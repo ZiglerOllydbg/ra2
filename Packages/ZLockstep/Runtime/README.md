@@ -27,8 +27,7 @@
   - 地图与路径数据 (Map & Path Data)
 
 ### 4. AI 框架 (AI Framework)
-- 行为树 / 状态机 (Behavior Tree / FSM)
-- AI决策与感知框架 (AI Decision Making & Perception Framework)
+- 行为树 (Behavior Tree)
 
 ### 5. 帧同步框架 (Lockstep Framework)
 - **锁步同步管理器 (Lockstep Sync Manager)**: 核心逻辑，负责驱动游戏按帧执行。 (Core logic, drives the game frame by frame.)
