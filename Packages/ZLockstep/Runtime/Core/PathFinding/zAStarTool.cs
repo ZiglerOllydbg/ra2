@@ -200,7 +200,7 @@ namespace zUnity
 				closeList.Add(minFPoint);//将该点添加到关闭列表中
 				if (minFPoint == null)
 				{
-					ZLog.LogError("Error!  路径查找失败!  Start:" + __startP.x + "," + __startP.y + "   End:" + __endP.x + "," + __endP.y);
+					zUDebug.LogError("Error!  路径查找失败!  Start:" + __startP.x + "," + __startP.y + "   End:" + __endP.x + "," + __endP.y);
 					//查找失败就直接退出
 					return;
 				}
