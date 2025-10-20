@@ -1,0 +1,88 @@
+{
+    "name": "RTS_Controls",
+    "maps": [
+        {
+            "name": "Camera",
+            "id": "be29bc10-349e-4e22-9cce-3c17f36f71d6",
+            "actions": [
+                {
+                    "name": "Pan",
+                    "type": "Value",
+                    "id": "704d51a8-81fa-4771-9640-5da657063b26",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Zoom",
+                    "type": "Value",
+                    "id": "8c822339-d547-489c-8620-897bb6285585",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "87becc68-1d4c-4a88-a63c-43a6cc53383b",
+                    "path": "<Pointer>/delta",
+                    "interactions": "Hold",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pan",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f81eded9-14e9-4113-9527-e8c541028710",
+                    "path": "<Pointer>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Create",
+            "id": "010eb57d-d313-4854-9bae-9afe05397be9",
+            "actions": [
+                {
+                    "name": "createUnit",
+                    "type": "Button",
+                    "id": "91257576-7f80-468b-be15-a365a495aa8b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "ca0ccf62-e528-4da1-8ce5-31517e31c838",
+                    "path": "<Pointer>/press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "createUnit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        {
+            "name": "RTSControl",
+            "bindingGroup": "RTSControl",
+            "devices": []
+        }
+    ]
+}

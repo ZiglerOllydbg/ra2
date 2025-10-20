@@ -1,5 +1,35 @@
 # ZLockstep - 帧同步（RTS）游戏框架设计
 
+## 核心架构理念：逻辑与视觉完全分离
+
+```
+┌─────────────────────────────────────┐
+│      逻辑层（zWorld - ECS）          │
+│  - 纯数据组件（zVector3/zfloat）    │
+│  - 游戏逻辑System                    │
+│  - 确定性计算                        │
+│  - 0依赖Unity，可独立运行            │
+└──────────────┬──────────────────────┘
+               │ 单向数据流
+               ↓
+┌─────────────────────────────────────┐
+│     表现层（Unity GameObject）       │
+│  - Transform/Renderer               │
+│  - 动画/特效/音效                    │
+│  - 视觉插值/表现效果                 │
+│  - 仅在客户端，不影响逻辑            │
+└─────────────────────────────────────┘
+```
+
+### 关键特性
+- ✅ **完全分离**：逻辑层0依赖Unity，可在服务器/测试环境运行
+- ✅ **确定性**：逻辑层使用zfloat/zVector3，保证帧同步
+- ✅ **高性能**：ViewComponent只在需要显示的实体上添加
+- ✅ **灵活性**：可无视觉运行（服务器），或一对多显示（回放、观战）
+- ✅ **易测试**：逻辑层可纯C#单元测试，无需Unity环境
+
+---
+
 ## 一、 核心引擎层 (Core Engine Layer)
 
 ### 1. 核心库 (Core Library)
@@ -15,6 +45,16 @@
 ### 2. 仿真核心 (Simulation Core)
 - **`World`**: 游戏世界，管理所有实体和系统 (Game world, manages all entities and systems)
 - **`ECS`**: 实体-组件-系统架构 (Entity-Component-System Architecture)
+  - **核心组件 (Core Components)**:
+    - `TransformComponent`: 位置、旋转、缩放（纯逻辑数据）
+    - `VelocityComponent`: 速度
+    - `UnitComponent`: 单位属性
+    - `HealthComponent`: 生命值
+  - **系统 (Systems)**:
+    - `BaseSystem`: 系统基类
+    - `MovementSystem`: 移动系统
+    - `CombatSystem`: 战斗系统
+    - `PresentationSystem`: 表现同步系统
 - **`Time`**: 确定性时间管理器 (Deterministic Time Manager)
 - **`Event System`**: 事件系统 (Event System)
 
@@ -33,6 +73,14 @@
 - **锁步同步管理器 (Lockstep Sync Manager)**: 核心逻辑，负责驱动游戏按帧执行。 (Core logic, drives the game frame by frame.)
 - **命令序列化与分发 (Command Serialization & Distribution)**
 - *注：本框架不包含底层网络传输实现，仅负责同步逻辑。(Note: This framework does not include the underlying network transport implementation, it is only responsible for the synchronization logic.)*
+
+### 6. 表现层 (Presentation Layer)
+- **ViewComponent**: Unity GameObject绑定组件
+- **EntityFactory**: 实体工厂（创建逻辑+视觉）
+- **MathConversion**: 确定性数学类型与Unity类型转换
+- **表现系统 (Presentation Systems)**:
+  - 直接同步模式
+  - 插值平滑模式
 
 
 ## 二、 游戏逻辑层 (Game Logic Layer)
