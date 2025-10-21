@@ -1,0 +1,156 @@
+using zUnity;
+using ZLockstep.Simulation;
+using ZLockstep.Simulation.Events;
+
+namespace ZLockstep.Sync.Command.Commands
+{
+    /// <summary>
+    /// 创建单位命令
+    /// </summary>
+    public class CreateUnitCommand : BaseCommand
+    {
+        public override int CommandType => CommandTypes.CreateUnit;
+
+        /// <summary>
+        /// 单位类型ID
+        /// 1=动员兵, 2=犀牛坦克, 3=矿车
+        /// </summary>
+        public int UnitType { get; set; }
+
+        /// <summary>
+        /// 创建位置
+        /// </summary>
+        public zVector3 Position { get; set; }
+
+        /// <summary>
+        /// 单位预制体ID（用于表现层）
+        /// </summary>
+        public int PrefabId { get; set; }
+
+        public CreateUnitCommand(int playerId, int unitType, zVector3 position, int prefabId = 0)
+            : base(playerId)
+        {
+            UnitType = unitType;
+            Position = position;
+            PrefabId = prefabId;
+        }
+
+        public override void Execute(zWorld world)
+        {
+            // 在逻辑层创建单位实体
+            var entity = world.EntityManager.CreateEntity();
+
+            // 添加Transform组件
+            world.ComponentManager.AddComponent(entity, new Simulation.ECS.Components.TransformComponent
+            {
+                Position = Position,
+                Rotation = zQuaternion.identity,
+                Scale = zVector3.one
+            });
+
+            // 添加Unit组件（根据类型）
+            var unitComponent = CreateUnitComponent(UnitType);
+            world.ComponentManager.AddComponent(entity, unitComponent);
+
+            // 添加Health组件
+            var healthComponent = CreateHealthComponent(UnitType);
+            world.ComponentManager.AddComponent(entity, healthComponent);
+
+            // 如果单位有攻击能力，添加Attack组件
+            if (CanAttack(UnitType))
+            {
+                var attackComponent = CreateAttackComponent(UnitType);
+                world.ComponentManager.AddComponent(entity, attackComponent);
+            }
+
+            // 发送事件通知表现层创建视图
+            // 表现层会监听此事件并创建GameObject
+            world.ViewEventManager.Publish(new UnitCreatedEvent
+            {
+                EntityId = entity.Id,
+                UnitType = UnitType,
+                Position = Position,
+                PlayerId = PlayerId,
+                PrefabId = PrefabId
+            });
+
+            UnityEngine.Debug.Log($"[CreateUnitCommand] 玩家{PlayerId} 创建了单位类型{UnitType} 在位置{Position}，Entity ID: {entity.Id}");
+        }
+
+        #region 辅助方法
+
+        private Simulation.ECS.Components.UnitComponent CreateUnitComponent(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(PlayerId);
+                case 2: // 犀牛坦克
+                    return Simulation.ECS.Components.UnitComponent.CreateTank(PlayerId);
+                case 3: // 矿车
+                    return Simulation.ECS.Components.UnitComponent.CreateHarvester(PlayerId);
+                default:
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(PlayerId);
+            }
+        }
+
+        private Simulation.ECS.Components.HealthComponent CreateHealthComponent(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)50.0f);
+                case 2: // 犀牛坦克
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)200.0f);
+                case 3: // 矿车
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)150.0f);
+                default:
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)100.0f);
+            }
+        }
+
+        private Simulation.ECS.Components.AttackComponent CreateAttackComponent(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return new Simulation.ECS.Components.AttackComponent
+                    {
+                        Damage = (zfloat)10.0f,
+                        Range = (zfloat)4.0f,
+                        AttackInterval = (zfloat)1.0f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                case 2: // 犀牛坦克
+                    return new Simulation.ECS.Components.AttackComponent
+                    {
+                        Damage = (zfloat)30.0f,
+                        Range = (zfloat)8.0f,
+                        AttackInterval = (zfloat)2.0f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                default:
+                    return Simulation.ECS.Components.AttackComponent.CreateDefault();
+            }
+        }
+
+        private bool CanAttack(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                case 2: // 犀牛坦克
+                    return true;
+                case 3: // 矿车
+                    return false;
+                default:
+                    return false;
+            }
+        }
+
+        #endregion
+    }
+}
+

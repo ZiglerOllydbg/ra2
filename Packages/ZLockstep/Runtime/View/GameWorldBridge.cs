@@ -1,7 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS.Systems;
 using ZLockstep.View.Systems;
+using ZLockstep.Sync.Command;
 
 namespace ZLockstep.View
 {
@@ -27,6 +29,10 @@ namespace ZLockstep.View
         [Tooltip("表现层根节点")]
         public Transform viewRoot;
 
+        [Header("预制体设置")]
+        [Tooltip("单位预制体列表（索引对应单位类型）")]
+        public GameObject[] unitPrefabs = new GameObject[10];
+
         // 逻辑世界
         private zWorld _logicWorld;
 
@@ -35,6 +41,12 @@ namespace ZLockstep.View
 
         // 表现系统
         private PresentationSystem _presentationSystem;
+
+        // 视图事件监听器
+        private ViewEventListener _viewEventListener;
+
+        // 命令缓冲区
+        private CommandBuffer _commandBuffer;
 
         // 逻辑帧计时器
         private float _logicTimer = 0f;
@@ -46,9 +58,15 @@ namespace ZLockstep.View
         public zWorld LogicWorld => _logicWorld;
 
         /// <summary>
-        /// 获取实体工厂
+        /// 获取实体工厂（已废弃，建议使用Command系统）
         /// </summary>
+        [System.Obsolete("建议使用 SubmitCommand 方法代替直接使用EntityFactory")]
         public EntityFactory EntityFactory => _entityFactory;
+
+        /// <summary>
+        /// 获取命令缓冲区
+        /// </summary>
+        public CommandBuffer CommandBuffer => _commandBuffer;
 
         private void Awake()
         {
@@ -67,15 +85,38 @@ namespace ZLockstep.View
             // 计算逻辑帧间隔
             _logicInterval = 1.0f / logicFrameRate;
 
-            // 创建实体工厂
+            // 创建视图根节点
             if (viewRoot == null)
                 viewRoot = transform;
+
+            // 创建实体工厂（保留用于兼容）
             _entityFactory = new EntityFactory(_logicWorld, viewRoot);
+
+            // 创建命令缓冲区
+            _commandBuffer = new CommandBuffer(_logicWorld.CommandManager);
+
+            // 创建视图事件监听器
+            _viewEventListener = new ViewEventListener(_logicWorld, viewRoot);
+            RegisterPrefabs();
 
             // 注册游戏系统（按执行顺序）
             RegisterSystems();
 
             Debug.Log($"[GameWorldBridge] 逻辑世界初始化完成，帧率: {logicFrameRate} FPS");
+        }
+
+        /// <summary>
+        /// 注册预制体到视图监听器
+        /// </summary>
+        private void RegisterPrefabs()
+        {
+            for (int i = 0; i < unitPrefabs.Length; i++)
+            {
+                if (unitPrefabs[i] != null)
+                {
+                    _viewEventListener.RegisterUnitPrefab(i, unitPrefabs[i]);
+                }
+            }
         }
 
         /// <summary>
@@ -107,11 +148,30 @@ namespace ZLockstep.View
 
         private void Update()
         {
+            // 处理视图事件
+            _viewEventListener?.ProcessEvents();
+
             // 如果启用了插值，在Update中进行平滑处理
             if (enableSmoothInterpolation && _presentationSystem != null)
             {
                 _presentationSystem.LerpUpdate(Time.deltaTime, interpolationSpeed);
             }
+        }
+
+        /// <summary>
+        /// 提交命令到游戏世界
+        /// </summary>
+        public void SubmitCommand(ICommand command)
+        {
+            _logicWorld.CommandManager.SubmitCommand(command);
+        }
+
+        /// <summary>
+        /// 批量提交命令
+        /// </summary>
+        public void SubmitCommands(IEnumerable<ICommand> commands)
+        {
+            _logicWorld.CommandManager.SubmitCommands(commands);
         }
 
         private void OnDestroy()

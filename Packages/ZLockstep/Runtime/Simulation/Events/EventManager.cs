@@ -14,7 +14,7 @@ namespace ZLockstep.Simulation.Events
         // Value: Queue of event instances
         private readonly Dictionary<Type, Queue<IEvent>> _eventQueues = new Dictionary<Type, Queue<IEvent>>();
         private static readonly Queue<IEvent> _emptyQueue = new Queue<IEvent>();
-        
+
         /// <summary>
         /// 发布一个事件。事件会被加入对应类型的队列中，等待System来处理。
         /// </summary>
@@ -34,14 +34,14 @@ namespace ZLockstep.Simulation.Events
         /// </summary>
         /// <typeparam name="T">事件类型</typeparam>
         /// <returns>只读的事件队列</returns>
-        public Queue<IEvent> GetEvents<T>() where T : IEvent
+        public IReadOnlyList<T> GetEvents<T>() where T : IEvent
         {
             var eventType = typeof(T);
             if (_eventQueues.TryGetValue(eventType, out var queue))
             {
-                return queue;
+                return queue.Cast<T>().ToList();
             }
-            return _emptyQueue;
+            return Array.Empty<T>();
         }
 
         /// <summary>

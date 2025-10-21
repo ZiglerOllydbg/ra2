@@ -361,6 +361,17 @@ MonoBehaviour:
   enableSmoothInterpolation: 1
   interpolationSpeed: 10
   viewRoot: {fileID: 1676976046}
+  unitPrefabs:
+  - {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
+  - {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!4 &1676976046
 Transform:
   m_ObjectHideFlags: 0
@@ -496,11 +507,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worldBridge: {fileID: 1676976045}
-  unitCubePrefab: {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
   groundLayer:
     serializedVersion: 2
     m_Bits: 4294967295
   playerId: 0
+  unitType: 1
+  prefabId: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -3,22 +3,23 @@ using UnityEngine.InputSystem;
 using ZLockstep.View;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Sync.Command;
+using ZLockstep.Sync.Command.Commands;
 using zUnity;
 
 /// <summary>
-/// 测试脚本：点击地面创建单位
+/// 测试脚本：点击地面创建单位（使用Command系统）
 /// </summary>
 public class Test : MonoBehaviour
 {
     [Header("游戏世界")]
     [SerializeField] private GameWorldBridge worldBridge;
 
-    [Header("单位预制体")]
-    [SerializeField] private GameObject unitCubePrefab;
-
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
     [SerializeField] private int playerId = 0; // 玩家ID
+    [SerializeField] private int unitType = 1; // 单位类型：1=动员兵, 2=坦克, 3=矿车
+    [SerializeField] private int prefabId = 1; // 预制体ID（对应unitPrefabs数组索引）
 
     private RTSControl _controls;
     private Camera _mainCamera;
@@ -52,19 +53,13 @@ public class Test : MonoBehaviour
     }
 
     /// <summary>
-    /// 响应创建单位的输入
+    /// 响应创建单位的输入（使用Command系统）
     /// </summary>
     private void OnCreateUnit(InputAction.CallbackContext context)
     {
-        if (worldBridge == null || worldBridge.EntityFactory == null)
+        if (worldBridge == null || worldBridge.LogicWorld == null)
         {
             Debug.LogWarning("[Test] GameWorldBridge 未初始化！");
-            return;
-        }
-
-        if (unitCubePrefab == null)
-        {
-            Debug.LogWarning("[Test] 单位预制体未分配！");
             return;
         }
 
@@ -131,48 +126,84 @@ public class Test : MonoBehaviour
     }
 
     /// <summary>
-    /// 在指定位置创建单位
+    /// 在指定位置创建单位（通过Command）
     /// </summary>
     private void CreateUnitAtPosition(Vector3 position)
     {
         // 转换为逻辑层坐标
         zVector3 logicPosition = position.ToZVector3();
 
-        // 使用 EntityFactory 创建单位
-        Entity entity = worldBridge.EntityFactory.CreateUnit(
-            unitType: 1, // 1=动员兵类型
-            position: logicPosition,
+        // 创建CreateUnitCommand
+        var createCommand = new CreateUnitCommand(
             playerId: playerId,
-            prefab: unitCubePrefab,
-            enableInterpolation: true
-        );
+            unitType: unitType,
+            position: logicPosition,
+            prefabId: prefabId
+        )
+        {
+            Source = CommandSource.Local
+        };
 
-        Debug.Log($"[Test] 在位置 {position} 创建了单位 Entity_{entity.Id}");
+        // 提交命令到游戏世界
+        worldBridge.SubmitCommand(createCommand);
 
-        // 可选：给新创建的单位一个测试移动命令
-        // 让它移动到附近的位置
-        // StartCoroutine(TestMoveUnit(entity, logicPosition));
+        Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}, 玩家={playerId}");
     }
 
     /// <summary>
-    /// 测试：让单位自动移动（可选）
+    /// 测试：右键点击地面让所有单位移动（可选）
     /// </summary>
-    private System.Collections.IEnumerator TestMoveUnit(Entity entity, zVector3 startPos)
+    private void Update()
     {
-        yield return new WaitForSeconds(1f);
+        // 右键点击发送移动命令
+        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            SendMoveCommand();
+        }
+    }
 
-        // 生成一个随机目标位置
-        zVector3 targetPos = new zVector3(
-            startPos.x + (zfloat)Random.Range(-5f, 5f),
-            startPos.y,
-            startPos.z + (zfloat)Random.Range(-5f, 5f)
-        );
+    /// <summary>
+    /// 发送移动命令给所有单位
+    /// </summary>
+    private void SendMoveCommand()
+    {
+        if (worldBridge == null || worldBridge.LogicWorld == null)
+            return;
 
-        // 添加移动命令
-        var moveCmd = new MoveCommandComponent(targetPos);
-        worldBridge.LogicWorld.ComponentManager.AddComponent(entity, moveCmd);
+        Vector2 screenPosition = Mouse.current.position.ReadValue();
+        if (!TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
+            return;
 
-        Debug.Log($"[Test] 单位 Entity_{entity.Id} 开始移动到 {targetPos}");
+        // 获取所有属于该玩家的单位
+        var allUnits = worldBridge.LogicWorld.ComponentManager
+            .GetAllEntityIdsWith<UnitComponent>();
+
+        var playerUnits = new System.Collections.Generic.List<int>();
+        foreach (var entityId in allUnits)
+        {
+            var entity = new Entity(entityId);
+            var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
+            if (unit.PlayerId == playerId)
+            {
+                playerUnits.Add(entityId);
+            }
+        }
+
+        if (playerUnits.Count > 0)
+        {
+            // 创建移动命令
+            var moveCommand = new MoveCommand(
+                playerId: playerId,
+                entityIds: playerUnits.ToArray(),
+                targetPosition: worldPosition.ToZVector3()
+            )
+            {
+                Source = CommandSource.Local
+            };
+
+            worldBridge.SubmitCommand(moveCommand);
+            Debug.Log($"[Test] 发送移动命令: {playerUnits.Count}个单位 → {worldPosition}");
+        }
     }
 
     #region 调试辅助
@@ -181,20 +212,6 @@ public class Test : MonoBehaviour
     private Vector3 _lastClickPosition;
     private float _gizmoDisplayTime = 2f;
     private float _lastClickTime;
-
-    private void Update()
-    {
-        // 调试：显示点击位置
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            Vector2 screenPosition = Mouse.current.position.ReadValue();
-            if (TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
-            {
-                _lastClickPosition = worldPosition;
-                _lastClickTime = Time.time;
-            }
-        }
-    }
 
     private void OnDrawGizmos()
     {

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.Events;
+using ZLockstep.Sync.Command;
 
 namespace ZLockstep.Simulation
 {
@@ -15,8 +16,10 @@ namespace ZLockstep.Simulation
         public EntityManager EntityManager { get; private set; }
         public ComponentManager ComponentManager { get; private set; }
         public SystemManager SystemManager { get; private set; }
-        public EventManager EventManager { get; private set; }
+        public EventManager ViewEventManager { get; private set; }
+        public EventManager LogicEventManager { get; private set; }
         public TimeManager TimeManager { get; private set; }
+        public CommandManager CommandManager { get; private set; }
 
         /// <summary>
         /// 当前的逻辑帧数
@@ -38,7 +41,9 @@ namespace ZLockstep.Simulation
             EntityManager.Init(ComponentManager);
 
             SystemManager = new SystemManager(this);
-            EventManager = new EventManager();
+            ViewEventManager = new EventManager();
+            LogicEventManager = new EventManager();
+            CommandManager = new CommandManager(this);
 
             // TODO: 在这里注册所有的游戏系统 (e.g., SystemManager.RegisterSystem(new MovementSystem());)
         }
@@ -51,11 +56,14 @@ namespace ZLockstep.Simulation
             // 1. 推进时间
             TimeManager.Advance();
 
-            // 2. 执行 System
+            // 2. 执行当前帧的所有命令
+            CommandManager.ExecuteFrame();
+
+            // 3. 执行 System
             SystemManager.UpdateAll();
 
-            // 3. 在帧末尾清空事件队列
-            EventManager.Clear();
+            // 4. 在帧末尾清空事件队列
+            LogicEventManager.Clear();
         }
 
         /// <summary>
