@@ -24,7 +24,7 @@ namespace ZLockstep.Simulation.ECS
         /// <summary>
         /// 事件管理器（快捷访问）
         /// </summary>
-        protected Events.EventManager EventManager => World.ViewEventManager;
+        protected Events.EventManager EventManager => World.EventManager;
 
         /// <summary>
         /// 时间管理器（快捷访问）

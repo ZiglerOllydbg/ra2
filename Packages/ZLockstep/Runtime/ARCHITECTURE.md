@@ -1,304 +1,597 @@
-# ZLockstep ECS 架构文档
+# ZLockstep 架构设计（三层架构）
 
-## 文件结构
+> 遵循奥卡姆剃刀原则：简单的方案是最好的方案
 
-```
-Packages/ZLockstep/Runtime/
-├── Core/                           # 核心库（确定性数学、工具）
-│   ├── Math/                       # zfloat, zVector3, zQuaternion, zMatrix4x4
-│   ├── PathFinding/                # A*寻路
-│   └── Tools/                      # 调试工具
-│
-├── Simulation/                     # 逻辑层（纯C#，0依赖Unity）
-│   ├── ECS/                        # ECS核心
-│   │   ├── Components/             # 所有组件定义
-│   │   │   ├── TransformComponent.cs       # 位置旋转缩放
-│   │   │   ├── VelocityComponent.cs        # 速度
-│   │   │   ├── UnitComponent.cs            # 单位属性
-│   │   │   ├── HealthComponent.cs          # 生命值
-│   │   │   ├── AttackComponent.cs          # 攻击能力
-│   │   │   └── MoveCommandComponent.cs     # 移动命令
-│   │   ├── Systems/                # 所有系统实现
-│   │   │   └── MovementSystem.cs           # 移动系统
-│   │   ├── BaseSystem.cs           # 系统基类
-│   │   ├── ComponentManager.cs     # 组件管理器
-│   │   ├── EntityManager.cs        # 实体管理器
-│   │   ├── SystemManager.cs        # 系统管理器
-│   │   ├── Entity.cs               # 实体定义
-│   │   ├── IComponent.cs           # 组件接口
-│   │   └── ISystem.cs              # 系统接口
-│   ├── Events/                     # 事件系统
-│   ├── zWorld.cs                   # 游戏世界
-│   └── zTime.cs                    # 时间管理
-│
-├── View/                           # 表现层（依赖Unity）
-│   ├── Systems/                    
-│   │   └── PresentationSystem.cs           # 表现同步系统
-│   ├── ViewComponent.cs            # Unity GameObject绑定
-│   ├── EntityFactory.cs            # 实体工厂
-│   ├── GameWorldBridge.cs          # 逻辑表现桥接
-│   ├── MathConversionExtensions.cs # 数学类型转换
-│   └── README_USAGE.md             # 使用指南
-│
-└── Sync/                           # 帧同步（命令、回放）
-    ├── Command/
-    ├── GameLogic/
-    └── LockstepManager.cs
-```
+## ═══════════════════════════════════════════════════════════
+## 架构总览
+## ═══════════════════════════════════════════════════════════
 
-## 核心架构图
+### 设计哲学
+
+1. **严格分层**：每层只知道下层，不知道上层
+2. **唯一zWorld**：整个游戏只有一个逻辑世界实例
+3. **跨平台核心**：Game和zWorld可在任何C#环境运行
+4. **确定性保证**：逻辑层使用zfloat/zVector3
+
+### 三层结构
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Unity Layer                          │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │          GameWorldBridge.cs                       │  │
-│  │  - 连接逻辑层和表现层                              │  │
-│  │  - FixedUpdate: 驱动逻辑帧                        │  │
-│  │  - Update: 插值平滑显示                           │  │
-│  └──────────────┬────────────────┬───────────────────┘  │
-│                 │                │                       │
-└─────────────────┼────────────────┼───────────────────────┘
-                  │                │
-    ┌─────────────▼──────────┐  ┌──▼──────────────────────┐
-    │   Simulation Layer     │  │   Presentation Layer    │
-    │   (纯逻辑，确定性)      │  │   (Unity显示)           │
-    │  ┌──────────────────┐  │  │  ┌──────────────────┐  │
-    │  │     zWorld       │  │  │  │  EntityFactory   │  │
-    │  │  ┌────────────┐  │  │  │  │  - CreateUnit()  │  │
-    │  │  │SystemMgr  │  │  │  │  │  - CreateView()  │  │
-    │  │  │ComponentMgr│  │  │  │  └──────────────────┘  │
-    │  │  │EntityMgr   │  │  │  │  ┌──────────────────┐  │
-    │  │  └────────────┘  │  │  │  │ViewComponent     │  │
-    │  └──────────────────┘  │  │  │- GameObject      │  │
-    │  ┌──────────────────┐  │  │  │- Transform       │  │
-    │  │    Systems       │  │  │  │- Animator        │  │
-    │  │  - Movement      │  │  │  └──────────────────┘  │
-    │  │  - Combat        │  │  │  ┌──────────────────┐  │
-    │  │  - AI            │  │  │  │PresentationSys   │  │
-    │  └──────────────────┘  │  │  │- Sync Views      │  │
-    │  ┌──────────────────┐  │  │  │- Lerp Update     │  │
-    │  │   Components     │  │  │  └──────────────────┘  │
-    │  │  - Transform     │──┼──┼──> MathConversion     │
-    │  │  - Velocity      │  │  │    (zVector3 → Vector3)│
-    │  │  - Unit          │  │  └────────────────────────┘
-    │  │  - Health        │  │
-    │  │  - Attack        │  │
-    │  └──────────────────┘  │
-    └─────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│  【第3层：Unity桥接层】GameWorldBridge                 │
+│  文件：View/GameWorldBridge.cs                        │
+│  ─────────────────────────────────────────────────────│
+│  职责：                                               │
+│  • Unity平台适配（MonoBehaviour生命周期）            │
+│  • Unity资源管理（预制体、场景对象）                 │
+│  • Inspector配置界面                                 │
+│  • 不知道游戏逻辑细节                                │
+│  ─────────────────────────────────────────────────────│
+│  依赖：持有Game实例                                  │
+└──────────────────┬────────────────────────────────────┘
+                   │
+                   ▼
+┌───────────────────────────────────────────────────────┐
+│  【第2层：应用控制层】Game                             │
+│  文件：Sync/Game.cs                                   │
+│  ─────────────────────────────────────────────────────│
+│  职责：                                               │
+│  • 游戏生命周期管理（Init/Update/Shutdown）          │
+│  • 创建并持有唯一的zWorld实例                        │
+│  • 注册游戏系统                                      │
+│  • 纯C#，跨平台（Unity/服务器/测试）                 │
+│  • 不知道Unity，不知道表现                           │
+│  ─────────────────────────────────────────────────────│
+│  依赖：创建并驱动zWorld                              │
+└──────────────────┬────────────────────────────────────┘
+                   │
+                   ▼
+┌───────────────────────────────────────────────────────┐
+│  【第1层：游戏逻辑核心】zWorld                         │
+│  文件：Simulation/zWorld.cs                           │
+│  ─────────────────────────────────────────────────────│
+│  职责：                                               │
+│  • 游戏状态容器（管理所有ECS数据）                   │
+│  • ECS架构（Entity/Component/System）                 │
+│  • 确定性计算（zfloat/zVector3）                      │
+│  • 命令系统（Command → ECS → Event）                  │
+│  • 不知道平台，不知道如何被驱动                       │
+│  ─────────────────────────────────────────────────────│
+│  依赖：无（完全独立）                                │
+└───────────────────────────────────────────────────────┘
 ```
 
-## 数据流
+---
 
-### 1. 初始化流程
+## ═══════════════════════════════════════════════════════════
+## 数据流向
+## ═══════════════════════════════════════════════════════════
 
-```
-Unity Scene
-  └─> GameWorldBridge.Awake()
-       ├─> 创建 zWorld
-       ├─> 初始化 SystemManager, ComponentManager, EntityManager
-       ├─> 注册所有 Systems (Movement, Combat, Presentation...)
-       └─> 创建 EntityFactory
-```
-
-### 2. 游戏循环
+### 完整流程
 
 ```
-FixedUpdate (固定帧率，如20FPS)
-  └─> zWorld.Update()
-       ├─> TimeManager.Advance()              [更新逻辑时间]
-       ├─> SystemManager.UpdateAll()          [执行所有系统]
-       │    ├─> MovementSystem.Update()       [处理移动]
-       │    ├─> CombatSystem.Update()         [处理战斗]
-       │    ├─> AISystem.Update()             [处理AI]
-       │    └─> PresentationSystem.Update()   [同步显示]
-       └─> EventManager.Clear()               [清理事件]
-
-Update (每帧，如60/120FPS)
-  └─> PresentationSystem.LerpUpdate()         [插值平滑]
-       └─> 将Unity对象插值到逻辑位置
+1. 用户输入（鼠标点击）
+   ↓
+2. GameWorldBridge 捕获输入
+   ↓
+3. 创建 Command（如 CreateUnitCommand）
+   ↓
+4. worldBridge.SubmitCommand(cmd)
+   ↓
+5. Game.SubmitCommand(cmd)
+   ↓
+6. zWorld.CommandManager.SubmitCommand(cmd)
+   ↓
+7. Game.Update() → zWorld.Update()
+   ↓
+8. zWorld.EventManager.Clear() - 清空上一帧事件
+   ↓
+9. zWorld.CommandManager.ExecuteFrame()
+   ├─ cmd.Execute(zWorld)
+   ├─ 创建Entity，添加Component
+   └─ EventManager.Publish(UnitCreatedEvent)
+   ↓
+10. zWorld.SystemManager.UpdateAll()
+   ├─ MovementSystem.Update() - 处理移动逻辑
+   ├─ ...其他逻辑System
+   └─ PresentationSystem.Update()
+      ├─ ProcessCreationEvents() - 获取UnitCreatedEvent
+      ├─ 实例化Unity GameObject
+      ├─ 添加ViewComponent
+      └─ SyncAllViews() - 同步Transform
+   ↓
+11. Unity渲染（视觉呈现）
 ```
 
-### 3. 创建实体流程
+### 关键点
 
-```
-EntityFactory.CreateUnit()
-  ├─> EntityManager.CreateEntity()            [创建逻辑实体]
-  ├─> 添加 TransformComponent                 [位置]
-  ├─> 添加 UnitComponent                      [单位属性]
-  ├─> 添加 HealthComponent                    [生命值]
-  ├─> 添加 AttackComponent (可选)            [攻击能力]
-  └─> 创建 ViewComponent                      [Unity表现]
-       └─> Instantiate(prefab)
-```
+1. **事件清空时机**：
+   - 在 `Game.Update()` 开始时调用 `EventManager.Clear()`
+   - 确保上一帧的事件已被处理
 
-### 4. 移动流程
+2. **表现同步**：
+   - `PresentationSystem` 在同一逻辑帧内处理事件
+   - 视图创建发生在 `SystemManager.UpdateAll()` 期间
 
-```
-玩家点击地面
-  └─> 添加 MoveCommandComponent(target)       [移动命令]
+3. **插值平滑**：
+   - `PresentationSystem.LerpUpdate()` 在Unity的 `Update()` 中调用
+   - 提供逻辑帧之间的平滑过渡
 
-MovementSystem.Update()
-  ├─> 遍历所有有 MoveCommandComponent 的实体
-  ├─> 计算方向: (target - position).normalized
-  ├─> 更新 TransformComponent.Rotation        [朝向目标]
-  ├─> 设置 VelocityComponent                  [设置速度]
-  └─> 到达时移除 MoveCommandComponent
+---
 
-MovementSystem.ApplyVelocity()
-  ├─> 遍历所有有 VelocityComponent 的实体
-  └─> 更新 TransformComponent.Position += velocity * deltaTime
+## ═══════════════════════════════════════════════════════════
+## 各层详解
+## ═══════════════════════════════════════════════════════════
 
-PresentationSystem.Update()
-  ├─> 遍历所有有 ViewComponent 的实体
-  ├─> 读取 TransformComponent
-  └─> 同步到 Unity Transform
-       └─> viewTransform.position = logicPosition.ToVector3()
-```
+### 【第1层】zWorld - 游戏逻辑核心
 
-## 关键设计原则
+**文件位置**：`Simulation/zWorld.cs`
 
-### 1. 逻辑表现分离
+**核心管理器**：
 
-| 层次 | 特点 | 依赖 |
-|------|------|------|
-| **Simulation** | 纯逻辑，确定性计算 | 仅依赖Core（数学库）|
-| **View** | 显示、插值、特效 | 依赖Unity + Simulation |
+| 管理器 | 职责 |
+|-------|------|
+| `EntityManager` | 创建/销毁实体 |
+| `ComponentManager` | 添加/获取/删除组件 |
+| `SystemManager` | 注册/更新所有System |
+| `EventManager` | 发布/获取/清空事件 |
+| `TimeManager` | 管理逻辑时间和Tick |
+| `CommandManager` | 管理命令执行 |
 
-### 2. 确定性保证
-
-- ✅ 使用 `zfloat` 定点数
-- ✅ 所有逻辑在 `FixedUpdate` 中以固定帧率运行
-- ✅ 遍历实体时排序（`GetAllEntityIdsWith` 自动排序）
-- ✅ 逻辑层0随机数，必须用 `zRandom`
-
-### 3. 组件设计
-
-- ✅ **struct**: 纯数据，值类型，修改后需写回
-- ✅ **最小化**: 每个组件只存一种数据
-- ❌ **不含逻辑**: 组件不包含方法（除了辅助属性）
+**关键方法**：
 
 ```csharp
-// ✅ 好的设计
-public struct HealthComponent : IComponent
-{
-    public zfloat MaxHealth;
-    public zfloat CurrentHealth;
-    public bool IsAlive => CurrentHealth > zfloat.Zero;  // 只读属性OK
-}
+// 初始化
+void Init(int frameRate)
 
-// ❌ 坏的设计
-public class HealthComponent : IComponent  // ❌ 不要用class
+// 推进一帧
+void Update()
+  1. TimeManager.Advance() - Tick++
+  2. CommandManager.ExecuteFrame() - 执行命令
+  3. SystemManager.UpdateAll() - 执行系统
+
+// 清理
+void Shutdown()
+```
+
+**设计原则**：
+- ✅ 不知道谁在驱动它（Game/GameWorldBridge/测试）
+- ✅ 不知道游戏模式（单机/网络/回放）
+- ✅ 不知道平台（Unity/服务器/命令行）
+
+---
+
+### 【第2层】Game - 应用控制层
+
+**文件位置**：`Sync/Game.cs`
+
+**核心职责**：
+
+```csharp
+// 构造函数
+Game(int frameRate = 20, int localPlayerId = 0)
+
+// 初始化游戏
+void Init()
+  1. 创建 zWorld
+  2. world.Init(frameRate)
+  3. RegisterSystems() - 注册游戏系统
+
+// 游戏主循环
+void Update()
+  1. world.EventManager.Clear() - 清空上一帧事件
+  2. world.Update() - 推进逻辑
+
+// 提交命令
+void SubmitCommand(ICommand command)
+
+// 关闭游戏
+void Shutdown()
+```
+
+**使用场景**：
+
+| 场景 | 用法 |
+|-----|------|
+| Unity客户端 | 通过 `GameWorldBridge` 持有并驱动 |
+| 服务器 | 直接在 `Main()` 中创建和驱动 |
+| 单元测试 | 直接实例化，无需Unity环境 |
+
+**设计原则**：
+- ✅ 只负责"控制"，不负责"呈现"
+- ✅ 纯C#实现，不依赖Unity
+- ✅ 创建并持有唯一的zWorld
+
+---
+
+### 【第3层】GameWorldBridge - Unity桥接层
+
+**文件位置**：`View/GameWorldBridge.cs`
+
+**核心字段**：
+
+```csharp
+[SerializeField] int logicFrameRate = 20;
+[SerializeField] int localPlayerId = 0;
+[SerializeField] Transform viewRoot;
+[SerializeField] GameObject[] unitPrefabs;
+
+bool enableSmoothInterpolation = true;
+float interpolationSpeed = 10f;
+
+private Game _game; // 持有Game实例
+private PresentationSystem _presentationSystem;
+```
+
+**Unity生命周期**：
+
+```csharp
+void Awake()
+  1. InitializeGame() - 创建Game，Game.Init()
+  2. InitializeUnityView() - 创建PresentationSystem
+
+void FixedUpdate()
+  _game.Update() - 驱动逻辑更新
+
+void Update()
+  _presentationSystem.LerpUpdate() - 平滑插值（可选）
+
+void OnDestroy()
+  _game.Shutdown() - 清理资源
+```
+
+**对外接口**：
+
+```csharp
+// 提交命令
+void SubmitCommand(ICommand command)
+
+// 访问逻辑世界
+zWorld LogicWorld { get; }
+Game Game { get; }
+```
+
+**设计原则**：
+- ✅ 只负责"桥接"，不负责"逻辑"
+- ✅ 持有Game实例，不创建zWorld
+- ✅ Unity特定代码只在这一层
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 表现系统（Presentation Layer）
+## ═══════════════════════════════════════════════════════════
+
+### PresentationSystem
+
+**文件位置**：`View/Systems/PresentationSystem.cs`
+
+**核心职责**：
+
+```csharp
+// 初始化（由GameWorldBridge调用）
+void Initialize(Transform viewRoot, Dictionary<int, GameObject> prefabs)
+
+// 主更新（在逻辑帧内执行）
+void Update()
+  1. ProcessCreationEvents() - 处理UnitCreatedEvent
+     ├─ 获取预制体
+     ├─ 实例化GameObject
+     └─ 添加ViewComponent
+  2. SyncAllViews() - 同步Transform、动画
+
+// 平滑插值（在Unity Update中执行）
+void LerpUpdate(float deltaTime, float speed)
+```
+
+**关键特性**：
+- ✅ 在同一逻辑帧内处理事件（确保及时创建）
+- ✅ 支持平滑插值（提供更好的视觉体验）
+- ✅ 自动同步动画状态（IsMoving, IsAttacking等）
+
+---
+
+### ViewComponent
+
+**文件位置**：`View/ViewComponent.cs`
+
+**核心字段**：
+
+```csharp
+GameObject GameObject;           // Unity游戏对象
+Transform Transform;             // Transform缓存
+Animator Animator;               // 动画控制器
+Renderer Renderer;               // 渲染器
+
+// 插值相关
+Vector3 LastLogicPosition;
+Quaternion LastLogicRotation;
+bool EnableInterpolation;
+```
+
+**使用说明**：
+- 这是唯一引用Unity的组件
+- 只在表现层使用，不参与逻辑计算
+- 通过 `ViewComponent.Create(GameObject)` 创建
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 命令系统（Command System）
+## ═══════════════════════════════════════════════════════════
+
+### 架构
+
+```
+ICommand 接口
+  ├─ BaseCommand 抽象基类
+  │   ├─ CreateUnitCommand - 创建单位
+  │   ├─ MoveCommand - 移动命令
+  │   └─ ... 其他命令
+
+CommandManager
+  ├─ SubmitCommand(cmd) - 提交命令
+  ├─ ExecuteFrame() - 执行当前帧命令
+  └─ 支持延迟执行（网络同步）
+```
+
+### 命令来源
+
+```csharp
+enum CommandSource
 {
-    public void TakeDamage() { ... }        // ❌ 不要在组件里写逻辑
+    Local = 0,    // 本地玩家输入
+    AI = 1,       // AI决策
+    Network = 2,  // 网络同步
+    Replay = 3    // 回放系统
 }
 ```
 
-### 4. System设计
-
-- ✅ 继承 `BaseSystem`
-- ✅ 逻辑写在 `Update()` 中
-- ✅ 使用 `ComponentManager.GetAllEntityIdsWith<T>()` 遍历
-- ✅ 通过添加/移除组件来控制实体行为
+### 使用示例
 
 ```csharp
-public class MySystem : BaseSystem
+// 创建单位命令
+var cmd = new CreateUnitCommand(
+    playerId: 0,
+    unitType: 1,
+    position: new zVector3(0, 0, 0),
+    prefabId: 1
+) { Source = CommandSource.Local };
+
+// 提交命令
+worldBridge.SubmitCommand(cmd);
+```
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## ECS 核心组件
+## ═══════════════════════════════════════════════════════════
+
+### 逻辑组件（纯数据）
+
+| 组件 | 字段 | 用途 |
+|-----|------|------|
+| `TransformComponent` | Position, Rotation, Scale | 逻辑变换 |
+| `VelocityComponent` | Value, IsMoving | 速度 |
+| `UnitComponent` | UnitType, PlayerId, MoveSpeed | 单位属性 |
+| `HealthComponent` | MaxHealth, CurrentHealth | 生命值 |
+| `AttackComponent` | Damage, Range, TargetEntityId | 攻击 |
+| `MoveCommandComponent` | TargetPosition, StopDistance | 移动指令 |
+
+### 表现组件（Unity相关）
+
+| 组件 | 字段 | 用途 |
+|-----|------|------|
+| `ViewComponent` | GameObject, Transform, Animator | 视图绑定 |
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 系统（Systems）
+## ═══════════════════════════════════════════════════════════
+
+### 逻辑系统
+
+| 系统 | 职责 |
+|-----|------|
+| `MovementSystem` | 处理移动命令，更新Transform |
+| `CombatSystem` | 处理战斗逻辑（待实现） |
+| `AISystem` | AI决策（待实现） |
+
+### 表现系统
+
+| 系统 | 职责 |
+|-----|------|
+| `PresentationSystem` | 同步逻辑到Unity表现 |
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 快速开始
+## ═══════════════════════════════════════════════════════════
+
+### Unity场景设置
+
+1. **创建GameWorld对象**
+   ```
+   Hierarchy → 右键 → Create Empty
+   命名为 "GameWorld"
+   Add Component → GameWorldBridge
+   ```
+
+2. **配置GameWorldBridge**
+   - Logic Frame Rate: `20`
+   - Local Player Id: `0`
+   - View Root: 拖入 `GameWorld` 自己
+   - Unit Prefabs[1]: 拖入单位预制体（如 Cube）
+
+3. **创建测试脚本**
+   ```csharp
+   using ZLockstep.View;
+   using ZLockstep.Sync.Command.Commands;
+   using zUnity;
+   
+   public class MyTest : MonoBehaviour
+   {
+       [SerializeField] GameWorldBridge worldBridge;
+       
+       void Update()
+       {
+           if (Input.GetMouseButtonDown(0))
+           {
+               var cmd = new CreateUnitCommand(
+                   playerId: 0,
+                   unitType: 1,
+                   position: GetMouseWorldPosition(),
+                   prefabId: 1
+               );
+               worldBridge.SubmitCommand(cmd);
+           }
+       }
+   }
+   ```
+
+4. **运行游戏**
+   - 点击 Play
+   - 点击场景中的地面
+   - 单位会在点击位置创建
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 架构优势
+## ═══════════════════════════════════════════════════════════
+
+### 1. 严格分层
+
+- ✅ 每层职责单一，互不干扰
+- ✅ 上层依赖下层，下层不知道上层
+- ✅ 遵循奥卡姆剃刀原则
+
+### 2. 跨平台
+
+```
+Unity客户端        服务器            单元测试
+    ↓                ↓                  ↓
+GameWorldBridge    Main()            TestCase
+    ↓                ↓                  ↓
+    └────────────→ Game ←─────────────┘
+                    ↓
+                  zWorld（纯C#，跨平台）
+```
+
+### 3. 易于测试
+
+```csharp
+[Test]
+public void TestUnitMovement()
 {
-    public override void Update()
+    // 纯C#测试，无需Unity环境
+    var game = new Game();
+    game.Init();
+    
+    var cmd = new CreateUnitCommand(...);
+    game.SubmitCommand(cmd);
+    game.Update();
+    
+    Assert.IsTrue(...);
+}
+```
+
+### 4. 命令驱动
+
+- ✅ 所有操作通过Command
+- ✅ 支持网络同步（未来）
+- ✅ 支持回放系统
+- ✅ 支持AI决策
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 常见问题（FAQ）
+## ═══════════════════════════════════════════════════════════
+
+### Q: 为什么要三层架构？
+A: 
+- **第1层 zWorld**：纯逻辑，跨平台，可测试
+- **第2层 Game**：生命周期管理，纯C#
+- **第3层 GameWorldBridge**：Unity适配，资源管理
+
+### Q: 为什么只有一个zWorld？
+A: 
+- 游戏状态必须唯一，避免数据不一致
+- 多个zWorld会导致同步问题
+
+### Q: 事件什么时候清空？
+A: 
+- 在 `Game.Update()` 开始时清空上一帧事件
+- 确保 `PresentationSystem` 有机会处理
+
+### Q: 如何添加新的System？
+A: 
+```csharp
+// 在 Game.RegisterSystems() 中添加
+protected override void RegisterSystems()
+{
+    base.RegisterSystems();
+    World.SystemManager.RegisterSystem(new MyCustomSystem());
+}
+```
+
+### Q: 如何自定义Command？
+A: 
+```csharp
+public class MyCommand : BaseCommand
+{
+    public override int CommandType => 100;
+    
+    public MyCommand(int playerId) : base(playerId) { }
+    
+    public override void Execute(zWorld world)
     {
-        var entities = ComponentManager.GetAllEntityIdsWith<MyComponent>();
-        
-        foreach (var entityId in entities)
-        {
-            var entity = new Entity(entityId);
-            
-            // 读取组件
-            var component = ComponentManager.GetComponent<MyComponent>(entity);
-            
-            // 修改数据
-            component.Value += DeltaTime;
-            
-            // 写回（因为是struct）
-            ComponentManager.AddComponent(entity, component);
-        }
+        // 你的逻辑
     }
 }
 ```
 
-## 常见模式
+---
 
-### 模式1：基于命令的行为
+## ═══════════════════════════════════════════════════════════
+## 未来扩展
+## ═══════════════════════════════════════════════════════════
 
-```csharp
-// 添加命令组件来触发行为
-var moveCmd = new MoveCommandComponent(targetPosition);
-ComponentManager.AddComponent(entity, moveCmd);
+### 网络同步（待实现）
 
-// System处理命令
-// 完成后移除命令
-ComponentManager.RemoveComponent<MoveCommandComponent>(entity);
+```
+┌─────────────────────────────────────┐
+│  GameWorldBridge (客户端)           │
+│  - 提交本地命令                     │
+│  - 接收网络命令                     │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  NetworkManager (网络层)             │
+│  - 命令序列化/反序列化              │
+│  - 帧确认机制                       │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+         [其他客户端]
 ```
 
-### 模式2：标记组件
+### 回放系统（待实现）
 
-```csharp
-// 用空组件作为标记
-public struct SelectedTag : IComponent { }
-
-// 标记为选中
-ComponentManager.AddComponent(entity, new SelectedTag());
-
-// System只处理被标记的实体
-var selected = ComponentManager.GetAllEntityIdsWith<SelectedTag>();
 ```
-
-### 模式3：状态机
-
-```csharp
-public struct UnitStateComponent : IComponent
-{
-    public enum State { Idle, Moving, Attacking, Dead }
-    public State CurrentState;
-}
-
-// 根据状态执行不同逻辑
-var state = ComponentManager.GetComponent<UnitStateComponent>(entity);
-switch (state.CurrentState)
-{
-    case State.Idle: /* ... */ break;
-    case State.Moving: /* ... */ break;
-}
+CommandManager.RecordHistory = true;
+// ... 游戏进行中 ...
+var history = CommandManager.GetCommandHistory();
+// 保存到文件
+// 回放时重新执行命令序列
 ```
-
-## 性能优化建议
-
-1. **缓存查询结果**：不要在Update中重复查询相同的组件类型
-2. **按需添加ViewComponent**：服务器端不需要
-3. **合理的逻辑帧率**：20FPS通常够用，不要超过30FPS
-4. **使用struct**：组件用struct而非class（值类型，内存友好）
-5. **空间划分**：对于碰撞检测，使用Quadtree/Grid
-
-## 扩展建议
-
-### 近期任务
-- [ ] CombatSystem（战斗系统）
-- [ ] BuildingSystem（建筑系统）
-- [ ] ResourceSystem（资源系统）
-- [ ] PathfindingSystem（寻路系统）
-
-### 中期任务
-- [ ] CommandQueue（命令队列）
-- [ ] SelectionSystem（单位选择）
-- [ ] FogOfWar（战争迷雾）
-- [ ] ReplaySystem（回放系统）
-
-### 长期任务
-- [ ] 网络同步（帧同步）
-- [ ] AI行为树集成
-- [ ] 技能系统
-- [ ] Buff/Debuff系统
 
 ---
 
-更多使用示例请参考：[View/README_USAGE.md](View/README_USAGE.md)
-
+**文档版本**: v1.0  
+**最后更新**: 2025-10-21  
+**维护者**: ZLockstep团队

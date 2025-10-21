@@ -1,19 +1,43 @@
 using UnityEngine;
+using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Simulation.Events;
 
 namespace ZLockstep.View.Systems
 {
     /// <summary>
     /// 表现同步系统：将逻辑层数据同步到Unity表现层
-    /// 这个System应该在所有逻辑System之后执行
+    /// 
+    /// 职责：
+    /// 1. 监听逻辑事件，创建Unity GameObject
+    /// 2. 同步逻辑Transform到Unity Transform
+    /// 3. 同步动画状态
+    /// 4. 可选：提供平滑插值
+    /// 
+    /// 执行时机：
+    /// - 在所有逻辑System之后执行
+    /// - 在同一逻辑帧内处理事件（确保及时创建View）
     /// </summary>
     public class PresentationSystem : BaseSystem
     {
+        // Unity资源
+        private Transform _viewRoot;
+        private Dictionary<int, GameObject> _unitPrefabs;
+
         /// <summary>
         /// 是否启用平滑插值（在FixedUpdate之间）
         /// </summary>
         public bool EnableSmoothInterpolation { get; set; } = false;
+
+        /// <summary>
+        /// 初始化系统（由GameWorldBridge调用）
+        /// </summary>
+        public void Initialize(Transform viewRoot, Dictionary<int, GameObject> prefabs)
+        {
+            _viewRoot = viewRoot;
+            _unitPrefabs = prefabs;
+        }
 
         protected override void OnInitialize()
         {
@@ -22,8 +46,51 @@ namespace ZLockstep.View.Systems
 
         public override void Update()
         {
-            // 在逻辑帧时，同步所有有View的实体
+            // 1. 处理事件（创建新的View）
+            ProcessCreationEvents();
+
+            // 2. 同步已有的View
             SyncAllViews();
+        }
+
+        /// <summary>
+        /// 处理单位创建事件
+        /// </summary>
+        private void ProcessCreationEvents()
+        {
+            var events = EventManager.GetEvents<UnitCreatedEvent>();
+            foreach (var evt in events)
+            {
+                CreateViewForEntity(evt);
+            }
+        }
+
+        /// <summary>
+        /// 为实体创建Unity视图
+        /// </summary>
+        private void CreateViewForEntity(UnitCreatedEvent evt)
+        {
+            // 获取预制体
+            if (!_unitPrefabs.TryGetValue(evt.UnitType, out var prefab))
+            {
+                if (!_unitPrefabs.TryGetValue(evt.PrefabId, out prefab))
+                {
+                    Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={evt.UnitType}, PrefabId={evt.PrefabId}");
+                    return;
+                }
+            }
+
+            // 实例化GameObject
+            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
+            viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
+            viewObject.transform.position = evt.Position.ToVector3();
+
+            // 创建并添加ViewComponent
+            var entity = new Entity(evt.EntityId);
+            var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
+            ComponentManager.AddComponent(entity, viewComponent);
+
+            Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}");
         }
 
         /// <summary>
@@ -70,9 +137,6 @@ namespace ZLockstep.View.Systems
 
             // 同步动画状态
             SyncAnimationState(entity, view);
-
-            // 同步其他视觉效果
-            SyncVisualEffects(entity, view);
 
             // 写回ViewComponent（如果有修改）
             ComponentManager.AddComponent(entity, view);
@@ -123,23 +187,6 @@ namespace ZLockstep.View.Systems
         }
 
         /// <summary>
-        /// 同步其他视觉效果（血条、选中框等）
-        /// </summary>
-        private void SyncVisualEffects(Entity entity, ViewComponent view)
-        {
-            // TODO: 这里可以发送事件给UI系统来更新血条
-            if (ComponentManager.HasComponent<HealthComponent>(entity))
-            {
-                var health = ComponentManager.GetComponent<HealthComponent>(entity);
-                // EventManager.Dispatch(new HealthChangedEvent 
-                // { 
-                //     EntityId = entity.Id, 
-                //     HealthPercent = health.HealthPercent 
-                // });
-            }
-        }
-
-        /// <summary>
         /// Unity的Update中调用，用于平滑插值（可选）
         /// </summary>
         public void LerpUpdate(float deltaTime, float interpolationSpeed = 10f)
@@ -181,4 +228,3 @@ namespace ZLockstep.View.Systems
         }
     }
 }
-

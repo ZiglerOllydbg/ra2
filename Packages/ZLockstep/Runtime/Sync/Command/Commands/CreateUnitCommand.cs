@@ -64,8 +64,8 @@ namespace ZLockstep.Sync.Command.Commands
             }
 
             // 发送事件通知表现层创建视图
-            // 表现层会监听此事件并创建GameObject
-            world.ViewEventManager.Publish(new UnitCreatedEvent
+            // PresentationSystem会在同一帧内处理此事件并创建GameObject
+            world.EventManager.Publish(new UnitCreatedEvent
             {
                 EntityId = entity.Id,
                 UnitType = UnitType,
