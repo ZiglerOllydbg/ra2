@@ -75,10 +75,23 @@ namespace ZLockstep.Simulation
         /// 驱动世界前进一个逻辑帧
         /// 这是游戏逻辑的核心循环
         /// </summary>
-        public void Update()
+        /// <param name="targetTick">目标帧号（可选，用于锁帧同步）
+        /// - 如果提供：直接设置为该帧号（锁帧模式）
+        /// - 如果为null：自动递增（单机模式）
+        /// </param>
+        public void Update(int? targetTick = null)
         {
-            // 1. 推进时间（Tick++）
-            TimeManager.Advance();
+            // 1. 推进时间
+            if (targetTick.HasValue)
+            {
+                // 锁帧模式：由外部指定帧号
+                TimeManager.SetTick(targetTick.Value);
+            }
+            else
+            {
+                // 单机模式：自动递增
+                TimeManager.Advance();
+            }
 
             // 2. 执行当前帧的所有命令（Command → 修改ECS状态）
             CommandManager.ExecuteFrame();

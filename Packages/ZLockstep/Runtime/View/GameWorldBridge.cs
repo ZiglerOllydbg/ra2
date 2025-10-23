@@ -40,6 +40,9 @@ namespace ZLockstep.View
     public class GameWorldBridge : MonoBehaviour
     {
         [Header("游戏配置")]
+        [Tooltip("游戏模式")]
+        [SerializeField] private GameMode gameMode = GameMode.Standalone;
+        
         [Tooltip("逻辑帧率（帧/秒）")]
         [SerializeField] private int logicFrameRate = 20;
         
@@ -59,6 +62,13 @@ namespace ZLockstep.View
         
         [Tooltip("插值速度")]
         [SerializeField] private float interpolationSpeed = 10f;
+
+        [Header("追帧设置")]
+        [Tooltip("追帧时每帧执行的逻辑帧数（越大追得越快）")]
+        [SerializeField] private int catchUpFramesPerUpdate = 10;
+
+        [Tooltip("是否在追帧时禁用渲染（提升性能）")]
+        [SerializeField] private bool disableRenderingDuringCatchUp = true;
 
         // ═══════════════════════════════════════════════════════════
         // 核心：持有 Game 实例（不是创建 zWorld！）
@@ -90,16 +100,75 @@ namespace ZLockstep.View
 
         private void FixedUpdate()
         {
-            // 驱动 Game（Game再驱动zWorld）
-            _game?.Update();
+            if (_game == null)
+                return;
+
+            // 追帧模式：快速执行多帧
+            if (_game.IsCatchingUp)
+            {
+                UpdateCatchUpMode();
+            }
+            else
+            {
+                // 正常模式：每帧执行一次
+                _game.Update();
+            }
         }
 
         private void Update()
         {
+            // 追帧时跳过插值更新（避免卡顿）
+            if (_game != null && _game.IsCatchingUp)
+            {
+                return;
+            }
+
             // Unity特定：插值更新（让移动更平滑）
             if (enableSmoothInterpolation && _presentationSystem != null)
             {
                 _presentationSystem.LerpUpdate(Time.deltaTime, interpolationSpeed);
+            }
+        }
+
+        /// <summary>
+        /// 追帧模式更新（每帧执行多次逻辑帧）
+        /// </summary>
+        private void UpdateCatchUpMode()
+        {
+            // 禁用渲染（可选）
+            if (disableRenderingDuringCatchUp && _presentationSystem != null)
+            {
+                _presentationSystem.EnableSmoothInterpolation = false;
+            }
+
+            // 快速执行多帧
+            int executedFrames = 0;
+            while (_game.IsCatchingUp && executedFrames < catchUpFramesPerUpdate)
+            {
+                _game.Update();
+                executedFrames++;
+
+                // 如果已经追上了，停止
+                if (!_game.IsCatchingUp)
+                {
+                    break;
+                }
+            }
+
+            if (executedFrames > 0)
+            {
+                Debug.Log($"[GameWorldBridge] 追帧中，本次执行 {executedFrames} 帧，进度: {_game.GetCatchUpProgress():P0}");
+            }
+
+            // 追帧完成后恢复渲染
+            if (!_game.IsCatchingUp)
+            {
+                if (_presentationSystem != null)
+                {
+                    _presentationSystem.EnableSmoothInterpolation = enableSmoothInterpolation;
+                }
+                
+                Debug.Log("[GameWorldBridge] 追帧完成，恢复正常模式");
             }
         }
 
@@ -118,10 +187,10 @@ namespace ZLockstep.View
         private void InitializeGame()
         {
             // 创建 Game（Game会创建唯一的zWorld）
-            _game = new Game(logicFrameRate, localPlayerId);
+            _game = new Game(gameMode, logicFrameRate, localPlayerId);
             _game.Init();
 
-            Debug.Log($"[GameWorldBridge] Game初始化完成");
+            Debug.Log($"[GameWorldBridge] Game初始化完成 - 模式:{gameMode}");
         }
 
         /// <summary>
@@ -167,6 +236,21 @@ namespace ZLockstep.View
             _game?.SubmitCommand(command);
         }
 
+        /// <summary>
+        /// 开始追帧（断线重连后调用）
+        /// </summary>
+        /// <param name="catchUpCommands">需要追赶的帧命令</param>
+        public void StartCatchUp(Dictionary<int, List<ICommand>> catchUpCommands)
+        {
+            if (_game == null)
+            {
+                Debug.LogError("[GameWorldBridge] Game 未初始化");
+                return;
+            }
+
+            _game.StartCatchUp(catchUpCommands);
+        }
+
         // ═══════════════════════════════════════════════════════════
         // 调试辅助
         // ═══════════════════════════════════════════════════════════
@@ -206,6 +290,45 @@ namespace ZLockstep.View
             }
         }
 
+        #region 调试界面
+
+        private void OnGUI()
+        {
+            if (_game == null)
+                return;
+
+            // 显示追帧进度
+            if (_game.IsCatchingUp)
+            {
+                GUILayout.BeginArea(new Rect(10, 10, 400, 100));
+                
+                GUILayout.Label("═══ 追帧中 ═══", new GUIStyle(GUI.skin.label) 
+                { 
+                    fontSize = 20, 
+                    fontStyle = FontStyle.Bold,
+                    normal = { textColor = Color.yellow }
+                });
+
+                float progress = _game.GetCatchUpProgress();
+                int pending = _game.FrameSyncManager?.GetPendingFrameCount() ?? 0;
+                
+                GUILayout.Label($"进度: {progress:P0}");
+                GUILayout.Label($"剩余帧数: {pending}");
+                GUILayout.Label($"当前帧: {_game.World.Tick}");
+                
+                // 进度条
+                Rect progressRect = new Rect(10, 80, 380, 20);
+                GUI.Box(progressRect, "");
+                GUI.color = Color.green;
+                GUI.Box(new Rect(10, 80, 380 * progress, 20), "");
+                GUI.color = Color.white;
+                
+                GUILayout.EndArea();
+            }
+        }
+
+        #endregion
+
         #region Inspector信息显示
 
 #if UNITY_EDITOR
@@ -227,6 +350,15 @@ namespace ZLockstep.View
                         .GetAllEntityIdsWith<Simulation.ECS.Components.TransformComponent>()
                         .Count();
                     UnityEditor.EditorGUILayout.LabelField("实体数量", entityCount.ToString());
+
+                    // 追帧状态
+                    if (bridge._game.IsCatchingUp)
+                    {
+                        UnityEditor.EditorGUILayout.Space();
+                        UnityEditor.EditorGUILayout.LabelField("状态", "追帧中", UnityEditor.EditorStyles.boldLabel);
+                        int pending = bridge._game.FrameSyncManager?.GetPendingFrameCount() ?? 0;
+                        UnityEditor.EditorGUILayout.LabelField("剩余帧数", pending.ToString());
+                    }
                 }
             }
         }

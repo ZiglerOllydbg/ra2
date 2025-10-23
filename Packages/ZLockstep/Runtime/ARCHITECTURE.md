@@ -557,27 +557,129 @@ public class MyCommand : BaseCommand
 ---
 
 ## ═══════════════════════════════════════════════════════════
-## 未来扩展
+## 帧同步（Lockstep）实现
 ## ═══════════════════════════════════════════════════════════
 
-### 网络同步（待实现）
+> 详细文档：[Sync/LOCKSTEP_GUIDE.md](Sync/LOCKSTEP_GUIDE.md)
+
+### 核心原理
+
+**帧同步（Lockstep）** = 所有客户端在同一逻辑帧执行相同的命令
+
+```
+【关键机制】：客户端必须等待服务器确认才能推进
+
+Frame 0  1  2  3  4  5
+客户端A: ✓  ✓  ⏳ ⏳ ✓  ✓  (等待确认)
+客户端B: ✓  ✓  ⏳ ⏳ ✓  ✓  (等待确认)
+服务器:  ✓确认0 ✓确认1 ✓确认2...
+```
+
+### 架构
 
 ```
 ┌─────────────────────────────────────┐
-│  GameWorldBridge (客户端)           │
-│  - 提交本地命令                     │
-│  - 接收网络命令                     │
+│  GameWorldBridge (Unity)            │
+│  FixedUpdate() → Game.Update()      │
 └──────────────┬──────────────────────┘
                │
                ▼
 ┌─────────────────────────────────────┐
-│  NetworkManager (网络层)             │
-│  - 命令序列化/反序列化              │
-│  - 帧确认机制                       │
+│  Game (应用层)                      │
+│  根据GameMode选择执行方式           │
 └──────────────┬──────────────────────┘
                │
-               ▼
-         [其他客户端]
+       ┌───────┴───────┐
+       │ Standalone    │ NetworkClient
+       ▼               ▼
+ExecuteLogicFrame() FrameSyncManager
+                           │
+                      ├─ CanAdvanceFrame()
+                      ├─ 检查 confirmedFrame
+                      ├─ 是 → PrepareNextFrame()
+                      └─ 然后 → ExecuteLogicFrame()
+```
+
+### 游戏模式
+
+| 模式 | 行为 | 使用场景 |
+|-----|------|---------|
+| `Standalone` | 每帧都执行 | 单机游戏 |
+| `NetworkClient` | 等待服务器确认 | 网络客户端 |
+| `NetworkServer` | 每帧都执行 | 服务器权威 |
+| `Replay` | 按录制执行 | 回放系统 |
+
+### 使用示例
+
+#### 1. Unity配置
+
+```
+GameWorldBridge:
+  - Game Mode: NetworkClient
+  - Logic Frame Rate: 20
+  - Local Player Id: 0
+```
+
+#### 2. 提交命令（自动根据模式处理）
+
+```csharp
+// 单机模式：直接执行
+worldBridge.Game.SubmitCommand(cmd);
+
+// 网络模式：需要传入网络适配器
+worldBridge.Game.SubmitCommand(cmd, networkAdapter);
+```
+
+#### 3. 接收服务器确认
+
+```csharp
+void OnReceiveServerMessage(int frame, List<ICommand> commands)
+{
+    worldBridge.Game.FrameSyncManager.ConfirmFrame(frame, commands);
+}
+```
+
+### FrameSyncManager
+
+**职责**：
+- 管理帧确认状态（`confirmedFrame`）
+- 缓冲未来帧的命令
+- 决定是否可以推进
+
+**关键方法**：
+```csharp
+// 检查是否可以推进（返回false表示等待中）
+bool CanAdvanceFrame();
+
+// 准备下一帧（提交命令，不执行world.Update）
+int PrepareNextFrame();
+
+// 服务器确认帧（网络层调用）
+void ConfirmFrame(int frame, List<ICommand> commands);
+
+// 提交本地命令（发送到服务器）
+void SubmitLocalCommand(ICommand cmd, INetworkAdapter adapter);
+```
+
+**重要**：`FrameSyncManager` 不直接执行 `world.Update()`，实际执行由 `Game.ExecuteLogicFrame()` 完成，确保所有模式都统一清空事件。
+
+---
+
+## ═══════════════════════════════════════════════════════════
+## 未来扩展
+## ═══════════════════════════════════════════════════════════
+
+### 网络层（需要实现）
+
+```
+┌─────────────────────────────────────┐
+│  INetworkAdapter (接口)             │
+│  void SendCommandToServer(cmd)      │
+└──────────────┬──────────────────────┘
+               │
+               ├─ Unity Netcode 实现
+               ├─ WebSocket 实现
+               └─ 自定义协议实现
 ```
 
 ### 回放系统（待实现）
