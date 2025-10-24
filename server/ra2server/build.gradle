@@ -68,7 +68,7 @@ jar {
 // 拷贝依赖的jar包到libs目录
 task copyDependencies(type: Copy) {
     from configurations.runtimeClasspath
-    into '../dist/libs'
+    into '../jar/libs'
 }
 
 build.dependsOn copyDependencies
