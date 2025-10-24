@@ -51,5 +51,15 @@ namespace ZLockstep.Simulation
             Time += DeltaTime;
             Tick++;
         }
+
+        /// <summary>
+        /// 设置当前帧号（用于锁帧同步）
+        /// 在锁帧模式下，应该由 FrameSyncManager 控制 Tick
+        /// </summary>
+        public void SetTick(int tick)
+        {
+            Tick = tick;
+            Time = DeltaTime * new zfloat(tick);
+        }
     }
 }
