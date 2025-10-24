@@ -43,7 +43,7 @@ dependencies {
 
     // hutool工具库
     implementation 'cn.hutool:hutool-all:5.8.22'
-    
+
 }
 
 application {
@@ -52,7 +52,7 @@ application {
 
 // 配置jar包输出目录和名称
 jar {
-    destinationDirectory = file('../dist')
+    destinationDirectory = file('../jar')
     archiveFileName = 'ra2.jar'
 
     manifest {
