@@ -55,6 +55,7 @@ public class Room {
         gameStarted = true;
         
         try {
+            System.out.println("房间 " + id + " 游戏开始");
             ObjectNode response = objectMapper.createObjectNode();
             response.put("type", "gameStart");
             
@@ -135,7 +136,9 @@ public class Room {
         broadcastFrameSync(currentFrame, currentFrameData);
         
         // 清理旧帧数据
-        frameInputs.remove(currentFrame - 10); // 保留最近10帧数据
+        if (currentFrame > 10) {
+            frameInputs.remove(currentFrame - 10); // 保留最近10帧数据
+        }
     }
 
     private void broadcastFrameSync(int frame, Map<String, JsonNode> frameData) {

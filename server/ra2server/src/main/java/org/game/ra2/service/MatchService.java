@@ -29,6 +29,7 @@ public class MatchService {
      */
     public void addToMatchQueue(String channelId, JsonNode data) {
         try {
+            System.out.println("添加匹配请求到队列: " + channelId + ", 数据: " + data.toString());
             MatchMessage message = new MatchMessage(channelId, data);
             matchQueue.put(message);
         } catch (InterruptedException e) {

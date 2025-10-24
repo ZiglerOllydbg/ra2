@@ -44,6 +44,9 @@ dependencies {
     // hutool工具库
     implementation 'cn.hutool:hutool-all:5.8.22'
 
+    // WebSocket客户端
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+
 }
 
 application {

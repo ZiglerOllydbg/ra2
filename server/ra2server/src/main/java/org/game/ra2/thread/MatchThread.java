@@ -46,11 +46,15 @@ public class MatchThread extends Thread {
     private void processMatchQueue() {
         // 处理所有排队的匹配请求
         matchQueue.drainTo(waitingPlayers);
+        
+//        System.out.println("当前等待匹配的玩家数: " + waitingPlayers.size());
 
         // 两两匹配创建房间
         while (waitingPlayers.size() >= 2) {
             MatchMessage player1 = waitingPlayers.remove(0);
             MatchMessage player2 = waitingPlayers.remove(0);
+            
+            System.out.println("匹配玩家: " + player1.getChannelId() + " 和 " + player2.getChannelId());
             
             // 创建房间并分配给房间线程池
             RoomService.getInstance().createRoom(player1, player2);

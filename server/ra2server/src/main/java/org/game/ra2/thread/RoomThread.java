@@ -78,21 +78,28 @@ public class RoomThread extends Thread {
      */
     public void createRoom(MatchMessage player1, MatchMessage player2) {
         Runnable task = () -> {
-            Room room = new Room(generateRoomId());
-            
-            // 添加玩家到房间
-            room.addPlayer(player1.getChannelId(), player1.getData().get("name").asText());
-            room.addPlayer(player2.getChannelId(), player2.getData().get("name").asText());
-            
-            // 建立channel和房间的映射关系
-            channelRoomMap.put(player1.getChannelId(), room.getId());
-            channelRoomMap.put(player2.getChannelId(), room.getId());
-            
-            // 保存房间
-            rooms.put(room.getId(), room);
-            
-            // 通知客户端准备进入场景
-            notifyMatchSuccess(room);
+            try {
+                Room room = new Room(generateRoomId());
+                
+                // 添加玩家到房间
+                room.addPlayer(player1.getChannelId(), player1.getData().get("name").asText());
+                room.addPlayer(player2.getChannelId(), player2.getData().get("name").asText());
+                
+                // 建立channel和房间的映射关系
+                channelRoomMap.put(player1.getChannelId(), room.getId());
+                channelRoomMap.put(player2.getChannelId(), room.getId());
+                
+                // 保存房间
+                rooms.put(room.getId(), room);
+                
+                System.out.println("创建房间: " + room.getId());
+                
+                // 通知客户端准备进入场景
+                notifyMatchSuccess(room);
+            } catch (Exception e) {
+                System.err.println("创建房间时发生错误:");
+                e.printStackTrace();
+            }
         };
         
         try {
@@ -118,11 +125,15 @@ public class RoomThread extends Thread {
             response.set("data", dataArray);
             String message = objectMapper.writeValueAsString(response);
             
+            System.out.println("发送匹配成功消息: " + message);
+            
             // 发送给房间内的所有玩家
             for (Room.Player player : room.getPlayers()) {
+                System.out.println("向玩家发送消息: " + player.getChannelId() + ", " + player.getName());
                 WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
             }
         } catch (Exception e) {
+            System.err.println("发送匹配成功消息时发生错误:");
             e.printStackTrace();
         }
     }

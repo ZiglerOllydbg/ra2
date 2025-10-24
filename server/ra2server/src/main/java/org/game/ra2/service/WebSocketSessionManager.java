@@ -40,8 +40,10 @@ public class WebSocketSessionManager {
         Channel channel = channels.get(channelId);
         if (channel != null && channel.isActive()) {
             channel.eventLoop().execute(() -> {
-                channel.writeAndFlush(message).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+                channel.writeAndFlush(message);
             });
+        } else {
+            System.out.println("无法发送消息到频道: " + channelId + ", 频道状态: " + (channel != null ? "活跃=" + channel.isActive() : "不存在"));
         }
     }
 }

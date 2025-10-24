@@ -1,9 +1,7 @@
 package org.game.ra2;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Timer;
-import java.util.TimerTask;
+import org.game.ra2.netty.WebSocketServer;
+import org.game.ra2.service.MatchService;
 
 /**
  * 游戏启动类
@@ -11,14 +9,15 @@ import java.util.TimerTask;
 public class GameStartUp {
 
     public static void main(String[] args) {
-        Timer timer = new Timer();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println(LocalDateTime.now().format(formatter));
-            }
-        }, 0, 1000);
+        try {
+            // 初始化匹配服务
+            MatchService matchService = MatchService.getInstance();
+            
+            // 启动WebSocket服务器
+            WebSocketServer server = new WebSocketServer(8080, matchService);
+            server.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
