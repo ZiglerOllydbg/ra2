@@ -1,7 +1,13 @@
 # 启动
 
+## 下载jdk11
+https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
+
+![](jdk.png)
+
 ## 1、解压jdk11压缩包到当前目录：jdk11.0.29_7
-相对目录结构：
+
+解压后，目录结构：
 ```
 server/jdk11.0.29_7
                     /bin
