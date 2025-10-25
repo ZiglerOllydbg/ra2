@@ -40,12 +40,12 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
         // 处理断线逻辑
         if (CHANNEL_ROOM_MAP.containsKey(channelId)) {
             // 如果在房间中，则交给房间线程处理
-            System.out.println("房间中的玩家断线: " + channelId);
+            System.out.println("房间中的玩家断开: " + channelId);
             RoomService.getInstance().handleDisconnect(channelId);
             CHANNEL_ROOM_MAP.remove(channelId);
         } else {
             // 如果不在房间中，交给匹配线程处理
-            System.out.println("匹配中的玩家断线: " + channelId);
+            System.out.println("匹配中的玩家断开: " + channelId);
             matchService.handleDisconnect(channelId);
         }
     }
