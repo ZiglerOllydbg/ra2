@@ -69,42 +69,21 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
         try {
             JsonNode jsonNode = objectMapper.readTree(request);
             String type = jsonNode.get("type").asText();
-            
-            switch (type) {
-                case "match":
-                    // 添加到匹配队列
-                    matchService.addToMatchQueue(channelId, jsonNode.get("data"));
-                    break;
-                case "ready":
-                    // 准备就绪消息
-                    String roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
-                    if (roomId != null) {
-                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
-                        if (roomService != null) {
-                            roomService.handleReady(channelId);
-                        }
+
+            if (type.equals("match")) {// 添加到匹配队列
+                matchService.addMessage(channelId, jsonNode);
+            } else {// 其他消息根据房间信息转发
+                String roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
+                if (roomId != null) {
+                    RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
+                    if (roomService != null) {
+                        roomService.addMessage(channelId, jsonNode);
+                    } else {
+                        System.err.println("房间不存在: " + roomId);
                     }
-                    break;
-                case "frameInput":
-                    // 帧输入消息
-                    roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
-                    if (roomId != null) {
-                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
-                        if (roomService != null) {
-                            roomService.handleFrameInput(channelId, jsonNode.get("data"));
-                        }
-                    }
-                    break;
-                default:
-                    // 其他消息根据房间信息转发
-                    roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
-                    if (roomId != null) {
-                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
-                        if (roomService != null) {
-                            roomService.handleMessage(channelId, jsonNode);
-                        }
-                    }
-                    break;
+                } else {
+                    System.err.println("玩家未加入房间: " + channelId);
+                }
             }
         } catch (Exception e) {
             System.err.println("处理消息时发生错误: " + request);

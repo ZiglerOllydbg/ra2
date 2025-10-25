@@ -16,6 +16,11 @@ public class RoomServiceManager {
     private final List<RoomThread> roomThreads = new ArrayList<>();
     private final AtomicInteger currentIndex = new AtomicInteger(0);
     private final ConcurrentHashMap<String, RoomService> roomServices = new ConcurrentHashMap<>();
+
+    /**
+     * roomId分配器
+     */
+    private final AtomicInteger roomIdAllocator = new AtomicInteger(0);
     
     private RoomServiceManager() {
         // 初始化多个RoomThread实例
@@ -32,14 +37,19 @@ public class RoomServiceManager {
     
     /**
      * 创建一个新的RoomService并分配给一个RoomThread
-     * @param roomId 房间ID
      * @return RoomService实例
      */
-    public RoomService createRoomService(String roomId) {
+    public RoomService createRoomService() {
+        // 分配房间ID
+        int incId = roomIdAllocator.getAndIncrement();
+        String roomId = "room_" + incId;
+        // 分配一个RoomThread
         int index = currentIndex.getAndIncrement() % roomThreads.size();
         RoomThread roomThread = roomThreads.get(index);
-        RoomService roomService = new RoomService(roomThread);
+        // 创建RoomService实例
+        RoomService roomService = new RoomService(roomId, roomThread);
         roomServices.put(roomId, roomService);
+        roomThread.addRoomService(roomService);
         return roomService;
     }
     

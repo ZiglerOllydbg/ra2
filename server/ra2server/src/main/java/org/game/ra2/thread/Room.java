@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.game.ra2.entity.Player; // 使用独立的Player类
 import org.game.ra2.service.WebSocketSessionManager;
 
 import java.util.*;
@@ -141,7 +142,7 @@ public class Room {
             frameInputs.remove(currentFrame - 10); // 保留最近10帧数据
         }
     }
-
+    
     private void broadcastFrameSync(int frame, Map<String, JsonNode> frameData) {
         try {
             ObjectNode response = objectMapper.createObjectNode();
@@ -176,26 +177,5 @@ public class Room {
     
     public boolean isGameStarted() {
         return gameStarted;
-    }
-
-    /**
-     * 玩家内部类
-     */
-    public static class Player {
-        private final String channelId;
-        private final String name;
-
-        public Player(String channelId, String name) {
-            this.channelId = channelId;
-            this.name = name;
-        }
-
-        public String getChannelId() {
-            return channelId;
-        }
-
-        public String getName() {
-            return name;
-        }
     }
 }
