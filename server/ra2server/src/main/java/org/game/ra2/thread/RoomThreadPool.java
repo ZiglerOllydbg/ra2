@@ -32,46 +32,57 @@ public class RoomThreadPool {
         // 轮询分配到不同的房间线程
         int currentIndex = index.getAndIncrement() % roomThreads.size();
         RoomThread roomThread = roomThreads.get(currentIndex);
-        roomThread.createRoom(player1, player2);
+        
+        // 创建任务在RoomThread中执行
+        Runnable task = () -> {
+            // 这里可以添加房间创建后的处理逻辑
+            System.out.println("在RoomThread中处理房间创建任务");
+        };
+        
+        roomThread.executeTask(task);
     }
 
     public void handleReady(String roomId, String channelId) {
-        // 找到对应的房间线程处理
+        // 在所有线程中广播处理准备就绪消息
         for (RoomThread roomThread : roomThreads) {
-            if (roomThread.containsRoom(roomId)) {
-                roomThread.handleReady(roomId, channelId);
-                break;
-            }
+            Runnable task = () -> {
+                // 这里可以添加处理准备就绪的逻辑
+                System.out.println("在RoomThread中处理准备就绪消息: " + roomId + ", " + channelId);
+            };
+            roomThread.executeTask(task);
         }
     }
 
     public void handleFrameInput(String roomId, String channelId, JsonNode data) {
-        // 找到对应的房间线程处理
+        // 在所有线程中广播处理帧输入
         for (RoomThread roomThread : roomThreads) {
-            if (roomThread.containsRoom(roomId)) {
-                roomThread.handleFrameInput(roomId, channelId, data);
-                break;
-            }
+            Runnable task = () -> {
+                // 这里可以添加处理帧输入的逻辑
+                System.out.println("在RoomThread中处理帧输入: " + roomId + ", " + channelId);
+            };
+            roomThread.executeTask(task);
         }
     }
 
     public void handleDisconnect(String channelId) {
-        // 找到对应的房间线程处理
+        // 在所有线程中广播处理断线
         for (RoomThread roomThread : roomThreads) {
-            if (roomThread.containsChannel(channelId)) {
-                roomThread.handleDisconnect(channelId);
-                break;
-            }
+            Runnable task = () -> {
+                // 这里可以添加处理断线的逻辑
+                System.out.println("在RoomThread中处理断线: " + channelId);
+            };
+            roomThread.executeTask(task);
         }
     }
 
     public void handleMessage(String roomId, String channelId, JsonNode message) {
-        // 找到对应的房间线程处理
+        // 在所有线程中广播处理其他消息
         for (RoomThread roomThread : roomThreads) {
-            if (roomThread.containsRoom(roomId)) {
-                roomThread.handleMessage(roomId, channelId, message);
-                break;
-            }
+            Runnable task = () -> {
+                // 这里可以添加处理其他消息的逻辑
+                System.out.println("在RoomThread中处理其他消息: " + roomId + ", " + channelId + ", " + message.toString());
+            };
+            roomThread.executeTask(task);
         }
     }
 }

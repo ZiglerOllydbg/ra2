@@ -2,9 +2,10 @@ package org.game.ra2.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.game.ra2.thread.MatchThread;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -13,12 +14,14 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class MatchService {
     private static MatchService instance = new MatchService();
-    private final MatchThread matchThread;
     private final LinkedBlockingQueue<MatchMessage> matchQueue = new LinkedBlockingQueue<>();
+    private final List<MatchMessage> waitingPlayers = new ArrayList<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private MatchService() {
-        matchThread = new MatchThread(matchQueue);
+        // 启动匹配处理线程
+        Thread matchThread = new Thread(this::processMatches);
+        matchThread.setName("MatchThread");
         matchThread.start();
     }
 
@@ -46,6 +49,45 @@ public class MatchService {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 处理匹配队列
+     */
+    private void processMatches() {
+        System.out.println("匹配线程启动");
+
+        while (true) {
+            try {
+                // 处理匹配队列中的消息
+                processMatchQueue();
+
+                // 心跳逻辑 (每秒20帧)
+                Thread.sleep(50); // 50ms = 1/20秒
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void processMatchQueue() {
+        // 处理所有排队的匹配请求
+        matchQueue.drainTo(waitingPlayers);
+
+        // 两两匹配创建房间
+        while (waitingPlayers.size() >= 2) {
+            MatchMessage player1 = waitingPlayers.remove(0);
+            MatchMessage player2 = waitingPlayers.remove(0);
+
+            System.out.println("匹配玩家: " + player1.getChannelId() + " 和 " + player2.getChannelId());
+
+            // 创建房间并分配给房间线程池
+            RoomService.getInstance().createRoom(player1, player2);
         }
     }
 

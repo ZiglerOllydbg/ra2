@@ -43,6 +43,7 @@ public class Room {
      * @param channelId
      */
     public void markPlayerReady(String channelId) {
+        System.out.println("玩家 " + channelId + " 准备就绪");
         readyPlayers.add(channelId);
         
         // 检查是否所有玩家都已准备就绪
