@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.game.ra2.thread.RoomThreadPool;
+import org.game.ra2.thread.RoomThread;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,20 +18,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * 房间服务类
  */
 public class RoomService {
-    private static RoomService instance = new RoomService();
-    private final RoomThreadPool roomThreadPool;
+    private final RoomThread roomThread;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     // 房间管理数据结构
     private final Map<String, RoomInfo> rooms = new ConcurrentHashMap<>();
     private final Map<String, String> channelRoomMap = new ConcurrentHashMap<>();
 
-    private RoomService() {
-        roomThreadPool = new RoomThreadPool(4); // 创建4个房间线程
-    }
-
-    public static RoomService getInstance() {
-        return instance;
+    public RoomService() {
+        // 每个RoomService对应一个RoomThread
+        roomThread = new RoomThread("RoomService-Thread");
+        roomThread.start();
     }
 
     /**
@@ -60,8 +57,11 @@ public class RoomService {
         // 通知客户端准备进入场景
         notifyMatchSuccess(roomInfo);
         
-        // 将房间分配给线程池处理
-        roomThreadPool.assignRoom(player1, player2);
+        // 将房间创建任务提交给RoomThread处理
+        roomThread.executeTask(() -> {
+            // 这里可以添加房间创建后的处理逻辑
+            System.out.println("在RoomThread中处理房间创建后的任务");
+        });
     }
     
     private void notifyMatchSuccess(RoomInfo room) {
@@ -113,7 +113,11 @@ public class RoomService {
             }
         }
         
-        roomThreadPool.handleReady(roomId, channelId);
+        // 将准备就绪任务提交给RoomThread处理
+        roomThread.executeTask(() -> {
+            // 这里可以添加处理准备就绪后的逻辑
+            System.out.println("在RoomThread中处理准备就绪后的任务");
+        });
     }
     
     private void startGame(String roomId) {
@@ -161,7 +165,11 @@ public class RoomService {
             }
         }
         
-        roomThreadPool.handleFrameInput(roomId, channelId, data);
+        // 将帧输入任务提交给RoomThread处理
+        roomThread.executeTask(() -> {
+            // 这里可以添加处理帧输入后的逻辑
+            System.out.println("在RoomThread中处理帧输入后的任务");
+        });
     }
 
     /**
@@ -183,7 +191,11 @@ public class RoomService {
             }
         }
         
-        roomThreadPool.handleDisconnect(channelId);
+        // 将断线处理任务提交给RoomThread处理
+        roomThread.executeTask(() -> {
+            // 这里可以添加处理断线后的逻辑
+            System.out.println("在RoomThread中处理断线后的任务");
+        });
     }
 
     /**
@@ -196,7 +208,18 @@ public class RoomService {
         // 可以在这里处理房间内的其他自定义消息
         System.out.println("处理房间内消息: " + message.toString());
         
-        roomThreadPool.handleMessage(roomId, channelId, message);
+        // 将消息处理任务提交给RoomThread处理
+        roomThread.executeTask(() -> {
+            // 这里可以添加处理消息后的逻辑
+            System.out.println("在RoomThread中处理消息后的任务");
+        });
+    }
+    
+    /**
+     * 停止服务
+     */
+    public void stopService() {
+        roomThread.stopRunning();
     }
     
     /**

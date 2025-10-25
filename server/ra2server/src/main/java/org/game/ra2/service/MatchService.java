@@ -86,8 +86,9 @@ public class MatchService {
 
             System.out.println("匹配玩家: " + player1.getChannelId() + " 和 " + player2.getChannelId());
 
-            // 创建房间并分配给房间线程池
-            RoomService.getInstance().createRoom(player1, player2);
+            // 从RoomServiceManager获取RoomService实例来创建房间
+            RoomService roomService = RoomServiceManager.getInstance().getNextRoomService();
+            roomService.createRoom(player1, player2);
         }
     }
 
