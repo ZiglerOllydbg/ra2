@@ -173,6 +173,10 @@ public class Room {
     public int getPlayerCount() {
         return players.size();
     }
+    
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
 
     /**
      * 玩家内部类

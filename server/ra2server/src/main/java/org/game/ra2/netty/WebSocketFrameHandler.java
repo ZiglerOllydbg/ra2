@@ -11,15 +11,10 @@ import org.game.ra2.service.RoomService;
 import org.game.ra2.service.RoomServiceManager;
 import org.game.ra2.service.WebSocketSessionManager;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MatchService matchService;
-    
-    // 临时存储session信息，后续会移到专门的管理器中
-    public static final ConcurrentHashMap<String, String> CHANNEL_ROOM_MAP = new ConcurrentHashMap<>();
 
     public WebSocketFrameHandler(MatchService matchService) {
         this.matchService = matchService;
@@ -39,13 +34,15 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
         System.out.println("连接断开: " + channelId);
         
         // 处理断线逻辑
-        if (CHANNEL_ROOM_MAP.containsKey(channelId)) {
+        String roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
+        if (roomId != null) {
             // 如果在房间中，则交给房间线程处理
             System.out.println("房间中的玩家断开: " + channelId);
-            // 轮询获取一个RoomService来处理断线
-            RoomService roomService = RoomServiceManager.getInstance().getNextRoomService();
-            roomService.handleDisconnect(channelId);
-            CHANNEL_ROOM_MAP.remove(channelId);
+            RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
+            if (roomService != null) {
+                roomService.handleDisconnect(channelId);
+            }
+            WebSocketSessionManager.getInstance().removeChannelRoomMapping(channelId);
         } else {
             // 如果不在房间中，交给匹配线程处理
             System.out.println("匹配中的玩家断开: " + channelId);
@@ -80,29 +77,32 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
                     break;
                 case "ready":
                     // 准备就绪消息
-                    if (CHANNEL_ROOM_MAP.containsKey(channelId)) {
-                        String roomId = CHANNEL_ROOM_MAP.get(channelId);
-                        // 轮询获取一个RoomService来处理准备就绪消息
-                        RoomService roomService = RoomServiceManager.getInstance().getNextRoomService();
-                        roomService.handleReady(roomId, channelId);
+                    String roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
+                    if (roomId != null) {
+                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
+                        if (roomService != null) {
+                            roomService.handleReady(channelId);
+                        }
                     }
                     break;
                 case "frameInput":
                     // 帧输入消息
-                    if (CHANNEL_ROOM_MAP.containsKey(channelId)) {
-                        String roomId = CHANNEL_ROOM_MAP.get(channelId);
-                        // 轮询获取一个RoomService来处理帧输入消息
-                        RoomService roomService = RoomServiceManager.getInstance().getNextRoomService();
-                        roomService.handleFrameInput(roomId, channelId, jsonNode.get("data"));
+                    roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
+                    if (roomId != null) {
+                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
+                        if (roomService != null) {
+                            roomService.handleFrameInput(channelId, jsonNode.get("data"));
+                        }
                     }
                     break;
                 default:
                     // 其他消息根据房间信息转发
-                    if (CHANNEL_ROOM_MAP.containsKey(channelId)) {
-                        String roomId = CHANNEL_ROOM_MAP.get(channelId);
-                        // 轮询获取一个RoomService来处理其他消息
-                        RoomService roomService = RoomServiceManager.getInstance().getNextRoomService();
-                        roomService.handleMessage(roomId, channelId, jsonNode);
+                    roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);
+                    if (roomId != null) {
+                        RoomService roomService = RoomServiceManager.getInstance().getRoomService(roomId);
+                        if (roomService != null) {
+                            roomService.handleMessage(channelId, jsonNode);
+                        }
                     }
                     break;
             }

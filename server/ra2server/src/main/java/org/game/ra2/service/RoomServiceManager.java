@@ -1,7 +1,10 @@
 package org.game.ra2.service;
 
+import org.game.ra2.thread.RoomThread;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -10,14 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RoomServiceManager {
     private static RoomServiceManager instance = new RoomServiceManager();
     
-    private final List<RoomService> roomServices = new ArrayList<>();
+    private final List<RoomThread> roomThreads = new ArrayList<>();
     private final AtomicInteger currentIndex = new AtomicInteger(0);
+    private final ConcurrentHashMap<String, RoomService> roomServices = new ConcurrentHashMap<>();
     
     private RoomServiceManager() {
-        // 初始化多个RoomService实例
+        // 初始化多个RoomThread实例
         for (int i = 0; i < 4; i++) {
-            RoomService roomService = new RoomService();
-            roomServices.add(roomService);
+            RoomThread roomThread = new RoomThread("RoomThread-" + i);
+            roomThreads.add(roomThread);
+            roomThread.start();
         }
     }
     
@@ -26,20 +31,45 @@ public class RoomServiceManager {
     }
     
     /**
-     * 轮询获取RoomService实例
+     * 创建一个新的RoomService并分配给一个RoomThread
+     * @param roomId 房间ID
      * @return RoomService实例
      */
-    public RoomService getNextRoomService() {
-        int index = currentIndex.getAndIncrement() % roomServices.size();
-        return roomServices.get(index);
+    public RoomService createRoomService(String roomId) {
+        int index = currentIndex.getAndIncrement() % roomThreads.size();
+        RoomThread roomThread = roomThreads.get(index);
+        RoomService roomService = new RoomService(roomThread);
+        roomServices.put(roomId, roomService);
+        return roomService;
+    }
+    
+    /**
+     * 根据房间ID获取RoomService
+     * @param roomId 房间ID
+     * @return RoomService实例
+     */
+    public RoomService getRoomService(String roomId) {
+        return roomServices.get(roomId);
+    }
+    
+    /**
+     * 移除RoomService
+     * @param roomId 房间ID
+     */
+    public void removeRoomService(String roomId) {
+        RoomService roomService = roomServices.remove(roomId);
+        if (roomService != null) {
+            roomService.stopService();
+        }
     }
     
     /**
      * 停止所有RoomService
      */
     public void stopAllServices() {
-        for (RoomService roomService : roomServices) {
-            roomService.stopService();
+        for (RoomThread roomThread : roomThreads) {
+            roomThread.stopRunning();
         }
+        roomServices.clear();
     }
 }

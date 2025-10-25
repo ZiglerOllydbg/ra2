@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketSessionManager {
     private static WebSocketSessionManager instance = new WebSocketSessionManager();
     private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> channelRoomMap = new ConcurrentHashMap<>();
 
     private WebSocketSessionManager() {
     }
@@ -27,6 +28,7 @@ public class WebSocketSessionManager {
 
     public void removeChannel(String channelId) {
         channels.remove(channelId);
+        channelRoomMap.remove(channelId);
     }
 
     public Channel getChannel(String channelId) {
@@ -54,5 +56,31 @@ public class WebSocketSessionManager {
         } else {
             System.out.println("无法发送消息到频道: " + channelId + ", 频道状态: " + (channel != null ? "活跃=" + channel.isActive() : "不存在"));
         }
+    }
+    
+    /**
+     * 设置频道与房间的映射关系
+     * @param channelId 频道ID
+     * @param roomId 房间ID
+     */
+    public void setChannelRoomMapping(String channelId, String roomId) {
+        channelRoomMap.put(channelId, roomId);
+    }
+    
+    /**
+     * 获取频道所属的房间ID
+     * @param channelId 频道ID
+     * @return 房间ID
+     */
+    public String getRoomIdByChannel(String channelId) {
+        return channelRoomMap.get(channelId);
+    }
+    
+    /**
+     * 移除频道与房间的映射关系
+     * @param channelId 频道ID
+     */
+    public void removeChannelRoomMapping(String channelId) {
+        channelRoomMap.remove(channelId);
     }
 }
