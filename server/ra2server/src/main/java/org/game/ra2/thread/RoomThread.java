@@ -28,6 +28,10 @@ public class RoomThread extends Thread {
     public void run() {
         System.out.println("房间线程启动: " + getName());
 
+        // 稳定20帧循环逻辑 (每秒20帧)
+        final long FRAME_TIME = 50; // 50ms per frame (1000ms / 20fps = 50ms)
+        long lastFrameTime = System.currentTimeMillis();
+
         while (running) {
             try {
                 // 处理任务队列
@@ -39,8 +43,17 @@ public class RoomThread extends Thread {
                     roomService.runFrame();
                 }
 
-                // 心跳逻辑 (每秒20帧)
-                Thread.sleep(50); // 50ms = 1/20秒
+                // 精确控制帧率，保证稳定的20帧
+                long currentTime = System.currentTimeMillis();
+                long elapsedTime = currentTime - lastFrameTime;
+                long sleepTime = FRAME_TIME - elapsedTime;
+                
+                if (sleepTime > 0) {
+                    Thread.sleep(sleepTime);
+                }
+                
+                // 更新帧时间，如果执行时间超过了帧时间，则立即进入下一帧
+                lastFrameTime = System.currentTimeMillis();
                 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
