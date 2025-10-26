@@ -14,6 +14,12 @@ public class WebSocketTest : MonoBehaviour
     
     private void Start()
     {
+        // 加载之前保存的玩家名字
+        if (PlayerPrefs.HasKey("PlayerName"))
+        {
+            playerName = PlayerPrefs.GetString("PlayerName");
+        }
+        
         AddLog("客户端已启动");
     }
     
@@ -44,7 +50,14 @@ public class WebSocketTest : MonoBehaviour
         
         // 玩家名称输入
         GUILayout.Label("角色名:");
-        playerName = GUILayout.TextField(playerName, GUILayout.Width(200));
+        string newName = GUILayout.TextField(playerName, GUILayout.Width(200));
+        if (newName != playerName)
+        {
+            playerName = newName;
+            // 保存玩家名字到PlayerPrefs
+            PlayerPrefs.SetString("PlayerName", playerName);
+            PlayerPrefs.Save();
+        }
         
         GUILayout.Space(10);
         
