@@ -189,7 +189,7 @@ public class Room {
                 if (player.isChannelValid()) {
                     WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
                 } else {
-                    System.out.println("玩家 " + player + " 已断线");
+//                    System.out.println("玩家 " + player + " 已断线");
                 }
             }
         } catch (Exception e) {
