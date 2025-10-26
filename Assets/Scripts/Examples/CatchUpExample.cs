@@ -98,9 +98,9 @@ public class CatchUpExample : MonoBehaviour
                     playerId: 0,
                     unitType: 1,
                     position: new zVector3(
-                        zfloat.CreateFromRaw(Random.Range(-5, 5) * 65536),
+                        zfloat.CreateFloat(Random.Range(-5, 5) * 65536),
                         zfloat.Zero,
-                        zfloat.CreateFromRaw(Random.Range(-5, 5) * 65536)
+                        zfloat.CreateFloat(Random.Range(-5, 5) * 65536)
                     ),
                     prefabId: 1
                 )

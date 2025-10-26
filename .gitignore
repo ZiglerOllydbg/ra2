@@ -215,3 +215,4 @@ obj/
 .vs/
 /server/ra2server/.idea
 /server/jdk11.0.29_7
+/.vscode
