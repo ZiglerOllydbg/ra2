@@ -2,7 +2,7 @@ using UnityEngine;
 using Game.RA2.Client;
 using System;
 
-public class NetTest : MonoBehaviour
+public class WebSocketTest : MonoBehaviour
 {
     private WebSocketClient client;
     private string playerName = "Player1";
