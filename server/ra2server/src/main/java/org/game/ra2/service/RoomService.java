@@ -24,6 +24,7 @@ public class RoomService {
     private final String roomId;
     // 房间管理数据结构
     private Room room;
+    private boolean destroyed = false; // 标记房间是否已被销毁
 
     public RoomService(String roomId, RoomThread roomThread) {
         this.roomId = roomId;
@@ -37,6 +38,11 @@ public class RoomService {
      */
     public void addMessage(String channelId, JsonNode data) {
         try {
+            // 如果房间已被销毁，则忽略消息
+            if (destroyed) {
+                return;
+            }
+            
             Message message = new Message(channelId, data);
             messageQueue.put(message);
         } catch (InterruptedException e) {
@@ -134,6 +140,16 @@ public class RoomService {
     public void handleDisconnect(String channelId) {
         if (room != null) {
             room.handleDisconnect(channelId);
+        }
+    }
+    
+    /**
+     * 玩家离开房间
+     * @param channelId
+     */
+    public void handlePlayerLeave(String channelId) {
+        if (room != null) {
+            room.removePlayer(channelId);
             WebSocketSessionManager.getInstance().removeChannelRoomMapping(channelId);
         }
     }
@@ -176,6 +192,9 @@ public class RoomService {
                 case "frameInput":
                     room.addFrameInput(channelId, data);
                     break;
+                case "leave":
+                    handlePlayerLeave(channelId);
+                    break;
                 default:
                     // 处理其他类型的消息
                     System.out.println("房间未知消息类型: " + type);
@@ -188,5 +207,21 @@ public class RoomService {
         if (room != null && room.isGameStarted()) {
             room.update();
         }
+        
+        // 检查房间是否应该销毁
+        if (room != null && !destroyed && room.shouldDestroy()) {
+            destroyRoom();
+        }
+    }
+    
+    /**
+     * 销毁房间
+     */
+    private void destroyRoom() {
+        System.out.println("正在销毁房间: " + roomId);
+        destroyed = true;
+        
+        // 通知RoomServiceManager移除此房间服务
+        RoomServiceManager.getInstance().removeRoomService(roomId);
     }
 }

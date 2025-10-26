@@ -11,12 +11,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * RoomService管理器，用于管理多个RoomService实例
  */
 public class RoomServiceManager {
-    private static RoomServiceManager instance = new RoomServiceManager();
-    
+    /**
+     * 单例实例
+     */
+    private static final RoomServiceManager instance = new RoomServiceManager();
+    /**
+     * 房间线程列表
+     */
     private final List<RoomThread> roomThreads = new ArrayList<>();
     private final AtomicInteger currentIndex = new AtomicInteger(0);
+    /**
+     * 房间服务缓存
+     */
     private final ConcurrentHashMap<String, RoomService> roomServices = new ConcurrentHashMap<>();
-
     /**
      * roomId分配器
      */

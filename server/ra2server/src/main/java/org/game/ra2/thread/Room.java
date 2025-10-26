@@ -21,6 +21,10 @@ public class Room {
     private int currentFrame = 0;
     private boolean gameStarted = false;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    // 添加房间销毁相关字段
+    private long emptySince = -1; // 房间变空的时间点
+    private static final long DESTROY_DELAY = 30 * 1000; // 30秒后销毁
 
     public Room(String id) {
         this.id = id;
@@ -35,6 +39,18 @@ public class Room {
      */
     public void addPlayer(Player  player) {
         players.add(player);
+        emptySince = -1; // 有玩家加入，重置空房间计时
+    }
+    
+    /**
+     * 移除玩家
+     */
+    public void removePlayer(String channelId) {
+        players.removeIf(player -> player.getChannelId().equals(channelId));
+        readyPlayers.remove(channelId);
+        
+        // 检查是否所有玩家都已离开，如果是，则开始计时
+        checkEmptyAndStartTimer();
     }
 
     /**
@@ -53,6 +69,7 @@ public class Room {
 
     private void startGame() {
         gameStarted = true;
+        emptySince = -1; // 开始游戏，重置空房间计时
         
         try {
             System.out.println("房间 " + id + " 游戏开始");
@@ -108,6 +125,9 @@ public class Room {
                 player.setChannelValid(false);
             }
         }
+        
+        // 检查是否所有玩家都已断线，如果是，则开始计时
+        checkEmptyAndStartTimer();
     }
 
     /**
@@ -187,5 +207,38 @@ public class Room {
     
     public boolean isGameStarted() {
         return gameStarted;
+    }
+    
+    /**
+     * 检查房间是否为空并启动计时器
+     */
+    private void checkEmptyAndStartTimer() {
+        boolean allDisconnected = true;
+        for (Player player : players) {
+            if (player.isChannelValid()) {
+                allDisconnected = false;
+                break;
+            }
+        }
+        
+        if (allDisconnected && emptySince == -1) {
+            emptySince = System.currentTimeMillis();
+            System.out.println("房间 " + id + " 所有玩家已离开，开始30秒倒计时销毁");
+        }
+    }
+    
+    /**
+     * 检查是否应该销毁房间
+     * @return true表示应该销毁房间
+     */
+    public boolean shouldDestroy() {
+        if (emptySince != -1) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - emptySince > DESTROY_DELAY) {
+                System.out.println("房间 " + id + " 已空置超过30秒，准备销毁");
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -29,8 +29,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         String channelId = ctx.channel().id().asLongText();
-        WebSocketSessionManager.getInstance().removeChannel(channelId);
-        
+
         System.out.println("连接断开: " + channelId);
         
         // 处理断线逻辑
@@ -48,6 +47,8 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
             System.out.println("匹配中的玩家断开: " + channelId);
             matchService.handleDisconnect(channelId);
         }
+
+        WebSocketSessionManager.getInstance().removeChannel(channelId);
     }
 
     @Override
