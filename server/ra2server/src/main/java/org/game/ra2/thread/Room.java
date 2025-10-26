@@ -32,11 +32,9 @@ public class Room {
 
     /**
      * 添加玩家
-     * @param channelId
-     * @param name
      */
-    public void addPlayer(String channelId, String name) {
-        players.add(new Player(channelId, name));
+    public void addPlayer(Player  player) {
+        players.add(player);
     }
 
     /**
@@ -65,7 +63,11 @@ public class Room {
             
             // 广播游戏开始消息
             for (Player player : players) {
-                WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
+                if (player.isChannelValid()) {
+                    WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
+                } else {
+                    System.out.println("玩家 " + player + " 已断线");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,9 +76,11 @@ public class Room {
 
     /**
      * 添加帧输入
+     *
+     * @param channelId
      * @param data
      */
-    public void addFrameInput(JsonNode data) {
+    public void addFrameInput(String channelId, JsonNode data) {
         try {
             int frame = data.get("frame").asInt();
             JsonNode inputs = data.get("inputs");
@@ -98,10 +102,12 @@ public class Room {
      * @param channelId
      */
     public void handleDisconnect(String channelId) {
-        // 从玩家列表中移除
-        players.removeIf(player -> player.getChannelId().equals(channelId));
-        // 从准备列表中移除
-        readyPlayers.remove(channelId);
+        // 修改ChannelValid
+        for (Player player : players) {
+            if (player.getChannelId().equals(channelId)) {
+                player.setChannelValid(false);
+            }
+        }
     }
 
     /**
@@ -160,7 +166,11 @@ public class Room {
             
             // 发送给所有玩家
             for (Player player : players) {
-                WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
+                if (player.isChannelValid()) {
+                    WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
+                } else {
+                    System.out.println("玩家 " + player + " 已断线");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

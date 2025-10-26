@@ -64,7 +64,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
         String channelId = ctx.channel().id().asLongText();
         String request = msg.text();
         
-        System.out.println("收到消息: " + request);
+//        System.out.println("收到消息: " + request);
         
         try {
             JsonNode jsonNode = objectMapper.readTree(request);

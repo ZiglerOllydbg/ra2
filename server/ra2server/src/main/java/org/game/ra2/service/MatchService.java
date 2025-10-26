@@ -1,9 +1,10 @@
 package org.game.ra2.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.game.ra2.entity.Player; // 导入独立的Player类
+// 移除了对org.game.ra2.entity.Player的导入
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,9 +16,28 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 匹配服务类
  */
 public class MatchService {
+    // 添加PlayerInfo内部类
+    public static class PlayerInfo {
+        private String channelId;
+        private String name;
+
+        public PlayerInfo(String channelId, String name) {
+            this.channelId = channelId;
+            this.name = name;
+        }
+
+        public String getChannelId() {
+            return channelId;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
     private static MatchService instance = new MatchService();
     private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private final List<Player> waitingPlayers = new ArrayList<>(); // 改为使用独立的Player类
+    private final List<PlayerInfo> waitingPlayers = new ArrayList<>(); // 改为使用内部PlayerInfo类
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private MatchService() {
@@ -41,12 +61,6 @@ public class MatchService {
             System.out.println("添加匹配请求到队列: " + channelId + ", 数据: " + data.toString());
             Message message = new Message(channelId, data);
             messageQueue.put(message);
-
-            // 返回消息matched
-            Map<String, String> response = new HashMap<>();
-            response.put("type", "matched");
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            WebSocketSessionManager.getInstance().sendMessage(channelId, jsonResponse);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -110,9 +124,20 @@ public class MatchService {
         // 将消息数据转换为Player并保存到等待玩家列表中
         JsonNode data = message.getData();
         String name = data.has("name") ? data.get("name").asText() : "Unknown";
-        Player player = new Player(message.getChannelId(), name); // 创建独立的Player对象
+        PlayerInfo player = new PlayerInfo(message.getChannelId(), name); // 创建内部PlayerInfo对象
         waitingPlayers.add(player);
         System.out.println("添加玩家到等待列表: " + message.getChannelId());
+
+        try {
+            Map<String, String> response = new HashMap<>();
+            response.put("type", "matched");
+            String jsonResponse = objectMapper.writeValueAsString(response);
+
+            WebSocketSessionManager.getInstance().sendMessage(message.getChannelId(), jsonResponse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     /**
@@ -121,13 +146,14 @@ public class MatchService {
     private void processMatching() {
         // 两两匹配创建房间
         while (waitingPlayers.size() >= 2) {
-            Player player1 = waitingPlayers.remove(0);
-            Player player2 = waitingPlayers.remove(0);
+            PlayerInfo player1 = waitingPlayers.remove(0);
+            PlayerInfo player2 = waitingPlayers.remove(0);
 
             System.out.println("匹配玩家: " + player1.getChannelId() + " 和 " + player2.getChannelId());
 
             // 创建RoomService实例来创建房间
             RoomService roomService = RoomServiceManager.getInstance().createRoomService();
+            
             roomService.createRoom(player1, player2);
         }
     }
@@ -142,8 +168,8 @@ public class MatchService {
         System.out.println("处理用户断线: " + channelId);
         
         // 从等待玩家列表中移除断线的玩家
-        Player playerToRemove = null;
-        for (Player player : waitingPlayers) {
+        PlayerInfo playerToRemove = null;
+        for (PlayerInfo player : waitingPlayers) {
             if (player.getChannelId().equals(channelId)) {
                 playerToRemove = player;
                 break;

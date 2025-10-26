@@ -24,6 +24,10 @@ public class RoomThread extends Thread {
         this.roomServices.put(roomService.getRoomId(), roomService);
     }
 
+    public void removeRoomService(String roomId) {
+        this.roomServices.remove(roomId);
+    }
+
     @Override
     public void run() {
         System.out.println("房间线程启动: " + getName());
@@ -40,7 +44,7 @@ public class RoomThread extends Thread {
                 // 处理房间消息队列
                 for (RoomService roomService : roomServices.values()) {
                     roomService.processMessageQueue();
-                    roomService.runFrame();
+                    roomService.pulse();
                 }
 
                 // 精确控制帧率，保证稳定的20帧
