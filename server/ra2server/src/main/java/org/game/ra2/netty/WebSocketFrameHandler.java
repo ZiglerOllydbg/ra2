@@ -1,7 +1,7 @@
 package org.game.ra2.netty;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.game.ra2.util.ObjectMapperProvider;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -13,7 +13,6 @@ import org.game.ra2.service.WebSocketSessionManager;
 
 public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final MatchService matchService;
 
     public WebSocketFrameHandler(MatchService matchService) {
@@ -68,7 +67,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
 //        System.out.println("收到消息: " + request);
         
         try {
-            JsonNode jsonNode = objectMapper.readTree(request);
+            JsonNode jsonNode = ObjectMapperProvider.getInstance().readTree(request);
             String type = jsonNode.get("type").asText();
 
             if (type.equals("match")) {// 添加到匹配队列

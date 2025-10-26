@@ -2,8 +2,7 @@ package org.game.ra2.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.game.ra2.util.ObjectMapperProvider;
 // 移除了对org.game.ra2.entity.Player的导入
 
 import java.util.ArrayList;
@@ -16,6 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 匹配服务类
  */
 public class MatchService {
+
+    private boolean matching;
+
     // 添加PlayerInfo内部类
     public static class PlayerInfo {
         private String channelId;
@@ -38,7 +40,6 @@ public class MatchService {
     private static MatchService instance = new MatchService();
     private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private final List<PlayerInfo> waitingPlayers = new ArrayList<>(); // 改为使用内部PlayerInfo类
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private MatchService() {
         // 启动匹配处理线程
@@ -124,6 +125,19 @@ public class MatchService {
         // 将消息数据转换为Player并保存到等待玩家列表中
         JsonNode data = message.getData();
         String name = data.has("name") ? data.get("name").asText() : "Unknown";
+
+        // 检查channelId是否已经在匹配中
+        if (isMatching(message.getChannelId())) {
+            System.out.println("玩家已存在匹配中: " + message.getChannelId());
+            return;
+        }
+
+        // 检查channelId已经在房间中
+        if (WebSocketSessionManager.getInstance().isChannelInRoom(message.getChannelId())) {
+            System.out.println("玩家已加入房间: " + message.getChannelId());
+            return;
+        }
+
         PlayerInfo player = new PlayerInfo(message.getChannelId(), name); // 创建内部PlayerInfo对象
         waitingPlayers.add(player);
         System.out.println("添加玩家到等待列表: " + message.getChannelId());
@@ -131,13 +145,17 @@ public class MatchService {
         try {
             Map<String, String> response = new HashMap<>();
             response.put("type", "matched");
-            String jsonResponse = objectMapper.writeValueAsString(response);
+            String jsonResponse = ObjectMapperProvider.getInstance().writeValueAsString(response);
 
             WebSocketSessionManager.getInstance().sendMessage(message.getChannelId(), jsonResponse);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private boolean isMatching(String channelId) {
+        return waitingPlayers.stream().anyMatch(player -> player.getChannelId().equals(channelId));
     }
 
     /**

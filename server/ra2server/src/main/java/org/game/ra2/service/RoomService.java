@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.game.ra2.util.ObjectMapperProvider;
 import org.game.ra2.entity.Camp;
 import org.game.ra2.entity.Player;
 import org.game.ra2.thread.Room;
@@ -18,7 +19,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class RoomService {
     private final RoomThread roomThread;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
 
     private final String roomId;

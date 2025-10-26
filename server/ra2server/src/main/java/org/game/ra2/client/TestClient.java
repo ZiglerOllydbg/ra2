@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.game.ra2.util.ObjectMapperProvider;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -12,7 +13,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class TestClient extends WebSocketClient {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     private final String clientId;
     private boolean matched = false;
     private boolean gameStarted = false;

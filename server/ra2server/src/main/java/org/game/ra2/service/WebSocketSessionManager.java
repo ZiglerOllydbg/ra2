@@ -73,7 +73,14 @@ public class WebSocketSessionManager {
     public String getRoomIdByChannel(String channelId) {
         return channelRoomMap.get(channelId);
     }
-    
+
+    /**
+     * channel存在房间
+     */
+    public boolean isChannelInRoom(String channelId) {
+        return channelRoomMap.containsKey(channelId);
+    }
+
     /**
      * 移除频道与房间的映射关系
      * @param channelId 频道ID

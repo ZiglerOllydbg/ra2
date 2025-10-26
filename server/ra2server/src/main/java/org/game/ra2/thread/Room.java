@@ -2,6 +2,7 @@ package org.game.ra2.thread;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.game.ra2.util.ObjectMapperProvider;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.game.ra2.entity.Player; // 使用独立的Player类
@@ -20,7 +21,7 @@ public class Room {
     private final Map<Integer, Map<String, JsonNode>> frameInputs = new ConcurrentHashMap<>();
     private int currentFrame = 0;
     private boolean gameStarted = false;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     
     // 添加房间销毁相关字段
     private long emptySince = -1; // 房间变空的时间点
@@ -55,9 +56,13 @@ public class Room {
 
     /**
      * 标记玩家准备就绪
-     * @param channelId
      */
     public void markPlayerReady(String channelId) {
+        if (readyPlayers.contains(channelId)) {
+            System.err.println("玩家 " + channelId + " 已准备就绪");
+            return;
+        }
+
         System.out.println("玩家 " + channelId + " 准备就绪");
         readyPlayers.add(channelId);
         
