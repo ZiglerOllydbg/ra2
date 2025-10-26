@@ -188,10 +188,10 @@ public class Room {
             for (Player player : players) {
                 if (player.isChannelValid()) {
                     WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
-                } else {
-//                    System.out.println("玩家 " + player + " 已断线");
                 }
             }
+
+            System.out.println("房间 " + id + " 广播帧 " + frame + " 在线人数(" + getOnlinePlayerCount() + ") 数据：" + response);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -199,6 +199,19 @@ public class Room {
 
     public List<Player> getPlayers() {
         return new ArrayList<>(players);
+    }
+
+    /**
+     * 在线人数
+     */
+    public int getOnlinePlayerCount() {
+        int count = 0;
+        for (Player player : players) {
+            if (player.isChannelValid()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public int getPlayerCount() {

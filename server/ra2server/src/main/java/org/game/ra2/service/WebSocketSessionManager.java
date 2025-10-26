@@ -45,9 +45,7 @@ public class WebSocketSessionManager {
         if (channel != null && channel.isActive()) {
             channel.eventLoop().execute(() -> {
                 channel.writeAndFlush(new TextWebSocketFrame(message)).addListener((ChannelFutureListener) future -> {
-                    if (future.isSuccess()) {
-                        System.out.println("消息发送成功 - 频道ID: " + channelId + ", 消息: " + message);
-                    } else {
+                    if (!future.isSuccess()) {
                         System.err.println("消息发送失败 - 频道ID: " + channelId + ", 消息: " + message);
                         future.cause().printStackTrace();
                     }

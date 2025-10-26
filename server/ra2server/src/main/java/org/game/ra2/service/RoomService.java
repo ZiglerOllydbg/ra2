@@ -108,6 +108,8 @@ public class RoomService {
             response.put("roomId", roomId);
             // 设置玩家campID
             response.put("yourCampId", sendPlayer.getCampId().toString());
+            // 设置token
+            response.put("yourToken", sendPlayer.getToken());
             
             ArrayNode dataArray = objectMapper.createArrayNode();
             for (Player player : room.getPlayers()) {
