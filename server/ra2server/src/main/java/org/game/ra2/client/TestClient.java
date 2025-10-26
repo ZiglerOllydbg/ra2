@@ -85,8 +85,14 @@ public class TestClient extends WebSocketClient {
 
     private void handleMatchSuccess(JsonNode message) {
         matched = true;
-        System.out.println("[" + clientId + "] 匹配成功: " + message.toString());
-        
+        System.out.println("[" + clientId + "] 匹配成功.message:" +  message);
+        // 打印房间ID和你的campId和token
+        String roomId = message.get("roomId").asText();
+        int campId = message.get("yourCampId").asInt();
+        String token = message.get("yourToken").asText();
+        JsonNode data = message.get("data");
+        System.out.println("[" + clientId + "] 房间ID: " + roomId + ", CampID: " + campId + ", Token: " + token);
+
         // 发送准备就绪消息
         try {
             ObjectNode request = objectMapper.createObjectNode();

@@ -1,6 +1,8 @@
 package org.game.ra2.entity;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * 玩家实体类
@@ -9,7 +11,7 @@ public class Player {
     /**
      * 阵营ID
      */
-    private final CampID campId;
+    private final Camp camp;
     /**
      * 频道ID
      */
@@ -27,15 +29,15 @@ public class Player {
      */
     private String token;
 
-    public Player(CampID campId) {
-        this.campId = campId;
+    public Player(Camp camp) {
+        this.camp = camp;
         this.channelValid = true;
-        // 随机token
-        this.token = String.valueOf(System.currentTimeMillis());
+        // 随机token：事件戳+随机数
+        this.token = String.valueOf(RandomUtils.nextLong(100000000L, 999999999L));
     }
 
-    public CampID getCampId() {
-        return campId;
+    public Camp getCamp() {
+        return camp;
     }
 
     public String getChannelId() {
@@ -69,7 +71,7 @@ public class Player {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("campId", campId)
+                .append("campId", camp)
                 .append("channelId", channelId)
                 .append("name", name)
                 .toString();

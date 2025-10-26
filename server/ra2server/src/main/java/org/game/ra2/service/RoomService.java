@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.game.ra2.entity.CampID;
+import org.game.ra2.entity.Camp;
 import org.game.ra2.entity.Player;
 import org.game.ra2.thread.Room;
 import org.game.ra2.thread.RoomThread;
@@ -74,12 +74,12 @@ public class RoomService {
         // 创建房间
         room = new Room(roomId);
 
-        Player redPlayer = new Player(CampID.Red);
+        Player redPlayer = new Player(Camp.Red);
         redPlayer.setChannelId(player1.getChannelId());
         redPlayer.setName(player1.getName());
         room.addPlayer(redPlayer);
 
-        Player bluePlayer = new Player(CampID.Blue);
+        Player bluePlayer = new Player(Camp.Blue);
         bluePlayer.setChannelId(player2.getChannelId());
         bluePlayer.setName(player2.getName());
         room.addPlayer(bluePlayer);
@@ -107,14 +107,14 @@ public class RoomService {
             // 设置房间ID
             response.put("roomId", roomId);
             // 设置玩家campID
-            response.put("yourCampId", sendPlayer.getCampId().toString());
+            response.put("yourCampId", sendPlayer.getCamp().getId());
             // 设置token
             response.put("yourToken", sendPlayer.getToken());
             
             ArrayNode dataArray = objectMapper.createArrayNode();
             for (Player player : room.getPlayers()) {
                 ObjectNode playerNode = objectMapper.createObjectNode();
-                playerNode.put("campId", player.getCampId().toString());
+                playerNode.put("campId", player.getCamp().getId());
                 playerNode.put("name", player.getName());
                 dataArray.add(playerNode);
             }

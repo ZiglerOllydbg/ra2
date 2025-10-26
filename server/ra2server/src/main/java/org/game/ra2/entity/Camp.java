@@ -1,21 +1,21 @@
 package org.game.ra2.entity;
 
-public enum CampID {
+public enum Camp {
     Red(1),
     Blue(2);
 
     private final int id;
-    CampID(int id) {
+    Camp(int id) {
         this.id = id;
     }
     public int getId() {
         return id;
     }
 
-    public static CampID fromId(int id) {
-        for (CampID campID : values()) {
-            if (campID.id == id) {
-                return campID;
+    public static Camp fromId(int id) {
+        for (Camp camp : values()) {
+            if (camp.id == id) {
+                return camp;
             }
         }
         return null;
