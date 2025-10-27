@@ -20,6 +20,11 @@ on:
         description: '触发构建的原因'
         required: true
         type: string
+      deploy_only:
+        description: '是否仅执行部署（跳过构建）'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   # =======================================================
@@ -27,6 +32,8 @@ jobs:
   # =======================================================
   build:
     runs-on: ubuntu-latest
+    # 如果选择了仅部署，则跳过构建任务
+    if: ${{ ! (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true') }}
     
     steps:
     # 步骤 1.1: 检出代码
@@ -75,8 +82,9 @@ jobs:
   # 任务 2: 部署应用到服务器
   # =======================================================
   deploy:
-    # 依赖 'build' 任务，确保构建成功后才开始部署
+    # 如果是手动触发且选择了仅部署，则不需要依赖构建任务
     needs: build
+    if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true') }}
     runs-on: ubuntu-latest
 
     # **重要**: 仅在代码被推送到主分支时才执行此任务，避免在Pull Request时部署
@@ -84,10 +92,35 @@ jobs:
 
     steps:
       # 步骤 2.1: 下载由 'build' 任务创建的部署包
+      # 如果是仅部署模式，则直接使用预构建的包
       - name: Download deployment package
         uses: actions/download-artifact@v4
         with:
           name: server-package # 必须与 build 任务中上传的 name 完全一致
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true') }}
+      
+      # 如果是仅部署模式，直接准备部署包
+      - name: Prepare deployment package for deploy-only mode
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true' }}
+        run: |
+          # 创建一个临时的分发目录 'staging'
+          mkdir -p staging
+          
+          # 将预编译好的 JAR 文件和相关文件拷贝到 staging 目录
+          echo "Copying JAR files and related resources..."
+          cp -r server/jar/* staging/
+          
+          # 列出 staging 目录的内容以供调试
+          echo "Package content:"
+          ls -l staging
+      
+      # 如果是仅部署模式，上传准备好的包
+      - name: Upload deployment package for deploy-only mode
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-package # 构建产物的名称
+          path: staging/       # 上传 staging 目录下的所有内容
 
       # 步骤 2.2: 将整个部署包的内容安全地拷贝到服务器的临时目录
       - name: Copy package to server
