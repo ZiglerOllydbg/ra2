@@ -16,6 +16,8 @@ public class GameStartUp {
             // 启动WebSocket服务器
             WebSocketServer server = new WebSocketServer(8080, matchService);
             server.start();
+
+            System.out.println("服务器启动成功，请访问 http://localhost:8080");
         } catch (Exception e) {
             e.printStackTrace();
         }
