@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# 设置应用程序根目录
+APP_HOME="$(cd "$(dirname "$0")" && pwd)"
+
 echo "Starting ra2 server..."
 echo "Using system Java"
+echo "App home: $APP_HOME"
 
 # 检查Java是否存在
 if ! command -v java &> /dev/null; then
@@ -11,6 +15,7 @@ if ! command -v java &> /dev/null; then
 fi
 
 # 运行Java程序
+cd "$APP_HOME"
 java -Dfile.encoding=UTF-8 -cp "ra2.jar:config/*:libs/*:" org.game.ra2.GameStartUp
 
 # 检查运行结果
