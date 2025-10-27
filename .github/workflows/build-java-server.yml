@@ -21,7 +21,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '11'
-        distribution: 'temurin'
+        distribution: 'corretto'
         
     - name: Grant execute permission for gradlew
       run: chmod +x server/ra2server/gradlew
