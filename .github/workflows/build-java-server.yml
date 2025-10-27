@@ -104,10 +104,6 @@ jobs:
             APP_DIR="/opt/my-ra2"
             TEMP_DIR="/tmp/my-ra2-deployment"
 
-            # 停止当前运行的应用服务
-            echo "Stopping ra2 service..."
-            sudo systemctl stop ra2
-
             # 1. 清空目标应用目录
             echo "Clearing application directory: $APP_DIR"
             # 确保目录存在，如果不存在则创建
@@ -117,18 +113,12 @@ jobs:
             # 2. 将临时目录中的所有新文件拷贝到目标应用目录
             echo "Copying new application files..."
             sudo cp -r $TEMP_DIR/* $APP_DIR/
-            # 赋予应用目录正确的权限 (根据你的设置修改 'your_user')
-            # sudo chown -R your_user:your_user $APP_DIR
+            
+            # 设置正确的权限
+            echo "Setting permissions..."
+            sudo chown -R ra2:ra2 $APP_DIR
+            sudo chmod +x $APP_DIR/ra2.sh
 
             # 3. 清理服务器上的临时部署目录
             echo "Cleaning up temporary directory..."
             sudo rm -rf $TEMP_DIR
-
-            # 4. 启动应用服务
-            echo "Starting ra2 service..."
-            sudo systemctl start ra2
-
-            # 5. (可选但推荐) 检查服务状态以确认部署成功
-            echo "Deployment complete. Checking status..."
-            sleep 5 # 等待几秒钟让服务有时间启动
-            sudo systemctl status ra2
