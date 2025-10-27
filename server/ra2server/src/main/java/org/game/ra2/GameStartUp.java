@@ -18,7 +18,6 @@ public class GameStartUp {
             server.start();
 
             System.out.println("服务器启动成功，请访问 http://localhost:8080");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
