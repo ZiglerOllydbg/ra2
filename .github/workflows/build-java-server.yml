@@ -49,18 +49,9 @@ jobs:
         # 创建一个临时的分发目录 'staging'
         mkdir -p staging
         
-        # 将构建好的 JAR 文件拷贝到 staging 目录，并重命名为一个固定的名字
-        echo "Copying JAR file..."
-        cp server/ra2server/build/libs/*.jar staging/ra2-server.jar
-        
-        # --- 在这里添加你需要一起部署的其他文件 ---
-        # 示例: 拷贝一个配置文件
-        # echo "Copying configuration file..."
-        # cp server/ra2server/config/application.properties staging/
-        
-        # 示例: 拷贝一个启动脚本
-        # echo "Copying run script..."
-        # cp server/ra2server/run.sh staging/
+        # 将预编译好的 JAR 文件和相关文件拷贝到 staging 目录
+        echo "Copying JAR files and related resources..."
+        cp -r server/jar/* staging/
         
         # 列出 staging 目录的内容以供调试
         echo "Package content:"
