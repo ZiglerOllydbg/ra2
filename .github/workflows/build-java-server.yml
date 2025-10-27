@@ -88,7 +88,7 @@ jobs:
     
     # **重要**: 仅在代码被推送到主分支时才执行此任务，避免在Pull Request时部署
     # 但也允许通过手动触发工作流进行部署
-    if: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only != 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_only == 'true') }}
 
     steps:
       # 步骤 2.1: 下载由 'build' 任务创建的部署包
