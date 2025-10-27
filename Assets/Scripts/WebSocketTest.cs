@@ -10,7 +10,7 @@ public class WebSocketTest : MonoBehaviour
     private string matchInfo = "";
     private Vector2 scrollPosition;
     private string logText = "";
-    private string serverUrl = "ws://localhost:8080/ws";
+    private string serverUrl = "ws://101.126.136.178:8080/ws";
     
     private void Start()
     {
