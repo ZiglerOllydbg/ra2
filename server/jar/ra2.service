@@ -6,6 +6,9 @@ After=network.target
 WorkingDirectory=/opt/my-ra2
 # 确保服务器上安装了Java，并可以使用 'java' 命令
 ExecStart=/bin/bash /opt/my-ra2/ra2.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ra2
 SuccessExitStatus=143
 Restart=on-failure      # 如果应用非正常退出，自动重启
 RestartSec=10
