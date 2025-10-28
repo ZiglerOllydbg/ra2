@@ -357,9 +357,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22ea18183815ced4aace40942698b711, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameMode: 0
   logicFrameRate: 20
-  enableSmoothInterpolation: 1
-  interpolationSpeed: 10
+  localPlayerId: 0
   viewRoot: {fileID: 1676976046}
   unitPrefabs:
   - {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
@@ -372,6 +372,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  enableSmoothInterpolation: 1
+  interpolationSpeed: 10
+  catchUpFramesPerUpdate: 10
+  disableRenderingDuringCatchUp: 1
 --- !u!4 &1676976046
 Transform:
   m_ObjectHideFlags: 0
@@ -400,6 +404,7 @@ GameObject:
   - component: {fileID: 1792985139}
   - component: {fileID: 1792985138}
   - component: {fileID: 1792985142}
+  - component: {fileID: 1792985143}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -513,6 +518,28 @@ MonoBehaviour:
   playerId: 0
   unitType: 1
   prefabId: 1
+--- !u!114 &1792985143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792985137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bfd4b176f0ae9444912396402a0ebd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoUpdate: 1
+  autoUpdateInterval: 0.033
+  showGrid: 1
+  showObstacles: 1
+  showUnits: 1
+  showFlowField: 1
+  showTargets: 1
+  unitSize: 0.5
+  flowFieldArrowSize: 0.4
+  flowFieldDisplayInterval: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

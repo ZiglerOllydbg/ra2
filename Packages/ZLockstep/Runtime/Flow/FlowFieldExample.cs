@@ -44,7 +44,7 @@ namespace ZLockstep.Flow
             // 5. 创建导航系统并注册到World
             navSystem = new FlowFieldNavigationSystem();
             world.SystemManager.RegisterSystem(navSystem);
-            navSystem.InitializeNavigation(flowFieldManager, rvoSimulator);
+            navSystem.InitializeNavigation(flowFieldManager, rvoSimulator, mapManager);
         }
 
         /// <summary>
@@ -109,7 +109,8 @@ namespace ZLockstep.Flow
             }
 
             // 设置相同目标（会共享同一个流场）
-            zVector2 targetPos = new zVector2(new zfloat(200), new zfloat(200));
+            // 地图范围：256格*0.5=128单位，所以目标应该在(0,0)到(128,128)范围内
+            zVector2 targetPos = new zVector2(new zfloat(110), new zfloat(110));
             navSystem.SetMultipleTargets(squad, targetPos);
 
             zUDebug.Log($"创建了 {squad.Count} 个单位，目标: {targetPos}");
@@ -123,12 +124,13 @@ namespace ZLockstep.Flow
         {
             zUDebug.Log("=== 示例2：多目标导航 ===");
 
+            // 地图范围：256格*0.5=128单位，所以目标应该在(0,0)到(128,128)范围内
             zVector2[] targets = new zVector2[]
             {
-                new zVector2(new zfloat(200), new zfloat(200)),
-                new zVector2(new zfloat(200), new zfloat(50)),
-                new zVector2(new zfloat(50), new zfloat(200)),
-                new zVector2(new zfloat(100), new zfloat(100))
+                new zVector2(new zfloat(110), new zfloat(110)),
+                new zVector2(new zfloat(110), new zfloat(30)),
+                new zVector2(new zfloat(30), new zfloat(110)),
+                new zVector2(new zfloat(70), new zfloat(70))
             };
 
             // 创建20个单位，分成4组
@@ -166,7 +168,8 @@ namespace ZLockstep.Flow
                 new zfloat(0, 3000),
                 new zfloat(2)
             );
-            navSystem.SetMoveTarget(unit, new zVector2(new zfloat(180), new zfloat(180)));
+            // 地图范围：256格*0.5=128单位
+            navSystem.SetMoveTarget(unit, new zVector2(new zfloat(100), new zfloat(100)));
 
             zUDebug.Log("单位开始移动...");
 

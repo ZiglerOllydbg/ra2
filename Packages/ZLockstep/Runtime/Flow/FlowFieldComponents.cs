@@ -49,6 +49,16 @@ namespace ZLockstep.Flow
         /// </summary>
         public zfloat Radius;
 
+        /// <summary>
+        /// 卡住检测：上次位置
+        /// </summary>
+        public zVector2 LastPosition;
+
+        /// <summary>
+        /// 卡住检测：停滞时间
+        /// </summary>
+        public int StuckFrames;
+
         public static FlowFieldNavigatorComponent Create(zfloat radius, zfloat maxSpeed)
         {
             return new FlowFieldNavigatorComponent
@@ -60,7 +70,9 @@ namespace ZLockstep.Flow
                 SlowDownRadius = new zfloat(2),
                 HasReachedTarget = false,
                 IsEnabled = true,
-                Radius = radius
+                Radius = radius,
+                LastPosition = zVector2.zero,
+                StuckFrames = 0
             };
         }
     }

@@ -164,7 +164,10 @@ namespace ZLockstep.Flow
             // 2. 使用Dijkstra计算代价场
             CalculateCostField(field, map, targetX, targetY);
 
-            // 3. 根据代价场生成方向场
+            // 3. 添加墙壁惩罚（让单位远离障碍物）
+            AddWallPenalty(field, map);
+
+            // 4. 根据代价场生成方向场（使用加权平均，更平滑）
             GenerateDirectionField(field, map);
 
             field.isDirty = false;
@@ -229,6 +232,55 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
+        /// 添加墙壁惩罚到代价场
+        /// 靠近障碍物的格子增加额外代价，让单位自然远离墙壁
+        /// </summary>
+        private static void AddWallPenalty(FlowField field, IFlowFieldMap map)
+        {
+            zfloat wallPenalty = new zfloat(0, 5000); // 每个邻近障碍物增加0.5代价
+
+            for (int y = 0; y < field.height; y++)
+            {
+                for (int x = 0; x < field.width; x++)
+                {
+                    if (!map.IsWalkable(x, y))
+                        continue;
+
+                    int index = field.GetIndex(x, y);
+                    
+                    // 如果已经是无限代价（不可达），跳过
+                    if (field.costs[index] == zfloat.Infinity)
+                        continue;
+
+                    // 检查8个邻居，计算障碍物数量
+                    int obstacleCount = 0;
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            if (dx == 0 && dy == 0)
+                                continue;
+
+                            int nx = x + dx;
+                            int ny = y + dy;
+
+                            if (!field.IsValid(nx, ny) || !map.IsWalkable(nx, ny))
+                            {
+                                obstacleCount++;
+                            }
+                        }
+                    }
+
+                    // 添加惩罚：障碍物越多，惩罚越高
+                    if (obstacleCount > 0)
+                    {
+                        field.costs[index] += wallPenalty * (zfloat)obstacleCount;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 根据代价场生成方向场
         /// </summary>
         private static void GenerateDirectionField(FlowField field, IFlowFieldMap map)
@@ -253,10 +305,10 @@ namespace ZLockstep.Flow
                         continue;
                     }
 
-                    // 找到代价最小的邻居
-                    zfloat minCost = field.costs[index];
-                    int bestDx = 0;
-                    int bestDy = 0;
+                    // ===== 改进：加权平均方向，而不是单纯选最小 =====
+                    zfloat currentCost = field.costs[index];
+                    zVector2 avgDirection = zVector2.zero;
+                    zfloat totalWeight = zfloat.Zero;
 
                     for (int i = 0; i < 8; i++)
                     {
@@ -267,22 +319,29 @@ namespace ZLockstep.Flow
                             continue;
 
                         int neighborIndex = field.GetIndex(nx, ny);
-                        if (field.costs[neighborIndex] < minCost)
+                        zfloat neighborCost = field.costs[neighborIndex];
+                        
+                        // 只考虑代价更低的邻居
+                        if (neighborCost < currentCost)
                         {
-                            minCost = field.costs[neighborIndex];
-                            bestDx = DX[i];
-                            bestDy = DY[i];
+                            // 代价差越大，权重越高
+                            zfloat costDiff = currentCost - neighborCost;
+                            zfloat weight = costDiff * costDiff; // 平方强调差异
+                            
+                            zVector2 dirToNeighbor = new zVector2((zfloat)DX[i], (zfloat)DY[i]);
+                            avgDirection += dirToNeighbor * weight;
+                            totalWeight += weight;
                         }
                     }
 
                     // 设置方向（归一化）
-                    if (bestDx != 0 || bestDy != 0)
+                    if (totalWeight > zfloat.Epsilon)
                     {
-                        zVector2 dir = new zVector2((zfloat)bestDx, (zfloat)bestDy);
-                        field.directions[index] = dir.normalized;
+                        field.directions[index] = (avgDirection / totalWeight).normalized;
                     }
                     else
                     {
+                        // 没有更低代价的邻居（局部最小值或目标点）
                         field.directions[index] = zVector2.zero;
                     }
                 }
