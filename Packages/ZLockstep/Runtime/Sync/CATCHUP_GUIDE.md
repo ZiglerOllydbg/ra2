@@ -26,6 +26,48 @@
   10 个 FixedUpdate 后追上
 ```
 
+## 核心机制
+
+### 禁用渲染 + 追帧后重新同步
+
+追帧期间的性能优化策略：
+
+```
+追帧期间（Frame 100-200）：
+  1. PresentationSystem.Enabled = false （停止创建GameObject）
+  2. 快速执行 100 帧逻辑
+  3. 逻辑层正常推进（Entity创建、移动等）
+  4. 表现层完全停止
+
+追帧完成后：
+  1. PresentationSystem.Enabled = true （重新启用）
+  2. 调用 ResyncAllEntities()：
+     a) 遍历所有逻辑实体
+     b) 为缺失ViewComponent的实体创建GameObject
+     c) 强制同步已有ViewComponent的位置
+  3. 恢复正常渲染
+```
+
+**关键代码**：
+
+```csharp
+// GameWorldBridge.OnCatchUpComplete()
+private void OnCatchUpComplete()
+{
+    if (_presentationSystem != null)
+    {
+        // 1. 重新启用表现系统
+        _presentationSystem.Enabled = true;
+
+        // 2. 恢复插值设置
+        _presentationSystem.EnableSmoothInterpolation = enableSmoothInterpolation;
+
+        // 3. 重新同步所有实体的视图（最重要！）
+        _presentationSystem.ResyncAllEntities();
+    }
+}
+```
+
 ## 使用方法
 
 ### 1. 配置 GameWorldBridge
@@ -246,11 +288,15 @@ else
 ```csharp
 [SerializeField] private bool disableRenderingDuringCatchUp = true;
 
-// 追帧时自动禁用 PresentationSystem
+// 追帧时自动禁用整个表现系统（不创建GameObject，不同步位置）
 if (disableRenderingDuringCatchUp)
 {
-    _presentationSystem.EnableSmoothInterpolation = false;
+    _presentationSystem.Enabled = false;
 }
+
+// 追帧完成后重新启用并同步
+_presentationSystem.Enabled = true;
+_presentationSystem.ResyncAllEntities(); // 重新创建所有缺失的视图
 ```
 
 ### 3. 进度显示
@@ -402,6 +448,29 @@ disableRenderingDuringCatchUp = true;
 // 追帧完成后校验
 int clientHash = CalculateStateHash();
 RequestServerHash(currentFrame, clientHash);
+```
+
+### 问题：追帧后GameObject缺失或位置错误
+
+**原因**：追帧期间禁用了渲染，没有创建GameObject
+
+**解决**：`ResyncAllEntities()` 会自动处理
+
+```csharp
+// GameWorldBridge.OnCatchUpComplete() 中会自动调用
+_presentationSystem.ResyncAllEntities();
+
+// 此方法会：
+// 1. 遍历所有逻辑实体
+// 2. 为缺失ViewComponent的实体创建GameObject
+// 3. 强制同步已有ViewComponent的位置
+```
+
+**手动触发重新同步**（通常不需要）：
+
+```csharp
+// 如果需要手动重新同步
+worldBridge.Game.World.GetSystem<PresentationSystem>().ResyncAllEntities();
 ```
 
 ---

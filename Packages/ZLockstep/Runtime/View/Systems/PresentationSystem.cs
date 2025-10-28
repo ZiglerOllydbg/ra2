@@ -31,6 +31,11 @@ namespace ZLockstep.View.Systems
         public bool EnableSmoothInterpolation { get; set; } = false;
 
         /// <summary>
+        /// 是否启用表现系统（追帧时可以禁用以提升性能）
+        /// </summary>
+        public bool Enabled { get; set; } = true;
+
+        /// <summary>
         /// 初始化系统（由GameWorldBridge调用）
         /// </summary>
         public void Initialize(Transform viewRoot, Dictionary<int, GameObject> prefabs)
@@ -46,6 +51,12 @@ namespace ZLockstep.View.Systems
 
         public override void Update()
         {
+            // 追帧时跳过（提升性能）
+            if (!Enabled)
+            {
+                return;
+            }
+
             // 1. 处理事件（创建新的View）
             ProcessCreationEvents();
 
@@ -110,6 +121,86 @@ namespace ZLockstep.View.Systems
 
                 SyncEntityToView(entity);
             }
+        }
+
+        /// <summary>
+        /// 重新同步所有实体（追帧完成后调用）
+        /// 用于处理追帧期间禁用渲染导致的视图缺失
+        /// </summary>
+        public void ResyncAllEntities()
+        {
+            if (_viewRoot == null || _unitPrefabs == null)
+            {
+                Debug.LogWarning("[PresentationSystem] ResyncAllEntities: 未初始化");
+                return;
+            }
+
+            int createdCount = 0;
+            int syncedCount = 0;
+
+            // 获取所有逻辑实体
+            var allEntities = ComponentManager.GetAllEntityIdsWith<TransformComponent>();
+
+            foreach (var entityId in allEntities)
+            {
+                var entity = new Entity(entityId);
+
+                // 检查是否已有 ViewComponent
+                if (ComponentManager.HasComponent<ViewComponent>(entity))
+                {
+                    // 已有视图，强制同步位置
+                    var view = ComponentManager.GetComponent<ViewComponent>(entity);
+                    var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+
+                    if (view.Transform != null)
+                    {
+                        view.Transform.position = transform.Position.ToVector3();
+                        view.Transform.rotation = transform.Rotation.ToQuaternion();
+                        view.Transform.localScale = transform.Scale.ToVector3();
+                        syncedCount++;
+                    }
+                }
+                else
+                {
+                    // 没有视图，需要创建
+                    if (ComponentManager.HasComponent<UnitComponent>(entity))
+                    {
+                        CreateViewForMissingEntity(entity);
+                        createdCount++;
+                    }
+                }
+            }
+
+            Debug.Log($"[PresentationSystem] ResyncAllEntities 完成: 新建={createdCount}, 同步={syncedCount}");
+        }
+
+        /// <summary>
+        /// 为缺失视图的实体创建 GameObject
+        /// </summary>
+        private void CreateViewForMissingEntity(Entity entity)
+        {
+            var unit = ComponentManager.GetComponent<UnitComponent>(entity);
+            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+
+            // 获取预制体
+            if (!_unitPrefabs.TryGetValue(unit.UnitType, out var prefab))
+            {
+                Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={unit.UnitType}");
+                return;
+            }
+
+            // 实例化GameObject
+            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
+            viewObject.name = $"Unit_{entity.Id}_Type{unit.UnitType}_P{unit.PlayerId}_Resynced";
+            viewObject.transform.position = transform.Position.ToVector3();
+            viewObject.transform.rotation = transform.Rotation.ToQuaternion();
+            viewObject.transform.localScale = transform.Scale.ToVector3();
+
+            // 创建并添加ViewComponent
+            var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
+            ComponentManager.AddComponent(entity, viewComponent);
+
+            Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
         }
 
         /// <summary>
@@ -191,7 +282,7 @@ namespace ZLockstep.View.Systems
         /// </summary>
         public void LerpUpdate(float deltaTime, float interpolationSpeed = 10f)
         {
-            if (!EnableSmoothInterpolation)
+            if (!Enabled || !EnableSmoothInterpolation)
                 return;
 
             var viewEntities = ComponentManager.GetAllEntityIdsWith<ViewComponent>();

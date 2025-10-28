@@ -78,6 +78,9 @@ namespace ZLockstep.View
         // Unity特定：表现系统
         private PresentationSystem _presentationSystem;
 
+        // 追帧状态追踪
+        private bool _wasInCatchUp = false;
+
         /// <summary>
         /// 暴露Game供外部访问（如Test.cs）
         /// </summary>
@@ -117,10 +120,20 @@ namespace ZLockstep.View
 
         private void Update()
         {
-            // 追帧时跳过插值更新（避免卡顿）
-            if (_game != null && _game.IsCatchingUp)
+            if (_game != null)
             {
-                return;
+                // 检测追帧完成
+                if (_wasInCatchUp && !_game.IsCatchingUp)
+                {
+                    OnCatchUpComplete();
+                }
+                _wasInCatchUp = _game.IsCatchingUp;
+
+                // 追帧时跳过插值更新（避免卡顿）
+                if (_game.IsCatchingUp)
+                {
+                    return;
+                }
             }
 
             // Unity特定：插值更新（让移动更平滑）
@@ -135,10 +148,10 @@ namespace ZLockstep.View
         /// </summary>
         private void UpdateCatchUpMode()
         {
-            // 禁用渲染（可选）
+            // 禁用渲染（可选，提升性能）
             if (disableRenderingDuringCatchUp && _presentationSystem != null)
             {
-                _presentationSystem.EnableSmoothInterpolation = false;
+                _presentationSystem.Enabled = false;
             }
 
             // 快速执行多帧
@@ -159,17 +172,28 @@ namespace ZLockstep.View
             {
                 Debug.Log($"[GameWorldBridge] 追帧中，本次执行 {executedFrames} 帧，进度: {_game.GetCatchUpProgress():P0}");
             }
+        }
 
-            // 追帧完成后恢复渲染
-            if (!_game.IsCatchingUp)
+        /// <summary>
+        /// 追帧完成回调
+        /// </summary>
+        private void OnCatchUpComplete()
+        {
+            Debug.Log("[GameWorldBridge] 追帧完成，开始重新同步所有视图...");
+
+            if (_presentationSystem != null)
             {
-                if (_presentationSystem != null)
-                {
-                    _presentationSystem.EnableSmoothInterpolation = enableSmoothInterpolation;
-                }
-                
-                Debug.Log("[GameWorldBridge] 追帧完成，恢复正常模式");
+                // 1. 重新启用表现系统
+                _presentationSystem.Enabled = true;
+
+                // 2. 恢复插值设置
+                _presentationSystem.EnableSmoothInterpolation = enableSmoothInterpolation;
+
+                // 3. 重新同步所有实体的视图（最重要！）
+                _presentationSystem.ResyncAllEntities();
             }
+
+            Debug.Log($"[GameWorldBridge] 追帧完成，当前帧: {_game.World.Tick}，视图已重新同步");
         }
 
         private void OnDestroy()
