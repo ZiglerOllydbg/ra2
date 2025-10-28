@@ -1,5 +1,26 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
+/// <summary>
+/// 定点数结构体，用于替代浮点数进行精确计算
+/// 该结构体通过将数值放大10000倍后以整数形式存储，从而避免浮点数精度问题
+/// 特别适用于需要跨平台确定性行为的场景，如游戏锁步同步系统
+/// 
+/// 核心原理:
+/// - 使用 long 类型的 value 字段存储放大 10000 倍后的值
+/// - 保证小数点后 4 位精度（0.0001）
+/// 
+/// 主要特性:
+/// - 预定义常量: One, Zero, Two, Half, Quarter 等常用数值
+/// - 多种构造方式: 支持整数、小数部分分别传入等方式创建
+/// - 完整运算符重载: 支持加减乘除、求余、比较等所有常用运算
+/// - 类型转换: 支持与 int、long、float 等类型的相互转换
+/// - 解析功能: 支持字符串解析为 zfloat 类型
+/// 
+/// 使用示例:
+/// zfloat a = new zfloat(3);       // 3.0
+/// zfloat b = new zfloat(1, 5000); // 1.5
+/// zfloat c = a + b;               // 4.5
+/// </summary>
 [System.Serializable]
 [System.Runtime.InteropServices.StructLayout(LayoutKind.Sequential)]
 [System.Runtime.InteropServices.ComVisible(true)]
