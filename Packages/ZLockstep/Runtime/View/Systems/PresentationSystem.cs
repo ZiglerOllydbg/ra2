@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
+using ZLockstep.Sync;
 
 namespace ZLockstep.View.Systems
 {
@@ -34,6 +35,9 @@ namespace ZLockstep.View.Systems
         /// 是否启用表现系统（追帧时可以禁用以提升性能）
         /// </summary>
         public bool Enabled { get; set; } = true;
+        
+        // 添加对Game对象的引用
+        private Game _game;
 
         /// <summary>
         /// 初始化系统（由GameWorldBridge调用）
@@ -42,6 +46,14 @@ namespace ZLockstep.View.Systems
         {
             _viewRoot = viewRoot;
             _unitPrefabs = prefabs;
+        }
+        
+        /// <summary>
+        /// 设置Game对象引用（由GameWorldBridge调用）
+        /// </summary>
+        public void SetGame(Game game)
+        {
+            _game = game;
         }
 
         protected override void OnInitialize()
@@ -100,6 +112,12 @@ namespace ZLockstep.View.Systems
             var entity = new Entity(evt.EntityId);
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
             ComponentManager.AddComponent(entity, viewComponent);
+
+            // 添加玩家单位指示器组件
+            var indicator = viewObject.AddComponent<PlayerUnitIndicator>();
+            // 修复：通过Game对象获取本地玩家ID
+            int localPlayerId = _game != null ? _game.GetLocalPlayerId() : 0;
+            indicator.Initialize(localPlayerId, evt.PlayerId);
 
             Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}");
         }

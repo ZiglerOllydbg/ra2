@@ -277,6 +277,8 @@ namespace ZLockstep.View
             
             // 初始化表现系统并注册到Game
             _presentationSystem.Initialize(viewRoot, prefabDict);
+            // 设置Game引用以便访问本地玩家ID
+            _presentationSystem.SetGame(_game);
             _game.World.SystemManager.RegisterSystem(_presentationSystem);
 
             Debug.Log($"[GameWorldBridge] Unity视图初始化完成，预制体数量: {prefabDict.Count}");
