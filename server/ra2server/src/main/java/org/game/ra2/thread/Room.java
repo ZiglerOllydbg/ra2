@@ -110,8 +110,13 @@ public class Room {
     public void addFrameInput(String channelId, JsonNode data) {
         try {
             int frame = data.get("frame").asInt();
-            JsonNode inputs = data.get("data");
 
+            if (frame < currentFrame) {
+                System.err.println("收到过期的帧输入：" + frame);
+                return;
+            }
+
+            JsonNode inputs = data.get("data");
 
             Map<String, JsonNode> frameData = frameInputs.computeIfAbsent(frame, k -> new HashMap<>());
 
