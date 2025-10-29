@@ -84,6 +84,11 @@ namespace ZLockstep.Sync
         /// 是否正在追帧（断线重连后快速追赶）
         /// </summary>
         public bool IsCatchingUp { get; private set; }
+        
+        /// <summary>
+        /// 是否暂停游戏
+        /// </summary>
+        public bool IsPaused { get; private set; }
 
         private readonly int _frameRate;
         private readonly int _localPlayerId;
@@ -150,6 +155,12 @@ namespace ZLockstep.Sync
         /// <returns>是否执行了逻辑更新（网络模式可能返回false表示等待中）</returns>
         public bool Update()
         {
+            // 暂停状态下不执行逻辑更新（追帧模式除外）
+            if (IsPaused && !IsCatchingUp)
+            {
+                return false;
+            }
+
             // 追帧模式：优先处理
             if (IsCatchingUp)
             {
@@ -345,6 +356,24 @@ namespace ZLockstep.Sync
         {
             World?.Shutdown();
             UnityEngine.Debug.Log("[Game] 已关闭");
+        }
+        
+        /// <summary>
+        /// 暂停游戏
+        /// </summary>
+        public void Pause()
+        {
+            IsPaused = true;
+            UnityEngine.Debug.Log("[Game] 游戏已暂停");
+        }
+        
+        /// <summary>
+        /// 恢复游戏
+        /// </summary>
+        public void Resume()
+        {
+            IsPaused = false;
+            UnityEngine.Debug.Log("[Game] 游戏已恢复");
         }
     }
 }

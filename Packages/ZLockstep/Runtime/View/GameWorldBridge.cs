@@ -91,6 +91,39 @@ namespace ZLockstep.View
         /// </summary>
         public Simulation.zWorld LogicWorld => _game?.World;
 
+        /// <summary>
+        /// 暂停游戏
+        /// </summary>
+        public void PauseGame()
+        {
+            _game?.Pause();
+        }
+
+        /// <summary>
+        /// 恢复游戏
+        /// </summary>
+        public void ResumeGame()
+        {
+            _game?.Resume();
+        }
+
+        /// <summary>
+        /// 切换游戏暂停/恢复状态
+        /// </summary>
+        public void TogglePause()
+        {
+            if (_game != null)
+            {
+                if (_game.IsPaused)
+                {
+                    _game.Resume();
+                }
+                else
+                {
+                    _game.Pause();
+                }
+            }
+        }
         // ═══════════════════════════════════════════════════════════
         // Unity生命周期
         // ═══════════════════════════════════════════════════════════
@@ -130,7 +163,8 @@ namespace ZLockstep.View
                 _wasInCatchUp = _game.IsCatchingUp;
 
                 // 追帧时跳过插值更新（避免卡顿）
-                if (_game.IsCatchingUp)
+                // 暂停时也跳过插值更新
+                if (_game.IsCatchingUp || _game.IsPaused)
                 {
                     return;
                 }
