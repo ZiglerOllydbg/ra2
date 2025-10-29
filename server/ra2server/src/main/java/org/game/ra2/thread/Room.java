@@ -110,7 +110,7 @@ public class Room {
     public void addFrameInput(String channelId, JsonNode data) {
         try {
             int frame = data.get("frame").asInt();
-            JsonNode inputs = data.get("inputs");
+            JsonNode inputs = data.get("data");
 
 
             Map<String, JsonNode> frameData = frameInputs.computeIfAbsent(frame, k -> new HashMap<>());
@@ -185,6 +185,7 @@ public class Room {
     
     private void broadcastFrameSync(int frame, Map<String, JsonNode> frameData) {
         try {
+            boolean empty = true;
             ObjectNode response = objectMapper.createObjectNode();
             response.put("type", "frameSync");
             response.put("frame", frame);
@@ -192,6 +193,9 @@ public class Room {
             ArrayNode dataArray = objectMapper.createArrayNode();
             for (JsonNode input : frameData.values()) {
                 dataArray.add(input);
+                if (!input.get("inputs").isEmpty()) {
+                    empty = false;
+                }
             }
             
             response.set("data", dataArray);
@@ -205,7 +209,9 @@ public class Room {
                 }
             }
 
-            System.out.println("房间 " + id + " 广播帧 " + frame + " 在线人数(" + getOnlinePlayerCount() + ") 数据：" + response);
+            if (!empty) {
+                System.out.println("房间 " + id + " 广播帧 " + frame + " 在线人数(" + getOnlinePlayerCount() + ") 数据：" + response);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

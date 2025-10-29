@@ -116,7 +116,7 @@ public class TestClient extends WebSocketClient {
         System.out.println("[" + clientId + "] 收到帧同步数据 - 帧号: " + frame + ", 数据: " + message.toString());
         
         // 模拟发送下一帧的输入数据
-        sendFrameInput(frame + 2);
+//        sendFrameInput(frame + 2);
     }
 
     private void sendFrameInput(int frame) {
