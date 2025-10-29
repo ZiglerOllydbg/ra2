@@ -64,6 +64,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
                             if (command != null)
                             {
                                 commandList.Add(command);
+                                zUDebug.Log($"[Ra2Demo] 接收到的操作命令: {command}");
                             }
 
                             print = true;

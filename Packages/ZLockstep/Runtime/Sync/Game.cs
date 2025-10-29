@@ -91,7 +91,7 @@ namespace ZLockstep.Sync
         public bool IsPaused { get; private set; }
 
         private readonly int _frameRate;
-        private readonly int _localPlayerId;
+        private int _localPlayerId;
 
         /// <summary>
         /// 构造函数
@@ -374,6 +374,33 @@ namespace ZLockstep.Sync
         {
             IsPaused = false;
             UnityEngine.Debug.Log("[Game] 游戏已恢复");
+        }
+
+        /// <summary>
+        /// 获取本地玩家ID
+        /// </summary>
+        /// <returns>当前本地玩家ID</returns>
+        public int GetLocalPlayerId()
+        {
+            return _localPlayerId;
+        }
+        
+        /// <summary>
+        /// 设置本地玩家ID（仅在网络客户端模式下且尚未设置时允许修改）
+        /// </summary>
+        /// <param name="playerId">新的玩家ID</param>
+        public void SetLocalPlayerId(int playerId)
+        {
+            // 只允许在特定条件下修改玩家ID
+            if (Mode != GameMode.NetworkClient)
+            {
+                UnityEngine.Debug.LogWarning("[Game] 只有在网络客户端模式下才允许修改玩家ID");
+                return;
+            }
+
+            _localPlayerId = playerId;
+            
+            UnityEngine.Debug.Log($"[Game] 玩家ID已更新为: {playerId}");
         }
     }
 }

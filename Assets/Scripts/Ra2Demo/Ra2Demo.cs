@@ -20,7 +20,6 @@ public class Ra2Demo : MonoBehaviour
 
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
-    [SerializeField] private int playerId = 0; // 玩家ID
     [SerializeField] private int unitType = 1; // 单位类型：1=动员兵, 2=坦克, 3=矿车
     [SerializeField] private int prefabId = 1; // 预制体ID（对应unitPrefabs数组索引）
 
@@ -154,7 +153,7 @@ public class Ra2Demo : MonoBehaviour
 
         // 创建CreateUnitCommand
         var createCommand = new CreateUnitCommand(
-            playerId: playerId,
+            playerId: 0,
             unitType: unitType,
             position: logicPosition,
             prefabId: prefabId
@@ -166,7 +165,7 @@ public class Ra2Demo : MonoBehaviour
         // 提交命令到游戏世界
         worldBridge.SubmitCommand(createCommand);
 
-        Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}, 玩家={playerId}");
+        Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}");
     }
 
     /// <summary>
@@ -204,7 +203,7 @@ public class Ra2Demo : MonoBehaviour
         {
             var entity = new Entity(entityId);
             var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
-            if (unit.PlayerId == playerId)
+            if (unit.PlayerId == worldBridge.Game.GetLocalPlayerId())
             {
                 playerUnits.Add(entityId);
             }
@@ -214,7 +213,7 @@ public class Ra2Demo : MonoBehaviour
         {
             // 创建移动命令
             var moveCommand = new MoveCommand(
-                playerId: playerId,
+                playerId: 0,
                 entityIds: playerUnits.ToArray(),
                 targetPosition: worldPosition.ToZVector3()
             )
@@ -363,6 +362,9 @@ public class Ra2Demo : MonoBehaviour
             
             // 初始化网络适配器
             new WebSocketNetworkAdaptor(_client, worldBridge);
+            
+            // 更新 Game 中的玩家ID
+            worldBridge.Game.SetLocalPlayerId(data.CampId);
         };
         
         isConnected = true;
