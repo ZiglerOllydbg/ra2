@@ -30,20 +30,17 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] private string ServerUrl = "ws://101.126.136.178:8080/ws";
 
     private WebSocketClient _client;
+    
+    // 添加状态标志
+    private bool isConnected = false;
+    private bool isMatched = false;
+    private bool isReady = false;
+    private bool isPaused = false;
 
     private void Awake()
     {
         _mainCamera = Camera.main;
         _controls = new RTSControl();
-
-        _client = new WebSocketClient(ServerUrl, "Player1");
-        _client.Connect();
-        _client.OnMatchSuccess += (MatchSuccessData data) =>
-        {
-            Debug.Log($"[Test] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}");
-            // 准备就绪
-            _client.SendReady();
-        };
 
         // 如果没有分配 worldBridge，尝试自动查找
         if (worldBridge == null)
@@ -58,56 +55,9 @@ public class Ra2Demo : MonoBehaviour
 
     void Start()
     {
-        // zVector3 zVector3 = new zVector3(1, 2, 3);
-        // string json = JsonConvert.SerializeObject(zVector3);
-        // Debug.Log(json);
-
-        TestIO();
-
-        new WebSocketNetworkAdaptor(_client, worldBridge);
+        // 不再在这里初始化WebSocketNetworkAdaptor
     }
 
-    private void TestIO()
-    {
-        {
-            // 创建CreateUnitCommand
-            var createCommand = new CreateUnitCommand(
-                playerId: playerId,
-                unitType: unitType,
-                position: new zVector3(1, 2, 3),
-                prefabId: prefabId
-            )
-            {
-                Source = CommandSource.Local
-            };
-
-            string command = JsonConvert.SerializeObject(createCommand);
-            Debug.Log(command);
-
-            // 反序列化
-            var command2 = JsonConvert.DeserializeObject<CreateUnitCommand>(command);
-            Debug.Log(command2);
-        }
-
-        {
-            // 创建移动命令
-            var moveCommand = new MoveCommand(
-                playerId: playerId,
-                entityIds: new int[] { 1, 2, 3 },
-                targetPosition: new zVector3(4, 5, 6)
-            )
-            {
-                Source = CommandSource.Local
-            };
-
-            string command = JsonConvert.SerializeObject(moveCommand);
-            Debug.Log(command);
-
-            // 反序列化
-            var command2 = JsonConvert.DeserializeObject<MoveCommand>(command);
-            Debug.Log(command2);
-        }
-    }
 
     private void OnEnable()
     {
@@ -328,5 +278,84 @@ public class Ra2Demo : MonoBehaviour
     }
 
     #endregion
-}
 
+    private void OnGUI()
+    {
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle.fontSize = 24;
+        buttonStyle.fixedHeight = 60;
+        buttonStyle.fixedWidth = 200;
+
+        // 将按钮定位在屏幕中央
+        float screenWidth = Screen.width;
+        float screenHeight = Screen.height;
+        float buttonWidth = 200;
+        float buttonHeight = 60;
+        
+        Rect buttonRect = new Rect(
+            (screenWidth - buttonWidth) / 2,
+            (screenHeight - buttonHeight) / 2,
+            buttonWidth,
+            buttonHeight
+        );
+
+        GUILayout.BeginArea(buttonRect);
+        
+        if (!isConnected)
+        {
+            if (GUILayout.Button("匹配", buttonStyle))
+            {
+                ConnectToServer();
+            }
+        }
+        else if (isConnected && !isMatched)
+        {
+            GUILayout.Label("匹配中...", buttonStyle);
+        }
+        else if (isMatched && !isReady)
+        {
+            if (GUILayout.Button("准备", buttonStyle))
+            {
+                _client.SendReady();
+                isReady = true;
+            }
+        }
+        else if (isReady)
+        {
+            if (!isPaused)
+            {
+                if (GUILayout.Button("暂停", buttonStyle))
+                {
+                    worldBridge.PauseGame();
+                    isPaused = true;
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("继续", buttonStyle))
+                {
+                    worldBridge.ResumeGame();
+                    isPaused = false;
+                }
+            }
+        }
+        
+        GUILayout.EndArea();
+    }
+
+    private void ConnectToServer()
+    {
+        _client = new WebSocketClient(ServerUrl, "Player1");
+        _client.Connect();
+        _client.OnMatchSuccess += (MatchSuccessData data) =>
+        {
+            Debug.Log($"[Test] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}");
+            isMatched = true;
+            
+            // 初始化网络适配器
+            new WebSocketNetworkAdaptor(_client, worldBridge);
+        };
+        
+        isConnected = true;
+    }
+}
