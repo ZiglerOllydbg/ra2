@@ -1,6 +1,9 @@
 using zUnity;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.Events;
+using System.Globalization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -16,6 +19,7 @@ namespace ZLockstep.Sync.Command.Commands
         /// 1=动员兵, 2=犀牛坦克, 3=矿车
         /// </summary>
         public int UnitType { get; set; }
+
 
         /// <summary>
         /// 创建位置
@@ -151,6 +155,12 @@ namespace ZLockstep.Sync.Command.Commands
         }
 
         #endregion
+    
+
+        // tostring
+        public override string ToString()
+        {
+            return $"[CreateUnitCommand] 玩家{PlayerId} 创建了单位类型{UnitType} 在位置{Position} PrefabId: {PrefabId}";
+        }
     }
 }
-

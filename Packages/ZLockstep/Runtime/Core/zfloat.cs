@@ -1,4 +1,6 @@
+using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 /// <summary>
 /// 定点数结构体，用于替代浮点数进行精确计算
@@ -21,10 +23,10 @@ using System.Runtime.InteropServices;
 /// zfloat b = new zfloat(1, 5000); // 1.5
 /// zfloat c = a + b;               // 4.5
 /// </summary>
-[System.Serializable]
+[Serializable]
 [System.Runtime.InteropServices.StructLayout(LayoutKind.Sequential)]
 [System.Runtime.InteropServices.ComVisible(true)]
-public struct zfloat
+public struct zfloat : ISerializable
 //: IComparable, IFormattable, IConvertible
 //, IComparable<zfloat>, IEquatable<zfloat>
 {
@@ -640,5 +642,25 @@ public struct zfloat
 		v = new zfloat(intPart, decimalsPart_10000);
 
 		return true;
+	}
+	
+	/// <summary>
+	/// 实现ISerializable接口的序列化方法
+	/// </summary>
+	/// <param name="info">序列化信息</param>
+	/// <param name="context">流上下文</param>
+	public void GetObjectData(SerializationInfo info, StreamingContext context)
+	{
+		info.AddValue("value", value);
+	}
+	
+	/// <summary>
+	/// 反序列化构造函数
+	/// </summary>
+	/// <param name="info">序列化信息</param>
+	/// <param name="context">流上下文</param>
+	public zfloat(SerializationInfo info, StreamingContext context)
+	{
+		value = info.GetInt64("value");
 	}
 }

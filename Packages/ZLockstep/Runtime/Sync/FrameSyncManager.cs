@@ -64,6 +64,8 @@ namespace ZLockstep.Sync
         /// </summary>
         public int MaxWaitFrames { get; set; } = 300; // 默认15秒（假设20FPS）
 
+        public INetworkAdapter NetworkAdapter;
+
         public FrameSyncManager(zWorld world)
         {
             _world = world;
@@ -143,13 +145,13 @@ namespace ZLockstep.Sync
             else
             {
                 // 没有命令也要推进（空帧）
-                Debug.Log($"[FrameSyncManager] 准备Frame {nextFrame}（空帧）");
+                // Debug.Log($"[FrameSyncManager] 准备Frame {nextFrame}（空帧）");
             }
 
             // 更新当前帧
             _currentFrame = nextFrame;
 
-            Debug.Log($"[FrameSyncManager] currentFrame={_currentFrame}, world.Tick={_world.Tick} (将在ExecuteLogicFrame中同步)");
+            // Debug.Log($"[FrameSyncManager] currentFrame={_currentFrame}, world.Tick={_world.Tick} (将在ExecuteLogicFrame中同步)");
 
             return nextFrame;
         }
@@ -176,7 +178,7 @@ namespace ZLockstep.Sync
                 _frameCommands[frame] = new List<ICommand>(commands);
             }
 
-            Debug.Log($"[FrameSyncManager] 服务器确认Frame {frame}，命令数={commands?.Count ?? 0}");
+            // Debug.Log($"[FrameSyncManager] 服务器确认Frame {frame}，命令数={commands?.Count ?? 0}");
         }
 
         /// <summary>
@@ -233,13 +235,14 @@ namespace ZLockstep.Sync
         /// <summary>
         /// 提交本地命令（会发送到服务器）
         /// </summary>
-        public void SubmitLocalCommand(ICommand command, INetworkAdapter networkAdapter)
+        public void SubmitLocalCommand(ICommand command)
         {
+            command.ExecuteFrame = _currentFrame + 2;
             // 1. 加入待确认列表
             _pendingLocalCommands.Add(command);
 
             // 2. 发送到服务器
-            networkAdapter?.SendCommandToServer(command);
+            NetworkAdapter?.SendCommandToServer(command);
 
             Debug.Log($"[FrameSyncManager] 提交本地命令：{command.GetType().Name}，等待服务器确认");
         }

@@ -185,7 +185,7 @@ namespace ZLockstep.Sync
                     // 3. 执行逻辑帧（传入目标帧号，确保 Tick 同步）
                     ExecuteLogicFrame(frameNumber);
                     
-                    UnityEngine.Debug.Log($"[Game] 执行网络帧 {frameNumber}, world.Tick={World.Tick}");
+                    // UnityEngine.Debug.Log($"[Game] 执行网络帧 {frameNumber}, world.Tick={World.Tick}");
                     return true;
 
                 default:
@@ -247,7 +247,7 @@ namespace ZLockstep.Sync
         /// - NetworkClient: 发送到服务器，等待确认后执行
         /// - NetworkServer: 直接提交（服务器权威）
         /// </summary>
-        public void SubmitCommand(ICommand command, INetworkAdapter networkAdapter = null)
+        public void SubmitCommand(ICommand command)
         {
             command.PlayerId = _localPlayerId;
 
@@ -268,13 +268,7 @@ namespace ZLockstep.Sync
                         return;
                     }
 
-                    if (networkAdapter == null)
-                    {
-                        UnityEngine.Debug.LogError("[Game] 网络模式下需要提供NetworkAdapter！");
-                        return;
-                    }
-
-                    FrameSyncManager.SubmitLocalCommand(command, networkAdapter);
+                    FrameSyncManager.SubmitLocalCommand(command);
                     break;
             }
         }

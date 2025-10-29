@@ -1,8 +1,16 @@
-﻿using System;
+using System;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace zUnity
 {
-	public struct zVector3
+	/// <summary>
+	/// 三维向量结构体，用于确定性计算
+	/// 包含x、y、z三个分量，每个分量都是zfloat类型
+	/// 提供了向量运算的各种方法，如加减乘除、点积、叉积、归一化等
+	/// </summary>
+	[Serializable]
+	public struct zVector3 : ISerializable
 	{
 		public static readonly zVector3 zero = new zVector3((zfloat)0, (zfloat)0, (zfloat)0);
 		public static readonly zVector3 one = new zVector3((zfloat)1, (zfloat)1, (zfloat)1);
@@ -41,10 +49,23 @@ namespace zUnity
 			this.z = vec.z;
 		}
 
+		/// <summary>
+		/// X轴坐标分量
+		/// </summary>
+		[JsonProperty]
 		public zfloat x;
+		
+		/// <summary>
+		/// Y轴坐标分量
+		/// </summary>
+		[JsonProperty]
 		public zfloat y;
-		public zfloat z;
 
+		/// <summary>
+		/// Z轴坐标分量
+		/// </summary>
+		[JsonProperty]
+		public zfloat z;
 
 		public zfloat this[int index]
 		{
@@ -90,6 +111,8 @@ namespace zUnity
 			}
 		}
 
+
+
 		public void Add(ref zVector3 vec)
 		{
 			x.value += vec.x.value;
@@ -123,6 +146,7 @@ namespace zUnity
 		/// <summary>
 		/// 获取归一化向量，注意每次调用，都会重新归一化。
 		/// </summary>
+		[JsonIgnore]
 		public zVector3 normalized
 		{
 			get
@@ -148,6 +172,7 @@ namespace zUnity
 			}
 		}
 
+		[JsonIgnore]
 		public zVector3 approxNormalizedXZ
 		{
 			get
@@ -156,7 +181,7 @@ namespace zUnity
 				vec.y.value = 0;
 
 				zfloat xzLen = zMathf.ApproximateHypotenuse(x, z);
-				if(xzLen.value == 0)
+				if (xzLen.value == 0)
 				{
 					return zVector3.zero;
 				}
@@ -840,5 +865,29 @@ namespace zUnity
 		{
 			return ("(" + x + " , " + y + " , " + z + ")");
 		}
-	}
+
+        /// <summary>
+        /// 实现ISerializable接口的序列化方法
+        /// </summary>
+        /// <param name="info">序列化信息</param>
+        /// <param name="context">流上下文</param>
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("x", x.value);
+            info.AddValue("y", y.value);
+            info.AddValue("z", z.value);
+        }
+        
+        /// <summary>
+        /// 反序列化构造函数
+        /// </summary>
+        /// <param name="info">序列化信息</param>
+        /// <param name="context">流上下文</param>
+        public zVector3(SerializationInfo info, StreamingContext context)
+        {
+            x = zfloat.CreateFloat(info.GetInt64("x"));
+            y = zfloat.CreateFloat(info.GetInt64("y"));
+            z = zfloat.CreateFloat(info.GetInt64("z"));
+        }
+    }
 }

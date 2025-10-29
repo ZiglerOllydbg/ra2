@@ -85,7 +85,7 @@ namespace ZLockstep.View
         /// 暴露Game供外部访问（如Test.cs）
         /// </summary>
         public Game Game => _game;
-        
+
         /// <summary>
         /// 快捷访问：逻辑世界（实际是 _game.World）
         /// </summary>

@@ -3,6 +3,10 @@ using zUnity;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
+using System.Globalization;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -76,6 +80,15 @@ namespace ZLockstep.Sync.Command.Commands
                 UnityEngine.Debug.Log($"[MoveCommand] 玩家{PlayerId} 命令{successCount}个单位移动到 {TargetPosition}");
             }
         }
-    }
-}
 
+        // tostring
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append($"[MoveCommand] 玩家{PlayerId} 命令{EntityIds.Length}个单位移动到 {TargetPosition}");
+            return sb.ToString();
+        }
+
+    }
+    
+}

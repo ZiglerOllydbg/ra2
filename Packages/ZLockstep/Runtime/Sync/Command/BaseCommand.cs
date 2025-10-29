@@ -1,3 +1,5 @@
+using System;
+using Newtonsoft.Json.Linq;
 using ZLockstep.Simulation;
 
 namespace ZLockstep.Sync.Command
@@ -6,6 +8,7 @@ namespace ZLockstep.Sync.Command
     /// 命令基类
     /// 提供通用的属性实现
     /// </summary>
+    [Serializable]
     public abstract class BaseCommand : ICommand
     {
         public abstract int CommandType { get; }
@@ -25,14 +28,14 @@ namespace ZLockstep.Sync.Command
 
         public abstract void Execute(zWorld world);
 
-        public virtual byte[] Serialize()
+        public virtual JObject Serialize()
         {
             // 默认实现（子类可以重写）
             // TODO: 实现序列化逻辑
-            return new byte[0];
+            return null;
         }
 
-        public virtual void Deserialize(byte[] data)
+        public virtual void Deserialize(string data)
         {
             // 默认实现（子类可以重写）
             // TODO: 实现反序列化逻辑

@@ -4,6 +4,7 @@ using ZLockstep.View;
 using ZLockstep.Sync.Command;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
+using Newtonsoft.Json.Linq;
 
 /// <summary>
 /// 网络命令示例
@@ -68,7 +69,7 @@ public class NetworkCommandExample : MonoBehaviour
         command.ExecuteFrame = currentFrame + networkDelay;
 
         // 3. 序列化命令
-        byte[] commandData = command.Serialize();
+        var commandData = command.Serialize();
 
         // 4. 发送到网络（这里是模拟）
         SimulateSendToNetwork(commandData, command.ExecuteFrame);
@@ -83,12 +84,12 @@ public class NetworkCommandExample : MonoBehaviour
     /// 模拟发送数据到网络
     /// 在真实项目中，这里应该使用网络库发送数据
     /// </summary>
-    private void SimulateSendToNetwork(byte[] data, int executeFrame)
+    private void SimulateSendToNetwork(JObject data, int executeFrame)
     {
         // 模拟：通过网络库发送
         // NetworkClient.Send(MessageType.GameCommand, data);
         
-        Debug.Log($"[Network] 发送 {data.Length} 字节到网络，执行帧: {executeFrame}");
+        Debug.Log($"[Network] 发送 {data} 字节到网络，执行帧: {executeFrame}");
     }
 
     #region 示例：使用方法

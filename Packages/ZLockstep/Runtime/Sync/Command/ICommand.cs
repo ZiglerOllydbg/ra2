@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using ZLockstep.Simulation;
 
 namespace ZLockstep.Sync.Command
@@ -48,12 +49,12 @@ namespace ZLockstep.Sync.Command
         /// <summary>
         /// 序列化命令（用于网络传输和回放）
         /// </summary>
-        byte[] Serialize();
+        JObject Serialize();
 
         /// <summary>
         /// 反序列化命令
         /// </summary>
-        void Deserialize(byte[] data);
+        void Deserialize(string data);
     }
 }
 

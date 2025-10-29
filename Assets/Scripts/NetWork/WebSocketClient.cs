@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using UnityEngine;
 using NativeWebSocket;
 using Newtonsoft.Json.Linq;
+using ZLockstep.Sync.Command;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Game.RA2.Client
 {
@@ -77,34 +80,76 @@ namespace Game.RA2.Client
             SendMessage(request.ToString());
             Debug.Log($"[{clientId}] 发送准备就绪");
         }
-        
-        private void SendFrameInput(int frame)
+
+        public void SendFrameInput(int frame, float moveX = 0, float moveY = 0, float moveZ = 0)
         {
             var request = new JObject
             {
                 ["type"] = "frameInput",
                 ["frame"] = frame
             };
-            
+
             var inputs = new JArray();
             var input = new JObject
             {
                 ["id"] = clientId
             };
-            
+
             var inputData = new JArray();
-            for (int i = 0; i < 3; i++)
-            {
-                inputData.Add(random.Next(10));
-            }
-            
+            inputData.Add(moveX);
+            inputData.Add(moveY);
+            inputData.Add(moveZ);
+
             input["input"] = inputData;
             inputs.Add(input);
-            
+
             request["inputs"] = inputs;
-            
+
             SendMessage(request.ToString());
-            Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据");
+            Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: ({moveX}, {moveY}, {moveZ})");
+        }
+
+        public class FrameInput
+        {
+            public string type;
+            public int frame;
+            
+            public List<MyCommand> data;
+        }
+        
+        public class MyCommand
+        {
+            public int commandType;
+            public ICommand command;
+        }
+        
+        public void SendFrameInput(int frame, ICommand command)
+        {
+            FrameInput frameInput = new FrameInput
+            {
+                type = "frameInput",
+                frame = frame,
+                data = new List<MyCommand>()
+            };
+
+            MyCommand myCommand = new MyCommand
+            {
+                commandType = command.CommandType,
+                command = command
+            };
+
+            frameInput.data.Add(myCommand);
+
+            string json = JsonConvert.SerializeObject(frameInput);
+            
+            SendMessage(json);
+            Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: {json}");
+        }
+
+        // 添加一个公共方法，允许外部调用发送帧输入
+        public void SendFrameInput(int frame, Vector3 direction)
+        {
+            SendFrameInput(frame, direction.x, direction.y, direction.z);
         }
         
         private async void SendMessage(string message)
@@ -148,7 +193,7 @@ namespace Game.RA2.Client
                 var json = JObject.Parse(message);
                 string type = json["type"]?.ToString();
 
-                Debug.Log($"[{clientId}] 收到消息: {message}");
+                // Debug.Log($"[{clientId}] 收到消息: {message}");
                 
                 switch (type)
                 {
@@ -202,7 +247,7 @@ namespace Game.RA2.Client
         private void HandleFrameSync(JObject message)
         {
             int frame = message["frame"]?.ToObject<int>() ?? 0;
-            Debug.Log($"[{clientId}] 收到帧同步数据 - 帧号: {frame}, 数据: {message}");
+            // Debug.Log($"[{clientId}] 收到帧同步数据 - 帧号: {frame}, 数据: {message}");
             
             var frameData = new FrameSyncData
             {
@@ -213,7 +258,7 @@ namespace Game.RA2.Client
             OnFrameSync?.Invoke(frameData);
             
             // 模拟发送下一帧的输入数据
-            SendFrameInput(frame + 2);
+            // SendFrameInput(frame + 2); // 现在由外部控制何时发送输入
         }
         
         private void HandleWebSocketClose(WebSocketCloseCode closeCode)
