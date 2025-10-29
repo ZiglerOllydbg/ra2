@@ -27,19 +27,6 @@ namespace ZLockstep.Sync.Command
         }
 
         public abstract void Execute(zWorld world);
-
-        public virtual JObject Serialize()
-        {
-            // 默认实现（子类可以重写）
-            // TODO: 实现序列化逻辑
-            return null;
-        }
-
-        public virtual void Deserialize(string data)
-        {
-            // 默认实现（子类可以重写）
-            // TODO: 实现反序列化逻辑
-        }
     }
 }
 

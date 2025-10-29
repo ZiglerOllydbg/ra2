@@ -81,34 +81,6 @@ namespace Game.RA2.Client
             Debug.Log($"[{clientId}] 发送准备就绪");
         }
 
-        public void SendFrameInput(int frame, float moveX = 0, float moveY = 0, float moveZ = 0)
-        {
-            var request = new JObject
-            {
-                ["type"] = "frameInput",
-                ["frame"] = frame
-            };
-
-            var inputs = new JArray();
-            var input = new JObject
-            {
-                ["id"] = clientId
-            };
-
-            var inputData = new JArray();
-            inputData.Add(moveX);
-            inputData.Add(moveY);
-            inputData.Add(moveZ);
-
-            input["input"] = inputData;
-            inputs.Add(input);
-
-            request["inputs"] = inputs;
-
-            SendMessage(request.ToString());
-            Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: ({moveX}, {moveY}, {moveZ})");
-        }
-
         public class FrameInput
         {
             public string type;
@@ -144,12 +116,6 @@ namespace Game.RA2.Client
             
             SendMessage(json);
             Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: {json}");
-        }
-
-        // 添加一个公共方法，允许外部调用发送帧输入
-        public void SendFrameInput(int frame, Vector3 direction)
-        {
-            SendFrameInput(frame, direction.x, direction.y, direction.z);
         }
         
         private async void SendMessage(string message)

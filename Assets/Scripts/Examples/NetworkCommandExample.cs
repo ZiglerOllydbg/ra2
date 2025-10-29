@@ -69,10 +69,10 @@ public class NetworkCommandExample : MonoBehaviour
         command.ExecuteFrame = currentFrame + networkDelay;
 
         // 3. 序列化命令
-        var commandData = command.Serialize();
+        // var commandData = command.Serialize();
 
         // 4. 发送到网络（这里是模拟）
-        SimulateSendToNetwork(commandData, command.ExecuteFrame);
+        SimulateSendToNetwork(null, command.ExecuteFrame);
 
         // 5. 本地也提交命令（确保一致性）
         worldBridge.SubmitCommand(command);

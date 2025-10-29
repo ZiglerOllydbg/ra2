@@ -45,16 +45,6 @@ namespace ZLockstep.Sync.Command
         /// </summary>
         /// <param name="world">游戏世界</param>
         void Execute(zWorld world);
-
-        /// <summary>
-        /// 序列化命令（用于网络传输和回放）
-        /// </summary>
-        JObject Serialize();
-
-        /// <summary>
-        /// 反序列化命令
-        /// </summary>
-        void Deserialize(string data);
     }
 }
 
