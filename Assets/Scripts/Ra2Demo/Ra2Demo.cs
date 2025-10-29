@@ -286,42 +286,51 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
-        // 将按钮定位在屏幕中央
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
-        float buttonWidth = 200;
-        float buttonHeight = 60;
-        
-        Rect buttonRect = new Rect(
-            (screenWidth - buttonWidth) / 2,
-            (screenHeight - buttonHeight) / 2,
-            buttonWidth,
-            buttonHeight
-        );
+        if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
+        {
+            // 将匹配和准备按钮定位在屏幕中央
+            float screenWidth = Screen.width;
+            float screenHeight = Screen.height;
+            float buttonWidth = 200;
+            float buttonHeight = 60;
+            
+            Rect buttonRect = new Rect(
+                (screenWidth - buttonWidth) / 2,
+                (screenHeight - buttonHeight) / 2,
+                buttonWidth,
+                buttonHeight
+            );
 
-        GUILayout.BeginArea(buttonRect);
-        
-        if (!isConnected)
-        {
-            if (GUILayout.Button("匹配", buttonStyle))
+            GUILayout.BeginArea(buttonRect);
+            
+            if (!isConnected)
             {
-                ConnectToServer();
+                if (GUILayout.Button("匹配", buttonStyle))
+                {
+                    ConnectToServer();
+                }
             }
-        }
-        else if (isConnected && !isMatched)
-        {
-            GUILayout.Label("匹配中...", buttonStyle);
-        }
-        else if (isMatched && !isReady)
-        {
-            if (GUILayout.Button("准备", buttonStyle))
+            else if (isConnected && !isMatched)
             {
-                _client.SendReady();
-                isReady = true;
+                GUILayout.Label("匹配中...", buttonStyle);
             }
+            else if (isMatched && !isReady)
+            {
+                if (GUILayout.Button("准备", buttonStyle))
+                {
+                    _client.SendReady();
+                    isReady = true;
+                }
+            }
+            
+            GUILayout.EndArea();
         }
         else if (isReady)
         {
+            // 将暂停/继续按钮定位在左上角
+            Rect pauseButtonRect = new Rect(20, 20, 200, 60);
+            GUILayout.BeginArea(pauseButtonRect);
+            
             if (!isPaused)
             {
                 if (GUILayout.Button("暂停", buttonStyle))
@@ -338,9 +347,9 @@ public class Ra2Demo : MonoBehaviour
                     isPaused = false;
                 }
             }
+            
+            GUILayout.EndArea();
         }
-        
-        GUILayout.EndArea();
     }
 
     private void ConnectToServer()
