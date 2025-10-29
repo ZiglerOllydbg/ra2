@@ -169,7 +169,7 @@ public class Room {
                 // 添加空输入
                 ObjectNode emptyInput = objectMapper.createObjectNode();
                 emptyInput.put("campId", campId);
-                emptyInput.set("input", objectMapper.createArrayNode());
+                emptyInput.set("inputs", objectMapper.createArrayNode());
                 currentFrameData.put(campId, emptyInput);
             }
         }
