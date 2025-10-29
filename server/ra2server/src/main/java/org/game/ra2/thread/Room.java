@@ -19,6 +19,7 @@ public class Room {
     private final List<Player> players = new ArrayList<>();
     private final Set<String> readyPlayers = new HashSet<>();
     private final Map<Integer, Map<String, JsonNode>> frameInputs = new ConcurrentHashMap<>();
+    private final Map<String, String> channelIdToCampIdCache = new HashMap<>(); // 缓存channelId到campId的映射
     private int currentFrame = 0;
     private boolean gameStarted = false;
     private final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
@@ -40,6 +41,8 @@ public class Room {
      */
     public void addPlayer(Player  player) {
         players.add(player);
+        // 更新缓存
+        channelIdToCampIdCache.put(player.getChannelId(), String.valueOf(player.getCamp().getId()));
         emptySince = -1; // 有玩家加入，重置空房间计时
     }
     
@@ -48,6 +51,8 @@ public class Room {
      */
     public void removePlayer(String channelId) {
         players.removeIf(player -> player.getChannelId().equals(channelId));
+        // 从缓存中移除
+        channelIdToCampIdCache.remove(channelId);
         readyPlayers.remove(channelId);
         
         // 检查是否所有玩家都已离开，如果是，则开始计时
@@ -106,14 +111,18 @@ public class Room {
         try {
             int frame = data.get("frame").asInt();
             JsonNode inputs = data.get("inputs");
-            
-            Map<String, JsonNode> frameData = new HashMap<>();
-            for (JsonNode input : inputs) {
-                String playerId = input.get("id").asText();
-                frameData.put(playerId, input);
-            }
-            
-            frameInputs.put(frame, frameData);
+
+
+            Map<String, JsonNode> frameData = frameInputs.computeIfAbsent(frame, k -> new HashMap<>());
+
+            ObjectNode playerInputs = objectMapper.createObjectNode();
+
+            // 从缓存中获取campId
+            String campId = channelIdToCampIdCache.get(channelId);
+            playerInputs.put("campId", campId);
+            playerInputs.set("inputs", inputs);
+
+            frameData.put(campId, playerInputs);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -151,17 +160,17 @@ public class Room {
 
     private void processFrameSync() {
         // 获取当前帧的数据
-        Map<String, JsonNode> currentFrameData = frameInputs.getOrDefault(currentFrame, new HashMap<>());
+        Map<String, JsonNode> currentFrameData = frameInputs.computeIfAbsent(currentFrame, k -> new HashMap<>());
         
         // 检查是否有所有玩家的输入数据，没有的补充空输入
         for (Player player : players) {
-            String playerId = player.getChannelId();
-            if (!currentFrameData.containsKey(playerId)) {
+            String campId = String.valueOf(player.getCamp().getId());
+            if (!currentFrameData.containsKey(campId)) {
                 // 添加空输入
                 ObjectNode emptyInput = objectMapper.createObjectNode();
-                emptyInput.put("id", playerId);
+                emptyInput.put("campId", campId);
                 emptyInput.set("input", objectMapper.createArrayNode());
-                currentFrameData.put(playerId, emptyInput);
+                currentFrameData.put(campId, emptyInput);
             }
         }
         
