@@ -291,7 +291,7 @@ public class Ra2Demo : MonoBehaviour
         // 绘制左上角的房间类型选择
         if (!isConnected) 
         {
-            Rect roomTypeRect = new Rect(20, 20, 400, 300);
+            Rect roomTypeRect = new Rect(20, 20, 700, 300);
             GUILayout.BeginArea(roomTypeRect);
             GUILayout.Label("房间类型:", buttonStyle);
             string[] roomTypeOptions = { "SOLO", "DUO", "TRIO", "QUAD", "OCTO" };
