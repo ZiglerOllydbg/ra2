@@ -10,7 +10,7 @@
 
 ## 🏗️ 技术架构
 
-> 详细架构文档：[Packages/ZLockstep/Runtime/README.md](Packages/ZLockstep/Runtime/README.md)
+> 详细架构文档：[client/Packages/ZLockstep/Runtime/README.md](client/Packages/ZLockstep/Runtime/README.md)
 
 ### 三层架构设计（奥卡姆剃刀原则）
 
