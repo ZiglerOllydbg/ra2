@@ -35,6 +35,9 @@ public class Ra2Demo : MonoBehaviour
     private bool isMatched = false;
     private bool isReady = false;
     private bool isPaused = false;
+    
+    // 添加房间类型选择
+    private RoomType selectedRoomType = RoomType.DUO;
 
     private void Awake()
     {
@@ -285,6 +288,20 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
+        // 绘制左上角的房间类型选择
+        if (!isConnected) 
+        {
+            Rect roomTypeRect = new Rect(20, 20, 400, 300);
+            GUILayout.BeginArea(roomTypeRect);
+            GUILayout.Label("房间类型:", buttonStyle);
+            string[] roomTypeOptions = { "SOLO", "DUO", "TRIO", "QUAD", "OCTO" };
+            int selectedIndex = (int)selectedRoomType - 1;
+            selectedIndex = GUILayout.SelectionGrid(selectedIndex, roomTypeOptions, 3, buttonStyle); // 每行3个选项
+            selectedRoomType = (RoomType)(selectedIndex + 1);
+            GUILayout.EndArea();
+        }
+
+        // 绘制中央的匹配/准备按钮
         if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
         {
             // 将匹配和准备按钮定位在屏幕中央
@@ -297,7 +314,7 @@ public class Ra2Demo : MonoBehaviour
                 (screenWidth - buttonWidth) / 2,
                 (screenHeight - buttonHeight) / 2,
                 buttonWidth,
-                buttonHeight
+                buttonHeight * 2 // 增加高度以容纳房间类型选择和按钮
             );
 
             GUILayout.BeginArea(buttonRect);
@@ -365,6 +382,11 @@ public class Ra2Demo : MonoBehaviour
             
             // 更新 Game 中的玩家ID
             worldBridge.Game.SetLocalPlayerId(data.CampId);
+        };
+        
+        // 使用选定的房间类型发送匹配请求
+        _client.OnConnected += (message) => {
+            _client.SendMatchRequest(selectedRoomType);
         };
         
         isConnected = true;

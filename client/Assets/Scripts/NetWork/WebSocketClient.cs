@@ -57,12 +57,18 @@ namespace Game.RA2.Client
         
         public void SendMatchRequest()
         {
+            SendMatchRequest(RoomType.DUO); // 默认为双人房间
+        }
+        
+        public void SendMatchRequest(RoomType roomType)
+        {
             var request = new JObject
             {
                 ["type"] = "match",
                 ["data"] = new JObject
                 {
-                    ["name"] = clientId
+                    ["name"] = clientId,
+                    ["roomType"] = roomType.ToString()
                 }
             };
             
@@ -142,8 +148,8 @@ namespace Game.RA2.Client
             
             OnConnected?.Invoke("连接建立成功");
             
-            // 连接成功后发送匹配请求
-            SendMatchRequest();
+            // 注意：不再在连接成功后立即发送匹配请求
+            // 而是由调用者决定何时发送匹配请求
         }
         
         private void HandleWebSocketMessage(byte[] data)
@@ -280,5 +286,28 @@ namespace Game.RA2.Client
     {
         public int Frame;
         public JObject Data;
+    }
+    
+    // 房间类型枚举
+    public enum RoomType
+    {
+        SOLO = 1,   // 1人房间
+        DUO = 2,    // 2人房间
+        TRIO = 3,   // 3人房间
+        QUAD = 4,   // 4人房间
+        OCTO = 8    // 8人房间
+    }
+    
+    // 阵营颜色枚举
+    public enum CampColor
+    {
+        Red = 1,    // 红色
+        Blue = 2,   // 蓝色
+        Green = 3,  // 绿色
+        Yellow = 4, // 黄色
+        Orange = 5, // 橙色
+        Purple = 6, // 紫色
+        Pink = 7,   // 粉色
+        Brown = 8   // 棕色
     }
 }
