@@ -50,7 +50,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'org.game.GameStartUp'
+    mainClass = 'org.game.ra2.GameStartUp'
 }
 
 // 配置jar包输出目录和名称
@@ -63,6 +63,78 @@ jar {
                 'Main-Class': 'org.game.ra2.GameStartUp'
         )
     }
+}
+
+// 配置多个客户端运行任务
+task runClient1(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端1"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player1']
+}
+
+task runClient2(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端2"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player2']
+}
+
+task runClient3(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端3"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player3']
+}
+
+task runClient4(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端4"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player4']
+}
+
+task runClient5(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端5"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player5']
+}
+
+task runClient6(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端6"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player6']
+}
+
+task runClient7(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端7"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player7']
+}
+
+task runClient8(type: JavaExec) {
+    group = "Application"
+    description = "运行测试客户端8"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.TestClient'
+    args = ['Player8']
+}
+
+task runMultiPlayerTest(type: JavaExec) {
+    group = "Application"
+    description = "运行多人测试"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.game.ra2.client.MultiPlayerTest'
 }
 
 // 拷贝依赖的jar包到libs目录

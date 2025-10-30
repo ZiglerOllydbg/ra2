@@ -15,14 +15,16 @@ import java.util.Scanner;
 public class TestClient extends WebSocketClient {
     private static final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     private final String clientId;
+    private final String roomType;
     private boolean matched = false;
     private boolean gameStarted = false;
     private int frameCount = 0;
     private final Random random = new Random();
 
-    public TestClient(URI serverUri, String clientId) {
+    public TestClient(URI serverUri, String clientId, String roomType) {
         super(serverUri);
         this.clientId = clientId;
+        this.roomType = roomType != null ? roomType.toUpperCase() : "DUO"; // 默认为双人房
     }
 
     @Override
@@ -73,6 +75,7 @@ public class TestClient extends WebSocketClient {
             
             ObjectNode data = objectMapper.createObjectNode();
             data.put("name", clientId);
+            data.put("roomType", roomType); // 添加房间类型参数
             
             request.set("data", data);
             
@@ -151,14 +154,16 @@ public class TestClient extends WebSocketClient {
     public static void main(String[] args) {
         try {
             if (args.length < 1) {
-                System.out.println("请提供客户端ID作为参数，例如: Player1");
+                System.out.println("请提供客户端ID作为参数，例如: Player1 [房间类型]");
+                System.out.println("房间类型: SOLO, DUO, TRIO, QUAD, OCTO");
                 return;
             }
             
             String clientId = args[0];
+            String roomType = args.length > 1 ? args[1] : "DUO";
             
             // 启动客户端
-            TestClient client = new TestClient(new URI("ws://localhost:8080/ws"), clientId);
+            TestClient client = new TestClient(new URI("ws://localhost:8080/ws"), clientId, roomType);
             client.connect();
             
             // 等待用户输入退出指令

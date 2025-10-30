@@ -62,11 +62,10 @@ public class RoomService {
     }
 
     /**
-     * 创建房间
-     * @param player1
-     * @param player2
+     * 创建房间（支持多种房间类型）
+     * @param players 玩家数组
      */
-    public void createRoom(MatchService.PlayerInfo player1, MatchService.PlayerInfo player2) {
+    public void createRoom(MatchService.PlayerInfo[] players) {
         if (room != null) {
             System.err.println("房间已存在");
             return;
@@ -75,21 +74,47 @@ public class RoomService {
         // 创建房间
         room = new Room(roomId);
 
-        Player redPlayer = new Player(Camp.Red);
-        redPlayer.setChannelId(player1.getChannelId());
-        redPlayer.setName(player1.getName());
-        room.addPlayer(redPlayer);
+        // 根据玩家数量确定阵营分配方式
+        Camp[] camps;
+        switch (players.length) {
+            case 1:
+                camps = new Camp[]{Camp.Red};
+                break;
+            case 2:
+                camps = new Camp[]{Camp.Red, Camp.Blue};
+                break;
+            case 3:
+                camps = new Camp[]{Camp.Red, Camp.Blue, Camp.Green};
+                break;
+            case 4:
+                camps = new Camp[]{Camp.Red, Camp.Blue, Camp.Green, Camp.Yellow};
+                break;
+            case 8:
+                camps = new Camp[]{Camp.Red, Camp.Blue, Camp.Green, Camp.Yellow, 
+                                  Camp.Orange, Camp.Purple, Camp.Pink, Camp.Brown};
+                break;
+            default:
+                // 默认分配前N个阵营
+                camps = new Camp[players.length];
+                Camp[] allCamps = Camp.values();
+                for (int i = 0; i < players.length && i < allCamps.length; i++) {
+                    camps[i] = allCamps[i];
+                }
+                break;
+        }
 
-        Player bluePlayer = new Player(Camp.Blue);
-        bluePlayer.setChannelId(player2.getChannelId());
-        bluePlayer.setName(player2.getName());
-        room.addPlayer(bluePlayer);
+        // 添加玩家到房间
+        for (int i = 0; i < players.length; i++) {
+            Player player = new Player(camps[i]);
+            player.setChannelId(players[i].getChannelId());
+            player.setName(players[i].getName());
+            room.addPlayer(player);
+            
+            // 在WebSocketSessionManager中记录映射关系
+            WebSocketSessionManager.getInstance().setChannelRoomMapping(players[i].getChannelId(), roomId);
+        }
         
-        // 在WebSocketSessionManager中也记录映射关系
-        WebSocketSessionManager.getInstance().setChannelRoomMapping(player1.getChannelId(), roomId);
-        WebSocketSessionManager.getInstance().setChannelRoomMapping(player2.getChannelId(), roomId);
-        
-        System.out.println("创建房间: " + roomId);
+        System.out.println("创建房间: " + roomId + "，玩家数量：" + players.length);
 
         // 发送给房间内的所有玩家
         for (Player player : room.getPlayers()) {
@@ -99,6 +124,15 @@ public class RoomService {
                 System.out.println("无法向玩家[" + player + "]发送匹配成功消息, 因为已断线！");
             }
         }
+    }
+
+    /**
+     * 创建双人房间（兼容旧版本）
+     * @param player1
+     * @param player2
+     */
+    public void createRoom(MatchService.PlayerInfo player1, MatchService.PlayerInfo player2) {
+        createRoom(new MatchService.PlayerInfo[]{player1, player2});
     }
     
     private void notifyMatchSuccess(Player sendPlayer) {

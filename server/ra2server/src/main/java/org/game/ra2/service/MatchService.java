@@ -3,12 +3,15 @@ package org.game.ra2.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.game.ra2.util.ObjectMapperProvider;
-// 移除了对org.game.ra2.entity.Player的导入
+import org.game.ra2.entity.RoomType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -39,9 +42,15 @@ public class MatchService {
 
     private static MatchService instance = new MatchService();
     private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private final List<PlayerInfo> waitingPlayers = new ArrayList<>(); // 改为使用内部PlayerInfo类
+    // 为每种房间类型维护一个等待队列
+    private final Map<RoomType, Queue<PlayerInfo>> waitingPlayersByType = new ConcurrentHashMap<>();
 
     private MatchService() {
+        // 初始化所有房间类型的队列
+        for (RoomType type : RoomType.values()) {
+            waitingPlayersByType.put(type, new ConcurrentLinkedQueue<>());
+        }
+        
         // 启动匹配处理线程
         Thread matchThread = new Thread(this::run);
         matchThread.setName("MatchThread");
@@ -123,8 +132,18 @@ public class MatchService {
      */
     private void handleMatchMessage(Message message) {
         // 将消息数据转换为Player并保存到等待玩家列表中
-        JsonNode data = message.getData();
+        JsonNode data = message.getData().get("data");
         String name = data.has("name") ? data.get("name").asText() : "Unknown";
+        
+        // 获取房间类型，默认为双人
+        String roomTypeStr = data.has("roomType") ? data.get("roomType").asText() : "DUO";
+        RoomType roomType;
+        try {
+            roomType = RoomType.valueOf(roomTypeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            System.out.println("无效的房间类型: " + roomTypeStr + "，使用默认类型 DUO");
+            roomType = RoomType.DUO;
+        }
 
         // 检查channelId是否已经在匹配中
         if (isMatching(message.getChannelId())) {
@@ -139,8 +158,9 @@ public class MatchService {
         }
 
         PlayerInfo player = new PlayerInfo(message.getChannelId(), name); // 创建内部PlayerInfo对象
-        waitingPlayers.add(player);
-        System.out.println("添加玩家到等待列表: " + message.getChannelId());
+        Queue<PlayerInfo> queue = waitingPlayersByType.get(roomType);
+        queue.add(player);
+        System.out.println("添加玩家到 " + roomType + " 等待列表: " + message.getChannelId());
 
         try {
             Map<String, String> response = new HashMap<>();
@@ -155,24 +175,36 @@ public class MatchService {
     }
 
     private boolean isMatching(String channelId) {
-        return waitingPlayers.stream().anyMatch(player -> player.getChannelId().equals(channelId));
+        // 检查所有队列中是否已经存在该玩家
+        for (Queue<PlayerInfo> queue : waitingPlayersByType.values()) {
+            if (queue.stream().anyMatch(player -> player.getChannelId().equals(channelId))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * 处理匹配逻辑
      */
     private void processMatching() {
-        // 两两匹配创建房间
-        while (waitingPlayers.size() >= 2) {
-            PlayerInfo player1 = waitingPlayers.remove(0);
-            PlayerInfo player2 = waitingPlayers.remove(0);
-
-            System.out.println("匹配玩家: " + player1.getChannelId() + " 和 " + player2.getChannelId());
-
-            // 创建RoomService实例来创建房间
-            RoomService roomService = RoomServiceManager.getInstance().createRoomService();
+        // 遍历所有房间类型处理匹配
+        for (RoomType roomType : RoomType.values()) {
+            Queue<PlayerInfo> queue = waitingPlayersByType.get(roomType);
             
-            roomService.createRoom(player1, player2);
+            // 当队列中的玩家数量满足房间要求时创建房间
+            while (queue.size() >= roomType.getMaxPlayers()) {
+                // 创建RoomService实例来创建房间
+                RoomService roomService = RoomServiceManager.getInstance().createRoomService();
+                
+                // 根据房间类型创建相应数量的玩家
+                PlayerInfo[] players = new PlayerInfo[roomType.getMaxPlayers()];
+                for (int i = 0; i < roomType.getMaxPlayers(); i++) {
+                    players[i] = queue.poll();
+                }
+                
+                roomService.createRoom(players);
+            }
         }
     }
 
@@ -185,16 +217,18 @@ public class MatchService {
         // 这里可以实现更复杂的逻辑
         System.out.println("处理用户断线: " + channelId);
         
-        // 从等待玩家列表中移除断线的玩家
-        PlayerInfo playerToRemove = null;
-        for (PlayerInfo player : waitingPlayers) {
-            if (player.getChannelId().equals(channelId)) {
-                playerToRemove = player;
-                break;
+        // 从所有等待队列中移除断线的玩家
+        for (Queue<PlayerInfo> queue : waitingPlayersByType.values()) {
+            PlayerInfo playerToRemove = null;
+            for (PlayerInfo player : queue) {
+                if (player.getChannelId().equals(channelId)) {
+                    playerToRemove = player;
+                    break;
+                }
             }
-        }
-        if (playerToRemove != null) {
-            waitingPlayers.remove(playerToRemove);
+            if (playerToRemove != null) {
+                queue.remove(playerToRemove);
+            }
         }
     }
 }
