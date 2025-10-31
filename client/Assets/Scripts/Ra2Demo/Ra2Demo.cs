@@ -39,6 +39,10 @@ public class Ra2Demo : MonoBehaviour
     // 添加房间类型选择
     private RoomType selectedRoomType = RoomType.DUO;
 
+    // 添加用于下拉列表显示的变量
+    private bool showRoomTypeDropdown = false;
+    private string[] roomTypeOptions = { "单人(SOLO)", "双人(DUO)", "三人(TRIO)", "四人(QUAD)", "八人(OCTO)" };
+    
     private void Awake()
     {
         _mainCamera = Camera.main;
@@ -291,13 +295,27 @@ public class Ra2Demo : MonoBehaviour
         // 绘制左上角的房间类型选择
         if (!isConnected) 
         {
-            Rect roomTypeRect = new Rect(20, 20, 700, 300);
+            Rect roomTypeRect = new Rect(20, 20, 250, 800);
             GUILayout.BeginArea(roomTypeRect);
             GUILayout.Label("房间类型:", buttonStyle);
-            string[] roomTypeOptions = { "SOLO", "DUO", "TRIO", "QUAD", "OCTO" };
-            int selectedIndex = (int)selectedRoomType - 1;
-            selectedIndex = GUILayout.SelectionGrid(selectedIndex, roomTypeOptions, 3, buttonStyle); // 每行3个选项
-            selectedRoomType = (RoomType)(selectedIndex + 1);
+            
+            // 自定义下拉列表实现
+            if (GUILayout.Button(roomTypeOptions[(int)selectedRoomType - 1], buttonStyle))
+            {
+                showRoomTypeDropdown = !showRoomTypeDropdown;
+            }
+            
+            if (showRoomTypeDropdown)
+            {
+                for (int i = 0; i < roomTypeOptions.Length; i++)
+                {
+                    if (GUILayout.Button(roomTypeOptions[i], buttonStyle))
+                    {
+                        selectedRoomType = (RoomType)(i + 1);
+                        showRoomTypeDropdown = false;
+                    }
+                }
+            }
             GUILayout.EndArea();
         }
 
@@ -308,19 +326,20 @@ public class Ra2Demo : MonoBehaviour
             float screenWidth = Screen.width;
             float screenHeight = Screen.height;
             float buttonWidth = 200;
-            float buttonHeight = 60;
+            float buttonHeight = 100;
             
             Rect buttonRect = new Rect(
                 (screenWidth - buttonWidth) / 2,
                 (screenHeight - buttonHeight) / 2,
                 buttonWidth,
-                buttonHeight * 2 // 增加高度以容纳房间类型选择和按钮
+                buttonHeight
             );
 
             GUILayout.BeginArea(buttonRect);
             
             if (!isConnected)
             {
+                GUILayout.Space(10);
                 if (GUILayout.Button("匹配", buttonStyle))
                 {
                     ConnectToServer();
@@ -344,7 +363,7 @@ public class Ra2Demo : MonoBehaviour
         else if (isReady)
         {
             // 将暂停/继续按钮定位在左上角
-            Rect pauseButtonRect = new Rect(20, 20, 200, 60);
+            Rect pauseButtonRect = new Rect(20, 20, 300, 200);
             GUILayout.BeginArea(pauseButtonRect);
             
             if (!isPaused)
