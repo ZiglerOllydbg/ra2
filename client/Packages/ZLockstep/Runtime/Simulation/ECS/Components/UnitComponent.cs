@@ -37,6 +37,8 @@ namespace ZLockstep.Simulation.ECS.Components
         /// </summary>
         public bool IsSelectable;
 
+        public int PrefabId;
+
         public static UnitComponent CreateInfantry(int playerId)
         {
             return new UnitComponent
