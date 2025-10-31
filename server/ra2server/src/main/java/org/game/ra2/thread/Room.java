@@ -112,7 +112,7 @@ public class Room {
             int frame = data.get("frame").asInt();
 
             if (frame < currentFrame) {
-                System.err.println("收到过期的帧输入：" + frame);
+                System.err.println("收到 " + channelId +" 过期的帧输入：" + frame + ", currentFrame=" + currentFrame);
                 return;
             }
 
