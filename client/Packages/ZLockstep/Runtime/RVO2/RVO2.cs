@@ -115,6 +115,12 @@ namespace ZLockstep.RVO
         /// <param name="deltaTime">时间步长</param>
         public void DoStep(zfloat deltaTime)
         {
+            // 防止除以零错误
+            if (deltaTime <= zfloat.Zero)
+            {
+                return;
+            }
+
             timeStep = deltaTime;
 
             // 为每个智能体计算新速度
@@ -199,6 +205,13 @@ namespace ZLockstep.RVO
                     zfloat invTimeStep = zfloat.One / timeStep;
                     zVector2 w = relativeVelocity - relativePosition * invTimeStep;
                     zfloat wLength = w.magnitude;
+                    
+                    // 防止除以零
+                    if (wLength < new zfloat(0, 1000)) // 0.001
+                    {
+                        continue; // 跳过这个障碍物
+                    }
+                    
                     zVector2 unitW = w / wLength;
 
                     line.direction = new zVector2(unitW.y, -unitW.x);
@@ -220,9 +233,18 @@ namespace ZLockstep.RVO
         /// </summary>
         private zVector2 LinearProgram2(List<ORCALine> lines, zfloat maxSpeed, zVector2 optVelocity)
         {
-            if (optVelocity.magnitude > maxSpeed)
+            zfloat optMagnitude = optVelocity.magnitude;
+            if (optMagnitude > maxSpeed)
             {
-                optVelocity = optVelocity.normalized * maxSpeed;
+                // 防止除以零
+                if (optMagnitude > new zfloat(0, 1000)) // 0.001
+                {
+                    optVelocity = optVelocity.normalized * maxSpeed;
+                }
+                else
+                {
+                    optVelocity = zVector2.zero;
+                }
             }
 
             // 检查期望速度是否满足所有约束
@@ -287,9 +309,18 @@ namespace ZLockstep.RVO
             }
 
             // 限制在最大速度内
-            if (result.magnitude > maxSpeed)
+            zfloat resultMagnitude = result.magnitude;
+            if (resultMagnitude > maxSpeed)
             {
-                result = result.normalized * maxSpeed;
+                // 防止除以零
+                if (resultMagnitude > new zfloat(0, 1000)) // 0.001
+                {
+                    result = result.normalized * maxSpeed;
+                }
+                else
+                {
+                    result = zVector2.zero;
+                }
             }
 
             return result;

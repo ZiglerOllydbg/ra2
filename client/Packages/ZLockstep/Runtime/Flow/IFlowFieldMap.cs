@@ -43,6 +43,7 @@ namespace ZLockstep.Flow
         /// 格子坐标转换为世界坐标（格子中心）
         /// </summary>
         zVector2 GridToWorld(int gridX, int gridY);
+        void SetWalkable(int x, int y, bool v);
     }
 }
 
