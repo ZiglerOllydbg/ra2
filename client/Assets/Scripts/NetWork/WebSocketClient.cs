@@ -17,7 +17,6 @@ namespace Game.RA2.Client
         private bool isConnected = false;
         private bool matched = false;
         private bool gameStarted = false;
-        private System.Random random = new System.Random();
         
         // 移除了消息队列，直接使用事件
         public event Action<string> OnConnected;

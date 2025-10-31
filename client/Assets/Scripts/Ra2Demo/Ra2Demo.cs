@@ -57,6 +57,33 @@ public class Ra2Demo : MonoBehaviour
                 Debug.LogError("[Test] 找不到 GameWorldBridge！请在场景中添加或手动分配。");
             }
         }
+        
+        // 加载保存的房间类型选择
+        LoadRoomTypeSelection();
+    }
+    
+    /// <summary>
+    /// 加载保存的房间类型选择
+    /// </summary>
+    private void LoadRoomTypeSelection()
+    {
+        if (PlayerPrefs.HasKey("SelectedRoomType"))
+        {
+            selectedRoomType = (RoomType)PlayerPrefs.GetInt("SelectedRoomType");
+        }
+        else
+        {
+            selectedRoomType = RoomType.DUO; // 默认值
+        }
+    }
+    
+    /// <summary>
+    /// 保存房间类型选择
+    /// </summary>
+    private void SaveRoomTypeSelection()
+    {
+        PlayerPrefs.SetInt("SelectedRoomType", (int)selectedRoomType);
+        PlayerPrefs.Save();
     }
 
     void Start()
@@ -313,6 +340,7 @@ public class Ra2Demo : MonoBehaviour
                     {
                         selectedRoomType = (RoomType)(i + 1);
                         showRoomTypeDropdown = false;
+                        SaveRoomTypeSelection(); // 保存选择
                     }
                 }
             }
@@ -351,11 +379,7 @@ public class Ra2Demo : MonoBehaviour
             }
             else if (isMatched && !isReady)
             {
-                if (GUILayout.Button("准备", buttonStyle))
-                {
-                    _client.SendReady();
-                    isReady = true;
-                }
+                GUILayout.Label("等待中", buttonStyle);
             }
             
             GUILayout.EndArea();
@@ -398,9 +422,18 @@ public class Ra2Demo : MonoBehaviour
             
             // 初始化网络适配器
             new WebSocketNetworkAdaptor(_client, worldBridge);
-            
+
             // 更新 Game 中的玩家ID
             worldBridge.Game.SetLocalPlayerId(data.CampId);
+            
+            _client.SendReady();
+        };
+        
+        // 监听游戏开始事件
+        _client.OnGameStart += () =>
+        {
+            Debug.Log("[Test] 游戏开始，设置为准备状态");
+            isReady = true;
         };
         
         // 使用选定的房间类型发送匹配请求
