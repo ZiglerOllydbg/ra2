@@ -2,11 +2,14 @@ package org.game.ra2;
 
 import org.game.ra2.netty.WebSocketServer;
 import org.game.ra2.service.MatchService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * 游戏启动类
  */
 public class GameStartUp {
+    private static final Logger logger = LogManager.getLogger(GameStartUp.class);
 
     public static void main(String[] args) {
         try {
@@ -17,10 +20,10 @@ public class GameStartUp {
             WebSocketServer server = new WebSocketServer(8080, matchService);
             server.start();
 
-            System.out.println("服务器启动成功，请访问 http://localhost:8080");
+            logger.info("服务器启动成功，请访问 http://localhost:8080");
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("服务器启动失败", e);
         }
     }
 }

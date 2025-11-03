@@ -7,12 +7,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.game.ra2.util.ObjectMapperProvider;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.URI;
 import java.util.Random;
 import java.util.Scanner;
 
 public class TestClient extends WebSocketClient {
+    private static final Logger logger = LogManager.getLogger(TestClient.class);
     private static final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     private final String clientId;
     private final String roomType;
@@ -29,7 +32,7 @@ public class TestClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
-        System.out.println("[" + clientId + "] 连接建立成功");
+        logger.info("[{}] 连接建立成功", clientId);
         // 连接成功后发送匹配请求
         sendMatchRequest();
     }
@@ -51,21 +54,21 @@ public class TestClient extends WebSocketClient {
                     handleFrameSync(jsonNode);
                     break;
                 default:
-                    System.out.println("[" + clientId + "] 收到未知消息类型: " + type);
+                    logger.warn("[{}] 收到未知消息类型: {}", clientId, type);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("处理消息时发生错误", e);
         }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        System.out.println("[" + clientId + "] 连接关闭: " + reason);
+        logger.info("[{}] 连接关闭: {}", clientId, reason);
     }
 
     @Override
     public void onError(Exception ex) {
-        ex.printStackTrace();
+        logger.error("客户端发生错误", ex);
     }
 
     private void sendMatchRequest() {
@@ -81,21 +84,21 @@ public class TestClient extends WebSocketClient {
             
             String message = objectMapper.writeValueAsString(request);
             send(message);
-            System.out.println("[" + clientId + "] 发送匹配请求: " + message);
+            logger.info("[{}] 发送匹配请求: {}", clientId, message);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("发送匹配请求时发生错误", e);
         }
     }
 
     private void handleMatchSuccess(JsonNode message) {
         matched = true;
-        System.out.println("[" + clientId + "] 匹配成功.message:" +  message);
+        logger.info("[{}] 匹配成功.message:{}", clientId, message);
         // 打印房间ID和你的campId和token
         String roomId = message.get("roomId").asText();
         int campId = message.get("yourCampId").asInt();
         String token = message.get("yourToken").asText();
         JsonNode data = message.get("data");
-        System.out.println("[" + clientId + "] 房间ID: " + roomId + ", CampID: " + campId + ", Token: " + token);
+        logger.info("[{}] 房间ID: {}, CampID: {}, Token: {}", clientId, roomId, campId, token);
 
         // 发送准备就绪消息
         try {
@@ -103,20 +106,20 @@ public class TestClient extends WebSocketClient {
             request.put("type", "ready");
             String readyMessage = objectMapper.writeValueAsString(request);
             send(readyMessage);
-            System.out.println("[" + clientId + "] 发送准备就绪");
+            logger.info("[{}] 发送准备就绪", clientId);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("发送准备就绪消息时发生错误", e);
         }
     }
 
     private void handleGameStart() {
         gameStarted = true;
-        System.out.println("[" + clientId + "] 游戏开始");
+        logger.info("[{}] 游戏开始", clientId);
     }
 
     private void handleFrameSync(JsonNode message) {
         int frame = message.get("frame").asInt();
-        System.out.println("[" + clientId + "] 收到帧同步数据 - 帧号: " + frame + ", 数据: " + message.toString());
+        logger.info("[{}] 收到帧同步数据 - 帧号: {}, 数据: {}", clientId, frame, message.toString());
         
         // 模拟发送下一帧的输入数据
 //        sendFrameInput(frame + 2);
@@ -145,17 +148,17 @@ public class TestClient extends WebSocketClient {
             
             String message = objectMapper.writeValueAsString(request);
             send(message);
-            System.out.println("[" + clientId + "] 发送第 " + frame + " 帧输入数据");
+            logger.info("[{}] 发送第 {} 帧输入数据", clientId, frame);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("发送帧输入数据时发生错误", e);
         }
     }
 
     public static void main(String[] args) {
         try {
             if (args.length < 1) {
-                System.out.println("请提供客户端ID作为参数，例如: Player1 [房间类型]");
-                System.out.println("房间类型: SOLO, DUO, TRIO, QUAD, OCTO");
+                logger.info("请提供客户端ID作为参数，例如: Player1 [房间类型]");
+                logger.info("房间类型: SOLO, DUO, TRIO, QUAD, OCTO");
                 return;
             }
             
@@ -168,12 +171,12 @@ public class TestClient extends WebSocketClient {
             
             // 等待用户输入退出指令
             Scanner scanner = new Scanner(System.in);
-            System.out.println("按回车键退出...");
+            logger.info("按回车键退出...");
             scanner.nextLine();
             
             client.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("启动客户端时发生错误", e);
         }
     }
 }

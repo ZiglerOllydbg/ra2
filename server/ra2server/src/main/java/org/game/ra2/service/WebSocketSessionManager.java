@@ -4,6 +4,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * WebSocket会话管理器
  */
 public class WebSocketSessionManager {
+    private static final Logger logger = LogManager.getLogger(WebSocketSessionManager.class);
     private static WebSocketSessionManager instance = new WebSocketSessionManager();
     private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> channelRoomMap = new ConcurrentHashMap<>();
@@ -46,13 +49,12 @@ public class WebSocketSessionManager {
             channel.eventLoop().execute(() -> {
                 channel.writeAndFlush(new TextWebSocketFrame(message)).addListener((ChannelFutureListener) future -> {
                     if (!future.isSuccess()) {
-                        System.err.println("消息发送失败 - 频道ID: " + channelId + ", 消息: " + message);
-                        future.cause().printStackTrace();
+                        logger.error("消息发送失败 - 频道ID: {}, 消息: {}", channelId, message, future.cause());
                     }
                 });
             });
         } else {
-            System.out.println("无法发送消息到频道: " + channelId + ", 频道状态: " + (channel != null ? "活跃=" + channel.isActive() : "不存在"));
+            logger.warn("无法发送消息到频道: {}, 频道状态: {}", channelId, (channel != null ? "活跃=" + channel.isActive() : "不存在"));
         }
     }
     

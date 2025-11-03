@@ -4,16 +4,20 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MultiPlayerTest {
+    private static final Logger logger = LogManager.getLogger(MultiPlayerTest.class);
+    
     public static void main(String[] args) {
         try {
-            System.out.println("请选择要测试的房间类型:");
-            System.out.println("1. SOLO (1人)");
-            System.out.println("2. DUO (2人)");
-            System.out.println("3. TRIO (3人)");
-            System.out.println("4. QUAD (4人)");
-            System.out.println("5. OCTO (8人)");
+            logger.info("请选择要测试的房间类型:");
+            logger.info("1. SOLO (1人)");
+            logger.info("2. DUO (2人)");
+            logger.info("3. TRIO (3人)");
+            logger.info("4. QUAD (4人)");
+            logger.info("5. OCTO (8人)");
             
             Scanner scanner = new Scanner(System.in);
             int choice = scanner.nextInt();
@@ -44,13 +48,13 @@ public class MultiPlayerTest {
                     playerCount = 8;
                     break;
                 default:
-                    System.out.println("无效选择，默认使用DUO模式");
+                    logger.warn("无效选择，默认使用DUO模式");
                     roomType = "DUO";
                     playerCount = 2;
                     break;
             }
             
-            System.out.println("启动 " + playerCount + " 个玩家进行 " + roomType + " 模式测试");
+            logger.info("启动 {} 个玩家进行 {} 模式测试", playerCount, roomType);
             
             List<TestClient> clients = new ArrayList<>();
             
@@ -65,7 +69,7 @@ public class MultiPlayerTest {
                 Thread.sleep(500);
             }
             
-            System.out.println("所有客户端已启动，按回车键停止所有客户端...");
+            logger.info("所有客户端已启动，按回车键停止所有客户端...");
             scanner.nextLine();
             
             // 关闭所有客户端
@@ -73,10 +77,10 @@ public class MultiPlayerTest {
                 client.close();
             }
             
-            System.out.println("所有客户端已关闭");
+            logger.info("所有客户端已关闭");
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("多玩家测试时发生错误", e);
         }
     }
 }

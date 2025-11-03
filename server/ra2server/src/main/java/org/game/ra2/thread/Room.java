@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.game.ra2.entity.Player; // 使用独立的Player类
 import org.game.ra2.service.WebSocketSessionManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 房间类
  */
 public class Room {
+    private static final Logger logger = LogManager.getLogger(Room.class);
+    
     private final String id;
     private final List<Player> players = new ArrayList<>();
     private final Set<String> readyPlayers = new HashSet<>();
@@ -64,11 +68,11 @@ public class Room {
      */
     public void markPlayerReady(String channelId) {
         if (readyPlayers.contains(channelId)) {
-            System.err.println("玩家 " + channelId + " 已准备就绪");
+            logger.warn("玩家 {} 已准备就绪", channelId);
             return;
         }
 
-        System.out.println("玩家 " + channelId + " 准备就绪");
+        logger.info("玩家 {} 准备就绪", channelId);
         readyPlayers.add(channelId);
         
         // 检查是否所有玩家都已准备就绪
@@ -82,7 +86,7 @@ public class Room {
         emptySince = -1; // 开始游戏，重置空房间计时
         
         try {
-            System.out.println("房间 " + id + " 游戏开始");
+            logger.info("房间 {} 游戏开始", id);
             ObjectNode response = objectMapper.createObjectNode();
             response.put("type", "gameStart");
             
@@ -93,11 +97,11 @@ public class Room {
                 if (player.isChannelValid()) {
                     WebSocketSessionManager.getInstance().sendMessage(player.getChannelId(), message);
                 } else {
-                    System.out.println("玩家 " + player + " 已断线");
+                    logger.warn("玩家 {} 已断线", player);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("开始游戏时发生错误", e);
         }
     }
 
@@ -112,7 +116,7 @@ public class Room {
             int frame = data.get("frame").asInt();
 
             if (frame < currentFrame) {
-                System.err.println("收到 " + channelId +" 过期的帧输入：" + frame + ", currentFrame=" + currentFrame);
+                logger.warn("收到 {} 过期的帧输入：{}, currentFrame={}", channelId, frame, currentFrame);
                 return;
             }
 
@@ -129,7 +133,7 @@ public class Room {
 
             frameData.put(campId, playerInputs);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("处理帧输入时发生错误", e);
         }
     }
 
@@ -215,10 +219,10 @@ public class Room {
             }
 
             if (!empty) {
-                System.out.println("房间 " + id + " 广播帧 " + frame + " 在线人数(" + getOnlinePlayerCount() + ") 数据：" + response);
+                logger.info("房间 {} 广播帧 {} 在线人数({}) 数据：{}", id, frame, getOnlinePlayerCount(), response);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("广播帧同步数据时发生错误", e);
         }
     }
 
@@ -261,7 +265,7 @@ public class Room {
         
         if (allDisconnected && emptySince == -1) {
             emptySince = System.currentTimeMillis();
-            System.out.println("房间 " + id + " 所有玩家已离开，开始30秒倒计时销毁");
+            logger.info("房间 {} 所有玩家已离开，开始30秒倒计时销毁", id);
         }
     }
     
@@ -273,7 +277,7 @@ public class Room {
         if (emptySince != -1) {
             long currentTime = System.currentTimeMillis();
             if (currentTime - emptySince > DESTROY_DELAY) {
-                System.out.println("房间 " + id + " 已空置超过30秒，准备销毁");
+                logger.info("房间 {} 已空置超过30秒，准备销毁", id);
                 return true;
             }
         }

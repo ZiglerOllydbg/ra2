@@ -9,6 +9,8 @@ import org.game.ra2.entity.Camp;
 import org.game.ra2.entity.Player;
 import org.game.ra2.thread.Room;
 import org.game.ra2.thread.RoomThread;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 房间服务类
  */
 public class RoomService {
+    private static final Logger logger = LogManager.getLogger(RoomService.class);
+    
     private final RoomThread roomThread;
     private final ObjectMapper objectMapper = ObjectMapperProvider.getInstance();
     private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
@@ -47,9 +51,9 @@ public class RoomService {
             Message message = new Message(channelId, data);
             messageQueue.put(message);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("添加消息到队列时被中断", e);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("添加消息到队列时发生错误", e);
         }
     }
 
@@ -67,7 +71,7 @@ public class RoomService {
      */
     public void createRoom(MatchService.PlayerInfo[] players) {
         if (room != null) {
-            System.err.println("房间已存在");
+            logger.error("房间已存在");
             return;
         }
 
@@ -114,14 +118,14 @@ public class RoomService {
             WebSocketSessionManager.getInstance().setChannelRoomMapping(players[i].getChannelId(), roomId);
         }
         
-        System.out.println("创建房间: " + roomId + "，玩家数量：" + players.length);
+        logger.info("创建房间: {}，玩家数量：{}", roomId, players.length);
 
         // 发送给房间内的所有玩家
         for (Player player : room.getPlayers()) {
             if (player.isChannelValid()) {
                 notifyMatchSuccess(player);
             } else {
-                System.out.println("无法向玩家[" + player + "]发送匹配成功消息, 因为已断线！");
+                logger.warn("无法向玩家[{}]发送匹配成功消息, 因为已断线！", player);
             }
         }
     }
@@ -164,10 +168,9 @@ public class RoomService {
 
             WebSocketSessionManager.getInstance().sendMessage(sendPlayer.getChannelId(), message);
 
-            System.out.println("向玩家[" + sendPlayer + "]发送匹配成功消息: " + message);
+            logger.info("向玩家[{}]发送匹配成功消息: {}", sendPlayer, message);
         } catch (Exception e) {
-            System.err.println("发送匹配成功消息时发生错误:" + e.getMessage());
-            e.printStackTrace();
+            logger.error("发送匹配成功消息时发生错误: {}", e.getMessage(), e);
         }
     }
 
@@ -235,7 +238,7 @@ public class RoomService {
                     break;
                 default:
                     // 处理其他类型的消息
-                    System.out.println("房间未知消息类型: " + type);
+                    logger.warn("房间未知消息类型: {}", type);
                     break;
             }
         }
@@ -256,7 +259,7 @@ public class RoomService {
      * 销毁房间
      */
     private void destroyRoom() {
-        System.out.println("正在销毁房间: " + roomId);
+        logger.info("正在销毁房间: {}", roomId);
         destroyed = true;
         
         // 通知RoomServiceManager移除此房间服务

@@ -1,6 +1,8 @@
 package org.game.ra2.thread;
 
 import org.game.ra2.service.RoomService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,8 @@ import java.util.ArrayList;
  * 房间线程类
  */
 public class RoomThread extends Thread {
+    private static final Logger logger = LogManager.getLogger(RoomThread.class);
+    
     private final LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     private volatile boolean running = true;
     private Map<String, RoomService> roomServices = new HashMap<>();
@@ -30,7 +34,7 @@ public class RoomThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("房间线程启动: " + getName());
+        logger.info("房间线程启动: {}", getName());
 
         // 稳定20帧循环逻辑 (每秒20帧)
         final long FRAME_TIME = 50; // 50ms per frame (1000ms / 20fps = 50ms)
@@ -60,10 +64,10 @@ public class RoomThread extends Thread {
                 lastFrameTime = System.currentTimeMillis();
                 
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                logger.info("房间线程被中断");
                 break;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("房间线程发生未预期错误", e);
             }
         }
     }
@@ -76,7 +80,7 @@ public class RoomThread extends Thread {
             try {
                 task.run();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("执行任务时发生错误", e);
             }
         }
     }
@@ -89,7 +93,7 @@ public class RoomThread extends Thread {
         try {
             taskQueue.put(task);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("添加任务到队列时被中断", e);
         }
     }
 
