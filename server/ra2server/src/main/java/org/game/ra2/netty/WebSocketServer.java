@@ -31,7 +31,7 @@ public class WebSocketServer {
                     .childHandler(new WebSocketServerInitializer(matchService));
 
             ChannelFuture future = bootstrap.bind(port).sync();
-            System.out.println("WebSocket服务器启动成功，端口：" + port);
+            System.out.println("WebSocket 服务器启动成功，端口：" + port);
             future.channel().closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
