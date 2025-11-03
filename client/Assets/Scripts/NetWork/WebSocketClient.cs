@@ -196,7 +196,7 @@ namespace Game.RA2.Client
             int campId = message["yourCampId"]?.ToObject<int>() ?? 0;
             string token = message["yourToken"]?.ToString();
             
-            Debug.Log($"[{clientId}] 匹配成功. 房间ID: {roomId}, CampID: {campId}, Token: {token}");
+            Debug.Log($"[{clientId}] 匹配成功. 房间ID: {roomId}, CampID: {campId}, Token: {token}. message: {message}");
             
             var matchData = new MatchSuccessData
             {
