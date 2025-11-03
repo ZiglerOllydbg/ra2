@@ -155,6 +155,11 @@ public class RoomService {
             }
             
             response.set("data", dataArray);
+            
+            // 添加初始游戏状态
+            ObjectNode initialState = createInitialGameState();
+            response.set("initialState", initialState);
+            
             String message = objectMapper.writeValueAsString(response);
 
             WebSocketSessionManager.getInstance().sendMessage(sendPlayer.getChannelId(), message);
@@ -165,10 +170,6 @@ public class RoomService {
             e.printStackTrace();
         }
     }
-
-    // 删除原有的 handleReady 方法
-    
-    // 删除原有的 handleFrameInput 方法
 
     /**
      * 处理断线
@@ -260,5 +261,95 @@ public class RoomService {
         
         // 通知RoomServiceManager移除此房间服务
         RoomServiceManager.getInstance().removeRoomService(roomId);
+    }
+    
+    /**
+     * 创建初始游戏状态
+     * @return 包含所有阵营初始状态的ObjectNode
+     */
+    private ObjectNode createInitialGameState() {
+        ObjectNode initialState = objectMapper.createObjectNode();
+        
+        // 为每个阵营创建初始单位
+        for (Player player : room.getPlayers()) {
+            int campId = player.getCamp().getId();
+            ObjectNode campState = objectMapper.createObjectNode();
+            
+            // 创建建筑物数组
+            ArrayNode buildings = objectMapper.createArrayNode();
+            
+            // 添加坦克工厂
+            ObjectNode factory = objectMapper.createObjectNode();
+            factory.put("id", "factory_" + campId);
+            factory.put("type", "tankFactory");
+            
+            // 根据阵营设置不同的初始位置
+            switch (campId) {
+                case 1: // 红色阵营 - 左上角
+                    factory.put("x", 100);
+                    factory.put("y", 100);
+                    break;
+                case 2: // 蓝色阵营 - 右下角
+                    factory.put("x", 900);
+                    factory.put("y", 500);
+                    break;
+                case 3: // 绿色阵营 - 左下角
+                    factory.put("x", 100);
+                    factory.put("y", 500);
+                    break;
+                case 4: // 黄色阵营 - 右上角
+                    factory.put("x", 900);
+                    factory.put("y", 100);
+                    break;
+                default: // 其他阵营默认位置
+                    factory.put("x", 500);
+                    factory.put("y", 300);
+                    break;
+            }
+            
+            buildings.add(factory);
+            campState.set("buildings", buildings);
+            
+            // 创建单位数组
+            ArrayNode units = objectMapper.createArrayNode();
+            
+            // 添加5辆坦克
+            for (int i = 1; i <= 5; i++) {
+                ObjectNode tank = objectMapper.createObjectNode();
+                tank.put("id", "tank_" + campId + "_" + i);
+                tank.put("type", "tank");
+                
+                // 设置坦克位置，围绕工厂分布
+                switch (campId) {
+                    case 1: // 红色阵营
+                        tank.put("x", 100 + i * 20);
+                        tank.put("y", 150);
+                        break;
+                    case 2: // 蓝色阵营
+                        tank.put("x", 900 - i * 20);
+                        tank.put("y", 450);
+                        break;
+                    case 3: // 绿色阵营
+                        tank.put("x", 100 + i * 20);
+                        tank.put("y", 450);
+                        break;
+                    case 4: // 黄色阵营
+                        tank.put("x", 900 - i * 20);
+                        tank.put("y", 150);
+                        break;
+                    default: // 其他阵营
+                        tank.put("x", 480 + i * 20);
+                        tank.put("y", 300);
+                        break;
+                }
+                
+                units.add(tank);
+            }
+            
+            campState.set("units", units);
+            initialState.set(String.valueOf(campId), campState);
+        }
+        
+        return initialState;
     }
 }
