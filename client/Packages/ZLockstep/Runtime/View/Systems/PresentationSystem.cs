@@ -93,18 +93,32 @@ namespace ZLockstep.View.Systems
         /// </summary>
         private void CreateViewForEntity(UnitCreatedEvent evt)
         {
-            // 获取预制体
-            if (!_unitPrefabs.TryGetValue(evt.UnitType, out var prefab))
+            GameObject viewObject = null;
+            
+            // 尝试获取预制体
+            if (_unitPrefabs.TryGetValue(evt.UnitType, out var prefab) || 
+                _unitPrefabs.TryGetValue(evt.PrefabId, out prefab))
             {
-                if (!_unitPrefabs.TryGetValue(evt.PrefabId, out prefab))
+                // 实例化预制体
+                viewObject = Object.Instantiate(prefab, _viewRoot);
+            }
+            else
+            {
+                // 找不到预制体，根据类型创建默认可视化
+                if (evt.UnitType == 100) // 100=弹道类型
+                {
+                    viewObject = CreateDefaultProjectileView(evt);
+                }
+                else
                 {
                     Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={evt.UnitType}, PrefabId={evt.PrefabId}");
                     return;
                 }
             }
 
-            // 实例化GameObject
-            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
+            if (viewObject == null)
+                return;
+
             viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
             viewObject.transform.position = evt.Position.ToVector3();
 
@@ -113,13 +127,59 @@ namespace ZLockstep.View.Systems
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
             ComponentManager.AddComponent(entity, viewComponent);
 
-            // 添加玩家单位指示器组件
-            var indicator = viewObject.AddComponent<PlayerUnitIndicator>();
-            // 修复：通过Game对象获取本地玩家ID
-            int localPlayerId = _game != null ? _game.GetLocalPlayerId() : 0;
-            indicator.Initialize(localPlayerId, evt.PlayerId);
+            // 添加玩家单位指示器组件（弹道不需要）
+            if (evt.UnitType != 100)
+            {
+                var indicator = viewObject.AddComponent<PlayerUnitIndicator>();
+                // 修复：通过Game对象获取本地玩家ID
+                int localPlayerId = _game != null ? _game.GetLocalPlayerId() : 0;
+                indicator.Initialize(localPlayerId, evt.PlayerId);
+            }
 
             Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}");
+        }
+
+        /// <summary>
+        /// 创建默认的弹道可视化
+        /// </summary>
+        private GameObject CreateDefaultProjectileView(UnitCreatedEvent evt)
+        {
+            // 创建弹道根节点
+            GameObject projectile = new GameObject($"Projectile_{evt.EntityId}");
+            projectile.transform.SetParent(_viewRoot);
+            projectile.transform.position = evt.Position.ToVector3();
+
+            // 添加球体作为弹头
+            GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.name = "ProjectileHead";
+            sphere.transform.SetParent(projectile.transform);
+            sphere.transform.localPosition = Vector3.zero;
+            sphere.transform.localScale = Vector3.one * 0.3f; // 0.3米直径
+
+            // 设置颜色（根据阵营）
+            var renderer = sphere.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                var material = new Material(Shader.Find("Standard"));
+                material.color = evt.PlayerId == 0 ? new Color(0.2f, 0.5f, 1f) : new Color(1f, 0.3f, 0.3f); // 蓝/红
+                material.SetFloat("_Metallic", 0.5f);
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", material.color * 2f);
+                renderer.material = material;
+            }
+
+            // 添加拖尾效果
+            var trail = projectile.AddComponent<TrailRenderer>();
+            trail.time = 0.5f; // 拖尾持续0.5秒
+            trail.startWidth = 0.2f;
+            trail.endWidth = 0.05f;
+            trail.material = new Material(Shader.Find("Sprites/Default"));
+            trail.startColor = evt.PlayerId == 0 ? new Color(0.2f, 0.5f, 1f, 1f) : new Color(1f, 0.3f, 0.3f, 1f);
+            trail.endColor = new Color(1f, 1f, 1f, 0f);
+
+            Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
+            
+            return projectile;
         }
 
         /// <summary>

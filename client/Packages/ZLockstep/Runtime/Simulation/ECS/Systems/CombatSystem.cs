@@ -175,7 +175,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 sourceEntityId: source.Id,
                 targetEntityId: target.Id,
                 damage: damage,
-                speed: new zfloat(20), // 弹道速度20米/秒
+                speed: new zfloat(10), // 弹道速度10米/秒（调慢以便观察）
                 targetPosition: targetPos,
                 isHoming: true, // 追踪型导弹
                 sourceCampId: sourceCampId
@@ -185,6 +185,18 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 添加速度组件（初始速度朝向目标）
             zVector3 direction = (targetPos - sourcePos).normalized;
             ComponentManager.AddComponent(projectile, new VelocityComponent(direction * projComponent.Speed));
+
+            // 添加UnitComponent（提供视图标识信息）
+            ComponentManager.AddComponent(projectile, new UnitComponent
+            {
+                UnitType = 100, // 100=弹道类型
+                PrefabId = 4,   // 弹道预制体ID
+                PlayerId = sourceCampId,
+                MoveSpeed = projComponent.Speed
+            });
+
+            // 添加Camp组件（继承发射者阵营，便于统一查询和碰撞检测）
+            ComponentManager.AddComponent(projectile, CampComponent.Create(sourceCampId));
 
             // 发布事件通知表现层创建弹道视图
             World.EventManager.Publish(new UnitCreatedEvent
@@ -196,7 +208,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 PrefabId = 4 // 弹道预制体ID
             });
 
-            // zUDebug.Log($"[CombatSystem] 发射弹道: {source.Id} -> {target.Id}, 伤害{damage}");
+            zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}, 伤害{damage}");
         }
     }
 }
