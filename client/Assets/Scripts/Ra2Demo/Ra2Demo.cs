@@ -62,8 +62,10 @@ public class Ra2Demo : MonoBehaviour
     // 添加多选支持相关字段
     private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
     private bool isSelecting = false; // 是否正在框选
+    private bool isClickOnUnit = false; // 鼠标按下时是否点击在单位上
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
+    private const float dragThreshold = 5f; // 拖拽阈值，像素单位
     
     private void Awake()
     {
@@ -183,14 +185,6 @@ public class Ra2Demo : MonoBehaviour
         // 获取鼠标/触摸位置
         Vector2 screenPosition = Pointer.current.position.ReadValue();
 
-        // 检查是否按住Shift键进行框选
-        if (Keyboard.current != null && Keyboard.current.shiftKey.isPressed)
-        {
-            // 开始框选
-            StartSelectionBox(screenPosition);
-            return;
-        }
-
         // 射线检测获取点击位置
         if (TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
         {
@@ -202,7 +196,18 @@ public class Ra2Demo : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
             // 检测是否点击到了单位
-            DetectAndSelectUnit(ray);
+            isClickOnUnit = CheckIfClickOnUnit(ray);
+            
+            // 如果点击在单位上，直接选择单位
+            if (isClickOnUnit)
+            {
+                DetectAndSelectUnit(ray);
+            }
+            else
+            {
+                // 如果点击在空白区域，开始框选
+                StartSelectionBox(screenPosition);
+            }
         }
     }
 
@@ -340,12 +345,48 @@ public class Ra2Demo : MonoBehaviour
     }
     
     /// <summary>
+    /// 检查是否点击在单位上
+    /// </summary>
+    /// <param name="ray">射线</param>
+    /// <returns>是否点击在单位上</returns>
+    private bool CheckIfClickOnUnit(Ray ray)
+    {
+        if (worldBridge == null || worldBridge.LogicWorld == null)
+            return false;
+
+        // 射线检测单位
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+        {
+            // 查找对应的逻辑实体
+            var entities = worldBridge.LogicWorld.ComponentManager
+                .GetAllEntityIdsWith<TransformComponent>();
+            
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                var transform = worldBridge.LogicWorld.ComponentManager
+                    .GetComponent<TransformComponent>(entity);
+                
+                // 比较位置来确定是否是同一个单位（简化实现）
+                Vector3 logicPosition = transform.Position.ToVector3();
+                if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
     /// 开始框选
     /// </summary>
     /// <param name="screenPosition">屏幕位置</param>
     private void StartSelectionBox(Vector2 screenPosition)
     {
         isSelecting = true;
+        isClickOnUnit = false; // 重置单位点击状态
         selectionStartPoint = screenPosition;
         selectionEndPoint = screenPosition;
     }
@@ -359,6 +400,16 @@ public class Ra2Demo : MonoBehaviour
         if (isSelecting)
         {
             selectionEndPoint = screenPosition;
+            
+            // 计算拖拽距离
+            float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
+            
+            // 只有当拖拽距离超过阈值时才真正激活框选
+            if (dragDistance > dragThreshold)
+            {
+                // 激活框选可视化
+                isSelecting = true;
+            }
         }
     }
     
@@ -367,9 +418,27 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void EndSelectionBox()
     {
+        // 如果鼠标按下时点击在单位上，则不执行框选逻辑
+        if (isClickOnUnit)
+        {
+            isSelecting = false;
+            isClickOnUnit = false;
+            return;
+        }
+        
         if (!isSelecting) return;
         
         isSelecting = false;
+        isClickOnUnit = false;
+        
+        // 计算拖拽距离
+        float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
+        
+        // 只有当拖拽距离超过阈值时才执行框选
+        if (dragDistance <= dragThreshold)
+        {
+            return;
+        }
         
         // 计算框选区域 (统一使用屏幕坐标系统)
         float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
@@ -767,8 +836,18 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void DrawSelectionBox()
     {
-        if (isSelecting)
+        // 只有当真正激活框选时才绘制（拖拽距离超过阈值且未点击在单位上）
+        if (isSelecting && !isClickOnUnit)
         {
+            // 计算拖拽距离
+            float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
+            
+            // 只有当拖拽距离超过阈值时才绘制框选区域
+            if (dragDistance <= dragThreshold)
+            {
+                return;
+            }
+            
             // 创建框选区域的样式
             GUIStyle selectionStyle = new GUIStyle();
             selectionStyle.normal.background = Texture2D.whiteTexture;
