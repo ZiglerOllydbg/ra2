@@ -553,18 +553,27 @@ public class Ra2Demo : MonoBehaviour
                 
                 // 将点击位置映射到游戏世界坐标
                 // 小地图纹理是256x256，对应游戏世界0-256坐标
-                float worldX = (localX / textureRect.width) * 256f;
-                float worldZ = (localY / textureRect.height) * 256f;
+                float worldX = localX / textureRect.width * 256f;
+                float worldZ = localY / textureRect.height * 256f;
                 
                 // 注意：纹理坐标Y轴向下为正，而世界坐标Z轴向上为正，需要翻转
                 worldZ = 256f - worldZ;
                 
-                // 移动主相机到点击位置（保持Y轴不变）
-                Vector3 cameraPos = _mainCamera.transform.position;
-                Vector3 targetPos = new Vector3(worldX, cameraPos.y, worldZ);
+                // 尝试通过RTSCameraTargetController设置相机目标位置
+                RTSCameraTargetController rtsCameraTargetController = RTSCameraTargetController.Instance;
+
+                Vector3 targetPos = new Vector3(worldX, rtsCameraTargetController.CameraTarget.position.y, worldZ);
                 
-                // 如果没有RtsCameraController，则直接设置位置
-                _mainCamera.transform.position = targetPos;
+                if (rtsCameraTargetController != null && rtsCameraTargetController.CameraTarget != null)
+                {
+                    // 使用RTSCameraTargetController移动相机目标
+                    rtsCameraTargetController.SetCameraTargetPosition(targetPos);
+                }
+                else
+                {
+                    // 如果没有控制器，则直接设置位置
+                    _mainCamera.transform.position = targetPos;
+                }
                 
                 // 使用事件，防止其他UI元素重复处理
                 Event.current.Use();
@@ -605,7 +614,7 @@ public class Ra2Demo : MonoBehaviour
         // 计算相机位置在屏幕上的实际绘制位置
         // 需要考虑小地图纹理在屏幕上的绘制区域和标题栏高度(25)
         float drawX = actualMiniMapRect.x + (cameraX / 256f) * actualMiniMapRect.width;
-        float drawY = actualMiniMapRect.y + 25 + (1.0f - cameraY / 256f) * (actualMiniMapRect.height - 30);
+        float drawY = actualMiniMapRect.y + (1.0f - cameraY / 256f) * (actualMiniMapRect.height - 25);
         
         // 绘制相机视角框（红色边框）
         Color oldColor = GUI.color;

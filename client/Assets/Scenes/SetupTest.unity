@@ -291,7 +291,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowZoom
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: BoundaryMaxX
+      value: 256
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: BoundaryMaxZ
+      value: 256
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: BoundaryMinX
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: BoundaryMinZ
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowDragMove

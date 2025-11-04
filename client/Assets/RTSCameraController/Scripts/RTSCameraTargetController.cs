@@ -801,6 +801,25 @@ public class RTSCameraTargetController : MonoBehaviour
         _lockedOnPosition = Vector3.zero;
         _lockedOnTransform = null;
     }
+    
+    /// <summary>
+    /// Sets the camera target position directly
+    /// </summary>
+    /// <param name="position">The target position to move the camera to</param>
+    public void SetCameraTargetPosition(Vector3 position)
+    {
+        // Cancel any target locking first
+        CancelTargetLock();
+        
+        // Apply boundary constraints
+        float clampedX = Mathf.Clamp(position.x, BoundaryMinX, BoundaryMaxX);
+        float clampedZ = Mathf.Clamp(position.z, BoundaryMinZ, BoundaryMaxZ);
+        position.x = clampedX;
+        position.z = clampedZ;
+        
+        // Set the camera target position
+        CameraTarget.position = position;
+    }
 
     /// <summary>
     /// Get's the corresponding Delta Time depending on the Independent Time Scale variable.
