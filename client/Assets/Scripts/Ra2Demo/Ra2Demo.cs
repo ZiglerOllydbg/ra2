@@ -7,9 +7,6 @@ using ZLockstep.Sync.Command;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 using Game.RA2.Client;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System.Collections.Generic;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -30,6 +27,7 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] public string ServerUrl = "ws://101.126.136.178:8080/ws";
 
     private WebSocketNetworkAdaptor _networkAdaptor; // 保存网络适配器引用
+    private WebSocketClient _client; // 添加WebSocket客户端引用
     
     // 添加状态标志
     private bool isConnected = false;
@@ -342,9 +340,6 @@ public class Ra2Demo : MonoBehaviour
                         selectedRoomType = (RoomType)(i + 1);
                         showRoomTypeDropdown = false;
                         SaveRoomTypeSelection(); // 保存选择
-                        
-                        // 如果已经创建了网络适配器，同步更新房间类型
-                        _networkAdaptor?.SetRoomType(selectedRoomType);
                     }
                 }
             }
@@ -374,10 +369,7 @@ public class Ra2Demo : MonoBehaviour
                 GUILayout.Space(10);
                 if (GUILayout.Button("匹配", buttonStyle))
                 {
-                    _networkAdaptor = new WebSocketNetworkAdaptor(worldBridge);
-                    _networkAdaptor.Connect(ServerUrl, "Player1");
-                    _networkAdaptor.SetRoomType(selectedRoomType);
-                    isConnected = true;
+                    ConnectToServer();
                 }
             }
             else if (isConnected && !isMatched)
@@ -417,5 +409,77 @@ public class Ra2Demo : MonoBehaviour
             GUILayout.EndArea();
         }
     }
+    
+    /// <summary>
+    /// 连接到服务器
+    /// </summary>
+    private void ConnectToServer()
+    {
+        _client = new WebSocketClient(ServerUrl, "Player1");
+        
+        // 注册事件处理
+        _client.OnConnected += OnConnected;
+        _client.OnMatchSuccess += OnMatchSuccess;
+        _client.OnGameStart += OnGameStart;
 
+        // 连接网络适配器和客户端
+        _networkAdaptor = new WebSocketNetworkAdaptor(worldBridge, _client);
+        
+        // 连接服务器
+        zUDebug.Log("[WebSocketNetworkAdaptor] 正在连接服务器...");
+        _client.Connect();
+        isConnected = true;
+    }
+    
+    /// <summary>
+    /// 连接成功事件处理
+    /// </summary>
+    private void OnConnected(string message)
+    {
+        zUDebug.Log("[Ra2Demo] 连接成功: " + message);
+        // 使用选定的房间类型发送匹配请求
+        _client.SendMatchRequest(selectedRoomType);
+    }
+    
+    /// <summary>
+    /// 匹配成功事件处理
+    /// </summary>
+    private void OnMatchSuccess(MatchSuccessData data)
+    {
+        isMatched = true;
+        
+        // data.Data为输入数据列表
+        zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, data={data}");
+        
+        // 更新 Game 中的玩家ID
+        worldBridge.Game.SetLocalPlayerId(data.CampId);
+        
+        // 处理创世阶段 - 初始化游戏世界
+        if (data.InitialState != null)
+        {
+            worldBridge.Game.InitializeWorldFromMatchData(data.InitialState);
+        }
+        
+        // 发送准备就绪消息
+        _client.SendReady();
+    }
+    
+    /// <summary>
+    /// 游戏开始事件处理
+    /// </summary>
+    private void OnGameStart()
+    {
+        isReady = true;
+        
+        // 在游戏正式启动时，发送一个初始帧确认（帧0）
+        // 这样可以启动帧同步逻辑
+        if (worldBridge != null && worldBridge.Game != null &&
+            worldBridge.Game.FrameSyncManager != null)
+        {
+            // 确认第0帧（空帧），启动帧同步逻辑
+            worldBridge.Game.FrameSyncManager.ConfirmFrame(0, new System.Collections.Generic.List<ICommand>());
+        }
+        
+        zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
+    }
 }

@@ -12,67 +12,26 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 {
     private readonly GameWorldBridge _gameWorldBridge; // 保存引用
     private WebSocketClient _client;
-    private RoomType _selectedRoomType = RoomType.DUO; // 默认房间类型
 
-    public WebSocketNetworkAdaptor(GameWorldBridge gameWorldBridge)
+    public WebSocketNetworkAdaptor(GameWorldBridge gameWorldBridge, WebSocketClient client)
     {
+        _client = client;
         _gameWorldBridge = gameWorldBridge; // 保存引用
-    }
-
-    public void Connect(string url, string clientId)
-    {
-        _client = new WebSocketClient(url, clientId);
-                // OnConnected
-        _client.OnConnected += OnConnected();
-        // OnMatchSuccess
-        _client.OnMatchSuccess += OnMatchSuccess(); // 注册匹配成功事件
-        
-        // OnGameStart
-        _client.OnGameStart += OnGameStart();
         // OnFrameSync
         _client.OnFrameSync += OnFrameSync(_gameWorldBridge);
 
         // 绑定网络适配器
         _gameWorldBridge.Game.FrameSyncManager.NetworkAdapter = this;
-
-        // 连接服务器
-        zUDebug.Log("[WebSocketNetworkAdaptor] 正在连接服务器...");
-        _client.Connect();
-
     }
     
     public void OnDispatchMessageQueue()
     {
         _client?.DispatchMessageQueue();
     }
-    
-    public void SetRoomType(RoomType roomType)
-    {
-        _selectedRoomType = roomType;
-    }
 
-    private System.Action<string> OnConnected()
+    public void SendCommandToServer(ICommand command)
     {
-        return (message) => {
-            // 使用选定的房间类型发送匹配请求
-            _client.SendMatchRequest(_selectedRoomType);
-        };
-    }
-    
-    private System.Action OnGameStart()
-    {
-        return () => {
-            // 在游戏正式启动时，发送一个初始帧确认（帧0）
-            // 这样可以启动帧同步逻辑
-            if (_gameWorldBridge != null && _gameWorldBridge.Game != null &&
-                _gameWorldBridge.Game.FrameSyncManager != null)
-            {
-                // 确认第0帧（空帧），启动帧同步逻辑
-                _gameWorldBridge.Game.FrameSyncManager.ConfirmFrame(0, new List<ICommand>());
-            }
-            
-            zUDebug.Log("[WebSocketNetworkAdaptor] 游戏开始，帧同步已启动");
-        };
+        _client.SendFrameInput(command.ExecuteFrame, command);
     }
 
     private static System.Action<FrameSyncData> OnFrameSync(GameWorldBridge gameWorldBridge)
@@ -138,31 +97,5 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
             gameWorldBridge.Game.FrameSyncManager.ConfirmFrame(data.Frame, commandList);
         };
-    }
-    
-    private System.Action<MatchSuccessData> OnMatchSuccess()
-    {
-        return (data) =>
-        {
-            // data.Data为输入数据列表
-            zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, data={data}");
-            
-            // 更新 Game 中的玩家ID
-            _gameWorldBridge.Game.SetLocalPlayerId(data.CampId);
-            
-            // 处理创世阶段 - 初始化游戏世界
-            if (data.InitialState != null)
-            {
-                _gameWorldBridge.Game.InitializeWorldFromMatchData(data.InitialState);
-            }
-            
-            // 发送准备就绪消息
-            _client.SendReady();
-        };
-    }
-
-    public void SendCommandToServer(ICommand command)
-    {
-        _client.SendFrameInput(command.ExecuteFrame, command);
     }
 }
