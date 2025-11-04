@@ -9,6 +9,7 @@ using zUnity;
 using Game.RA2.Client;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -26,9 +27,9 @@ public class Ra2Demo : MonoBehaviour
     private RTSControl _controls;
     private Camera _mainCamera;
 
-    [SerializeField] private string ServerUrl = "ws://101.126.136.178:8080/ws";
+    [SerializeField] public string ServerUrl = "ws://101.126.136.178:8080/ws";
 
-    private WebSocketClient _client;
+    private WebSocketNetworkAdaptor _networkAdaptor; // 保存网络适配器引用
     
     // 添加状态标志
     private bool isConnected = false;
@@ -213,7 +214,7 @@ public class Ra2Demo : MonoBehaviour
             SendMoveCommand();
         }
 
-        _client?.DispatchMessageQueue();
+        _networkAdaptor?.OnDispatchMessageQueue();
     }
 
     /// <summary>
@@ -341,6 +342,9 @@ public class Ra2Demo : MonoBehaviour
                         selectedRoomType = (RoomType)(i + 1);
                         showRoomTypeDropdown = false;
                         SaveRoomTypeSelection(); // 保存选择
+                        
+                        // 如果已经创建了网络适配器，同步更新房间类型
+                        _networkAdaptor?.SetRoomType(selectedRoomType);
                     }
                 }
             }
@@ -370,7 +374,10 @@ public class Ra2Demo : MonoBehaviour
                 GUILayout.Space(10);
                 if (GUILayout.Button("匹配", buttonStyle))
                 {
-                    ConnectToServer();
+                    _networkAdaptor = new WebSocketNetworkAdaptor(worldBridge);
+                    _networkAdaptor.Connect(ServerUrl, "Player1");
+                    _networkAdaptor.SetRoomType(selectedRoomType);
+                    isConnected = true;
                 }
             }
             else if (isConnected && !isMatched)
@@ -411,36 +418,4 @@ public class Ra2Demo : MonoBehaviour
         }
     }
 
-    private void ConnectToServer()
-    {
-        _client = new WebSocketClient(ServerUrl, "Player1");
-        _client.Connect();
-        _client.OnMatchSuccess += (MatchSuccessData data) =>
-        {
-            Debug.Log($"[Test] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}");
-            isMatched = true;
-            
-            // 初始化网络适配器
-            new WebSocketNetworkAdaptor(_client, worldBridge);
-
-            // 更新 Game 中的玩家ID
-            worldBridge.Game.SetLocalPlayerId(data.CampId);
-            
-            _client.SendReady();
-        };
-        
-        // 监听游戏开始事件
-        _client.OnGameStart += () =>
-        {
-            Debug.Log("[Test] 游戏开始，设置为准备状态");
-            isReady = true;
-        };
-        
-        // 使用选定的房间类型发送匹配请求
-        _client.OnConnected += (message) => {
-            _client.SendMatchRequest(selectedRoomType);
-        };
-        
-        isConnected = true;
-    }
 }

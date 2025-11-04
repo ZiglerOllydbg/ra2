@@ -195,14 +195,16 @@ namespace Game.RA2.Client
             string roomId = message["roomId"]?.ToString();
             int campId = message["yourCampId"]?.ToObject<int>() ?? 0;
             string token = message["yourToken"]?.ToString();
-            
+            var initialState = message["initialState"] as JObject; // 解析初始状态
+    
             Debug.Log($"[{clientId}] 匹配成功. 房间ID: {roomId}, CampID: {campId}, Token: {token}. message: {message}");
             
             var matchData = new MatchSuccessData
             {
                 RoomId = roomId,
                 CampId = campId,
-                Token = token
+                Token = token,
+                InitialState = initialState // 保存初始状态
             };
             
             OnMatchSuccess?.Invoke(matchData);
@@ -212,6 +214,7 @@ namespace Game.RA2.Client
         {
             gameStarted = true;
             Debug.Log($"[{clientId}] 游戏开始");
+            
             OnGameStart?.Invoke();
         }
         
@@ -279,6 +282,7 @@ namespace Game.RA2.Client
         public string RoomId;
         public int CampId;
         public string Token;
+        public JObject InitialState; // 添加初始状态数据
     }
     
     public struct FrameSyncData

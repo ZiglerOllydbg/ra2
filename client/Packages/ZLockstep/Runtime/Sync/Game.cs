@@ -2,6 +2,11 @@ using System.Collections.Generic;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS.Systems;
 using ZLockstep.Sync.Command;
+using Newtonsoft.Json.Linq;
+using ZLockstep.Simulation.ECS.Components;
+using zUnity;
+using ZLockstep.Simulation.Events;
+using System;
 
 namespace ZLockstep.Sync
 {
@@ -89,6 +94,16 @@ namespace ZLockstep.Sync
         /// 是否暂停游戏
         /// </summary>
         public bool IsPaused { get; private set; }
+        
+        /// <summary>
+        /// 创世阶段创建的实体事件列表
+        /// </summary>
+        private List<UnitCreatedEvent> _genesisEntities = new List<UnitCreatedEvent>();
+        
+        /// <summary>
+        /// 是否已经发布创世阶段实体事件
+        /// </summary>
+        private bool _hasPublishedGenesisEntities = false;
 
         private readonly int _frameRate;
         private int _localPlayerId;
@@ -243,6 +258,18 @@ namespace ZLockstep.Sync
         {
             // 1. 清空上一帧的事件（修复时序问题）
             World.EventManager.Clear();
+
+            // 特殊处理：在第一帧发布创世阶段创建的实体事件
+            if (!_hasPublishedGenesisEntities && _genesisEntities.Count > 0)
+            {
+                UnityEngine.Debug.Log($"[Game] 发布 {_genesisEntities.Count} 个创世阶段创建的实体事件");
+                foreach (var entityEvent in _genesisEntities)
+                {
+                    World.EventManager.Publish(entityEvent);
+                }
+                OnWorldInitialized();
+                _hasPublishedGenesisEntities = true;
+            }
 
             // 2. 更新唯一的 zWorld
             // - 单机模式：不传 targetTick，自动递增
@@ -402,5 +429,340 @@ namespace ZLockstep.Sync
             
             UnityEngine.Debug.Log($"[Game] 玩家ID已更新为: {playerId}");
         }
+        
+        /// <summary>
+        /// 当游戏世界初始化完成时调用（创世阶段完成）
+        /// </summary>
+        public void OnWorldInitialized()
+        {
+            UnityEngine.Debug.Log("[Game] 世界初始化完成，准备开始帧同步");
+            // 可以在这里设置一个标志，表示创世阶段已完成，可以开始处理帧逻辑
+        }
+        
+        /// <summary>
+        /// 根据匹配成功协议初始化游戏世界（创世阶段）
+        /// </summary>
+        /// <param name="initialState">初始状态数据</param>
+        public void InitializeWorldFromMatchData(JObject initialState)
+        {
+            if (World == null)
+            {
+                UnityEngine.Debug.LogError("[Game] 世界未初始化，无法执行创世阶段");
+                return;
+            }
+
+            UnityEngine.Debug.Log($"[Game] 开始创世阶段，初始化游戏世界状态");
+
+            // 创建一个临时列表来存储创世阶段创建的实体信息
+            var createdEntities = new List<UnitCreatedEvent>();
+
+            // 解析initialState数据并创建初始单位和建筑
+            foreach (var playerData in initialState)
+            {
+                string playerIdStr = playerData.Key;
+                int playerId = int.Parse(playerIdStr);
+                
+                var playerObj = (JObject)playerData.Value;
+                
+                // 创建建筑
+                var buildings = (JArray)playerObj["buildings"];
+                if (buildings != null)
+                {
+                    foreach (JObject building in buildings)
+                    {
+                        string id = building["id"]?.ToString();
+                        string type = building["type"]?.ToString();
+                        float x = building["x"]?.ToObject<float>() ?? 0;
+                        float y = building["y"]?.ToObject<float>() ?? 0;
+                        
+                        // 根据类型创建建筑实体
+                        var entityEvent = CreateBuildingEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
+                        if (entityEvent.HasValue)
+                        {
+                            createdEntities.Add(entityEvent.Value);
+                        }
+                    }
+                }
+                
+                // 创建单位
+                var units = (JArray)playerObj["units"];
+                if (units != null)
+                {
+                    foreach (JObject unit in units)
+                    {
+                        string id = unit["id"]?.ToString();
+                        string type = unit["type"]?.ToString();
+                        float x = unit["x"]?.ToObject<float>() ?? 0;
+                        float y = unit["y"]?.ToObject<float>() ?? 0;
+                        
+                        // 根据类型创建单位实体
+                        var entityEvent = CreateUnitEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
+                        if (entityEvent.HasValue)
+                        {
+                            createdEntities.Add(entityEvent.Value);
+                        }
+                    }
+                }
+            }
+            
+            // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
+            _genesisEntities = createdEntities;
+            
+            UnityEngine.Debug.Log($"[Game] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
+        }
+
+        private UnitCreatedEvent? CreateBuildingEntity(int playerId, string type, zVector3 position)
+        {
+            // 根据建筑类型确定建筑类型ID和尺寸
+            int buildingType = 0; // 默认为基地
+            int width = 2;
+            int height = 2;
+            int prefabId = 0;
+            
+            switch (type)
+            {
+                case "tankFactory":
+                    buildingType = 1; // 假设1为坦克工厂
+                    width = 3;
+                    height = 3;
+                    prefabId = 2; // 假设2为坦克工厂预制体ID
+                    break;
+                default:
+                    buildingType = 0; // 基地
+                    width = 2;
+                    height = 2;
+                    prefabId = 1; // 假设1为基地预制体ID
+                    break;
+            }
+
+            // 1. 创建建筑实体
+            var entity = World.EntityManager.CreateEntity();
+
+            // 2. 添加Transform组件
+            World.ComponentManager.AddComponent(entity, new TransformComponent
+            {
+                Position = position,
+                Rotation = zQuaternion.identity,
+                Scale = zVector3.one * 10
+            });
+
+            // 3. 添加建筑组件
+            var buildingComponent = BuildingComponent.Create(
+                buildingType, 0, 0, width, height); // 网格坐标暂时设为0，需要实际计算
+            World.ComponentManager.AddComponent(entity, buildingComponent);
+
+            // 4. 添加阵营组件
+            var campComponent = CampComponent.Create(playerId);
+            World.ComponentManager.AddComponent(entity, campComponent);
+
+            // 5. 添加生命值组件
+            var healthComponent = CreateBuildingHealthComponent(buildingType);
+            World.ComponentManager.AddComponent(entity, healthComponent);
+
+            // 6. 如果建筑有攻击能力（如防御塔），添加攻击组件
+            if (CanBuildingAttack(buildingType))
+            {
+                var attackComponent = CreateBuildingAttackComponent(buildingType);
+                World.ComponentManager.AddComponent(entity, attackComponent);
+            }
+
+            // 7. 创建但不发布事件，返回事件对象
+            var unitCreatedEvent = new UnitCreatedEvent
+            {
+                EntityId = entity.Id,
+                UnitType = buildingType,
+                Position = position,
+                PlayerId = playerId,
+                PrefabId = prefabId
+            };
+
+            UnityEngine.Debug.Log($"[Game] 创建建筑: Player {playerId}, Type {type} (ID: {buildingType}), Position {position}");
+            
+            // 返回事件对象，而不是直接发布
+            return unitCreatedEvent;
+        }
+
+        private UnitCreatedEvent? CreateUnitEntity(int playerId, string type, zVector3 position)
+        {
+            // 根据单位类型确定单位类型ID
+            int unitType = 1; // 默认为动员兵
+            int prefabId = 1; // 默认预制体ID
+            
+            switch (type)
+            {
+                case "tank":
+                    unitType = 2; // 坦克
+                    prefabId = 2; // 坦克预制体ID
+                    break;
+                default:
+                    unitType = 1; // 动员兵
+                    prefabId = 1; // 动员兵预制体ID
+                    break;
+            }
+
+            // 1. 创建单位实体
+            var entity = World.EntityManager.CreateEntity();
+
+            // 2. 添加Transform组件
+            World.ComponentManager.AddComponent(entity, new TransformComponent
+            {
+                Position = position,
+                Rotation = zQuaternion.identity,
+                Scale = zVector3.one * 5
+            });
+
+            // 3. 添加Unit组件（根据类型）
+            var unitComponent = CreateUnitComponent(unitType, playerId);
+            World.ComponentManager.AddComponent(entity, unitComponent);
+
+            // 4. 添加Health组件
+            var healthComponent = CreateUnitHealthComponent(unitType);
+            World.ComponentManager.AddComponent(entity, healthComponent);
+
+            // 5. 如果单位有攻击能力，添加Attack组件
+            if (CanUnitAttack(unitType))
+            {
+                var attackComponent = CreateUnitAttackComponent(unitType);
+                World.ComponentManager.AddComponent(entity, attackComponent);
+            }
+
+            // 6. 创建但不发布事件，返回事件对象
+            var unitCreatedEvent = new UnitCreatedEvent
+            {
+                EntityId = entity.Id,
+                UnitType = unitType,
+                Position = position,
+                PlayerId = playerId,
+                PrefabId = prefabId
+            };
+
+            UnityEngine.Debug.Log($"[Game] 创建单位: Player {playerId}, Type {type} (ID: {unitType}), Position {position}");
+            
+            // 返回事件对象，而不是直接发布
+            return unitCreatedEvent;
+        }
+
+        #region 单位辅助方法
+
+        private Simulation.ECS.Components.UnitComponent CreateUnitComponent(int unitType, int playerId)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(playerId);
+                case 2: // 犀牛坦克
+                    return Simulation.ECS.Components.UnitComponent.CreateTank(playerId);
+                case 3: // 矿车
+                    return Simulation.ECS.Components.UnitComponent.CreateHarvester(playerId);
+                default:
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(playerId);
+            }
+        }
+
+        private Simulation.ECS.Components.HealthComponent CreateUnitHealthComponent(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)50.0f);
+                case 2: // 犀牛坦克
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)200.0f);
+                case 3: // 矿车
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)150.0f);
+                default:
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)100.0f);
+            }
+        }
+
+        private Simulation.ECS.Components.AttackComponent CreateUnitAttackComponent(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                    return new Simulation.ECS.Components.AttackComponent
+                    {
+                        Damage = (zfloat)10.0f,
+                        Range = (zfloat)4.0f,
+                        AttackInterval = (zfloat)1.0f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                case 2: // 犀牛坦克
+                    return new Simulation.ECS.Components.AttackComponent
+                    {
+                        Damage = (zfloat)30.0f,
+                        Range = (zfloat)8.0f,
+                        AttackInterval = (zfloat)2.0f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                default:
+                    return Simulation.ECS.Components.AttackComponent.CreateDefault();
+            }
+        }
+
+        private bool CanUnitAttack(int unitType)
+        {
+            switch (unitType)
+            {
+                case 1: // 动员兵
+                case 2: // 犀牛坦克
+                    return true;
+                case 3: // 矿车
+                    return false;
+                default:
+                    return false;
+            }
+        }
+
+        #endregion
+
+        #region 建筑辅助方法
+
+        private Simulation.ECS.Components.HealthComponent CreateBuildingHealthComponent(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 0: // 基地
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)1000.0f);
+                case 1: // 防御塔/工厂
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)500.0f);
+                default:
+                    return new Simulation.ECS.Components.HealthComponent((zfloat)500.0f);
+            }
+        }
+
+        private Simulation.ECS.Components.AttackComponent CreateBuildingAttackComponent(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 1: // 防御塔
+                    return new Simulation.ECS.Components.AttackComponent
+                    {
+                        Damage = (zfloat)40.0f,
+                        Range = (zfloat)12.0f,
+                        AttackInterval = (zfloat)1.5f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                default:
+                    return Simulation.ECS.Components.AttackComponent.CreateDefault();
+            }
+        }
+
+        private bool CanBuildingAttack(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 0: // 基地
+                    return false;
+                case 1: // 防御塔/工厂
+                    return true; // 假设工厂可以攻击
+                default:
+                    return false;
+            }
+        }
+
+        #endregion
     }
 }
