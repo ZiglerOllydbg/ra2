@@ -120,7 +120,7 @@ public class Ra2Demo : MonoBehaviour
         // 射线检测获取点击位置
         if (TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
         {
-            CreateUnitAtPosition(worldPosition);
+            // CreateUnitAtPosition(worldPosition);
         }
     }
 
