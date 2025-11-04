@@ -112,6 +112,11 @@ namespace Game.Examples
             // 注册基础移动系统
             World.SystemManager.RegisterSystem(new MovementSystem());
 
+            // 注册自动追击系统（在战斗系统之前，确保单位能追到敌人）
+            var autoChaseSystem = new AutoChaseSystem();
+            World.SystemManager.RegisterSystem(autoChaseSystem);
+            autoChaseSystem.Initialize(NavSystem);
+
             // 注册战斗系统
             World.SystemManager.RegisterSystem(new CombatSystem());
             World.SystemManager.RegisterSystem(new ProjectileSystem());

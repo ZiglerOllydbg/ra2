@@ -334,7 +334,7 @@ public class StandaloneBattleDemo : MonoBehaviour
         }
         
         // 创建一个更大的区域，并添加半透明背景
-        GUILayout.BeginArea(new Rect(10, 10, 480, 420), _boxStyle);
+        GUILayout.BeginArea(new Rect(10, 10, 480, 460), _boxStyle);
 
         GUILayout.Label("=== 单机战斗Demo ===", _labelStyle);
         GUILayout.Space(3);
@@ -366,6 +366,12 @@ public class StandaloneBattleDemo : MonoBehaviour
         GUILayout.Label("M键：手动更新一帧", instructionStyle);
         GUILayout.Label("H键：切换生命值显示", instructionStyle);
         GUILayout.Label("R键：切换攻击范围显示", instructionStyle);
+
+        GUILayout.Space(5);
+        GUIStyle tipStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Italic };
+        tipStyle.normal.textColor = Color.yellow;
+        GUILayout.Label("提示：单位会自动追击15米内的敌人", tipStyle);
+        GUILayout.Label("测试战斗：创建双方单位并靠近即可", tipStyle);
 
         GUILayout.EndArea();
     }
