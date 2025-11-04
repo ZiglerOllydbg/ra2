@@ -24,7 +24,7 @@ public class Ra2Demo : MonoBehaviour
     [Header("小地图设置")]
     [SerializeField] private MiniMapController miniMapController; // 小地图控制器
     [SerializeField] private Rect miniMapRect = new Rect(20, -1, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从底部计算）
-    [SerializeField] private int miniMapMargin = 20; // 小地图边距
+    [SerializeField] private int miniMapMargin = 80; // 小地图边距
 
     private RTSControl _controls;
     private Camera _mainCamera;
@@ -54,6 +54,9 @@ public class Ra2Demo : MonoBehaviour
     
     // 添加对RtsCameraController的引用
     private RtsCameraController _rtsCameraController;
+    
+    // 添加选中单位相关字段
+    private int selectedEntityId = -1; // 选中的单位实体ID，-1表示未选中任何单位
     
     private void Awake()
     {
@@ -143,7 +146,7 @@ public class Ra2Demo : MonoBehaviour
 
     void Start()
     {
-        // 不再在这里初始化WebSocketNetworkAdaptor
+
     }
 
 
@@ -183,7 +186,8 @@ public class Ra2Demo : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
-            
+            // 检测是否点击到了单位
+            DetectAndSelectUnit(ray);
         }
     }
 
@@ -265,14 +269,48 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 测试：右键点击地面让所有单位移动（可选）
+    /// 检测并选择单位
+    /// </summary>
+    private void DetectAndSelectUnit(Ray ray)
+    {
+        if (worldBridge == null || worldBridge.LogicWorld == null)
+            return;
+
+        // 射线检测单位
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+        {
+            // 查找对应的逻辑实体
+                var entities = worldBridge.LogicWorld.ComponentManager
+                    .GetAllEntityIdsWith<TransformComponent>();
+                
+                foreach (var entityId in entities)
+                {
+                    var entity = new Entity(entityId);
+                    var transform = worldBridge.LogicWorld.ComponentManager
+                        .GetComponent<TransformComponent>(entity);
+                    
+                    // 比较位置来确定是否是同一个单位（简化实现）
+                    Vector3 logicPosition = transform.Position.ToVector3();
+                    if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
+                    {
+                        // 选中该单位
+                        selectedEntityId = entityId;
+                        Debug.Log($"[Test] 选中单位: EntityId={entityId}");
+                        return;
+                    }
+                }
+        }
+    }
+
+    /// <summary>
+    /// 测试：右键点击地面让选中的单位移动（可选）
     /// </summary>
     private void Update()
     {
         // 右键点击发送移动命令
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
-            SendMoveCommand();
+            SendMoveCommandForSelectedUnit();
         }
 
         _networkAdaptor?.OnDispatchMessageQueue();
@@ -281,10 +319,17 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 发送移动命令给所有单位
+    /// 发送移动命令给选中的单位
     /// </summary>
-    private void SendMoveCommand()
+    private void SendMoveCommandForSelectedUnit()
     {
+        // 检查是否有选中的单位
+        if (selectedEntityId == -1)
+        {
+            Debug.Log("[Test] 没有选中的单位");
+            return;
+        }
+
         if (worldBridge == null || worldBridge.LogicWorld == null)
             return;
 
@@ -292,36 +337,35 @@ public class Ra2Demo : MonoBehaviour
         if (!TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
             return;
 
-        // 获取所有属于该玩家的单位
-        var allUnits = worldBridge.LogicWorld.ComponentManager
-            .GetAllEntityIdsWith<UnitComponent>();
-
-        var playerUnits = new System.Collections.Generic.List<int>();
-        foreach (var entityId in allUnits)
+        // 检查选中的单位是否仍然有效且属于当前玩家
+        if (!worldBridge.LogicWorld.ComponentManager.HasComponent<UnitComponent>(new Entity(selectedEntityId)))
         {
-            var entity = new Entity(entityId);
-            var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
-            if (unit.PlayerId == worldBridge.Game.GetLocalPlayerId())
-            {
-                playerUnits.Add(entityId);
-            }
+            selectedEntityId = -1;
+            Debug.Log("[Test] 选中的单位已不存在");
+            return;
         }
 
-        if (playerUnits.Count > 0)
+        var entity = new Entity(selectedEntityId);
+        var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
+        if (unit.PlayerId != worldBridge.Game.GetLocalPlayerId())
         {
-            // 创建移动命令
-            var moveCommand = new MoveCommand(
-                playerId: 0,
-                entityIds: playerUnits.ToArray(),
-                targetPosition: worldPosition.ToZVector3()
-            )
-            {
-                Source = CommandSource.Local
-            };
-
-            worldBridge.SubmitCommand(moveCommand);
-            Debug.Log($"[Test] 发送移动命令: {playerUnits.Count}个单位 → {worldPosition}");
+            selectedEntityId = -1;
+            Debug.Log("[Test] 选中的单位不属于当前玩家");
+            return;
         }
+
+        // 创建移动命令
+        var moveCommand = new MoveCommand(
+            playerId: 0,
+            entityIds: new int[] { selectedEntityId },
+            targetPosition: worldPosition.ToZVector3()
+        )
+        {
+            Source = CommandSource.Local
+        };
+
+        worldBridge.SubmitCommand(moveCommand);
+        Debug.Log($"[Test] 发送移动命令: 单位 {selectedEntityId} → {worldPosition}");
     }
 
     #region 调试辅助
@@ -357,6 +401,13 @@ public class Ra2Demo : MonoBehaviour
                 Vector3 pos = transform.Position.ToVector3();
                 Gizmos.color = Color.cyan;
                 Gizmos.DrawWireCube(pos, Vector3.one * 0.8f);
+
+                // 如果这是选中的单位，用不同颜色标记
+                if (entityId == selectedEntityId)
+                {
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawWireSphere(pos, 1.0f);
+                }
 
                 // 如果有移动命令，绘制目标位置
                 if (worldBridge.LogicWorld.ComponentManager
@@ -486,6 +537,15 @@ public class Ra2Demo : MonoBehaviour
             
             GUILayout.EndArea();
         }
+        
+        // 显示选中的单位信息
+        if (isReady && selectedEntityId != -1)
+        {
+            Rect infoRect = new Rect(Screen.width - 250, 20, 230, 60);
+            GUILayout.BeginArea(infoRect, GUI.skin.box);
+            GUILayout.Label($"选中单位: {selectedEntityId}", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+            GUILayout.EndArea();
+        }
     }
     
     /// <summary>
@@ -568,7 +628,7 @@ public class Ra2Demo : MonoBehaviour
                 
                 if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
                 {
-                    Vector3 targetPos = new(worldX, RTSCameraTargetController.Instance.CameraTarget.position.y, worldZ);
+                    Vector3 targetPos = new(worldX, -50, worldZ);
                     RTSCameraTargetController.Instance.CameraTarget.position = targetPos;
                 }
 
@@ -681,9 +741,11 @@ public class Ra2Demo : MonoBehaviour
         {
             worldBridge.Game.InitializeWorldFromMatchData(data.InitialState);
         }
-        
+
         // 发送准备就绪消息
         _client.SendReady();
+
+        
     }
     
     /// <summary>
@@ -701,7 +763,65 @@ public class Ra2Demo : MonoBehaviour
             // 确认第0帧（空帧），启动帧同步逻辑
             worldBridge.Game.FrameSyncManager.ConfirmFrame(0, new System.Collections.Generic.List<ICommand>());
         }
-        
+
         zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
+        
+        // 获取我方战车工厂位置，相机移动到此位置
+        MoveCameraToOurFactory();
+        
+        // 调整相机位置
+        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
+        RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
+
+    }
+    
+    /// <summary>
+    /// 移动相机到我方工厂位置
+    /// </summary>
+    private void MoveCameraToOurFactory()
+    {
+        if (worldBridge == null || worldBridge.LogicWorld == null)
+            return;
+
+        // 获取所有建筑实体
+        var buildingEntities = worldBridge.LogicWorld.ComponentManager
+            .GetAllEntityIdsWith<BuildingComponent>();
+
+        int playerId = worldBridge.Game.GetLocalPlayerId();
+        
+        foreach (var entityId in buildingEntities)
+        {
+            var entity = new Entity(entityId);
+            
+            // 检查实体是否同时拥有阵营组件和建筑组件
+            if (worldBridge.LogicWorld.ComponentManager.HasComponent<CampComponent>(entity) &&
+                worldBridge.LogicWorld.ComponentManager.HasComponent<BuildingComponent>(entity))
+            {
+                var camp = worldBridge.LogicWorld.ComponentManager.GetComponent<CampComponent>(entity);
+                var building = worldBridge.LogicWorld.ComponentManager.GetComponent<BuildingComponent>(entity);
+                
+                // 查找我方阵营ID为1的建筑（工厂）
+                // 根据代码分析，建筑类型1代表工厂（tankFactory）
+                if (camp.CampId == playerId && building.BuildingType == 1)
+                {
+                    // 确保实体有位置组件
+                    if (worldBridge.LogicWorld.ComponentManager.HasComponent<TransformComponent>(entity))
+                    {
+                        var transform = worldBridge.LogicWorld.ComponentManager.GetComponent<TransformComponent>(entity);
+                        Vector3 factoryPosition = transform.Position.ToVector3();
+                        
+                        // 将相机移动到工厂位置
+                        if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
+                        {
+                            RTSCameraTargetController.Instance.CameraTarget.position = factoryPosition;
+                            zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+        
+        zUDebug.Log("[Ra2Demo] 未找到我方工厂");
     }
 }

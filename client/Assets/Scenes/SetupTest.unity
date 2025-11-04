@@ -326,20 +326,28 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: CameraZoomSpeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowMouseRotate
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: MouseLockOnRotate
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowScreenSideMove
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: CameraScreenSideSpeed
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowHeightOffsetChange
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7208503207582570876, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: m_AnchorMax.y
@@ -532,7 +540,7 @@ MonoBehaviour:
     y: -1
     width: 200
     height: 200
-  miniMapMargin: 20
+  miniMapMargin: 80
   ServerUrl: ws://127.0.0.1:8080/ws
 --- !u!1 &881345225
 GameObject:
