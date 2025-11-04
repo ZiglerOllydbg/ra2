@@ -8,13 +8,6 @@ namespace ZLockstep.View
     /// </summary>
     public class PlayerUnitIndicator : MonoBehaviour
     {
-        [Header("颜色设置")]
-        [Tooltip("本地玩家单位颜色")]
-        [SerializeField] private Color localPlayerColor = Color.green;
-        
-        [Tooltip("其他玩家单位颜色")]
-        [SerializeField] private Color otherPlayerColor = Color.red;
-
         private Renderer[] _renderers;
         private int _localPlayerId = -1;
         private int _unitPlayerId = -1;
@@ -46,9 +39,7 @@ namespace ZLockstep.View
             if (_localPlayerId == -1 || _unitPlayerId == -1)
                 return;
 
-            bool isLocalPlayer = _unitPlayerId == _localPlayerId;
-            Color targetColor = isLocalPlayer ? localPlayerColor : otherPlayerColor;
-            
+            Color targetColor = GetCampColor(_unitPlayerId);
             ApplyColorToRenderers(targetColor);
         }
 
@@ -71,26 +62,32 @@ namespace ZLockstep.View
         }
 
         /// <summary>
-        /// 设置本地玩家颜色
+        /// 根据阵营ID获取对应颜色
         /// </summary>
-        public void SetLocalPlayerColor(Color color)
+        /// <param name="campId">阵营ID</param>
+        /// <returns>阵营对应的颜色</returns>
+        private Color GetCampColor(int campId)
         {
-            localPlayerColor = color;
-            if (_localPlayerId != -1 && _unitPlayerId != -1 && _unitPlayerId == _localPlayerId)
+            switch (campId)
             {
-                ApplyColorToRenderers(localPlayerColor);
-            }
-        }
-
-        /// <summary>
-        /// 设置其他玩家颜色
-        /// </summary>
-        public void SetOtherPlayerColor(Color color)
-        {
-            otherPlayerColor = color;
-            if (_localPlayerId != -1 && _unitPlayerId != -1 && _unitPlayerId != _localPlayerId)
-            {
-                ApplyColorToRenderers(otherPlayerColor);
+                case 1:  // Red
+                    return Color.red;
+                case 2:  // Blue
+                    return Color.blue;
+                case 3:  // Green
+                    return Color.green;
+                case 4:  // Yellow
+                    return Color.yellow;
+                case 5:  // Orange
+                    return new Color(1.0f, 0.5f, 0.0f); // 橙色
+                case 6:  // Purple
+                    return new Color(0.5f, 0.0f, 1.0f); // 紫色
+                case 7:  // Pink
+                    return new Color(1.0f, 0.4f, 0.7f); // 粉色
+                case 8:  // Brown
+                    return new Color(0.6f, 0.3f, 0.0f); // 棕色
+                default: // 默认使用白色
+                    return Color.white;
             }
         }
     }
