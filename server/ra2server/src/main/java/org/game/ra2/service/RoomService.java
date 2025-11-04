@@ -287,34 +287,34 @@ public class RoomService {
             factory.put("id", "factory_" + campId);
             factory.put("type", "tankFactory");
             
-            // 根据阵营设置不同的初始位置
+            // 根据阵营设置不同的初始位置 (在256*256场景中)
             if (camp == Camp.Red) { // 红色阵营 - 左上角
-                factory.put("x", 100);
-                factory.put("y", 100);
+                factory.put("x", 32);
+                factory.put("y", 32);
             } else if (camp == Camp.Blue) { // 蓝色阵营 - 右下角
-                factory.put("x", 900);
-                factory.put("y", 500);
+                factory.put("x", 224);
+                factory.put("y", 224);
             } else if (camp == Camp.Green) { // 绿色阵营 - 左下角
-                factory.put("x", 100);
-                factory.put("y", 500);
+                factory.put("x", 32);
+                factory.put("y", 224);
             } else if (camp == Camp.Yellow) { // 黄色阵营 - 右上角
-                factory.put("x", 900);
-                factory.put("y", 100);
+                factory.put("x", 224);
+                factory.put("y", 32);
             } else if (camp == Camp.Orange) { // 橙色阵营 - 上方中间
-                factory.put("x", 500);
-                factory.put("y", 100);
+                factory.put("x", 128);
+                factory.put("y", 32);
             } else if (camp == Camp.Purple) { // 紫色阵营 - 下方中间
-                factory.put("x", 500);
-                factory.put("y", 500);
+                factory.put("x", 128);
+                factory.put("y", 224);
             } else if (camp == Camp.Pink) { // 粉色阵营 - 左侧中间
-                factory.put("x", 100);
-                factory.put("y", 300);
+                factory.put("x", 32);
+                factory.put("y", 128);
             } else if (camp == Camp.Brown) { // 棕色阵营 - 右侧中间
-                factory.put("x", 900);
-                factory.put("y", 300);
+                factory.put("x", 224);
+                factory.put("y", 128);
             } else { // 其他阵营默认位置
-                factory.put("x", 500);
-                factory.put("y", 300);
+                factory.put("x", 128);
+                factory.put("y", 128);
             }
             
             buildings.add(factory);
@@ -329,34 +329,34 @@ public class RoomService {
                 tank.put("id", "tank_" + campId + "_" + i);
                 tank.put("type", "tank");
                 
-                // 设置坦克位置，围绕工厂分布
+                // 设置坦克位置，围绕工厂分布 (在256*256场景中)
                 if (camp == Camp.Red) { // 红色阵营
-                    tank.put("x", 100 + i * 20);
-                    tank.put("y", 150);
+                    tank.put("x", 32 + i * 8);
+                    tank.put("y", 64);
                 } else if (camp == Camp.Blue) { // 蓝色阵营
-                    tank.put("x", 900 - i * 20);
-                    tank.put("y", 450);
+                    tank.put("x", 224 - i * 8);
+                    tank.put("y", 192);
                 } else if (camp == Camp.Green) { // 绿色阵营
-                    tank.put("x", 100 + i * 20);
-                    tank.put("y", 450);
+                    tank.put("x", 32 + i * 8);
+                    tank.put("y", 192);
                 } else if (camp == Camp.Yellow) { // 黄色阵营
-                    tank.put("x", 900 - i * 20);
-                    tank.put("y", 150);
+                    tank.put("x", 224 - i * 8);
+                    tank.put("y", 64);
                 } else if (camp == Camp.Orange) { // 橙色阵营
-                    tank.put("x", 480 + i * 20);
-                    tank.put("y", 100);
+                    tank.put("x", 112 + i * 8);
+                    tank.put("y", 32);
                 } else if (camp == Camp.Purple) { // 紫色阵营
-                    tank.put("x", 480 + i * 20);
-                    tank.put("y", 500);
+                    tank.put("x", 112 + i * 8);
+                    tank.put("y", 224);
                 } else if (camp == Camp.Pink) { // 粉色阵营
-                    tank.put("x", 100);
-                    tank.put("y", 280 + i * 10);
+                    tank.put("x", 32);
+                    tank.put("y", 112 + i * 4);
                 } else if (camp == Camp.Brown) { // 棕色阵营
-                    tank.put("x", 900);
-                    tank.put("y", 280 + i * 10);
+                    tank.put("x", 224);
+                    tank.put("y", 112 + i * 4);
                 } else { // 其他阵营
-                    tank.put("x", 480 + i * 20);
-                    tank.put("y", 300);
+                    tank.put("x", 112 + i * 8);
+                    tank.put("y", 128);
                 }
                 
                 units.add(tank);
