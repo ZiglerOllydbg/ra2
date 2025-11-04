@@ -10,18 +10,19 @@ using Newtonsoft.Json;
 
 public class WebSocketNetworkAdaptor : INetworkAdapter
 {
-    private readonly GameWorldBridge _gameWorldBridge; // 保存引用
+    private readonly ZLockstep.Sync.Game _game; // 保存引用
     private WebSocketClient _client;
 
-    public WebSocketNetworkAdaptor(GameWorldBridge gameWorldBridge, WebSocketClient client)
+    public WebSocketNetworkAdaptor(ZLockstep.Sync.Game game, WebSocketClient client)
     {
+        _game = game; // 保存引用
         _client = client;
-        _gameWorldBridge = gameWorldBridge; // 保存引用
+
         // OnFrameSync
-        _client.OnFrameSync += OnFrameSync(_gameWorldBridge);
+        _client.OnFrameSync += OnFrameSync(_game);
 
         // 绑定网络适配器
-        _gameWorldBridge.Game.FrameSyncManager.NetworkAdapter = this;
+        _game.FrameSyncManager.NetworkAdapter = this;
     }
     
     public void OnDispatchMessageQueue()
@@ -34,7 +35,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
         _client.SendFrameInput(command.ExecuteFrame, command);
     }
 
-    private static System.Action<FrameSyncData> OnFrameSync(GameWorldBridge gameWorldBridge)
+    private static System.Action<FrameSyncData> OnFrameSync(ZLockstep.Sync.Game game)
     {
         return (data) =>
         {
@@ -95,7 +96,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
                 zUDebug.Log($"[Ra2Demo] 接收到的命令帧: {data}");
             }
 
-            gameWorldBridge.Game.FrameSyncManager.ConfirmFrame(data.Frame, commandList);
+            game.FrameSyncManager.ConfirmFrame(data.Frame, commandList);
         };
     }
 }

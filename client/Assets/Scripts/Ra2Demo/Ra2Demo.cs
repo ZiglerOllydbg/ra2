@@ -8,6 +8,9 @@ using ZLockstep.Sync.Command;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 using Game.RA2.Client;
+using Game.Examples;
+using ZLockstep.Sync;
+using ZLockstep.View.Systems;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -15,7 +18,7 @@ using Game.RA2.Client;
 public class Ra2Demo : MonoBehaviour
 {
     [Header("游戏世界")]
-    [SerializeField] private GameWorldBridge worldBridge;
+    [SerializeField] private BattleGame _game;
 
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
@@ -66,28 +69,58 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
-    
+
+    [Header("Unity资源")]
+    [SerializeField] private Transform viewRoot;
+    [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
+    private PresentationSystem _presentationSystem;
+
     private void Awake()
     {
         _mainCamera = Camera.main;
         _controls = new RTSControl();
 
         // 如果没有分配 worldBridge，尝试自动查找
-        if (worldBridge == null)
-        {
-            worldBridge = FindObjectOfType<GameWorldBridge>();
-            if (worldBridge == null)
-            {
-                Debug.LogError("[Test] 找不到 GameWorldBridge！请在场景中添加或手动分配。");
-            }
-        }
-        
+        _game = new BattleGame(GameMode.NetworkClient, 20, 0);
+        _game.Init();
+
         // 初始化小地图系统
         InitializeMiniMap();
-        
+
         // 加载保存的房间类型选择和本地服务器选项
         LoadRoomTypeSelection();
         LoadLocalServerOption();
+    }
+    
+    /// <summary>
+    /// 初始化Unity视图层
+    /// </summary>
+    private void InitializeUnityView()
+    {
+        if (viewRoot == null)
+            viewRoot = transform;
+
+        // 创建表现系统
+        _presentationSystem = new PresentationSystem();
+        _presentationSystem.EnableSmoothInterpolation = true;
+
+        // 准备预制体字典
+        var prefabDict = new Dictionary<int, GameObject>();
+        for (int i = 0; i < unitPrefabs.Length; i++)
+        {
+            if (unitPrefabs[i] != null)
+            {
+                prefabDict[i] = unitPrefabs[i];
+                Debug.Log($"[StandaloneBattleDemo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
+            }
+        }
+
+        // 初始化并注册表现系统
+        _presentationSystem.Initialize(viewRoot, prefabDict);
+        _presentationSystem.SetGame(_game);
+        _game.World.SystemManager.RegisterSystem(_presentationSystem);
+
+        Debug.Log("[StandaloneBattleDemo] 视图系统初始化完成");
     }
     
     /// <summary>
@@ -176,7 +209,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void OnCreateUnit(InputAction.CallbackContext context)
     {
-        if (worldBridge == null || worldBridge.LogicWorld == null)
+        if (_game == null || _game.World == null)
         {
             Debug.LogWarning("[Test] GameWorldBridge 未初始化！");
             return;
@@ -283,7 +316,7 @@ public class Ra2Demo : MonoBehaviour
         };
 
         // 提交命令到游戏世界
-        worldBridge.SubmitCommand(createCommand);
+        _game.SubmitCommand(createCommand);
 
         Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}");
     }
@@ -293,20 +326,20 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void DetectAndSelectUnit(Ray ray)
     {
-        if (worldBridge == null || worldBridge.LogicWorld == null)
+        if (_game == null || _game.World == null)
             return;
 
         // 射线检测单位
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
         {
             // 查找对应的逻辑实体
-                var entities = worldBridge.LogicWorld.ComponentManager
+                var entities = _game.World.ComponentManager
                     .GetAllEntityIdsWith<TransformComponent>();
                 
                 foreach (var entityId in entities)
                 {
                     var entity = new Entity(entityId);
-                    var transform = worldBridge.LogicWorld.ComponentManager
+                    var transform = _game.World.ComponentManager
                         .GetComponent<TransformComponent>(entity);
                     
                     // 比较位置来确定是否是同一个单位（简化实现）
@@ -351,20 +384,20 @@ public class Ra2Demo : MonoBehaviour
     /// <returns>是否点击在单位上</returns>
     private bool CheckIfClickOnUnit(Ray ray)
     {
-        if (worldBridge == null || worldBridge.LogicWorld == null)
+        if (_game == null || _game.World == null)
             return false;
 
         // 射线检测单位
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
         {
             // 查找对应的逻辑实体
-            var entities = worldBridge.LogicWorld.ComponentManager
+            var entities = _game.World.ComponentManager
                 .GetAllEntityIdsWith<TransformComponent>();
             
             foreach (var entityId in entities)
             {
                 var entity = new Entity(entityId);
-                var transform = worldBridge.LogicWorld.ComponentManager
+                var transform = _game.World.ComponentManager
                     .GetComponent<TransformComponent>(entity);
                 
                 // 比较位置来确定是否是同一个单位（简化实现）
@@ -458,15 +491,15 @@ public class Ra2Demo : MonoBehaviour
         }
         
         // 查找框选区域内的单位
-        if (worldBridge != null && worldBridge.LogicWorld != null)
+        if (_game != null && _game.World != null)
         {
-            var entities = worldBridge.LogicWorld.ComponentManager
+            var entities = _game.World.ComponentManager
                 .GetAllEntityIdsWith<TransformComponent>();
             
             foreach (var entityId in entities)
             {
                 var entity = new Entity(entityId);
-                var transform = worldBridge.LogicWorld.ComponentManager
+                var transform = _game.World.ComponentManager
                     .GetComponent<TransformComponent>(entity);
                 
                 // 将世界坐标转换为屏幕坐标
@@ -527,7 +560,12 @@ public class Ra2Demo : MonoBehaviour
 
         _networkAdaptor?.OnDispatchMessageQueue();
         
-        // 小地图相机位置是固定的，不需要更新
+
+        // 表现系统：插值更新
+        if (_presentationSystem != null)
+        {
+            _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
+        }
     }
 
     /// <summary>
@@ -542,7 +580,7 @@ public class Ra2Demo : MonoBehaviour
             return;
         }
 
-        if (worldBridge == null || worldBridge.LogicWorld == null)
+        if (_game == null || _game.World == null)
             return;
 
         Vector2 screenPosition = Mouse.current.position.ReadValue();
@@ -553,15 +591,15 @@ public class Ra2Demo : MonoBehaviour
         List<int> validEntityIds = new List<int>();
         foreach (int entityId in selectedEntityIds)
         {
-            if (!worldBridge.LogicWorld.ComponentManager.HasComponent<UnitComponent>(new Entity(entityId)))
+            if (!_game.World.ComponentManager.HasComponent<UnitComponent>(new Entity(entityId)))
             {
                 Debug.Log($"[Test] 选中的单位 {entityId} 已不存在");
                 continue;
             }
 
             var entity = new Entity(entityId);
-            var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
-            if (unit.PlayerId != worldBridge.Game.GetLocalPlayerId())
+            var unit = _game.World.ComponentManager.GetComponent<UnitComponent>(entity);
+            if (unit.PlayerId != _game.GetLocalPlayerId())
             {
                 Debug.Log($"[Test] 选中的单位 {entityId} 不属于当前玩家");
                 continue;
@@ -592,7 +630,7 @@ public class Ra2Demo : MonoBehaviour
             Source = CommandSource.Local
         };
 
-        worldBridge.SubmitCommand(moveCommand);
+        _game.SubmitCommand(moveCommand);
         Debug.Log($"[Test] 发送移动命令: {validEntityIds.Count}个单位 → {worldPosition}");
     }
 
@@ -614,15 +652,15 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 显示所有已创建的单位（从逻辑层读取）
-        if (worldBridge != null && worldBridge.LogicWorld != null)
+        if (_game != null && _game.World != null)
         {
-            var transforms = worldBridge.LogicWorld.ComponentManager
+            var transforms = _game.World.ComponentManager
                 .GetAllEntityIdsWith<TransformComponent>();
 
             foreach (var entityId in transforms)
             {
                 var entity = new Entity(entityId);
-                var transform = worldBridge.LogicWorld.ComponentManager
+                var transform = _game.World.ComponentManager
                     .GetComponent<TransformComponent>(entity);
 
                 // 绘制单位位置
@@ -638,10 +676,10 @@ public class Ra2Demo : MonoBehaviour
                 }
 
                 // 如果有移动命令，绘制目标位置
-                if (worldBridge.LogicWorld.ComponentManager
+                if (_game.World.ComponentManager
                     .HasComponent<MoveCommandComponent>(entity))
                 {
-                    var moveCmd = worldBridge.LogicWorld.ComponentManager
+                    var moveCmd = _game.World.ComponentManager
                         .GetComponent<MoveCommandComponent>(entity);
                     
                     Vector3 targetPos = moveCmd.TargetPosition.ToVector3();
@@ -753,7 +791,7 @@ public class Ra2Demo : MonoBehaviour
             {
                 if (GUILayout.Button("暂停", buttonStyle))
                 {
-                    worldBridge.PauseGame();
+                    // worldBridge.PauseGame();
                     isPaused = true;
                 }
             }
@@ -761,7 +799,7 @@ public class Ra2Demo : MonoBehaviour
             {
                 if (GUILayout.Button("继续", buttonStyle))
                 {
-                    worldBridge.ResumeGame();
+                    // worldBridge.ResumeGame();
                     isPaused = false;
                 }
             }
@@ -987,7 +1025,7 @@ public class Ra2Demo : MonoBehaviour
         _client.OnGameStart += OnGameStart;
 
         // 连接网络适配器和客户端
-        _networkAdaptor = new WebSocketNetworkAdaptor(worldBridge, _client);
+        _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
         
         // 连接服务器
         zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
@@ -1016,12 +1054,12 @@ public class Ra2Demo : MonoBehaviour
         zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, data={data}");
         
         // 更新 Game 中的玩家ID
-        worldBridge.Game.SetLocalPlayerId(data.CampId);
+        _game.SetLocalPlayerId(data.CampId);
         
         // 处理创世阶段 - 初始化游戏世界
         if (data.InitialState != null)
         {
-            worldBridge.Game.InitializeWorldFromMatchData(data.InitialState);
+            _game.InitializeWorldFromMatchData(data.InitialState);
         }
 
         // 发送准备就绪消息
@@ -1039,11 +1077,10 @@ public class Ra2Demo : MonoBehaviour
         
         // 在游戏正式启动时，发送一个初始帧确认（帧0）
         // 这样可以启动帧同步逻辑
-        if (worldBridge != null && worldBridge.Game != null &&
-            worldBridge.Game.FrameSyncManager != null)
+        if (_game != null && _game.FrameSyncManager != null)
         {
             // 确认第0帧（空帧），启动帧同步逻辑
-            worldBridge.Game.FrameSyncManager.ConfirmFrame(0, new System.Collections.Generic.List<ICommand>());
+            _game.FrameSyncManager.ConfirmFrame(0, new System.Collections.Generic.List<ICommand>());
         }
 
         zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
@@ -1062,34 +1099,34 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void MoveCameraToOurFactory()
     {
-        if (worldBridge == null || worldBridge.LogicWorld == null)
+        if (_game == null || _game.World == null)
             return;
 
         // 获取所有建筑实体
-        var buildingEntities = worldBridge.LogicWorld.ComponentManager
+        var buildingEntities = _game.World.ComponentManager
             .GetAllEntityIdsWith<BuildingComponent>();
 
-        int playerId = worldBridge.Game.GetLocalPlayerId();
+        int playerId = _game.GetLocalPlayerId();
         
         foreach (var entityId in buildingEntities)
         {
             var entity = new Entity(entityId);
             
             // 检查实体是否同时拥有阵营组件和建筑组件
-            if (worldBridge.LogicWorld.ComponentManager.HasComponent<CampComponent>(entity) &&
-                worldBridge.LogicWorld.ComponentManager.HasComponent<BuildingComponent>(entity))
+            if (_game.World.ComponentManager.HasComponent<CampComponent>(entity) &&
+                _game.World.ComponentManager.HasComponent<BuildingComponent>(entity))
             {
-                var camp = worldBridge.LogicWorld.ComponentManager.GetComponent<CampComponent>(entity);
-                var building = worldBridge.LogicWorld.ComponentManager.GetComponent<BuildingComponent>(entity);
+                var camp = _game.World.ComponentManager.GetComponent<CampComponent>(entity);
+                var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
                 
                 // 查找我方阵营ID为1的建筑（工厂）
                 // 根据代码分析，建筑类型1代表工厂（tankFactory）
                 if (camp.CampId == playerId && building.BuildingType == 1)
                 {
                     // 确保实体有位置组件
-                    if (worldBridge.LogicWorld.ComponentManager.HasComponent<TransformComponent>(entity))
+                    if (_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
                     {
-                        var transform = worldBridge.LogicWorld.ComponentManager.GetComponent<TransformComponent>(entity);
+                        var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
                         Vector3 factoryPosition = transform.Position.ToVector3();
                         
                         // 将相机移动到工厂位置
