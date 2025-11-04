@@ -25,6 +25,10 @@ public class Ra2Demo : MonoBehaviour
     private Camera _mainCamera;
 
     [SerializeField] public string ServerUrl = "ws://101.126.136.178:8080/ws";
+    // 添加本地测试选项
+    private bool useLocalServer = false;
+    private const string LocalServerUrl = "ws://127.0.0.1:8080/ws";
+    private const string RemoteServerUrl = "ws://101.126.136.178:8080/ws";
 
     private WebSocketNetworkAdaptor _networkAdaptor; // 保存网络适配器引用
     private WebSocketClient _client; // 添加WebSocket客户端引用
@@ -57,8 +61,9 @@ public class Ra2Demo : MonoBehaviour
             }
         }
         
-        // 加载保存的房间类型选择
+        // 加载保存的房间类型选择和本地服务器选项
         LoadRoomTypeSelection();
+        LoadLocalServerOption();
     }
     
     /// <summary>
@@ -82,6 +87,23 @@ public class Ra2Demo : MonoBehaviour
     private void SaveRoomTypeSelection()
     {
         PlayerPrefs.SetInt("SelectedRoomType", (int)selectedRoomType);
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>
+    /// 加载本地服务器选项
+    /// </summary>
+    private void LoadLocalServerOption()
+    {
+        useLocalServer = PlayerPrefs.GetInt("UseLocalServer", 0) == 1;
+    }
+    
+    /// <summary>
+    /// 保存本地服务器选项
+    /// </summary>
+    private void SaveLocalServerOption()
+    {
+        PlayerPrefs.SetInt("UseLocalServer", useLocalServer ? 1 : 0);
         PlayerPrefs.Save();
     }
 
@@ -318,7 +340,7 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
-        // 绘制左上角的房间类型选择
+        // 绘制左上角的房间类型选择和本地测试选项
         if (!isConnected) 
         {
             Rect roomTypeRect = new Rect(20, 20, 250, 800);
@@ -342,6 +364,16 @@ public class Ra2Demo : MonoBehaviour
                         SaveRoomTypeSelection(); // 保存选择
                     }
                 }
+            }
+            
+            // 添加本地测试选项
+            GUILayout.Space(20);
+            bool previousValue = useLocalServer;
+            useLocalServer = GUILayout.Toggle(useLocalServer, "使用本地服务器");
+            // 如果值发生变化，保存设置
+            if (useLocalServer != previousValue)
+            {
+                SaveLocalServerOption();
             }
             GUILayout.EndArea();
         }
@@ -415,7 +447,9 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void ConnectToServer()
     {
-        _client = new WebSocketClient(ServerUrl, "Player1");
+        // 根据选项决定使用哪个服务器地址
+        string serverUrl = useLocalServer ? LocalServerUrl : RemoteServerUrl;
+        _client = new WebSocketClient(serverUrl, "Player1");
         
         // 注册事件处理
         _client.OnConnected += OnConnected;
@@ -426,7 +460,7 @@ public class Ra2Demo : MonoBehaviour
         _networkAdaptor = new WebSocketNetworkAdaptor(worldBridge, _client);
         
         // 连接服务器
-        zUDebug.Log("[WebSocketNetworkAdaptor] 正在连接服务器...");
+        zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
         _client.Connect();
         isConnected = true;
     }
