@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ZLockstep.View;
@@ -57,6 +58,12 @@ public class Ra2Demo : MonoBehaviour
     
     // 添加选中单位相关字段
     private int selectedEntityId = -1; // 选中的单位实体ID，-1表示未选中任何单位
+    
+    // 添加多选支持相关字段
+    private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
+    private bool isSelecting = false; // 是否正在框选
+    private Vector2 selectionStartPoint; // 框选起始点
+    private Vector2 selectionEndPoint; // 框选结束点
     
     private void Awake()
     {
@@ -176,6 +183,14 @@ public class Ra2Demo : MonoBehaviour
         // 获取鼠标/触摸位置
         Vector2 screenPosition = Pointer.current.position.ReadValue();
 
+        // 检查是否按住Shift键进行框选
+        if (Keyboard.current != null && Keyboard.current.shiftKey.isPressed)
+        {
+            // 开始框选
+            StartSelectionBox(screenPosition);
+            return;
+        }
+
         // 射线检测获取点击位置
         if (TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
         {
@@ -293,20 +308,148 @@ public class Ra2Demo : MonoBehaviour
                     Vector3 logicPosition = transform.Position.ToVector3();
                     if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
                     {
-                        // 选中该单位
-                        selectedEntityId = entityId;
-                        Debug.Log($"[Test] 选中单位: EntityId={entityId}");
+                        // 检查是否按住Ctrl键进行多选
+                        if (Keyboard.current != null && Keyboard.current.ctrlKey.isPressed)
+                        {
+                            // 如果已经选中则取消选中，否则添加到选中列表
+                            if (selectedEntityIds.Contains(entityId))
+                            {
+                                selectedEntityIds.Remove(entityId);
+                                Debug.Log($"[Test] 取消选中单位: EntityId={entityId}");
+                            }
+                            else
+                            {
+                                selectedEntityIds.Add(entityId);
+                                Debug.Log($"[Test] 添加选中单位: EntityId={entityId}");
+                            }
+                        }
+                        else
+                        {
+                            // 单选模式：清空之前选择并选中当前单位
+                            selectedEntityIds.Clear();
+                            selectedEntityIds.Add(entityId);
+                            Debug.Log($"[Test] 选中单位: EntityId={entityId}");
+                        }
+                        
+                        // 兼容旧的单选变量
+                        selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
                         return;
                     }
                 }
         }
     }
-
+    
+    /// <summary>
+    /// 开始框选
+    /// </summary>
+    /// <param name="screenPosition">屏幕位置</param>
+    private void StartSelectionBox(Vector2 screenPosition)
+    {
+        isSelecting = true;
+        selectionStartPoint = screenPosition;
+        selectionEndPoint = screenPosition;
+    }
+    
+    /// <summary>
+    /// 更新框选
+    /// </summary>
+    /// <param name="screenPosition">屏幕位置</param>
+    private void UpdateSelectionBox(Vector2 screenPosition)
+    {
+        if (isSelecting)
+        {
+            selectionEndPoint = screenPosition;
+        }
+    }
+    
+    /// <summary>
+    /// 结束框选
+    /// </summary>
+    private void EndSelectionBox()
+    {
+        if (!isSelecting) return;
+        
+        isSelecting = false;
+        
+        // 计算框选区域 (统一使用屏幕坐标系统)
+        float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
+        float y = Mathf.Min(selectionStartPoint.y, selectionEndPoint.y);
+        float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
+        float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
+        
+        Rect selectionRect = new Rect(x, y, width, height);
+        
+        // 检查是否按住Ctrl键进行多选
+        bool isMultiSelect = Keyboard.current != null && Keyboard.current.ctrlKey.isPressed;
+        
+        // 如果不是多选模式，清空之前的选择
+        if (!isMultiSelect)
+        {
+            selectedEntityIds.Clear();
+        }
+        
+        // 查找框选区域内的单位
+        if (worldBridge != null && worldBridge.LogicWorld != null)
+        {
+            var entities = worldBridge.LogicWorld.ComponentManager
+                .GetAllEntityIdsWith<TransformComponent>();
+            
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                var transform = worldBridge.LogicWorld.ComponentManager
+                    .GetComponent<TransformComponent>(entity);
+                
+                // 将世界坐标转换为屏幕坐标
+                Vector3 worldPosition = transform.Position.ToVector3();
+                Vector3 screenPos = _mainCamera.WorldToScreenPoint(worldPosition);
+                
+                // 注意：屏幕坐标的Y轴是从下往上增长的
+                // selectionRect也使用相同的坐标系统，所以不需要转换
+                
+                // 检查单位是否在框选区域内
+                if (selectionRect.Contains(screenPos))
+                {
+                    // 如果已经选中则跳过，否则添加到选中列表
+                    if (!selectedEntityIds.Contains(entityId))
+                    {
+                        selectedEntityIds.Add(entityId);
+                        Debug.Log($"[Test] 框选添加单位: EntityId={entityId}");
+                    }
+                }
+            }
+            
+            // 兼容旧的单选变量
+            selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
+        }
+    }
+    
     /// <summary>
     /// 测试：右键点击地面让选中的单位移动（可选）
     /// </summary>
     private void Update()
     {
+        // 更新框选状态
+        if (isSelecting && Mouse.current != null)
+        {
+            // 如果鼠标左键仍然按下，更新框选区域
+            if (Mouse.current.leftButton.isPressed)
+            {
+                Vector2 currentMousePosition = Mouse.current.position.ReadValue();
+                UpdateSelectionBox(currentMousePosition);
+            }
+            else
+            {
+                // 鼠标左键释放，结束框选
+                EndSelectionBox();
+            }
+        }
+        else if (!isSelecting && Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            // 确保在鼠标释放时也结束框选（额外的安全检查）
+            EndSelectionBox();
+        }
+        
         // 右键点击发送移动命令
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
@@ -324,7 +467,7 @@ public class Ra2Demo : MonoBehaviour
     private void SendMoveCommandForSelectedUnit()
     {
         // 检查是否有选中的单位
-        if (selectedEntityId == -1)
+        if (selectedEntityIds.Count == 0)
         {
             Debug.Log("[Test] 没有选中的单位");
             return;
@@ -338,26 +481,42 @@ public class Ra2Demo : MonoBehaviour
             return;
 
         // 检查选中的单位是否仍然有效且属于当前玩家
-        if (!worldBridge.LogicWorld.ComponentManager.HasComponent<UnitComponent>(new Entity(selectedEntityId)))
+        List<int> validEntityIds = new List<int>();
+        foreach (int entityId in selectedEntityIds)
         {
-            selectedEntityId = -1;
-            Debug.Log("[Test] 选中的单位已不存在");
-            return;
-        }
+            if (!worldBridge.LogicWorld.ComponentManager.HasComponent<UnitComponent>(new Entity(entityId)))
+            {
+                Debug.Log($"[Test] 选中的单位 {entityId} 已不存在");
+                continue;
+            }
 
-        var entity = new Entity(selectedEntityId);
-        var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
-        if (unit.PlayerId != worldBridge.Game.GetLocalPlayerId())
+            var entity = new Entity(entityId);
+            var unit = worldBridge.LogicWorld.ComponentManager.GetComponent<UnitComponent>(entity);
+            if (unit.PlayerId != worldBridge.Game.GetLocalPlayerId())
+            {
+                Debug.Log($"[Test] 选中的单位 {entityId} 不属于当前玩家");
+                continue;
+            }
+            
+            validEntityIds.Add(entityId);
+        }
+        
+        // 更新选中单位列表，移除无效单位
+        selectedEntityIds = new List<int>(validEntityIds);
+        
+        // 兼容旧的单选变量
+        selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
+
+        if (validEntityIds.Count == 0)
         {
-            selectedEntityId = -1;
-            Debug.Log("[Test] 选中的单位不属于当前玩家");
+            Debug.Log("[Test] 没有有效的选中单位");
             return;
         }
 
         // 创建移动命令
         var moveCommand = new MoveCommand(
             playerId: 0,
-            entityIds: new int[] { selectedEntityId },
+            entityIds: validEntityIds.ToArray(),
             targetPosition: worldPosition.ToZVector3()
         )
         {
@@ -365,7 +524,7 @@ public class Ra2Demo : MonoBehaviour
         };
 
         worldBridge.SubmitCommand(moveCommand);
-        Debug.Log($"[Test] 发送移动命令: 单位 {selectedEntityId} → {worldPosition}");
+        Debug.Log($"[Test] 发送移动命令: {validEntityIds.Count}个单位 → {worldPosition}");
     }
 
     #region 调试辅助
@@ -403,7 +562,7 @@ public class Ra2Demo : MonoBehaviour
                 Gizmos.DrawWireCube(pos, Vector3.one * 0.8f);
 
                 // 如果这是选中的单位，用不同颜色标记
-                if (entityId == selectedEntityId)
+                if (selectedEntityIds.Contains(entityId))
                 {
                     Gizmos.color = Color.green;
                     Gizmos.DrawWireSphere(pos, 1.0f);
@@ -433,6 +592,9 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fontSize = 24;
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
+
+        // 绘制框选区域
+        DrawSelectionBox();
 
         // 绘制小地图
         DrawMiniMap();
@@ -539,11 +701,20 @@ public class Ra2Demo : MonoBehaviour
         }
         
         // 显示选中的单位信息
-        if (isReady && selectedEntityId != -1)
+        if (isReady && selectedEntityIds.Count > 0)
         {
             Rect infoRect = new Rect(Screen.width - 250, 20, 230, 60);
             GUILayout.BeginArea(infoRect, GUI.skin.box);
-            GUILayout.Label($"选中单位: {selectedEntityId}", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+            
+            if (selectedEntityIds.Count == 1)
+            {
+                GUILayout.Label($"选中单位: {selectedEntityIds[0]}", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+            }
+            else
+            {
+                GUILayout.Label($"选中单位: {selectedEntityIds.Count}个", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+            }
+            
             GUILayout.EndArea();
         }
     }
@@ -588,6 +759,38 @@ public class Ra2Demo : MonoBehaviour
             
             // 可选：在小地图上绘制一个表示主相机视角的框
             DrawCameraViewIndicator();
+        }
+    }
+    
+    /// <summary>
+    /// 绘制框选区域
+    /// </summary>
+    private void DrawSelectionBox()
+    {
+        if (isSelecting)
+        {
+            // 创建框选区域的样式
+            GUIStyle selectionStyle = new GUIStyle();
+            selectionStyle.normal.background = Texture2D.whiteTexture;
+            Color selectionColor = new Color(0.5f, 0.7f, 1.0f, 0.3f); // 半透明蓝色
+            selectionStyle.normal.textColor = selectionColor;
+            
+            // 计算框选区域 (转换为GUI坐标系统)
+            float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
+            // GUI系统的Y轴是从上往下增长的，需要转换坐标
+            float guiStartY = Screen.height - selectionStartPoint.y;
+            float guiEndY = Screen.height - selectionEndPoint.y;
+            float y = Mathf.Min(guiStartY, guiEndY);
+            float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
+            float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
+            
+            Rect selectionRect = new Rect(x, y, width, height);
+            
+            // 绘制半透明的框选区域
+            Color oldColor = GUI.color;
+            GUI.color = selectionColor;
+            GUI.Box(selectionRect, "", selectionStyle);
+            GUI.color = oldColor;
         }
     }
     
