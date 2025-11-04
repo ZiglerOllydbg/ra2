@@ -178,6 +178,13 @@ public class Ra2Demo : MonoBehaviour
         {
             // CreateUnitAtPosition(worldPosition);
         }
+        
+        // 检测点击到的gameobject对象，并设置给相机目标RTSCameraTargetController.Instance
+        Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
+        {
+            
+        }
     }
 
     /// <summary>
@@ -559,22 +566,12 @@ public class Ra2Demo : MonoBehaviour
                 // 注意：纹理坐标Y轴向下为正，而世界坐标Z轴向上为正，需要翻转
                 worldZ = 256f - worldZ;
                 
-                // 尝试通过RTSCameraTargetController设置相机目标位置
-                RTSCameraTargetController rtsCameraTargetController = RTSCameraTargetController.Instance;
+                if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
+                {
+                    Vector3 targetPos = new(worldX, RTSCameraTargetController.Instance.CameraTarget.position.y, worldZ);
+                    RTSCameraTargetController.Instance.CameraTarget.position = targetPos;
+                }
 
-                Vector3 targetPos = new Vector3(worldX, rtsCameraTargetController.CameraTarget.position.y, worldZ);
-                
-                if (rtsCameraTargetController != null && rtsCameraTargetController.CameraTarget != null)
-                {
-                    // 使用RTSCameraTargetController移动相机目标
-                    rtsCameraTargetController.SetCameraTargetPosition(targetPos);
-                }
-                else
-                {
-                    // 如果没有控制器，则直接设置位置
-                    _mainCamera.transform.position = targetPos;
-                }
-                
                 // 使用事件，防止其他UI元素重复处理
                 Event.current.Use();
             }
