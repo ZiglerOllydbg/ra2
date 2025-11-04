@@ -1,4 +1,5 @@
 using UnityEngine;
+using ZLockstep.View.Systems;
 
 namespace ZLockstep.View
 {
@@ -70,21 +71,21 @@ namespace ZLockstep.View
         {
             switch (campId)
             {
-                case 1:  // Red
+                case (int)CampColor.Red:
                     return Color.red;
-                case 2:  // Blue
+                case (int)CampColor.Blue:
                     return Color.blue;
-                case 3:  // Green
+                case (int)CampColor.Green:
                     return Color.green;
-                case 4:  // Yellow
+                case (int)CampColor.Yellow:
                     return Color.yellow;
-                case 5:  // Orange
+                case (int)CampColor.Orange:
                     return new Color(1.0f, 0.5f, 0.0f); // 橙色
-                case 6:  // Purple
+                case (int)CampColor.Purple:
                     return new Color(0.5f, 0.0f, 1.0f); // 紫色
-                case 7:  // Pink
+                case (int)CampColor.Pink:
                     return new Color(1.0f, 0.4f, 0.7f); // 粉色
-                case 8:  // Brown
+                case (int)CampColor.Brown:
                     return new Color(0.6f, 0.3f, 0.0f); // 棕色
                 default: // 默认使用白色
                     return Color.white;
