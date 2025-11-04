@@ -21,9 +21,15 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] private int unitType = 1; // 单位类型：1=动员兵, 2=坦克, 3=矿车
     [SerializeField] private int prefabId = 1; // 预制体ID（对应unitPrefabs数组索引）
 
+    [Header("小地图设置")]
+    [SerializeField] private MiniMapController miniMapController; // 小地图控制器
+    [SerializeField] private Rect miniMapRect = new Rect(20, -1, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从底部计算）
+    [SerializeField] private int miniMapMargin = 20; // 小地图边距
+
     private RTSControl _controls;
     private Camera _mainCamera;
-
+    private RenderTexture _miniMapTexture;
+    
     [SerializeField] public string ServerUrl = "ws://101.126.136.178:8080/ws";
     // 添加本地测试选项
     private bool useLocalServer = false;
@@ -61,9 +67,34 @@ public class Ra2Demo : MonoBehaviour
             }
         }
         
+        // 初始化小地图系统
+        InitializeMiniMap();
+        
         // 加载保存的房间类型选择和本地服务器选项
         LoadRoomTypeSelection();
         LoadLocalServerOption();
+    }
+    
+    /// <summary>
+    /// 初始化小地图系统
+    /// </summary>
+    private void InitializeMiniMap()
+    {
+        if (miniMapController == null)
+        {
+            // 尝试查找场景中的小地图控制器
+            miniMapController = FindObjectOfType<MiniMapController>();
+            
+            // 如果找不到，创建一个新的
+            if (miniMapController == null)
+            {
+                GameObject miniMapObject = new GameObject("MiniMapController");
+                miniMapController = miniMapObject.AddComponent<MiniMapController>();
+            }
+        }
+        
+        // 获取小地图渲染纹理
+        _miniMapTexture = miniMapController.GetMiniMapTexture();
     }
     
     /// <summary>
@@ -235,6 +266,8 @@ public class Ra2Demo : MonoBehaviour
         }
 
         _networkAdaptor?.OnDispatchMessageQueue();
+        
+        // 小地图相机位置是固定的，不需要更新
     }
 
     /// <summary>
@@ -339,6 +372,9 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fontSize = 24;
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
+
+        // 绘制小地图
+        DrawMiniMap();
 
         // 绘制左上角的房间类型选择和本地测试选项
         if (!isConnected) 
@@ -515,5 +551,97 @@ public class Ra2Demo : MonoBehaviour
         }
         
         zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
+    }
+    
+    /// <summary>
+    /// 绘制小地图
+    /// </summary>
+    private void DrawMiniMap()
+    {
+        if (_miniMapTexture != null)
+        {
+            // 计算小地图的实际位置（支持从底部对齐）
+            Rect actualMiniMapRect = miniMapRect;
+            if (miniMapRect.y == -1) // 特殊值表示从底部计算位置
+            {
+                actualMiniMapRect = new Rect(miniMapMargin, 
+                                           Screen.height - miniMapRect.height - miniMapMargin, 
+                                           miniMapRect.width, 
+                                           miniMapRect.height);
+            }
+            
+            // 创建一个小地图窗口样式
+            GUIStyle miniMapStyle = new GUIStyle(GUI.skin.box);
+            
+            // 绘制小地图背景
+            GUI.Box(actualMiniMapRect, "", miniMapStyle);
+            
+            // 绘制小地图标题
+            GUIStyle miniMapTitleStyle = new GUIStyle(GUI.skin.label);
+            miniMapTitleStyle.fontStyle = FontStyle.Bold;
+            miniMapTitleStyle.normal.textColor = Color.white;
+            GUI.Label(new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 5, actualMiniMapRect.width, 20), 
+                      "小地图", miniMapTitleStyle);
+            
+            // 绘制小地图内容（留出标题空间）
+            Rect textureRect = new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 25, 
+                                       actualMiniMapRect.width, actualMiniMapRect.height - 30);
+            GUI.DrawTexture(textureRect, _miniMapTexture, ScaleMode.StretchToFill, true);
+            
+            // 可选：在小地图上绘制一个表示主相机视角的框
+            DrawCameraViewIndicator();
+        }
+    }
+    
+    /// <summary>
+    /// 在小地图上绘制主相机视角指示器
+    /// </summary>
+    private void DrawCameraViewIndicator()
+    {
+        if (_mainCamera == null || miniMapController == null)
+            return;
+            
+        // 获取地图边界
+        Vector4 mapBounds = miniMapController.GetMapBounds();
+        float mapWidth = mapBounds.z - mapBounds.x;  // 256
+        float mapHeight = mapBounds.w - mapBounds.y; // 256
+        
+        // 计算主相机在世界坐标系中的视野范围
+        Vector3 cameraPosition = _mainCamera.transform.position;
+        
+        // 将世界坐标转换为小地图纹理坐标 (0-256范围)
+        float cameraX = Mathf.Clamp((cameraPosition.x - mapBounds.x) / mapWidth * 256f, 0, 256);
+        float cameraY = Mathf.Clamp((cameraPosition.z - mapBounds.y) / mapHeight * 256f, 0, 256);
+        
+        // 计算小地图在屏幕上的实际位置
+        Rect actualMiniMapRect = miniMapRect;
+        if (miniMapRect.y == -1) // 特殊值表示从底部计算位置
+        {
+            actualMiniMapRect = new Rect(miniMapMargin, 
+                                       Screen.height - miniMapRect.height - miniMapMargin, 
+                                       miniMapRect.width, 
+                                       miniMapRect.height);
+        }
+        
+        // 计算相机位置在屏幕上的实际绘制位置
+        // 需要考虑小地图纹理在屏幕上的绘制区域和标题栏高度(25)
+        float drawX = actualMiniMapRect.x + (cameraX / 256f) * actualMiniMapRect.width;
+        float drawY = actualMiniMapRect.y + 25 + (1.0f - cameraY / 256f) * (actualMiniMapRect.height - 30);
+        
+        // 绘制相机视角框（红色边框）
+        Color oldColor = GUI.color;
+        GUI.color = Color.red;
+        
+        // 绘制一个固定大小的框作为示例（可以根据需要调整大小）
+        float boxSize = 30f;
+        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY - boxSize/2, boxSize, 2), Texture2D.whiteTexture); // 上边框
+        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY - boxSize/2, 2, boxSize), Texture2D.whiteTexture); // 左边框
+        GUI.DrawTexture(new Rect(drawX + boxSize/2 - 2, drawY - boxSize/2, 2, boxSize), Texture2D.whiteTexture); // 右边框
+        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY + boxSize/2 - 2, boxSize, 2), Texture2D.whiteTexture); // 下边框
+        
+        // 在中心绘制一个小点
+        GUI.DrawTexture(new Rect(drawX - 3, drawY - 3, 6, 6), Texture2D.whiteTexture);
+        
+        GUI.color = oldColor;
     }
 }

@@ -509,6 +509,14 @@ MonoBehaviour:
     m_Bits: 4294967295
   unitType: 1
   prefabId: 1
+  miniMapController: {fileID: 0}
+  miniMapRect:
+    serializedVersion: 2
+    x: 20
+    y: -1
+    width: 200
+    height: 200
+  miniMapMargin: 20
   ServerUrl: ws://127.0.0.1:8080/ws
 --- !u!1 &881345225
 GameObject:
