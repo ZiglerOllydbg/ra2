@@ -6,6 +6,10 @@ using ZLockstep.Flow;
 using ZLockstep.RVO;
 using zUnity;
 using ZLockstep.Simulation.ECS;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using ZLockstep.Simulation.Events;
+using ZLockstep.Simulation.ECS.Components;
 
 namespace Game.Examples
 {
@@ -127,6 +131,286 @@ namespace Game.Examples
             AISystem.Initialize(NavSystem);
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
+        }
+
+        /// <summary>
+        /// 根据匹配成功协议初始化游戏世界（创世阶段）
+        /// </summary>
+        /// <param name="initialState">初始状态数据</param>
+        public new void InitializeWorldFromMatchData(JObject initialState)
+        {
+            if (World == null)
+            {
+                zUDebug.LogError("[BattleGame] 世界未初始化，无法执行创世阶段");
+                return;
+            }
+
+            zUDebug.Log($"[BattleGame] 开始创世阶段，初始化游戏世界状态");
+
+            // 创建一个临时列表来存储创世阶段创建的实体信息
+            var createdEntities = new List<UnitCreatedEvent>();
+
+            // 解析initialState数据并创建初始单位和建筑
+            foreach (var playerData in initialState)
+            {
+                string playerIdStr = playerData.Key;
+                int playerId = int.Parse(playerIdStr);
+                
+                var playerObj = (JObject)playerData.Value;
+                
+                // 创建建筑
+                var buildings = (JArray)playerObj["buildings"];
+                if (buildings != null)
+                {
+                    foreach (JObject building in buildings)
+                    {
+                        string id = building["id"]?.ToString();
+                        string type = building["type"]?.ToString();
+                        float x = building["x"]?.ToObject<float>() ?? 0;
+                        float y = building["y"]?.ToObject<float>() ?? 0;
+                        
+                        // 根据类型创建建筑实体
+                        var entityEvent = CreateBuildingEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
+                        if (entityEvent.HasValue)
+                        {
+                            createdEntities.Add(entityEvent.Value);
+                        }
+                    }
+                }
+                
+                // 创建单位
+                var units = (JArray)playerObj["units"];
+                if (units != null)
+                {
+                    foreach (JObject unit in units)
+                    {
+                        string id = unit["id"]?.ToString();
+                        string type = unit["type"]?.ToString();
+                        float x = unit["x"]?.ToObject<float>() ?? 0;
+                        float y = unit["y"]?.ToObject<float>() ?? 0;
+                        
+                        // 根据类型创建单位实体
+                        var entityEvent = CreateUnitEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
+                        if (entityEvent.HasValue)
+                        {
+                            createdEntities.Add(entityEvent.Value);
+                        }
+                    }
+                }
+            }
+            
+            // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
+            _genesisEntities = createdEntities;
+            
+            zUDebug.Log($"[BattleGame] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
+        }
+
+        private UnitCreatedEvent? CreateBuildingEntity(int playerId, string type, zVector3 position)
+        {
+            // 根据建筑类型确定建筑类型ID和尺寸
+            int buildingType = 0; // 默认为基地
+            int width = 2;
+            int height = 2;
+            int prefabId = 0;
+            
+            switch (type)
+            {
+                case "tankFactory":
+                    buildingType = 1; // 假设1为坦克工厂
+                    width = 3;
+                    height = 3;
+                    prefabId = 2; // 假设2为坦克工厂预制体ID
+                    break;
+                default:
+                    buildingType = 0; // 基地
+                    width = 2;
+                    height = 2;
+                    prefabId = 1; // 假设1为基地预制体ID
+                    break;
+            }
+
+            // 1. 创建建筑实体
+            var entity = World.EntityManager.CreateEntity();
+
+            // 2. 添加Transform组件
+            World.ComponentManager.AddComponent(entity, new TransformComponent
+            {
+                Position = position,
+                Rotation = zQuaternion.identity,
+                Scale = zVector3.one * 3
+            });
+
+            // 3. 添加建筑组件
+            var buildingComponent = BuildingComponent.Create(
+                buildingType, 0, 0, width, height); // 网格坐标暂时设为0，需要实际计算
+            World.ComponentManager.AddComponent(entity, buildingComponent);
+
+            // 4. 添加阵营组件
+            var campComponent = CampComponent.Create(playerId);
+            World.ComponentManager.AddComponent(entity, campComponent);
+
+            // 5. 添加生命值组件
+            var healthComponent = CreateBuildingHealthComponent(buildingType);
+            World.ComponentManager.AddComponent(entity, healthComponent);
+
+            // 6. 如果建筑有攻击能力（如防御塔），添加攻击组件
+            if (CanBuildingAttack(buildingType))
+            {
+                var attackComponent = CreateBuildingAttackComponent(buildingType);
+                World.ComponentManager.AddComponent(entity, attackComponent);
+            }
+
+            // 7. 创建但不发布事件，返回事件对象
+            var unitCreatedEvent = new UnitCreatedEvent
+            {
+                EntityId = entity.Id,
+                UnitType = buildingType,
+                Position = position,
+                PlayerId = playerId,
+                PrefabId = prefabId
+            };
+
+            zUDebug.Log($"[BattleGame] 创建建筑: Player {playerId}, Type {type} (ID: {buildingType}), Position {position}");
+            
+            // 返回事件对象，而不是直接发布
+            return unitCreatedEvent;
+        }
+
+        private UnitCreatedEvent? CreateUnitEntity(int playerId, string type, zVector3 position)
+        {
+            // 根据单位类型确定单位类型ID
+            int unitType = 1; // 默认为动员兵
+            int prefabId = 1; // 默认预制体ID
+            zfloat radius = (zfloat)0.5f;
+            zfloat maxSpeed = (zfloat)3.0f;
+            
+            switch (type)
+            {
+                case "tank":
+                    unitType = 2; // 坦克
+                    prefabId = 2; // 坦克预制体ID
+                    radius = (zfloat)1.0f;
+                    maxSpeed = (zfloat)3.0f;
+                    break;
+                default:
+                    unitType = 1; // 动员兵
+                    prefabId = 1; // 动员兵预制体ID
+                    radius = (zfloat)0.5f;
+                    maxSpeed = (zfloat)3.0f;
+                    break;
+            }
+
+            // 1. 创建单位实体
+            var entity = World.EntityManager.CreateEntity();
+
+            // 2. 添加Transform组件
+            World.ComponentManager.AddComponent(entity, new TransformComponent
+            {
+                Position = position,
+                Rotation = zQuaternion.identity,
+                Scale = zVector3.one
+            });
+
+            // 3. 添加阵营组件
+            var camp = CampComponent.Create(playerId);
+            World.ComponentManager.AddComponent(entity, camp);
+
+            // 4. 添加单位组件
+            var unit = new UnitComponent
+            {
+                UnitType = unitType,
+                PlayerId = playerId,
+                PrefabId = prefabId,
+                MoveSpeed = maxSpeed
+            };
+            World.ComponentManager.AddComponent(entity, unit);
+
+            // 5. 添加生命值组件
+            var health = new HealthComponent
+            {
+                MaxHealth = unitType == 1 ? (zfloat)50 : unitType == 2 ? (zfloat)100 : (zfloat)150,
+                CurrentHealth = unitType == 1 ? (zfloat)50 : unitType == 2 ? (zfloat)100 : (zfloat)150
+            };
+            World.ComponentManager.AddComponent(entity, health);
+
+            // 6. 如果单位有攻击能力，添加攻击组件
+            if (unitType == 1 || unitType == 2) // 动员兵和坦克有攻击能力
+            {
+                var attack = new AttackComponent
+                {
+                    Damage = unitType == 1 ? (zfloat)10 : (zfloat)30,
+                    Range = unitType == 1 ? (zfloat)4 : (zfloat)10,
+                    AttackInterval = unitType == 1 ? (zfloat)1 : (zfloat)2,
+                    TimeSinceLastAttack = zfloat.Zero,
+                    TargetEntityId = -1
+                };
+                World.ComponentManager.AddComponent(entity, attack);
+            }
+
+            // 7. 添加速度组件
+            World.ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
+
+            // 8. 添加导航能力
+            NavSystem.AddNavigator(entity, radius, maxSpeed);
+
+            // 9. 创建但不发布事件，返回事件对象
+            var unitCreatedEvent = new UnitCreatedEvent
+            {
+                EntityId = entity.Id,
+                UnitType = unitType,
+                Position = position,
+                PlayerId = playerId,
+                PrefabId = prefabId
+            };
+
+            zUDebug.Log($"[BattleGame] 创建单位: Player {playerId}, Type {type} (ID: {unitType}), Position {position}");
+            
+            // 返回事件对象，而不是直接发布
+            return unitCreatedEvent;
+        }
+
+        private HealthComponent CreateBuildingHealthComponent(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 0: // 基地
+                    return new HealthComponent((zfloat)1000.0f);
+                case 1: // 防御塔/工厂
+                    return new HealthComponent((zfloat)500.0f);
+                default:
+                    return new HealthComponent((zfloat)500.0f);
+            }
+        }
+
+        private AttackComponent CreateBuildingAttackComponent(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 1: // 防御塔
+                    return new AttackComponent
+                    {
+                        Damage = (zfloat)40.0f,
+                        Range = (zfloat)12.0f,
+                        AttackInterval = (zfloat)1.5f,
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+                default:
+                    return AttackComponent.CreateDefault();
+            }
+        }
+
+        private bool CanBuildingAttack(int buildingType)
+        {
+            switch (buildingType)
+            {
+                case 0: // 基地
+                    return false;
+                case 1: // 防御塔/工厂
+                    return true; // 假设工厂可以攻击
+                default:
+                    return false;
+            }
         }
 
         /// <summary>

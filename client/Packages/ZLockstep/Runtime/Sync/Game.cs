@@ -98,7 +98,7 @@ namespace ZLockstep.Sync
         /// <summary>
         /// 创世阶段创建的实体事件列表
         /// </summary>
-        private List<UnitCreatedEvent> _genesisEntities = new List<UnitCreatedEvent>();
+        protected List<UnitCreatedEvent> _genesisEntities = new List<UnitCreatedEvent>();
         
         /// <summary>
         /// 是否已经发布创世阶段实体事件

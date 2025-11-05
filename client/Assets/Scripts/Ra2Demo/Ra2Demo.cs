@@ -90,6 +90,8 @@ public class Ra2Demo : MonoBehaviour
         // 加载保存的房间类型选择和本地服务器选项
         LoadRoomTypeSelection();
         LoadLocalServerOption();
+
+        InitializeUnityView();
     }
     
     /// <summary>
@@ -445,7 +447,7 @@ public class Ra2Demo : MonoBehaviour
             }
         }
     }
-    
+
     /// <summary>
     /// 结束框选
     /// </summary>
@@ -458,57 +460,57 @@ public class Ra2Demo : MonoBehaviour
             isClickOnUnit = false;
             return;
         }
-        
+
         if (!isSelecting) return;
-        
+
         isSelecting = false;
         isClickOnUnit = false;
-        
+
         // 计算拖拽距离
         float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
-        
+
         // 只有当拖拽距离超过阈值时才执行框选
         if (dragDistance <= dragThreshold)
         {
             return;
         }
-        
+
         // 计算框选区域 (统一使用屏幕坐标系统)
         float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
         float y = Mathf.Min(selectionStartPoint.y, selectionEndPoint.y);
         float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
         float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
-        
+
         Rect selectionRect = new Rect(x, y, width, height);
-        
+
         // 检查是否按住Ctrl键进行多选
         bool isMultiSelect = Keyboard.current != null && Keyboard.current.ctrlKey.isPressed;
-        
+
         // 如果不是多选模式，清空之前的选择
         if (!isMultiSelect)
         {
             selectedEntityIds.Clear();
         }
-        
+
         // 查找框选区域内的单位
         if (_game != null && _game.World != null)
         {
             var entities = _game.World.ComponentManager
                 .GetAllEntityIdsWith<TransformComponent>();
-            
+
             foreach (var entityId in entities)
             {
                 var entity = new Entity(entityId);
                 var transform = _game.World.ComponentManager
                     .GetComponent<TransformComponent>(entity);
-                
+
                 // 将世界坐标转换为屏幕坐标
                 Vector3 worldPosition = transform.Position.ToVector3();
                 Vector3 screenPos = _mainCamera.WorldToScreenPoint(worldPosition);
-                
+
                 // 注意：屏幕坐标的Y轴是从下往上增长的
                 // selectionRect也使用相同的坐标系统，所以不需要转换
-                
+
                 // 检查单位是否在框选区域内
                 if (selectionRect.Contains(screenPos))
                 {
@@ -520,9 +522,17 @@ public class Ra2Demo : MonoBehaviour
                     }
                 }
             }
-            
+
             // 兼容旧的单选变量
             selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
+        }
+    }
+    
+    private void FixedUpdate()
+    {
+        if (_game != null)
+        {
+            _game.Update();
         }
     }
     
