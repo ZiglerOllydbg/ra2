@@ -70,6 +70,9 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
                                 case CommandTypes.Move:
                                     command = JsonConvert.DeserializeObject<MoveCommand>(input["command"].ToString());
                                     break;
+                                case CommandTypes.EntityMove:
+                                    command = JsonConvert.DeserializeObject<EntityMoveCommand>(input["command"].ToString());
+                                    break;
                                 default:
                                     zUDebug.LogWarning($"[Ra2Demo] 未知的命令类型: {commandType}");
                                     break;

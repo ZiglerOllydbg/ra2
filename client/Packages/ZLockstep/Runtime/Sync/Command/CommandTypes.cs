@@ -11,9 +11,10 @@ namespace ZLockstep.Sync.Command
         // 单位相关命令 (1-99)
         public const int CreateUnit = 1;
         public const int Move = 2;
-        public const int Attack = 3;
-        public const int Stop = 4;
-        public const int Patrol = 5;
+        public const int EntityMove = 3; // 新增实体移动命令
+        public const int Attack = 4;
+        public const int Stop = 5;
+        public const int Patrol = 6;
         
         // 建筑相关命令 (100-199)
         public const int BuildStructure = 100;

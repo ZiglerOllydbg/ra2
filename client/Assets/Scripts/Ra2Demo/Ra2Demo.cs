@@ -630,11 +630,14 @@ public class Ra2Demo : MonoBehaviour
             return;
         }
 
+        zfloat x = zfloat.CreateFloat((long)(worldPosition.x * zfloat.SCALE_10000));
+        zfloat z = zfloat.CreateFloat((long)(worldPosition.z * zfloat.SCALE_10000));
+
         // 创建移动命令
-        var moveCommand = new MoveCommand(
+        var moveCommand = new EntityMoveCommand(
             playerId: 0,
             entityIds: validEntityIds.ToArray(),
-            targetPosition: worldPosition.ToZVector3()
+            targetPosition: new zVector2(x, z)
         )
         {
             Source = CommandSource.Local

@@ -7,6 +7,7 @@ using ZLockstep.Simulation.ECS.Components;
 using zUnity;
 using ZLockstep.Simulation.Events;
 using System;
+using ZLockstep.Flow;
 
 namespace ZLockstep.Sync
 {
@@ -109,6 +110,15 @@ namespace ZLockstep.Sync
         private int _localPlayerId;
 
         /// <summary>
+        /// 获取导航系统（虚方法，由子类实现）
+        /// </summary>
+        /// <returns>导航系统实例</returns>
+        public virtual FlowFieldNavigationSystem GetNavSystem()
+        {
+            return null; // 基类返回null，由子类重写
+        }
+        
+        /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="mode">游戏模式（默认单机）</param>
@@ -129,6 +139,7 @@ namespace ZLockstep.Sync
             // 创建唯一的 zWorld
             World = new zWorld();
             World.Init(_frameRate);
+            World.GameInstance = this; // 设置Game实例引用
 
             // 根据游戏模式创建帧同步管理器
             if (Mode == GameMode.NetworkClient)

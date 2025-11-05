@@ -50,6 +50,15 @@ namespace Game.Examples
         }
 
         /// <summary>
+        /// 获取导航系统（重写基类方法）
+        /// </summary>
+        /// <returns>导航系统实例</returns>
+        public override FlowFieldNavigationSystem GetNavSystem()
+        {
+            return NavSystem; // 返回BattleGame的NavSystem
+        }
+
+        /// <summary>
         /// 初始化战斗游戏
         /// </summary>
         public new void Init()

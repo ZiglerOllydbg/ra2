@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Sync.Command;
+using ZLockstep.Sync; // 添加Game引用
 
 namespace ZLockstep.Simulation
 {
@@ -44,6 +45,9 @@ namespace ZLockstep.Simulation
         public EventManager EventManager { get; private set; }
         public TimeManager TimeManager { get; private set; }
         public CommandManager CommandManager { get; private set; }
+        
+        // 添加Game实例引用
+        public Game GameInstance { get; set; }
 
         /// <summary>
         /// 当前的逻辑帧数

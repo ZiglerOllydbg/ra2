@@ -1,8 +1,10 @@
-﻿using System;
+using System;
+using System.Runtime.Serialization;
+using Newtonsoft.Json; // 添加序列化命名空间
 
 namespace zUnity
 {
-	public struct zVector4
+	public struct zVector4 : ISerializable // 实现ISerializable接口
 	{
 		public static readonly zVector4 zero = new zVector4((zfloat)0, (zfloat)0, (zfloat)0, (zfloat)0);
 		public static readonly zVector4 one = new zVector4((zfloat)1, (zfloat)1, (zfloat)1, (zfloat)1);
@@ -36,6 +38,15 @@ namespace zUnity
 			this.z = vec.z;
 			this.w = vec.w;
 		}
+		
+		// 添加反序列化构造函数
+        public zVector4(SerializationInfo info, StreamingContext context)
+        {
+            x = zfloat.CreateFloat(info.GetInt64("x"));
+            y = zfloat.CreateFloat(info.GetInt64("y"));
+            z = zfloat.CreateFloat(info.GetInt64("z"));
+            w = zfloat.CreateFloat(info.GetInt64("w"));
+        }
 
 		public zfloat x;
 		public zfloat y;
@@ -97,7 +108,7 @@ namespace zUnity
 
 
 		//	private zVector4 normalized;
-
+		[JsonIgnore]
 		public zVector4 normalized
 		{
 			get
@@ -369,5 +380,18 @@ namespace zUnity
 		{
 			return (x + " , " + y + " , " + z + " , " + w);
 		}
+		
+		/// <summary>
+        /// 实现ISerializable接口的序列化方法
+        /// </summary>
+        /// <param name="info">序列化信息</param>
+        /// <param name="context">流上下文</param>
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("x", x.value);
+            info.AddValue("y", y.value);
+            info.AddValue("z", z.value);
+            info.AddValue("w", w.value);
+        }
 	}
 }
