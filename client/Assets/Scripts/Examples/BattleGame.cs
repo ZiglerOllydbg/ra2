@@ -63,11 +63,10 @@ namespace Game.Examples
         /// </summary>
         public new void Init()
         {
-            // 先调用基类初始化
-            base.Init();
-
             // 初始化地图和导航系统
             InitializeMapAndNavigation();
+            // 先调用基类初始化
+            base.Init();
 
             zUDebug.Log("[BattleGame] 战斗游戏初始化完成");
         }
@@ -94,12 +93,6 @@ namespace Game.Examples
             // 4. 创建RVO模拟器
             RvoSimulator = new RVO2Simulator();
             zUDebug.Log("[BattleGame] RVO模拟器初始化完成");
-
-            // 5. 创建并注册导航系统
-            NavSystem = new FlowFieldNavigationSystem();
-            World.SystemManager.RegisterSystem(NavSystem);
-            NavSystem.InitializeNavigation(FlowFieldManager, RvoSimulator, MapManager);
-            zUDebug.Log("[BattleGame] 导航系统注册完成");
         }
 
         /// <summary>
@@ -122,6 +115,12 @@ namespace Game.Examples
         /// </summary>
         protected override void RegisterSystems()
         {
+            //  创建并注册导航系统
+            NavSystem = new FlowFieldNavigationSystem();
+            World.SystemManager.RegisterSystem(NavSystem);
+            NavSystem.InitializeNavigation(FlowFieldManager, RvoSimulator, MapManager);
+            zUDebug.Log("[BattleGame] 导航系统注册完成");
+
             // 注册基础移动系统
             World.SystemManager.RegisterSystem(new MovementSystem());
 
