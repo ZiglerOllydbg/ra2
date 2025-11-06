@@ -140,7 +140,9 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private void OnEntityDeath(Entity entity)
         {
-            // TODO: 发布死亡事件，播放死亡动画等
+            // 添加死亡组件，设置2秒后尸体消失
+            ComponentManager.AddComponent(entity, new DeathComponent(World.TimeManager.Tick, 2 * 20)); // 2秒 * 20帧/秒
+
             // 发布销毁事件
             var destroyEvent = new UnitDestroyedEvent
             {

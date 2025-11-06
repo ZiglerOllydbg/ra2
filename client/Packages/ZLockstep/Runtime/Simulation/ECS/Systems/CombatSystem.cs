@@ -36,11 +36,22 @@ namespace ZLockstep.Simulation.ECS.Systems
                     continue;
 
                 // 检查攻击者是否还活着
-                if (ComponentManager.HasComponent<HealthComponent>(entity))
+                if (ComponentManager.HasComponent<DeathComponent>(entity))
+                {
+                    continue; // 死亡单位不能攻击
+                }
+
+                // 兼容性检查：检查是否有生命值组件且已经死亡
+                if (!ComponentManager.HasComponent<DeathComponent>(entity) && 
+                    ComponentManager.HasComponent<HealthComponent>(entity))
                 {
                     var health = ComponentManager.GetComponent<HealthComponent>(entity);
                     if (health.CurrentHealth <= zfloat.Zero)
+                    {
+                        // 添加死亡组件，设置2秒后尸体消失
+                        ComponentManager.AddComponent(entity, new DeathComponent(World.TimeManager.Tick, 2 * 20)); // 2秒 * 20帧/秒
                         continue; // 死亡单位不能攻击
+                    }
                 }
 
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
@@ -120,9 +131,16 @@ namespace ZLockstep.Simulation.ECS.Systems
                     continue;
 
                 // 检查是否还活着
+                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                    continue;
+
                 var health = ComponentManager.GetComponent<HealthComponent>(otherEntity);
                 if (health.CurrentHealth <= zfloat.Zero)
+                {
+                    // 添加死亡组件，设置2秒后尸体消失
+                    ComponentManager.AddComponent(otherEntity, new DeathComponent(World.TimeManager.Tick, 2 * 20)); // 2秒 * 20帧/秒
                     continue;
+                }
 
                 // 计算距离
                 var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
@@ -151,11 +169,20 @@ namespace ZLockstep.Simulation.ECS.Systems
                 return false;
 
             // 检查是否还活着
+            if (ComponentManager.HasComponent<DeathComponent>(target))
+            {
+                return false;
+            }
+
             if (ComponentManager.HasComponent<HealthComponent>(target))
             {
                 var health = ComponentManager.GetComponent<HealthComponent>(target);
                 if (health.CurrentHealth <= zfloat.Zero)
+                {
+                    // 添加死亡组件，设置2秒后尸体消失
+                    ComponentManager.AddComponent(target, new DeathComponent(World.TimeManager.Tick, 2 * 20)); // 2秒 * 20帧/秒
                     return false;
+                }
             }
 
             return true;
@@ -220,4 +247,3 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
     }
 }
-

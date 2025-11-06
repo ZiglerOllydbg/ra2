@@ -134,7 +134,7 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new ProjectileSystem());
 
             // 注册销毁系统
-            World.SystemManager.RegisterSystem(new EntityDestructionSystem());
+            World.SystemManager.RegisterSystem(new DeathRemovalSystem());
 
             // 注册AI系统
             // AISystem = new SimpleAISystem();
