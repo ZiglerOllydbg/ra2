@@ -123,15 +123,17 @@ namespace ZLockstep.RVO
 
             timeStep = deltaTime;
 
-            // 为每个智能体计算新速度
+            // 阶段1：为每个智能体计算新速度（存储到newVelocity，不修改velocity）
+            // 这样保证所有智能体计算时看到的是同一时刻的状态，保持ORCA算法的对称性
             for (int i = 0; i < agents.Count; i++)
             {
                 ComputeNewVelocity(agents[i]);
             }
 
-            // 更新所有智能体的位置
+            // 阶段2：统一应用新速度并更新位置
             for (int i = 0; i < agents.Count; i++)
             {
+                agents[i].velocity = agents[i].newVelocity;
                 agents[i].position += agents[i].velocity * deltaTime;
             }
         }
@@ -224,7 +226,9 @@ namespace ZLockstep.RVO
 
             // 使用线性规划找到最优速度
             zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
-            agent.velocity = newVelocity;
+            // 存储到newVelocity字段，而不是直接修改velocity
+            // 这样保证所有智能体在计算时看到的是同一时刻的velocity状态
+            agent.newVelocity = newVelocity;
         }
 
         /// <summary>
@@ -291,17 +295,26 @@ namespace ZLockstep.RVO
                     else
                     {
                         // 需要在两条线的交点处
-                        zfloat determinant = Det(lines[i].direction, lines[i - 1].direction);
-                        
-                        if (zMathf.Abs(determinant) > zfloat.Epsilon)
+                        // 添加边界检查，防止访问lines[i-1]时数组越界
+                        if (i > 0)
                         {
-                            zVector2 delta = lines[i].point - lines[i - 1].point;
-                            zfloat t = Det(delta, lines[i - 1].direction) / determinant;
-                            result = lines[i].point + lines[i].direction * t;
+                            zfloat determinant = Det(lines[i].direction, lines[i - 1].direction);
+                            
+                            if (zMathf.Abs(determinant) > zfloat.Epsilon)
+                            {
+                                zVector2 delta = lines[i].point - lines[i - 1].point;
+                                zfloat t = Det(delta, lines[i - 1].direction) / determinant;
+                                result = lines[i].point + lines[i].direction * t;
+                            }
+                            else
+                            {
+                                // 线几乎平行，使用当前结果
+                                result = lines[i].point;
+                            }
                         }
                         else
                         {
-                            // 线几乎平行，使用当前结果
+                            // 只有一条线且不可行，使用当前线上的点
                             result = lines[i].point;
                         }
                     }
@@ -374,6 +387,9 @@ namespace ZLockstep.RVO
 
         /// <summary>当前速度</summary>
         public zVector2 velocity;
+
+        /// <summary>新计算的速度（用于两阶段更新）</summary>
+        public zVector2 newVelocity;
 
         /// <summary>期望速度</summary>
         public zVector2 prefVelocity;
