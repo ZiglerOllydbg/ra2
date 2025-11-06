@@ -14,6 +14,15 @@ namespace ZLockstep.Flow
         public int width;
         public int height;
         
+        // 多源支持
+        public bool isMulti;
+        public int[] targetXs;
+        public int[] targetYs;
+        public int minTargetX;
+        public int minTargetY;
+        public int maxTargetX;
+        public int maxTargetY;
+        
         /// <summary>
         /// 每个格子的方向向量（已归一化）
         /// </summary>
@@ -49,6 +58,10 @@ namespace ZLockstep.Flow
             referenceCount = 0;
             isDirty = false;
             lastUpdateFrame = 0;
+            isMulti = false;
+            targetXs = null;
+            targetYs = null;
+            minTargetX = 0; minTargetY = 0; maxTargetX = 0; maxTargetY = 0;
         }
 
         public int GetIndex(int x, int y)
@@ -174,6 +187,54 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
+        /// 计算多源流场（多个目标格作为起点）
+        /// </summary>
+        public static void CalculateMulti(FlowField field, IFlowFieldMap map, List<(int x, int y)> targets)
+        {
+            field.isMulti = true;
+            if (targets == null || targets.Count == 0)
+                return;
+
+            // 记录一个代表性目标（用于兼容调试）
+            field.targetGridX = targets[0].x;
+            field.targetGridY = targets[0].y;
+
+            // 记录目标集合与包围盒
+            field.targetXs = new int[targets.Count];
+            field.targetYs = new int[targets.Count];
+            field.minTargetX = int.MaxValue;
+            field.minTargetY = int.MaxValue;
+            field.maxTargetX = int.MinValue;
+            field.maxTargetY = int.MinValue;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                field.targetXs[i] = targets[i].x;
+                field.targetYs[i] = targets[i].y;
+                if (targets[i].x < field.minTargetX) field.minTargetX = targets[i].x;
+                if (targets[i].y < field.minTargetY) field.minTargetY = targets[i].y;
+                if (targets[i].x > field.maxTargetX) field.maxTargetX = targets[i].x;
+                if (targets[i].y > field.maxTargetY) field.maxTargetY = targets[i].y;
+            }
+
+            // 1. 初始化代价为无穷大
+            for (int i = 0; i < field.costs.Length; i++)
+            {
+                field.costs[i] = zfloat.Infinity;
+            }
+
+            // 2. 多源 Dijkstra
+            CalculateCostFieldMulti(field, map, targets);
+
+            // 3. 墙壁惩罚
+            AddWallPenalty(field, map);
+
+            // 4. 生成方向
+            GenerateDirectionField(field, map);
+
+            field.isDirty = false;
+        }
+
+        /// <summary>
         /// 使用Dijkstra算法计算代价场
         /// </summary>
         private static void CalculateCostField(FlowField field, IFlowFieldMap map, int targetX, int targetY)
@@ -212,6 +273,22 @@ namespace ZLockstep.Flow
                     if (!map.IsWalkable(nx, ny))
                         continue;
 
+                    // 禁止对角穿角：对角方向要求相邻两正交格可走
+                    if (i >= 4)
+                    {
+                        int stepX = DX[i];
+                        int stepY = DY[i];
+                        int adjX1 = current.x + stepX; // 水平相邻
+                        int adjY1 = current.y;
+                        int adjX2 = current.x;         // 垂直相邻
+                        int adjY2 = current.y + stepY;
+
+                        if (!field.IsValid(adjX1, adjY1) || !field.IsValid(adjX2, adjY2))
+                            continue;
+                        if (!map.IsWalkable(adjX1, adjY1) || !map.IsWalkable(adjX2, adjY2))
+                            continue;
+                    }
+
                     int neighborIndex = field.GetIndex(nx, ny);
                     if (closedSet[neighborIndex])
                         continue;
@@ -222,6 +299,76 @@ namespace ZLockstep.Flow
                     zfloat newCost = current.cost + moveCost * terrainCost;
 
                     // 更新代价
+                    if (newCost < field.costs[neighborIndex])
+                    {
+                        field.costs[neighborIndex] = newCost;
+                        openSet.Enqueue(new GridNode(nx, ny, newCost));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 多源 Dijkstra 计算代价场
+        /// </summary>
+        private static void CalculateCostFieldMulti(FlowField field, IFlowFieldMap map, List<(int x, int y)> targets)
+        {
+            PriorityQueue openSet = new PriorityQueue();
+            bool[] closedSet = new bool[field.width * field.height];
+
+            // 所有目标点代价为0
+            for (int i = 0; i < targets.Count; i++)
+            {
+                int tx = targets[i].x;
+                int ty = targets[i].y;
+                if (!field.IsValid(tx, ty))
+                    continue;
+                int tidx = field.GetIndex(tx, ty);
+                field.costs[tidx] = zfloat.Zero;
+                openSet.Enqueue(new GridNode(tx, ty, zfloat.Zero));
+            }
+
+            while (openSet.Count > 0)
+            {
+                GridNode current = openSet.Dequeue();
+                int currentIndex = field.GetIndex(current.x, current.y);
+                if (closedSet[currentIndex])
+                    continue;
+                closedSet[currentIndex] = true;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int nx = current.x + DX[i];
+                    int ny = current.y + DY[i];
+
+                    if (!field.IsValid(nx, ny))
+                        continue;
+                    if (!map.IsWalkable(nx, ny))
+                        continue;
+
+                    // 禁止对角穿角
+                    if (i >= 4)
+                    {
+                        int stepX = DX[i];
+                        int stepY = DY[i];
+                        int adjX1 = current.x + stepX;
+                        int adjY1 = current.y;
+                        int adjX2 = current.x;
+                        int adjY2 = current.y + stepY;
+                        if (!field.IsValid(adjX1, adjY1) || !field.IsValid(adjX2, adjY2))
+                            continue;
+                        if (!map.IsWalkable(adjX1, adjY1) || !map.IsWalkable(adjX2, adjY2))
+                            continue;
+                    }
+
+                    int neighborIndex = field.GetIndex(nx, ny);
+                    if (closedSet[neighborIndex])
+                        continue;
+
+                    zfloat moveCost = (i < 4) ? zfloat.One : SQRT2;
+                    zfloat terrainCost = map.GetTerrainCost(nx, ny);
+                    zfloat newCost = current.cost + moveCost * terrainCost;
+
                     if (newCost < field.costs[neighborIndex])
                     {
                         field.costs[neighborIndex] = newCost;
@@ -305,44 +452,68 @@ namespace ZLockstep.Flow
                         continue;
                     }
 
-                    // ===== 改进：加权平均方向，而不是单纯选最小 =====
+                    // 先尝试用代价场梯度（中心差分）生成方向
                     zfloat currentCost = field.costs[index];
-                    zVector2 avgDirection = zVector2.zero;
-                    zfloat totalWeight = zfloat.Zero;
 
-                    for (int i = 0; i < 8; i++)
+                    bool hasLeft = field.IsValid(x - 1, y) && field.costs[field.GetIndex(x - 1, y)] != zfloat.Infinity;
+                    bool hasRight = field.IsValid(x + 1, y) && field.costs[field.GetIndex(x + 1, y)] != zfloat.Infinity;
+                    bool hasDown = field.IsValid(x, y - 1) && field.costs[field.GetIndex(x, y - 1)] != zfloat.Infinity;
+                    bool hasUp = field.IsValid(x, y + 1) && field.costs[field.GetIndex(x, y + 1)] != zfloat.Infinity;
+
+                    zVector2 grad = zVector2.zero;
+                    if (hasLeft && hasRight)
                     {
-                        int nx = x + DX[i];
-                        int ny = y + DY[i];
-
-                        if (!field.IsValid(nx, ny))
-                            continue;
-
-                        int neighborIndex = field.GetIndex(nx, ny);
-                        zfloat neighborCost = field.costs[neighborIndex];
-                        
-                        // 只考虑代价更低的邻居
-                        if (neighborCost < currentCost)
-                        {
-                            // 代价差越大，权重越高
-                            zfloat costDiff = currentCost - neighborCost;
-                            zfloat weight = costDiff * costDiff; // 平方强调差异
-                            
-                            zVector2 dirToNeighbor = new zVector2((zfloat)DX[i], (zfloat)DY[i]);
-                            avgDirection += dirToNeighbor * weight;
-                            totalWeight += weight;
-                        }
+                        zfloat cL = field.costs[field.GetIndex(x - 1, y)];
+                        zfloat cR = field.costs[field.GetIndex(x + 1, y)];
+                        grad.x = (cR - cL) * new zfloat(0, 5000); // *0.5
+                    }
+                    if (hasDown && hasUp)
+                    {
+                        zfloat cD = field.costs[field.GetIndex(x, y - 1)];
+                        zfloat cU = field.costs[field.GetIndex(x, y + 1)];
+                        grad.y = (cU - cD) * new zfloat(0, 5000); // *0.5
                     }
 
-                    // 设置方向（归一化）
-                    if (totalWeight > zfloat.Epsilon)
+                    if (grad.magnitude > zfloat.Epsilon)
                     {
-                        field.directions[index] = (avgDirection / totalWeight).normalized;
+                        field.directions[index] = (-grad).normalized;
                     }
                     else
                     {
-                        // 没有更低代价的邻居（局部最小值或目标点）
-                        field.directions[index] = zVector2.zero;
+                        // 回退：加权平均方向（原实现）
+                        zVector2 avgDirection = zVector2.zero;
+                        zfloat totalWeight = zfloat.Zero;
+
+                        for (int i = 0; i < 8; i++)
+                        {
+                            int nx = x + DX[i];
+                            int ny = y + DY[i];
+
+                            if (!field.IsValid(nx, ny))
+                                continue;
+
+                            int neighborIndex = field.GetIndex(nx, ny);
+                            zfloat neighborCost = field.costs[neighborIndex];
+
+                            if (neighborCost < currentCost)
+                            {
+                                zfloat costDiff = currentCost - neighborCost;
+                                zfloat weight = costDiff * costDiff;
+
+                                zVector2 dirToNeighbor = new zVector2((zfloat)DX[i], (zfloat)DY[i]);
+                                avgDirection += dirToNeighbor * weight;
+                                totalWeight += weight;
+                            }
+                        }
+
+                        if (totalWeight > zfloat.Epsilon)
+                        {
+                            field.directions[index] = (avgDirection / totalWeight).normalized;
+                        }
+                        else
+                        {
+                            field.directions[index] = zVector2.zero;
+                        }
                     }
                 }
             }

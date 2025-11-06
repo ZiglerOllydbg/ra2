@@ -38,6 +38,7 @@ public class StandaloneBattleDemo : MonoBehaviour
     [SerializeField] private bool showObstacles = true;
     [SerializeField] private bool showHealthBars = true;
     [SerializeField] private bool showAttackRanges = false;
+    [SerializeField] private bool showScatterPoints = true;
     [SerializeField] private LayerMask groundLayer = -1;
 
     // 核心：BattleGame实例
@@ -247,8 +248,16 @@ public class StandaloneBattleDemo : MonoBehaviour
 
         if (_selectedUnits.Count > 0)
         {
-            _battleGame.NavSystem.SetMultipleTargets(_selectedUnits, targetPosition);
-            Debug.Log($"[StandaloneBattleDemo] 移动{_selectedUnits.Count}个单位到{targetPosition}");
+            if (_selectedUnits.Count > 1)
+            {
+                _battleGame.NavSystem.SetScatterTargets(_selectedUnits, targetPosition);
+                Debug.Log($"[StandaloneBattleDemo] 散点移动{_selectedUnits.Count}个单位到{targetPosition}");
+            }
+            else
+            {
+                _battleGame.NavSystem.SetMultipleTargets(_selectedUnits, targetPosition);
+                Debug.Log($"[StandaloneBattleDemo] 移动{_selectedUnits.Count}个单位到{targetPosition}");
+            }
         }
     }
 
@@ -450,6 +459,9 @@ public class StandaloneBattleDemo : MonoBehaviour
 
         // 绘制选中单位
         DrawSelectedUnits();
+
+        // 绘制散点调试
+        DrawScatterPoints();
     }
 
     private void DrawMapGrid()
@@ -590,6 +602,49 @@ public class StandaloneBattleDemo : MonoBehaviour
                 Vector3 pos = transform.Position.ToVector3();
                 Gizmos.DrawWireSphere(pos, 1f);
             }
+        }
+    }
+
+    private void DrawScatterPoints()
+    {
+        if (!showScatterPoints || _battleGame == null || _battleGame.NavSystem == null)
+            return;
+
+        var points = _battleGame.NavSystem.DebugScatterPoints;
+        if (points == null)
+            return;
+
+        // 散点
+        Gizmos.color = Color.cyan;
+        float r = 0.5f;
+        for (int i = 0; i < points.Count; i++)
+        {
+            var p = points[i];
+            Vector3 pos = new Vector3((float)p.x, 0.05f, (float)p.y);
+            Gizmos.DrawWireSphere(pos, r);
+        }
+
+        // 区域半径与中心
+        var center = _battleGame.NavSystem.DebugScatterCenter;
+        var rad = _battleGame.NavSystem.DebugScatterRadius;
+        Vector3 cpos = new Vector3((float)center.x, 0.03f, (float)center.y);
+        if (rad > zfloat.Zero)
+        {
+            Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.6f);
+            // 画圆：近似为多边形
+            int seg = 48;
+            float fr = (float)rad;
+            Vector3 prev = cpos + new Vector3(fr, 0f, 0f);
+            for (int i = 1; i <= seg; i++)
+            {
+                float ang = i * Mathf.PI * 2f / seg;
+                Vector3 cur = cpos + new Vector3(Mathf.Cos(ang) * fr, 0f, Mathf.Sin(ang) * fr);
+                Gizmos.DrawLine(prev, cur);
+                prev = cur;
+            }
+            // 中心点
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(cpos, 0.3f);
         }
     }
 }

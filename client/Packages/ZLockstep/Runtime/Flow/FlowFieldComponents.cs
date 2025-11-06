@@ -59,6 +59,11 @@ namespace ZLockstep.Flow
         /// </summary>
         public int StuckFrames;
 
+        /// <summary>
+        /// 近端稳定判定：低速连续帧计数
+        /// </summary>
+        public int NearSlowFrames;
+
         public static FlowFieldNavigatorComponent Create(zfloat radius, zfloat maxSpeed)
         {
             return new FlowFieldNavigatorComponent
@@ -72,7 +77,8 @@ namespace ZLockstep.Flow
                 IsEnabled = true,
                 Radius = radius,
                 LastPosition = zVector2.zero,
-                StuckFrames = 0
+                StuckFrames = 0,
+                NearSlowFrames = 0
             };
         }
     }

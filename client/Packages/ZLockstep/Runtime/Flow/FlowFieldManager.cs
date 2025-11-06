@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using zUnity;
 
 namespace ZLockstep.Flow
@@ -24,8 +25,10 @@ namespace ZLockstep.Flow
     {
         private IFlowFieldMap map;
         private Dictionary<long, FlowField> fieldCache;  // key: targetGridX | (targetGridY << 32)
+        private Dictionary<string, FlowField> multiFieldCache; // key: "x_y|x_y|..." 排序后
         private Dictionary<int, FlowField> fieldById;
         private Queue<FlowField> dirtyFields;
+        private HashSet<int> dirtySet;
         private int nextFieldId;
         private int maxCachedFields;
         private int currentFrame;
@@ -34,8 +37,10 @@ namespace ZLockstep.Flow
         public FlowFieldManager()
         {
             fieldCache = new Dictionary<long, FlowField>();
+            multiFieldCache = new Dictionary<string, FlowField>();
             fieldById = new Dictionary<int, FlowField>();
             dirtyFields = new Queue<FlowField>();
+            dirtySet = new HashSet<int>();
             nextFieldId = 0;
             maxCachedFields = 20;
             maxUpdatesPerFrame = 2;
@@ -58,6 +63,63 @@ namespace ZLockstep.Flow
         {
             map.WorldToGrid(targetWorldPos, out int gridX, out int gridY);
             return RequestFlowFieldToGrid(gridX, gridY);
+        }
+
+        /// <summary>
+        /// 请求多源（多个世界坐标目标）流场
+        /// </summary>
+        public int RequestFlowFieldMultiWorld(List<zVector2> targetWorldPositions)
+        {
+            List<(int x, int y)> cells = new List<(int x, int y)>();
+            HashSet<long> seen = new HashSet<long>();
+            foreach (var wp in targetWorldPositions)
+            {
+                map.WorldToGrid(wp, out int gx, out int gy);
+                long k = ((long)gx) | (((long)gy) << 32);
+                if (seen.Add(k))
+                {
+                    cells.Add((gx, gy));
+                }
+            }
+            return RequestFlowFieldMulti(cells);
+        }
+
+        /// <summary>
+        /// 请求多源（多个格子目标）流场
+        /// </summary>
+        public int RequestFlowFieldMulti(List<(int x, int y)> targetCells)
+        {
+            if (targetCells == null || targetCells.Count == 0)
+                return -1;
+
+            // 去重并排序 (y,x) 稳定 key
+            var unique = targetCells.Distinct().OrderBy(t => t.y).ThenBy(t => t.x).ToList();
+            string key = string.Join("|", unique.Select(t => $"{t.x}_{t.y}"));
+
+            if (multiFieldCache.TryGetValue(key, out FlowField fieldHit))
+            {
+                fieldHit.referenceCount++;
+                return fieldHit.fieldId;
+            }
+
+            // 检查缓存是否已满
+            if (fieldCache.Count + multiFieldCache.Count >= maxCachedFields)
+            {
+                CleanupUnusedFields();
+            }
+
+            // 创建并计算
+            FlowField field = new FlowField(nextFieldId++, map.GetWidth(), map.GetHeight());
+            field.referenceCount = 1;
+            field.isDirty = true;
+            field.isMulti = true;
+
+            FlowFieldCalculator.CalculateMulti(field, map, unique);
+            field.lastUpdateFrame = currentFrame;
+
+            multiFieldCache[key] = field;
+            fieldById[field.fieldId] = field;
+            return field.fieldId;
         }
 
         /// <summary>
@@ -176,15 +238,32 @@ namespace ZLockstep.Flow
 
             foreach (var field in fieldById.Values)
             {
-                // 检查流场的目标是否在受影响区域内
-                // 或者流场路径可能经过受影响区域
-                // 简单起见，只要有引用就标记为脏
-                if (field.referenceCount > 0)
+                if (field.referenceCount <= 0)
+                    continue;
+
+                if (!field.isMulti)
                 {
-                    field.isDirty = true;
-                    if (!dirtyFields.Contains(field))
+                    if (field.targetGridX >= flowMinX && field.targetGridX <= flowMaxX &&
+                        field.targetGridY >= flowMinY && field.targetGridY <= flowMaxY)
                     {
-                        dirtyFields.Enqueue(field);
+                        field.isDirty = true;
+                        if (dirtySet.Add(field.fieldId))
+                        {
+                            dirtyFields.Enqueue(field);
+                        }
+                    }
+                }
+                else
+                {
+                    bool intersect = !(field.maxTargetX < flowMinX || field.minTargetX > flowMaxX ||
+                                       field.maxTargetY < flowMinY || field.minTargetY > flowMaxY);
+                    if (intersect)
+                    {
+                        field.isDirty = true;
+                        if (dirtySet.Add(field.fieldId))
+                        {
+                            dirtyFields.Enqueue(field);
+                        }
                     }
                 }
             }
@@ -202,10 +281,25 @@ namespace ZLockstep.Flow
                 
                 if (field.isDirty)
                 {
-                    FlowFieldCalculator.Calculate(field, map, field.targetGridX, field.targetGridY);
+                    if (field.isMulti)
+                    {
+                        List<(int x, int y)> targets = new List<(int x, int y)>();
+                        if (field.targetXs != null)
+                        {
+                            for (int i = 0; i < field.targetXs.Length; i++)
+                                targets.Add((field.targetXs[i], field.targetYs[i]));
+                        }
+                        FlowFieldCalculator.CalculateMulti(field, map, targets);
+                    }
+                    else
+                    {
+                        FlowFieldCalculator.Calculate(field, map, field.targetGridX, field.targetGridY);
+                    }
                     field.lastUpdateFrame = currentFrame;
                     updated++;
                 }
+                // 出队后无论是否更新，移除脏标记记录，避免重复
+                dirtySet.Remove(field.fieldId);
             }
         }
 
@@ -216,7 +310,20 @@ namespace ZLockstep.Flow
         {
             if (fieldById.TryGetValue(fieldId, out FlowField field))
             {
-                FlowFieldCalculator.Calculate(field, map, field.targetGridX, field.targetGridY);
+                if (field.isMulti)
+                {
+                    List<(int x, int y)> targets = new List<(int x, int y)>();
+                    if (field.targetXs != null)
+                    {
+                        for (int i = 0; i < field.targetXs.Length; i++)
+                            targets.Add((field.targetXs[i], field.targetYs[i]));
+                    }
+                    FlowFieldCalculator.CalculateMulti(field, map, targets);
+                }
+                else
+                {
+                    FlowFieldCalculator.Calculate(field, map, field.targetGridX, field.targetGridY);
+                }
                 field.lastUpdateFrame = currentFrame;
             }
         }
@@ -256,12 +363,22 @@ namespace ZLockstep.Flow
         {
             List<long> keysToRemove = new List<long>();
             List<int> idsToRemove = new List<int>();
+            List<string> multiKeysToRemove = new List<string>();
 
             foreach (var kvp in fieldCache)
             {
                 if (kvp.Value.referenceCount <= 0)
                 {
                     keysToRemove.Add(kvp.Key);
+                    idsToRemove.Add(kvp.Value.fieldId);
+                }
+            }
+
+            foreach (var kvp in multiFieldCache)
+            {
+                if (kvp.Value.referenceCount <= 0)
+                {
+                    multiKeysToRemove.Add(kvp.Key);
                     idsToRemove.Add(kvp.Value.fieldId);
                 }
             }
@@ -275,6 +392,11 @@ namespace ZLockstep.Flow
             {
                 fieldById.Remove(id);
             }
+
+            foreach (string key in multiKeysToRemove)
+            {
+                multiFieldCache.Remove(key);
+            }
         }
 
         /// <summary>
@@ -283,8 +405,10 @@ namespace ZLockstep.Flow
         public void Clear()
         {
             fieldCache.Clear();
+            multiFieldCache.Clear();
             fieldById.Clear();
             dirtyFields.Clear();
+            dirtySet.Clear();
         }
 
         /// <summary>
