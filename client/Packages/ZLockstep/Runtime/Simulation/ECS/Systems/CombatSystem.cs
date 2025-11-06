@@ -77,6 +77,15 @@ namespace ZLockstep.Simulation.ECS.Systems
                     {
                         attack.TargetEntityId = -1;
                         ComponentManager.AddComponent(entity, attack);
+                        
+                        // 清空炮塔目标
+                        if (ComponentManager.HasComponent<TurretComponent>(entity))
+                        {
+                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                            turret.HasTarget = false;
+                            ComponentManager.AddComponent(entity, turret);
+                        }
+                        
                         continue;
                     }
 
@@ -88,12 +97,41 @@ namespace ZLockstep.Simulation.ECS.Systems
                     if (distanceSqr > rangeSqr)
                     {
                         attack.TargetEntityId = -1;
+                        
+                        // 清空炮塔目标
+                        if (ComponentManager.HasComponent<TurretComponent>(entity))
+                        {
+                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                            turret.HasTarget = false;
+                            ComponentManager.AddComponent(entity, turret);
+                        }
                     }
-                    // 如果在范围内且冷却完成，发射攻击
-                    else if (attack.CanAttack)
+                    // 如果在范围内，设置炮塔朝向目标
+                    else
                     {
-                        FireProjectile(entity, target, attack.Damage, transform.Position, targetTransform.Position, camp.CampId);
-                        attack.TimeSinceLastAttack = zfloat.Zero;
+                        // 更新炮塔朝向目标
+                        if (ComponentManager.HasComponent<TurretComponent>(entity))
+                        {
+                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                            turret.HasTarget = true;
+                            
+                            // 计算朝向目标的方向（2D）
+                            zVector3 toTarget = targetTransform.Position - transform.Position;
+                            zVector2 toTarget2D = new zVector2(toTarget.x, toTarget.z);
+                            if (toTarget2D.magnitude > zfloat.Epsilon)
+                            {
+                                turret.DesiredTurretDirection = toTarget2D.normalized;
+                            }
+                            
+                            ComponentManager.AddComponent(entity, turret);
+                        }
+                        
+                        // 如果冷却完成，发射攻击
+                        if (attack.CanAttack)
+                        {
+                            FireProjectile(entity, target, attack.Damage, transform.Position, targetTransform.Position, camp.CampId);
+                            attack.TimeSinceLastAttack = zfloat.Zero;
+                        }
                     }
                 }
 

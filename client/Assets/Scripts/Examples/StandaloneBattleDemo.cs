@@ -39,6 +39,7 @@ public class StandaloneBattleDemo : MonoBehaviour
     [SerializeField] private bool showHealthBars = true;
     [SerializeField] private bool showAttackRanges = false;
     [SerializeField] private bool showScatterPoints = true;
+    [SerializeField] private bool showRotationDebug = true;  // 新增：显示旋转调试
     [SerializeField] private LayerMask groundLayer = -1;
 
     // 核心：BattleGame实例
@@ -558,11 +559,130 @@ public class StandaloneBattleDemo : MonoBehaviour
                 Gizmos.DrawWireSphere(pos, (float)attack.Range);
             }
 
+            // 绘制旋转调试信息
+            if (showRotationDebug)
+            {
+                DrawUnitRotation(entity, transform, camp);
+            }
+
             // 绘制生命值条
             if (showHealthBars && _battleGame.World.ComponentManager.HasComponent<HealthComponent>(entity))
             {
                 DrawHealthBar(entity, pos + Vector3.up * 2f);
             }
+        }
+    }
+
+    /// <summary>
+    /// 绘制单位的旋转调试信息
+    /// </summary>
+    private void DrawUnitRotation(Entity entity, TransformComponent transform, CampComponent camp)
+    {
+        Vector3 pos = transform.Position.ToVector3() + Vector3.up * 0.5f;
+        float arrowLength = 2f;
+
+        // 1. 绘制车体当前朝向（蓝色）
+        zVector3 forward = transform.Rotation * zVector3.forward;
+        Vector3 bodyDirection = new Vector3((float)forward.x, 0, (float)forward.z).normalized;
+
+        // 检查是否正在原地转向
+        bool isInPlaceRotating = false;
+        if (_battleGame.World.ComponentManager.HasComponent<RotationStateComponent>(entity))
+        {
+            var rotationState = _battleGame.World.ComponentManager.GetComponent<RotationStateComponent>(entity);
+            isInPlaceRotating = rotationState.IsInPlaceRotating;
+
+            // 2. 绘制期望朝向（黄色）
+            if (rotationState.DesiredDirection.magnitude > new zfloat(0, 100))
+            {
+                Vector3 desiredDirection = new Vector3(
+                    (float)rotationState.DesiredDirection.x,
+                    0,
+                    (float)rotationState.DesiredDirection.y
+                ).normalized;
+
+                Gizmos.color = Color.yellow;
+                DrawArrow(pos, desiredDirection * arrowLength * 0.8f, 0.08f);
+            }
+        }
+
+        // 车体朝向颜色：原地转向时为洋红色，否则为蓝色
+        Gizmos.color = isInPlaceRotating ? Color.magenta : Color.blue;
+        DrawArrow(pos, bodyDirection * arrowLength, 0.1f);
+
+        // 3. 绘制炮塔朝向（红色）
+        if (_battleGame.World.ComponentManager.HasComponent<TurretComponent>(entity))
+        {
+            var turret = _battleGame.World.ComponentManager.GetComponent<TurretComponent>(entity);
+            
+            if (turret.HasTarget)
+            {
+                // 计算炮塔的世界朝向
+                float turretAngleRad = (float)turret.CurrentTurretAngle * Mathf.Deg2Rad;
+                Quaternion turretRotation = Quaternion.Euler(0, (float)turret.CurrentTurretAngle, 0);
+                Vector3 turretDirection = turretRotation * bodyDirection;
+
+                Vector3 turretPos = pos + Vector3.up * 0.3f;
+                Gizmos.color = Color.red;
+                DrawArrow(turretPos, turretDirection * arrowLength * 1.2f, 0.12f);
+            }
+        }
+
+        // 4. 绘制旋转阈值扇形（选中时）
+        if (_selectedUnits.Contains(entity) && _battleGame.World.ComponentManager.HasComponent<VehicleTypeComponent>(entity))
+        {
+            var vehicleType = _battleGame.World.ComponentManager.GetComponent<VehicleTypeComponent>(entity);
+            DrawRotationThresholdArc(pos, bodyDirection, (float)vehicleType.InPlaceRotationThreshold);
+        }
+    }
+
+    /// <summary>
+    /// 绘制箭头
+    /// </summary>
+    private void DrawArrow(Vector3 position, Vector3 direction, float thickness = 0.1f)
+    {
+        if (direction.magnitude < 0.01f)
+            return;
+
+        // 绘制主线
+        Vector3 end = position + direction;
+        Gizmos.DrawLine(position, end);
+        Gizmos.DrawSphere(end, thickness);
+
+        // 绘制箭头头部
+        Vector3 right = Vector3.Cross(direction, Vector3.up).normalized;
+        Vector3 arrowHeadBase = end - direction.normalized * 0.3f;
+        
+        Gizmos.DrawLine(end, arrowHeadBase + right * 0.2f);
+        Gizmos.DrawLine(end, arrowHeadBase - right * 0.2f);
+    }
+
+    /// <summary>
+    /// 绘制旋转阈值扇形
+    /// </summary>
+    private void DrawRotationThresholdArc(Vector3 position, Vector3 bodyDirection, float thresholdAngle)
+    {
+        // 绘制左右阈值线
+        Quaternion leftRotation = Quaternion.Euler(0, -thresholdAngle, 0);
+        Quaternion rightRotation = Quaternion.Euler(0, thresholdAngle, 0);
+
+        Vector3 leftBoundary = leftRotation * bodyDirection * 2f;
+        Vector3 rightBoundary = rightRotation * bodyDirection * 2f;
+
+        Gizmos.color = new Color(1, 1, 0, 0.5f);
+        Gizmos.DrawLine(position, position + leftBoundary);
+        Gizmos.DrawLine(position, position + rightBoundary);
+
+        // 绘制圆弧
+        int segments = 20;
+        Vector3 prevPoint = position + rightBoundary;
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = -thresholdAngle + (thresholdAngle * 2f * i / segments);
+            Quaternion rot = Quaternion.Euler(0, angle, 0);
+            Vector3 point = position + rot * bodyDirection * 2f;
+            Gizmos.DrawLine(prevPoint, point);
+            prevPoint = point;
         }
     }
 

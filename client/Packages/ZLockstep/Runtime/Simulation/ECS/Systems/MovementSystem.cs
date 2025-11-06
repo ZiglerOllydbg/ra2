@@ -60,21 +60,29 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 计算移动方向
                 zVector3 direction = toTarget.normalized;
 
-                // 更新朝向
-                if (direction.sqrMagnitude > zfloat.Zero)
+                // 设置期望旋转方向到RotationStateComponent（如果有）
+                if (ComponentManager.HasComponent<RotationStateComponent>(entity))
                 {
-                    zQuaternion targetRotation = zQuaternion.LookRotation(direction);
-                    // TODO: 可以添加平滑旋转逻辑
-                    transform.Rotation = targetRotation;
-                    zUDebug.Log("[MovementSystem] Update entity " + entity.Id + " rotation to " + targetRotation);
+                    var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                    zVector2 direction2D = new zVector2(direction.x, direction.z);
+                    if (direction2D.magnitude > zfloat.Epsilon)
+                    {
+                        rotationState.DesiredDirection = direction2D.normalized;
+                        ComponentManager.AddComponent(entity, rotationState);
+                    }
+
+                    // 检查是否正在原地转向
+                    if (rotationState.IsInPlaceRotating)
+                    {
+                        // 原地转向时不移动，速度设为零
+                        ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
+                        continue; // 跳过本次移动更新
+                    }
                 }
 
                 // 更新或添加速度组件
                 var velocity = new VelocityComponent(direction * unit.MoveSpeed);
                 ComponentManager.AddComponent(entity, velocity);
-
-                // 写回Transform
-                ComponentManager.AddComponent(entity, transform);
             }
         }
 
@@ -91,6 +99,17 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                 if (!ComponentManager.HasComponent<TransformComponent>(entity))
                     continue;
+
+                // 检查是否正在原地转向
+                if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+                {
+                    var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                    if (rotationState.IsInPlaceRotating)
+                    {
+                        // 原地转向时不更新位置
+                        continue;
+                    }
+                }
 
                 var velocity = ComponentManager.GetComponent<VelocityComponent>(entity);
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);

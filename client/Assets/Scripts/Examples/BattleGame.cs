@@ -131,6 +131,11 @@ namespace Game.Examples
 
             // 注册战斗系统
             World.SystemManager.RegisterSystem(new CombatSystem());
+
+            // 注册旋转系统（在战斗系统之后，处理车体和炮塔旋转）
+            World.SystemManager.RegisterSystem(new RotationSystem());
+            zUDebug.Log("[BattleGame] 旋转系统注册完成");
+
             World.SystemManager.RegisterSystem(new ProjectileSystem());
 
             // 注册销毁系统
@@ -379,7 +384,35 @@ namespace Game.Examples
             // 8. 添加导航能力
             NavSystem.AddNavigator(entity, radius, maxSpeed);
 
-            // 9. 创建但不发布事件，返回事件对象
+            // 9. 添加旋转相关组件
+            // 根据单位类型添加不同的载具类型组件
+            VehicleTypeComponent vehicleType;
+            if (unitType == 1) // 动员兵
+            {
+                vehicleType = VehicleTypeComponent.CreateInfantry();
+            }
+            else if (unitType == 2) // 坦克
+            {
+                vehicleType = VehicleTypeComponent.CreateHeavyTank();
+            }
+            else
+            {
+                vehicleType = VehicleTypeComponent.CreateInfantry(); // 默认
+            }
+            World.ComponentManager.AddComponent(entity, vehicleType);
+
+            // 添加旋转状态组件
+            var rotationState = RotationStateComponent.Create();
+            World.ComponentManager.AddComponent(entity, rotationState);
+
+            // 如果有炮塔，添加炮塔组件
+            if (vehicleType.HasTurret)
+            {
+                var turret = TurretComponent.CreateDefault();
+                World.ComponentManager.AddComponent(entity, turret);
+            }
+
+            // 10. 创建但不发布事件，返回事件对象
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,
@@ -542,7 +575,17 @@ namespace Game.Examples
             // 8. 添加导航能力
             NavSystem.AddNavigator(entity, radius, maxSpeed);
 
-            // 9. 发布事件通知表现层创建视图
+            // 9. 添加旋转相关组件
+            var vehicleType = VehicleTypeComponent.CreateHeavyTank(); // 坦克类型
+            World.ComponentManager.AddComponent(entity, vehicleType);
+
+            var rotationState = RotationStateComponent.Create();
+            World.ComponentManager.AddComponent(entity, rotationState);
+
+            var turret = TurretComponent.CreateDefault();
+            World.ComponentManager.AddComponent(entity, turret);
+
+            // 10. 发布事件通知表现层创建视图
             World.EventManager.Publish(new ZLockstep.Simulation.Events.UnitCreatedEvent
             {
                 EntityId = entity.Id,

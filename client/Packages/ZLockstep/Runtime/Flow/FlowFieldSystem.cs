@@ -564,6 +564,33 @@ namespace ZLockstep.Flow
                 }
             }
 
+            // ===== 设置期望旋转方向到RotationStateComponent =====
+            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+            {
+                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                if (flowDirection.magnitude > zfloat.Epsilon)
+                {
+                    rotationState.DesiredDirection = flowDirection.normalized;
+                    ComponentManager.AddComponent(entity, rotationState);
+                }
+            }
+
+            // ===== 检查是否正在原地转向 =====
+            bool isInPlaceRotating = false;
+            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+            {
+                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                isInPlaceRotating = rotationState.IsInPlaceRotating;
+            }
+
+            // 如果正在原地转向，停止移动
+            if (isInPlaceRotating)
+            {
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                ComponentManager.AddComponent(entity, navigator);
+                return;
+            }
+
             // ===== 提前预测碰撞 =====
             zVector2 desiredVelocity = flowDirection * speed;
             
@@ -694,6 +721,26 @@ namespace ZLockstep.Flow
                     ComponentManager.AddComponent(entity, velocity);
                 }
                 return;
+            }
+
+            // ===== 检查是否正在原地转向 =====
+            // 原地转向时冻结位置更新，只允许旋转
+            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+            {
+                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                if (rotationState.IsInPlaceRotating)
+                {
+                    // 冻结位置：重置RVO代理位置到当前Transform位置
+                    rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
+
+                    // 同步零速度到 VelocityComponent（若存在）
+                    if (ComponentManager.HasComponent<VelocityComponent>(entity))
+                    {
+                        var velocity = new VelocityComponent(new zVector3(zfloat.Zero, zfloat.Zero, zfloat.Zero));
+                        ComponentManager.AddComponent(entity, velocity);
+                    }
+                    return;
+                }
             }
             
             // ===== 碰撞检测：检查新位置是否在障碍物里 =====
