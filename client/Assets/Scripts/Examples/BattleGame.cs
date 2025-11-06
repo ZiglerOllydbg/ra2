@@ -182,7 +182,7 @@ namespace Game.Examples
                         string type = building["type"]?.ToString();
                         float x = building["x"]?.ToObject<float>() ?? 0;
                         float y = building["y"]?.ToObject<float>() ?? 0;
-                        
+
                         // 根据类型创建建筑实体
                         var entityEvent = CreateBuildingEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
                         if (entityEvent.HasValue)
@@ -191,6 +191,8 @@ namespace Game.Examples
                         }
                     }
                 }
+
+                var playerCount = 0;
                 
                 // 创建单位
                 var units = (JArray)playerObj["units"];
@@ -211,12 +213,13 @@ namespace Game.Examples
                         }
 
                         // TODO 测试代码，创建player2的单位
-                        {
+                        if (playerCount < 1) {
                             var entityEvent2 = CreateUnitEntity(2, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y + 32));
                             if (entityEvent2.HasValue)
                             {
                                 createdEntities.Add(entityEvent2.Value);
                             }
+                            playerCount++;
                         }
                     }
                 }

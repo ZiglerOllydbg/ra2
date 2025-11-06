@@ -4,6 +4,8 @@ using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Sync;
+using ZLockstep.Simulation.ECS.Systems;
+using static ZLockstep.Simulation.ECS.Systems.SettlementSystem;
 
 namespace ZLockstep.View.Systems
 {
@@ -20,7 +22,7 @@ namespace ZLockstep.View.Systems
     /// - 在所有逻辑System之后执行
     /// - 在同一逻辑帧内处理事件（确保及时创建View）
     /// </summary>
-    public class PresentationSystem : BaseSystem
+    public class PresentationSystem : PresentationBaseSystem
     {
         // Unity资源
         private Transform _viewRoot;
@@ -38,6 +40,11 @@ namespace ZLockstep.View.Systems
         
         // 添加对Game对象的引用
         private Game _game;
+
+        // 游戏结束状态变量
+        public bool IsGameOver { get; private set; } = false;
+        public bool IsVictory { get; private set; } = false;
+        public int WinningCampId { get; private set; } = -1;
 
         /// <summary>
         /// 初始化系统（由GameWorldBridge调用）
@@ -74,9 +81,26 @@ namespace ZLockstep.View.Systems
             
             // 2. 处理销毁事件
             ProcessDestructionEvents();
+            
+            // 3. 处理游戏结束事件
+            ProcessGameOverEvents();
 
-            // 3. 同步已有的View
+            // 4. 同步已有的View
             SyncAllViews();
+        }
+
+        /// <summary>
+        /// 处理游戏结束事件
+        /// </summary>
+        private void ProcessGameOverEvents()
+        {
+            var events = EventManager.GetEvents<GameOverEvent>();
+            foreach (var evt in events)
+            {
+                IsGameOver = true;
+                IsVictory = evt.IsVictory;
+                WinningCampId = evt.WinningCampId;
+            }
         }
 
         /// <summary>

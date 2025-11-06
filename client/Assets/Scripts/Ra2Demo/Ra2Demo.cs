@@ -71,11 +71,6 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
 
-    // 添加游戏结束状态变量
-    private bool isGameOver = false;
-    private bool isVictory = false;
-    private int winningCampId = -1;
-
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
     [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
@@ -846,7 +841,7 @@ public class Ra2Demo : MonoBehaviour
         }
         
         // 绘制游戏结束界面
-        if (isGameOver)
+        if (_presentationSystem.IsGameOver)
         {
             DrawGameOverUI();
         }
@@ -872,9 +867,9 @@ public class Ra2Demo : MonoBehaviour
         textStyle.fontSize = 48;
         textStyle.fontStyle = FontStyle.Bold;
         textStyle.alignment = TextAnchor.MiddleCenter;
-        textStyle.normal.textColor = isVictory ? Color.green : Color.red;
+        textStyle.normal.textColor = _presentationSystem.IsVictory ? Color.green : Color.red;
         
-        string resultText = isVictory ? "胜利!" : "失败!";
+        string resultText = _presentationSystem.IsVictory ? "胜利!" : "失败!";
         GUI.Label(new Rect(0, Screen.height / 2 - 50, Screen.width, 100), resultText, textStyle);
         
         // 显示胜利方信息
@@ -883,7 +878,7 @@ public class Ra2Demo : MonoBehaviour
         infoStyle.alignment = TextAnchor.MiddleCenter;
         infoStyle.normal.textColor = Color.white;
         
-        string infoText = isVictory ? $"你击败了阵营 {winningCampId}" : $"你被阵营 {winningCampId} 击败";
+        string infoText = _presentationSystem.IsVictory ? $"你击败了阵营 {_presentationSystem.WinningCampId}" : $"你被阵营 {_presentationSystem.WinningCampId} 击败";
         GUI.Label(new Rect(0, Screen.height / 2 + 50, Screen.width, 50), infoText, infoStyle);
         
         // 显示重新开始按钮
@@ -900,27 +895,10 @@ public class Ra2Demo : MonoBehaviour
     }
     
     /// <summary>
-    /// 游戏结束事件处理
-    /// </summary>
-    private void OnGameOver(SettlementSystem.GameOverEvent gameOverEvent)
-    {
-        isGameOver = true;
-        isVictory = gameOverEvent.IsVictory;
-        winningCampId = gameOverEvent.WinningCampId;
-        
-        zUDebug.Log($"[Ra2Demo] 游戏结束: {(isVictory ? "胜利" : "失败")}, 胜利方: {winningCampId}");
-    }
-    
-    /// <summary>
     /// 重新开始游戏
     /// </summary>
     private void RestartGame()
     {
-        // 重置游戏状态
-        isGameOver = false;
-        isVictory = false;
-        winningCampId = -1;
-        
         // TODO: 实现重新开始游戏逻辑
         // 可能需要重新加载场景或重置游戏状态
         zUDebug.Log("[Ra2Demo] 重新开始游戏");

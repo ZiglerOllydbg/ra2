@@ -12,6 +12,7 @@ namespace ZLockstep.Simulation.ECS.Systems
     public class SettlementSystem : BaseSystem
     {
         private int _localPlayerId;
+        private bool _gameOver = false;
 
         public SettlementSystem(int localPlayerId)
         {
@@ -37,6 +38,10 @@ namespace ZLockstep.Simulation.ECS.Systems
         
         public override void Update()
         {
+            // 如果游戏已经结束，不再检查结束条件
+            if (_gameOver)
+                return;
+                
             CheckGameOverCondition();
         }
         
@@ -61,6 +66,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     WinningCampId = GetWinningCampId(tankCounts, localPlayerCampId)
                 };
                 EventManager.Publish(gameOverEvent);
+                _gameOver = true;
                 return;
             }
             
@@ -84,6 +90,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     WinningCampId = localPlayerCampId
                 };
                 EventManager.Publish(gameOverEvent);
+                _gameOver = true;
             }
         }
         
