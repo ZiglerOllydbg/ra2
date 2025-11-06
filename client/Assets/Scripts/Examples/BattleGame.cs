@@ -134,10 +134,13 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new CombatSystem());
             World.SystemManager.RegisterSystem(new ProjectileSystem());
 
+            // 注册销毁系统
+            World.SystemManager.RegisterSystem(new EntityDestructionSystem());
+
             // 注册AI系统
-            AISystem = new SimpleAISystem();
-            World.SystemManager.RegisterSystem(AISystem);
-            AISystem.Initialize(NavSystem);
+            // AISystem = new SimpleAISystem();
+            // World.SystemManager.RegisterSystem(AISystem);
+            // AISystem.Initialize(NavSystem);
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
@@ -203,6 +206,15 @@ namespace Game.Examples
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
+                        }
+
+                        // TODO 测试代码，创建player2的单位
+                        {
+                            var entityEvent2 = CreateUnitEntity(2, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y + 32));
+                            if (entityEvent2.HasValue)
+                            {
+                                createdEntities.Add(entityEvent2.Value);
+                            }
                         }
                     }
                 }
@@ -299,7 +311,7 @@ namespace Game.Examples
                     unitType = 2; // 坦克
                     prefabId = 2; // 坦克预制体ID
                     radius = (zfloat)2;
-                    maxSpeed = (zfloat)3.0f;
+                    maxSpeed = (zfloat)6.0f;
                     break;
                 default:
                     unitType = 1; // 动员兵
@@ -349,7 +361,7 @@ namespace Game.Examples
                 {
                     Damage = unitType == 1 ? (zfloat)10 : (zfloat)30,
                     Range = unitType == 1 ? (zfloat)4 : (zfloat)10,
-                    AttackInterval = unitType == 1 ? (zfloat)1 : (zfloat)2,
+                    AttackInterval = (zfloat)1,
                     TimeSinceLastAttack = zfloat.Zero,
                     TargetEntityId = -1
                 };

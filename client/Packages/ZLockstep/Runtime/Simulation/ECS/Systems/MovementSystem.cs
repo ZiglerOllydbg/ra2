@@ -66,6 +66,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     zQuaternion targetRotation = zQuaternion.LookRotation(direction);
                     // TODO: 可以添加平滑旋转逻辑
                     transform.Rotation = targetRotation;
+                    zUDebug.Log("[MovementSystem] Update entity " + entity.Id + " rotation to " + targetRotation);
                 }
 
                 // 更新或添加速度组件

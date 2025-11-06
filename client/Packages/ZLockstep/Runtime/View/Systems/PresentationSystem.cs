@@ -71,8 +71,11 @@ namespace ZLockstep.View.Systems
 
             // 1. 处理事件（创建新的View）
             ProcessCreationEvents();
+            
+            // 2. 处理销毁事件
+            ProcessDestructionEvents();
 
-            // 2. 同步已有的View
+            // 3. 同步已有的View
             SyncAllViews();
         }
 
@@ -179,6 +182,46 @@ namespace ZLockstep.View.Systems
             Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
             
             return projectile;
+        }
+
+        /// <summary>
+        /// 处理单位销毁事件
+        /// </summary>
+        private void ProcessDestructionEvents()
+        {
+            var events = EventManager.GetEvents<UnitDestroyedEvent>();
+            foreach (var evt in events)
+            {
+                DestroyViewForEntity(evt);
+            }
+        }
+
+        /// <summary>
+        /// 销毁实体的Unity视图
+        /// </summary>
+        private void DestroyViewForEntity(UnitDestroyedEvent evt)
+        {
+            var entity = new Entity(evt.EntityId);
+            
+            // 检查是否有ViewComponent
+            if (ComponentManager.HasComponent<ViewComponent>(entity))
+            {
+                var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
+                
+                // 销毁GameObject
+                if (viewComponent.GameObject != null)
+                {
+                    UnityEngine.Object.Destroy(viewComponent.GameObject);
+                    Debug.Log($"[PresentationSystem] 销毁了实体 {evt.EntityId} 的视图: {viewComponent.GameObject.name}");
+                }
+                
+                // 移除ViewComponent
+                ComponentManager.RemoveComponent<ViewComponent>(entity);
+            }
+            else
+            {
+                Debug.LogWarning($"[PresentationSystem] 未找到实体 {evt.EntityId} 的视图组件");
+            }
         }
 
         /// <summary>

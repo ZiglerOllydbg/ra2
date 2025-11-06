@@ -1,4 +1,5 @@
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Simulation.Events;
 using zUnity;
 
 namespace ZLockstep.Simulation.ECS.Systems
@@ -140,11 +141,14 @@ namespace ZLockstep.Simulation.ECS.Systems
         private void OnEntityDeath(Entity entity)
         {
             // TODO: 发布死亡事件，播放死亡动画等
-
-            // 销毁实体
-            World.EntityManager.DestroyEntity(entity);
-
-            zUDebug.Log($"[ProjectileSystem] 实体{entity.Id}已死亡并被销毁");
+            // 发布销毁事件
+            var destroyEvent = new UnitDestroyedEvent
+            {
+                EntityId = entity.Id
+            };
+            
+            EventManager.Publish(destroyEvent);
+            UnityEngine.Debug.Log($"[EntityDestructionSystem] 发布实体 {entity} 的销毁事件");
         }
 
         /// <summary>
