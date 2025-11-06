@@ -11,6 +11,7 @@ using Game.RA2.Client;
 using Game.Examples;
 using ZLockstep.Sync;
 using ZLockstep.View.Systems;
+using ZLockstep.Simulation.ECS.Systems;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -69,6 +70,11 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
+
+    // 添加游戏结束状态变量
+    private bool isGameOver = false;
+    private bool isVictory = false;
+    private int winningCampId = -1;
 
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
@@ -204,6 +210,7 @@ public class Ra2Demo : MonoBehaviour
     {
         _controls.Create.Disable();
         _controls.Create.createUnit.performed -= OnCreateUnit;
+
     }
 
     /// <summary>
@@ -837,6 +844,86 @@ public class Ra2Demo : MonoBehaviour
             
             GUILayout.EndArea();
         }
+        
+        // 绘制游戏结束界面
+        if (isGameOver)
+        {
+            DrawGameOverUI();
+        }
+    }
+    
+    /// <summary>
+    /// 绘制游戏结束界面
+    /// </summary>
+    private void DrawGameOverUI()
+    {
+        // 创建一个半透明背景
+        GUIStyle bgStyle = new GUIStyle();
+        Texture2D bgTexture = new Texture2D(1, 1);
+        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
+        bgTexture.Apply();
+        bgStyle.normal.background = bgTexture;
+        
+        // 绘制背景
+        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
+        
+        // 显示结果文本
+        GUIStyle textStyle = new GUIStyle(GUI.skin.label);
+        textStyle.fontSize = 48;
+        textStyle.fontStyle = FontStyle.Bold;
+        textStyle.alignment = TextAnchor.MiddleCenter;
+        textStyle.normal.textColor = isVictory ? Color.green : Color.red;
+        
+        string resultText = isVictory ? "胜利!" : "失败!";
+        GUI.Label(new Rect(0, Screen.height / 2 - 50, Screen.width, 100), resultText, textStyle);
+        
+        // 显示胜利方信息
+        GUIStyle infoStyle = new GUIStyle(GUI.skin.label);
+        infoStyle.fontSize = 24;
+        infoStyle.alignment = TextAnchor.MiddleCenter;
+        infoStyle.normal.textColor = Color.white;
+        
+        string infoText = isVictory ? $"你击败了阵营 {winningCampId}" : $"你被阵营 {winningCampId} 击败";
+        GUI.Label(new Rect(0, Screen.height / 2 + 50, Screen.width, 50), infoText, infoStyle);
+        
+        // 显示重新开始按钮
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle.fontSize = 24;
+        buttonStyle.fixedHeight = 60;
+        buttonStyle.fixedWidth = 200;
+        
+        Rect buttonRect = new Rect((Screen.width - 200) / 2, Screen.height / 2 + 150, 200, 60);
+        if (GUI.Button(buttonRect, "重新开始", buttonStyle))
+        {
+            RestartGame();
+        }
+    }
+    
+    /// <summary>
+    /// 游戏结束事件处理
+    /// </summary>
+    private void OnGameOver(SettlementSystem.GameOverEvent gameOverEvent)
+    {
+        isGameOver = true;
+        isVictory = gameOverEvent.IsVictory;
+        winningCampId = gameOverEvent.WinningCampId;
+        
+        zUDebug.Log($"[Ra2Demo] 游戏结束: {(isVictory ? "胜利" : "失败")}, 胜利方: {winningCampId}");
+    }
+    
+    /// <summary>
+    /// 重新开始游戏
+    /// </summary>
+    private void RestartGame()
+    {
+        // 重置游戏状态
+        isGameOver = false;
+        isVictory = false;
+        winningCampId = -1;
+        
+        // TODO: 实现重新开始游戏逻辑
+        // 可能需要重新加载场景或重置游戏状态
+        zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
     
     /// <summary>

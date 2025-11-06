@@ -137,9 +137,9 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new DeathRemovalSystem());
 
             // 注册AI系统
-            // AISystem = new SimpleAISystem();
-            // World.SystemManager.RegisterSystem(AISystem);
-            // AISystem.Initialize(NavSystem);
+            AISystem = new SimpleAISystem();
+            World.SystemManager.RegisterSystem(AISystem);
+            AISystem.Initialize(NavSystem);
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
@@ -155,6 +155,9 @@ namespace Game.Examples
                 zUDebug.LogError("[BattleGame] 世界未初始化，无法执行创世阶段");
                 return;
             }
+
+            // 注册结算系统
+            World.SystemManager.RegisterSystem(new SettlementSystem(GetLocalPlayerId()));
 
             zUDebug.Log($"[BattleGame] 开始创世阶段，初始化游戏世界状态");
 
