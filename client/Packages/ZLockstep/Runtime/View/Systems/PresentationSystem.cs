@@ -96,8 +96,7 @@ namespace ZLockstep.View.Systems
             GameObject viewObject = null;
             
             // 尝试获取预制体
-            if (_unitPrefabs.TryGetValue(evt.UnitType, out var prefab) || 
-                _unitPrefabs.TryGetValue(evt.PrefabId, out prefab))
+            if (_unitPrefabs.TryGetValue(evt.PrefabId, out var prefab))
             {
                 // 实例化预制体
                 viewObject = Object.Instantiate(prefab, _viewRoot);
@@ -261,7 +260,7 @@ namespace ZLockstep.View.Systems
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
 
             // 获取预制体
-            if (!_unitPrefabs.TryGetValue(unit.UnitType, out var prefab))
+            if (!_unitPrefabs.TryGetValue(unit.PrefabId, out var prefab))
             {
                 Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={unit.UnitType}");
                 return;

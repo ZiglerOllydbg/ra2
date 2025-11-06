@@ -226,15 +226,15 @@ namespace Game.Examples
             {
                 case "tankFactory":
                     buildingType = 1; // 假设1为坦克工厂
-                    width = 3;
-                    height = 3;
-                    prefabId = 2; // 假设2为坦克工厂预制体ID
+                    width = 10;
+                    height = 10;
+                    prefabId = 0; // 假设2为坦克工厂预制体ID
                     break;
                 default:
                     buildingType = 0; // 基地
                     width = 2;
                     height = 2;
-                    prefabId = 1; // 假设1为基地预制体ID
+                    prefabId = 0; // 假设1为基地预制体ID
                     break;
             }
 
@@ -246,7 +246,7 @@ namespace Game.Examples
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one * 3
+                Scale = zVector3.one * (zfloat)10
             });
 
             // 3. 添加建筑组件
@@ -290,7 +290,7 @@ namespace Game.Examples
             // 根据单位类型确定单位类型ID
             int unitType = 1; // 默认为动员兵
             int prefabId = 1; // 默认预制体ID
-            zfloat radius = (zfloat)0.5f;
+            zfloat radius = (zfloat)2;
             zfloat maxSpeed = (zfloat)3.0f;
             
             switch (type)
@@ -298,13 +298,13 @@ namespace Game.Examples
                 case "tank":
                     unitType = 2; // 坦克
                     prefabId = 2; // 坦克预制体ID
-                    radius = (zfloat)1.0f;
+                    radius = (zfloat)2;
                     maxSpeed = (zfloat)3.0f;
                     break;
                 default:
                     unitType = 1; // 动员兵
                     prefabId = 1; // 动员兵预制体ID
-                    radius = (zfloat)0.5f;
+                    radius = (zfloat)2;
                     maxSpeed = (zfloat)3.0f;
                     break;
             }
@@ -317,7 +317,7 @@ namespace Game.Examples
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one
+                Scale = zVector3.one * radius
             });
 
             // 3. 添加阵营组件
