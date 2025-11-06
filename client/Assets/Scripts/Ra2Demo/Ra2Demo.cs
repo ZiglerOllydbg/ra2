@@ -869,7 +869,26 @@ public class Ra2Demo : MonoBehaviour
         textStyle.alignment = TextAnchor.MiddleCenter;
         textStyle.normal.textColor = _presentationSystem.IsVictory ? Color.green : Color.red;
         
-        string resultText = _presentationSystem.IsVictory ? "胜利!" : "失败!";
+        string resultText = "";
+        string infoText = "";
+        
+        // 根据胜利阵营ID判断游戏结果
+        if (_presentationSystem.WinningCampId == -1)
+        {
+            // 平局
+            resultText = "平局!";
+            infoText = "所有阵营都被击败";
+            textStyle.normal.textColor = Color.yellow; // 平局用黄色显示
+        }
+        else
+        {
+            // 胜负结果
+            resultText = _presentationSystem.IsVictory ? "胜利!" : "失败!";
+            infoText = _presentationSystem.IsVictory ? 
+                $"你击败了阵营 {_presentationSystem.WinningCampId}" : 
+                $"你被阵营 {_presentationSystem.WinningCampId} 击败";
+        }
+        
         GUI.Label(new Rect(0, Screen.height / 2 - 50, Screen.width, 100), resultText, textStyle);
         
         // 显示胜利方信息
@@ -878,7 +897,6 @@ public class Ra2Demo : MonoBehaviour
         infoStyle.alignment = TextAnchor.MiddleCenter;
         infoStyle.normal.textColor = Color.white;
         
-        string infoText = _presentationSystem.IsVictory ? $"你击败了阵营 {_presentationSystem.WinningCampId}" : $"你被阵营 {_presentationSystem.WinningCampId} 击败";
         GUI.Label(new Rect(0, Screen.height / 2 + 50, Screen.width, 50), infoText, infoStyle);
         
         // 显示重新开始按钮

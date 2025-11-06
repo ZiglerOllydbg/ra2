@@ -56,6 +56,31 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 获取本地玩家阵营ID
             int localPlayerCampId = _localPlayerId;
             
+            // 检查所有阵营是否都没有存活坦克（平局）
+            bool allCampsDead = true;
+            foreach (var kvp in tankCounts)
+            {
+                if (kvp.Value > 0)
+                {
+                    allCampsDead = false;
+                    break;
+                }
+            }
+            
+            // 如果所有阵营都没有存活坦克，则为平局
+            if (allCampsDead || tankCounts.Count == 0)
+            {
+                // 平局情况
+                var gameOverEvent = new GameOverEvent
+                {
+                    IsVictory = false, // 平局算作失败
+                    WinningCampId = -1 // -1表示平局
+                };
+                EventManager.Publish(gameOverEvent);
+                _gameOver = true;
+                return;
+            }
+            
             // 检查本地玩家是否失败（自己的所有坦克都死亡）
             if (tankCounts.ContainsKey(localPlayerCampId) && tankCounts[localPlayerCampId] <= 0)
             {

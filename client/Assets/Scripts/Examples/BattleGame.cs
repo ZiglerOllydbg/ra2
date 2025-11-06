@@ -213,14 +213,14 @@ namespace Game.Examples
                         }
 
                         // TODO 测试代码，创建player2的单位
-                        if (playerCount < 1) {
-                            var entityEvent2 = CreateUnitEntity(2, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y + 32));
-                            if (entityEvent2.HasValue)
-                            {
-                                createdEntities.Add(entityEvent2.Value);
-                            }
-                            playerCount++;
-                        }
+                        // if (playerCount < 1) {
+                        //     var entityEvent2 = CreateUnitEntity(2, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y + 32));
+                        //     if (entityEvent2.HasValue)
+                        //     {
+                        //         createdEntities.Add(entityEvent2.Value);
+                        //     }
+                        //     playerCount++;
+                        // }
                     }
                 }
             }
