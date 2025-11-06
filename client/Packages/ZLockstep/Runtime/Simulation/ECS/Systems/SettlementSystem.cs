@@ -82,7 +82,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             }
             
             // 检查本地玩家是否失败（自己的所有坦克都死亡）
-            if (tankCounts.ContainsKey(localPlayerCampId) && tankCounts[localPlayerCampId] <= 0)
+            if (!tankCounts.ContainsKey(localPlayerCampId))
             {
                 // 本地玩家失败
                 var gameOverEvent = new GameOverEvent
