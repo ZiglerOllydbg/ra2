@@ -156,6 +156,17 @@ namespace ZLockstep.Flow
         /// </summary>
         private void UpdateEntityNavigation(Entity entity)
         {
+            // 检查单位是否存活，死亡单位不能移动
+            if (ComponentManager.HasComponent<HealthComponent>(entity))
+            {
+                var health = ComponentManager.GetComponent<HealthComponent>(entity);
+                if (health.CurrentHealth <= zfloat.Zero)
+                {
+                    ClearMoveTarget(entity);
+                    return;
+                }
+            }
+
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
 
             if (!navigator.IsEnabled)
@@ -410,7 +421,6 @@ namespace ZLockstep.Flow
             
             transform.Position.x = newPos.x;
             transform.Position.z = newPos.y;
-            
             ComponentManager.AddComponent(entity, transform);
 
             // 同步速度到VelocityComponent（如果有）

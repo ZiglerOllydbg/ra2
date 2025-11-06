@@ -35,6 +35,14 @@ namespace ZLockstep.Simulation.ECS.Systems
                     !ComponentManager.HasComponent<CampComponent>(entity))
                     continue;
 
+                // 检查攻击者是否还活着
+                if (ComponentManager.HasComponent<HealthComponent>(entity))
+                {
+                    var health = ComponentManager.GetComponent<HealthComponent>(entity);
+                    if (health.CurrentHealth <= zfloat.Zero)
+                        continue; // 死亡单位不能攻击
+                }
+
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
