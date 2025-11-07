@@ -727,6 +727,16 @@ public class Ra2Demo : MonoBehaviour
         {
             Rect roomTypeRect = new Rect(20, 20, 250, 800);
             GUILayout.BeginArea(roomTypeRect);
+            // 添加本地测试选项
+            bool previousValue = useLocalServer;
+            useLocalServer = GUILayout.Toggle(useLocalServer, "使用本地服务器");
+            // 如果值发生变化，保存设置
+            if (useLocalServer != previousValue)
+            {
+                SaveLocalServerOption();
+            }
+            
+            GUILayout.Space(10);
             GUILayout.Label("房间类型:", buttonStyle);
             
             // 自定义下拉列表实现
@@ -746,16 +756,6 @@ public class Ra2Demo : MonoBehaviour
                         SaveRoomTypeSelection(); // 保存选择
                     }
                 }
-            }
-            
-            // 添加本地测试选项
-            GUILayout.Space(20);
-            bool previousValue = useLocalServer;
-            useLocalServer = GUILayout.Toggle(useLocalServer, "使用本地服务器");
-            // 如果值发生变化，保存设置
-            if (useLocalServer != previousValue)
-            {
-                SaveLocalServerOption();
             }
             GUILayout.EndArea();
         }
