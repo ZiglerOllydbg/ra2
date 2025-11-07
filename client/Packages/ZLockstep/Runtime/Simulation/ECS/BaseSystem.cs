@@ -1,8 +1,8 @@
 namespace ZLockstep.Simulation.ECS
 {
     /// <summary>
-    /// System的抽象基类，提供对World的便捷访问
-    /// 所有游戏系统都应该继承这个类
+    /// 系统基类
+    /// 提供系统的基本功能实现
     /// </summary>
     public abstract class BaseSystem : ISystem
     {
@@ -71,6 +71,11 @@ namespace ZLockstep.Simulation.ECS
         public virtual void OnDestroy()
         {
         }
+        
+        /// <summary>
+        /// 获取系统执行顺序（默认为普通系统）
+        /// </summary>
+        /// <returns>执行顺序编号</returns>
+        public virtual int GetOrder() => (int)SystemOrder.Normal;
     }
 }
-

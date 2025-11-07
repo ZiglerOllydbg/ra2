@@ -1,8 +1,10 @@
+using System;
+
 namespace ZLockstep.Simulation.ECS
 {
     /// <summary>
-    /// 所有系统的基础接口。
-    /// The base interface for all systems.
+    /// 系统接口
+    /// 所有ECS系统都需要实现此接口
     /// </summary>
     public interface ISystem
     {
@@ -17,5 +19,12 @@ namespace ZLockstep.Simulation.ECS
         /// 系统的主更新逻辑。
         /// </summary>
         void Update();
+        
+        /// <summary>
+        /// 获取系统执行顺序
+        /// 数字越小优先级越高，越早执行
+        /// </summary>
+        /// <returns>执行顺序编号</returns>
+        int GetOrder();
     }
 }

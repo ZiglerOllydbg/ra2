@@ -20,6 +20,7 @@ public class Ra2Demo : MonoBehaviour
 {
     [Header("游戏世界")]
     [SerializeField] private BattleGame _game;
+    [SerializeField] private GameMode Mode;
 
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
@@ -82,7 +83,7 @@ public class Ra2Demo : MonoBehaviour
         _controls = new RTSControl();
 
         // 如果没有分配 worldBridge，尝试自动查找
-        _game = new BattleGame(GameMode.NetworkClient, 20, 0);
+        _game = new BattleGame(Mode, 20, 0);
         _game.Init();
 
         // 初始化小地图系统
