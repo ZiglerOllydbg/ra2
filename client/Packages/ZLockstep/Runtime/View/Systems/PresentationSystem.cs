@@ -1,26 +1,23 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Sync;
-using ZLockstep.Simulation.ECS.Systems;
 using static ZLockstep.Simulation.ECS.Systems.SettlementSystem;
+
 
 namespace ZLockstep.View.Systems
 {
     /// <summary>
-    /// 表现同步系统：将逻辑层数据同步到Unity表现层
+    /// 表现层系统
+    /// 负责处理所有与Unity显示相关的逻辑
     /// 
     /// 职责：
-    /// 1. 监听逻辑事件，创建Unity GameObject
-    /// 2. 同步逻辑Transform到Unity Transform
-    /// 3. 同步动画状态
-    /// 4. 可选：提供平滑插值
-    /// 
-    /// 执行时机：
-    /// - 在所有逻辑System之后执行
-    /// - 在同一逻辑帧内处理事件（确保及时创建View）
+    /// 1. 监听逻辑层事件并创建/销毁视图
+    /// 2. 同步逻辑位置到Unity Transform
+    /// 3. 处理动画播放
+    /// 4. 管理UI显示
     /// </summary>
     public class PresentationSystem : PresentationBaseSystem
     {
@@ -37,7 +34,7 @@ namespace ZLockstep.View.Systems
         /// 是否启用表现系统（追帧时可以禁用以提升性能）
         /// </summary>
         public bool Enabled { get; set; } = true;
-        
+
         // 添加对Game对象的引用
         private Game _game;
 
@@ -54,7 +51,7 @@ namespace ZLockstep.View.Systems
             _viewRoot = viewRoot;
             _unitPrefabs = prefabs;
         }
-        
+
         /// <summary>
         /// 设置Game对象引用（由GameWorldBridge调用）
         /// </summary>
@@ -63,38 +60,27 @@ namespace ZLockstep.View.Systems
             _game = game;
         }
 
-        protected override void OnInitialize()
-        {
-            base.OnInitialize();
-        }
-
         public override void Update()
         {
-            // 追帧时跳过（提升性能）
-            if (!Enabled)
-            {
-                return;
-            }
-
-            // 1. 处理事件（创建新的View）
+            // 1. 处理单位创建事件
             ProcessCreationEvents();
-            
+
             // 2. 处理死亡事件（播放死亡动画）
             ProcessEntityDiedEvents();
-            
-            // 3. 处理销毁事件
-            ProcessDestructionEvents();
-            
-            // 4. 处理游戏结束事件
+
+            // 3. 检查死亡动画状态
+            CheckDyingEntities();
+
+            // 5. 处理游戏结束事件
             ProcessGameOverEvents();
 
-            // 5. 同步已有的View
+            // 6. 同步已有的View
             SyncAllViews();
         }
 
         /// <summary>
         /// 处理实体死亡事件
-        /// 触发死亡动画，但不销毁GameObject（等待DeathRemovalSystem和UnitDestroyedEvent）
+        /// 触发死亡动画，并将实体添加到死亡列表中用于跟踪动画状态
         /// </summary>
         private void ProcessEntityDiedEvents()
         {
@@ -102,13 +88,13 @@ namespace ZLockstep.View.Systems
             foreach (var evt in events)
             {
                 var entity = new Entity(evt.EntityId);
-                
+
                 // 检查是否有ViewComponent
                 if (!ComponentManager.HasComponent<ViewComponent>(entity))
                     continue;
-                    
+
                 var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
-                
+
                 // 触发死亡动画
                 if (viewComponent.Animator != null)
                 {
@@ -120,8 +106,68 @@ namespace ZLockstep.View.Systems
                     Debug.Log($"[PresentationSystem] 实体{evt.EntityId}死亡，但没有Animator组件");
                 }
                 
-                // 注意：不在这里销毁GameObject，等待DeathRemovalSystem处理后的UnitDestroyedEvent
+                // 添加到死亡列表，用于后续跟踪动画状态
+                _dyingEntities.Add((evt.EntityId, viewComponent.Animator));
             }
+        }
+
+        /// <summary>
+        /// 检查正在播放死亡动画的实体
+        /// 当动画播放完毕后，移除对应的视图组件
+        /// </summary>
+        private void CheckDyingEntities()
+        {
+            for (int i = _dyingEntities.Count - 1; i >= 0; i--)
+            {
+                var (entityId, animator) = _dyingEntities[i];
+                Entity entity = new Entity(entityId);
+
+                // 检查动画是否播放完毕
+                if (IsDeathAnimationFinished(animator))
+                {
+                    // 动画播放完毕，移除ViewComponent
+                    if (ComponentManager.HasComponent<ViewComponent>(entity))
+                    {
+                        var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
+
+                        // 销毁GameObject
+                        if (viewComponent.GameObject != null)
+                        {
+                            Object.Destroy(viewComponent.GameObject);
+                        }
+
+                        // 移除ViewComponent
+                        ComponentManager.RemoveComponent<ViewComponent>(entity);
+                        Debug.Log($"[PresentationSystem] 实体{entityId}死亡动画播放完毕，已移除视图");
+                    }
+
+                    // 从死亡列表中移除
+                    _dyingEntities.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 判断死亡动画是否播放完毕
+        /// </summary>
+        private bool IsDeathAnimationFinished(Animator animator)
+        {
+            // 检查Animator是否仍然有效
+            if (animator == null || !animator.gameObject.activeInHierarchy)
+                return true;
+
+            // 获取当前动画状态
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+
+            // 检查是否是死亡动画状态（需要根据实际动画状态名称调整）
+            if (stateInfo.IsName("Death"))
+            {
+                // normalizedTime大于等于1.0表示动画已经播放完成
+                return stateInfo.normalizedTime >= 1.0f;
+            }
+
+            // 如果不是死亡状态，可能动画已经切换，也可以认为完成
+            return true;
         }
 
         /// <summary>
@@ -156,7 +202,7 @@ namespace ZLockstep.View.Systems
         private void CreateViewForEntity(UnitCreatedEvent evt)
         {
             GameObject viewObject = null;
-            
+
             // 尝试获取预制体
             if (_unitPrefabs.TryGetValue(evt.PrefabId, out var prefab))
             {
@@ -239,48 +285,8 @@ namespace ZLockstep.View.Systems
             trail.endColor = new Color(1f, 1f, 1f, 0f);
 
             Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
-            
+
             return projectile;
-        }
-
-        /// <summary>
-        /// 处理单位销毁事件
-        /// </summary>
-        private void ProcessDestructionEvents()
-        {
-            var events = EventManager.GetEvents<UnitDestroyedEvent>();
-            foreach (var evt in events)
-            {
-                DestroyViewForEntity(evt);
-            }
-        }
-
-        /// <summary>
-        /// 销毁实体的Unity视图
-        /// </summary>
-        private void DestroyViewForEntity(UnitDestroyedEvent evt)
-        {
-            var entity = new Entity(evt.EntityId);
-            
-            // 检查是否有ViewComponent
-            if (ComponentManager.HasComponent<ViewComponent>(entity))
-            {
-                var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
-                
-                // 销毁GameObject
-                if (viewComponent.GameObject != null)
-                {
-                    UnityEngine.Object.Destroy(viewComponent.GameObject);
-                    Debug.Log($"[PresentationSystem] 销毁了实体 {evt.EntityId} 的视图: {viewComponent.GameObject.name}");
-                }
-                
-                // 移除ViewComponent
-                ComponentManager.RemoveComponent<ViewComponent>(entity);
-            }
-            else
-            {
-                Debug.LogWarning($"[PresentationSystem] 未找到实体 {evt.EntityId} 的视图组件");
-            }
         }
 
         /// <summary>
@@ -496,5 +502,11 @@ namespace ZLockstep.View.Systems
                 );
             }
         }
+
+        /// <summary>
+        /// 正在播放死亡动画的实体列表
+        /// 用于跟踪动画播放状态，在动画播放完毕后移除视图组件
+        /// </summary>
+        private List<(int entityId, Animator animator)> _dyingEntities = new List<(int, Animator)>();
     }
 }

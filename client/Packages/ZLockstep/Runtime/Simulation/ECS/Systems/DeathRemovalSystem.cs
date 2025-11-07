@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
+using ZLockstep.View;
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -22,23 +23,21 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 var entity = new Entity(entityId);
                 var death = ComponentManager.GetComponent<DeathComponent>(entity);
-                
-                // 检查是否应该移除尸体
-                if (death.ShouldRemove(currentTick))
+
+                // 检查是否应该移除尸体；检查是否存在可视化组件
+                if (death.ShouldRemove(currentTick) && HasViewComponent(entity))
                 {
-                    // 发布单位销毁事件，确保表现层能同步销毁视觉对象
-                    var destroyEvent = new UnitDestroyedEvent
-                    {
-                        EntityId = entityId
-                    };
-                    EventManager.Publish(destroyEvent);
-                    
                     // 销毁实体
                     World.EntityManager.DestroyEntity(entity);
-                    
                     zUDebug.Log($"[DeathRemovalSystem] 实体{entityId}尸体保留时间到期，已移除");
                 }
             }
         }
+
+        private bool HasViewComponent(Entity entity)
+        {
+            return ComponentManager.HasComponent<ViewComponent>(entity);
+        }
+
     }
 }
