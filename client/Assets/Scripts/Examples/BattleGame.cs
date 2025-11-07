@@ -166,7 +166,7 @@ namespace Game.Examples
             }
 
             // 注册结算系统
-            World.SystemManager.RegisterSystem(new SettlementSystem(GetLocalPlayerId()));
+            World.SystemManager.RegisterSystem(new SettlementSystem());
 
             zUDebug.Log($"[BattleGame] 开始创世阶段，初始化游戏世界状态");
 
@@ -295,6 +295,16 @@ namespace Game.Examples
                 World.ComponentManager.AddComponent(entity, attackComponent);
             }
 
+            // 判断是本地玩家，添加本地玩家组件
+            if (World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            {
+                var globalInfoComponent = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                {
+                    World.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
+                }
+            }
+
             // 7. 创建但不发布事件，返回事件对象
             var unitCreatedEvent = new UnitCreatedEvent
             {
@@ -414,6 +424,16 @@ namespace Game.Examples
             {
                 var turret = TurretComponent.CreateDefault();
                 World.ComponentManager.AddComponent(entity, turret);
+            }
+
+            // 判断是本地玩家，添加本地玩家组件
+            if (World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            {
+                var globalInfoComponent = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                {
+                    World.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
+                }
             }
 
             // 10. 创建但不发布事件，返回事件对象

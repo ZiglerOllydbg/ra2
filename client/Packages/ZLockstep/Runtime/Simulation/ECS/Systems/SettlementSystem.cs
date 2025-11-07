@@ -11,12 +11,12 @@ namespace ZLockstep.Simulation.ECS.Systems
     /// </summary>
     public class SettlementSystem : BaseSystem
     {
-        private int _localPlayerId;
+
         private bool _gameOver = false;
 
-        public SettlementSystem(int localPlayerId)
+        public SettlementSystem()
         {
-            _localPlayerId = localPlayerId;
+        
         }
 
         /// <summary>
@@ -50,11 +50,17 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private void CheckGameOverCondition()
         {
+            if (!ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            {
+                // 可能是单机模式
+                return;
+            }
+
             // 统计每个阵营的存活坦克数量
             var tankCounts = CountAliveTanksByCamp();
             
             // 获取本地玩家阵营ID
-            int localPlayerCampId = _localPlayerId;
+            int localPlayerCampId = ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
             
             // 检查所有阵营是否都没有存活坦克（平局）
             bool allCampsDead = true;

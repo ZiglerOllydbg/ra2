@@ -10,7 +10,6 @@ namespace ZLockstep.View
     public class PlayerUnitIndicator : MonoBehaviour
     {
         private Renderer[] _renderers;
-        private int _localPlayerId = -1;
         private int _unitPlayerId = -1;
 
         private void Awake()
@@ -24,9 +23,8 @@ namespace ZLockstep.View
         /// </summary>
         /// <param name="localPlayerId">本地玩家ID</param>
         /// <param name="unitPlayerId">单位所属玩家ID</param>
-        public void Initialize(int localPlayerId, int unitPlayerId)
+        public void Initialize(int unitPlayerId)
         {
-            _localPlayerId = localPlayerId;
             _unitPlayerId = unitPlayerId;
             
             UpdateVisualIndication();
@@ -37,7 +35,7 @@ namespace ZLockstep.View
         /// </summary>
         public void UpdateVisualIndication()
         {
-            if (_localPlayerId == -1 || _unitPlayerId == -1)
+            if (_unitPlayerId == -1)
                 return;
 
             Color targetColor = GetCampColor(_unitPlayerId);

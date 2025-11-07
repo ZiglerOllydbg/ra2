@@ -298,8 +298,6 @@ namespace ZLockstep.Sync
         /// </summary>
         public void SubmitCommand(ICommand command)
         {
-            command.PlayerId = _localPlayerId;
-
             switch (Mode)
             {
                 case GameMode.Standalone:
@@ -316,6 +314,8 @@ namespace ZLockstep.Sync
                         UnityEngine.Debug.LogError("[Game] 网络模式下FrameSyncManager未初始化！");
                         return;
                     }
+
+                    command.PlayerId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
 
                     FrameSyncManager.SubmitLocalCommand(command);
                     break;
@@ -412,33 +412,6 @@ namespace ZLockstep.Sync
         {
             IsPaused = false;
             UnityEngine.Debug.Log("[Game] 游戏已恢复");
-        }
-
-        /// <summary>
-        /// 获取本地玩家ID
-        /// </summary>
-        /// <returns>当前本地玩家ID</returns>
-        public int GetLocalPlayerId()
-        {
-            return _localPlayerId;
-        }
-        
-        /// <summary>
-        /// 设置本地玩家ID（仅在网络客户端模式下且尚未设置时允许修改）
-        /// </summary>
-        /// <param name="playerId">新的玩家ID</param>
-        public void SetLocalPlayerId(int playerId)
-        {
-            // 只允许在特定条件下修改玩家ID
-            if (Mode != GameMode.NetworkClient)
-            {
-                UnityEngine.Debug.LogWarning("[Game] 只有在网络客户端模式下才允许修改玩家ID");
-                return;
-            }
-
-            _localPlayerId = playerId;
-            
-            UnityEngine.Debug.Log($"[Game] 玩家ID已更新为: {playerId}");
         }
         
         /// <summary>

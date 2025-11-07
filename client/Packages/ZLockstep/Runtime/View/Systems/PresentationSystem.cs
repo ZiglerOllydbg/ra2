@@ -238,9 +238,7 @@ namespace ZLockstep.View.Systems
             if (evt.UnitType != 100)
             {
                 var indicator = viewObject.AddComponent<PlayerUnitIndicator>();
-                // 修复：通过Game对象获取本地玩家ID
-                int localPlayerId = _game != null ? _game.GetLocalPlayerId() : 0;
-                indicator.Initialize(localPlayerId, evt.PlayerId);
+                indicator.Initialize(evt.PlayerId);
             }
 
             Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}, position:{viewObject.transform.position}");
