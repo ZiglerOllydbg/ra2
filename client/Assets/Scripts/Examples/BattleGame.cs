@@ -138,6 +138,10 @@ namespace Game.Examples
 
             World.SystemManager.RegisterSystem(new ProjectileSystem());
 
+            // 注册生命值系统（在ProjectileSystem之后，DeathRemovalSystem之前）
+            World.SystemManager.RegisterSystem(new HealthSystem());
+            zUDebug.Log("[BattleGame] 生命值系统注册完成");
+
             // 注册销毁系统
             World.SystemManager.RegisterSystem(new DeathRemovalSystem());
 

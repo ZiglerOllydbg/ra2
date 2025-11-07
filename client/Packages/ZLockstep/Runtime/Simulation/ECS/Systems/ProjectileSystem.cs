@@ -122,35 +122,16 @@ namespace ZLockstep.Simulation.ECS.Systems
             var health = ComponentManager.GetComponent<HealthComponent>(target);
             health.CurrentHealth -= damage;
 
-            // 检查是否死亡
-            if (health.CurrentHealth <= zfloat.Zero)
+            // 确保生命值不低于0
+            if (health.CurrentHealth < zfloat.Zero)
             {
                 health.CurrentHealth = zfloat.Zero;
-                OnEntityDeath(target);
             }
 
-            // 写回生命值组件
+            // 写回生命值组件（由HealthSystem统一处理死亡检测）
             ComponentManager.AddComponent(target, health);
 
             // zUDebug.Log($"[ProjectileSystem] 对实体{targetEntityId}造成{damage}伤害，剩余生命{health.CurrentHealth}");
-        }
-
-        /// <summary>
-        /// 实体死亡处理
-        /// </summary>
-        private void OnEntityDeath(Entity entity)
-        {
-            // 添加死亡组件，设置2秒后尸体消失
-            ComponentManager.AddComponent(entity, new DeathComponent(World.TimeManager.Tick, 2 * 20)); // 2秒 * 20帧/秒
-
-            // 发布销毁事件
-            var destroyEvent = new UnitDestroyedEvent
-            {
-                EntityId = entity.Id
-            };
-            
-            EventManager.Publish(destroyEvent);
-            UnityEngine.Debug.Log($"[EntityDestructionSystem] 发布实体 {entity} 的销毁事件");
         }
 
         /// <summary>

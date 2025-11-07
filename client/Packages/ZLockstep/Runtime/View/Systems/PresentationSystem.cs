@@ -79,14 +79,49 @@ namespace ZLockstep.View.Systems
             // 1. 处理事件（创建新的View）
             ProcessCreationEvents();
             
-            // 2. 处理销毁事件
+            // 2. 处理死亡事件（播放死亡动画）
+            ProcessEntityDiedEvents();
+            
+            // 3. 处理销毁事件
             ProcessDestructionEvents();
             
-            // 3. 处理游戏结束事件
+            // 4. 处理游戏结束事件
             ProcessGameOverEvents();
 
-            // 4. 同步已有的View
+            // 5. 同步已有的View
             SyncAllViews();
+        }
+
+        /// <summary>
+        /// 处理实体死亡事件
+        /// 触发死亡动画，但不销毁GameObject（等待DeathRemovalSystem和UnitDestroyedEvent）
+        /// </summary>
+        private void ProcessEntityDiedEvents()
+        {
+            var events = EventManager.GetEvents<EntityDiedEvent>();
+            foreach (var evt in events)
+            {
+                var entity = new Entity(evt.EntityId);
+                
+                // 检查是否有ViewComponent
+                if (!ComponentManager.HasComponent<ViewComponent>(entity))
+                    continue;
+                    
+                var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
+                
+                // 触发死亡动画
+                if (viewComponent.Animator != null)
+                {
+                    viewComponent.Animator.SetTrigger("Death");
+                    Debug.Log($"[PresentationSystem] 实体{evt.EntityId}触发死亡动画");
+                }
+                else
+                {
+                    Debug.Log($"[PresentationSystem] 实体{evt.EntityId}死亡，但没有Animator组件");
+                }
+                
+                // 注意：不在这里销毁GameObject，等待DeathRemovalSystem处理后的UnitDestroyedEvent
+            }
         }
 
         /// <summary>

@@ -394,25 +394,11 @@ namespace ZLockstep.Flow
         /// </summary>
         private void UpdateEntityNavigation(Entity entity)
         {
-            // 检查单位是否存活，死亡单位不能移动
+            // 检查单位是否存活，死亡单位不能移动（只检查DeathComponent）
             if (ComponentManager.HasComponent<DeathComponent>(entity))
             {
                 ClearMoveTarget(entity);
                 return;
-            }
-
-            // 兼容性检查：检查是否有生命值组件且已经死亡
-            if (!ComponentManager.HasComponent<DeathComponent>(entity) &&
-                ComponentManager.HasComponent<HealthComponent>(entity))
-            {
-                var health = ComponentManager.GetComponent<HealthComponent>(entity);
-                if (health.CurrentHealth <= zfloat.Zero)
-                {
-                    // 添加死亡组件，设置2秒后尸体消失
-                    ComponentManager.AddComponent(entity, new DeathComponent(World.TimeManager.Tick, 2 * 30)); // 2秒 * 30帧/秒
-                    ClearMoveTarget(entity);
-                    return;
-                }
             }
 
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
