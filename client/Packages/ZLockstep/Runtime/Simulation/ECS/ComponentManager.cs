@@ -10,6 +10,18 @@ namespace ZLockstep.Simulation.ECS
         // Key: Component Type
         // Value: Dictionary<EntityId, IComponent>
         private readonly Dictionary<Type, Dictionary<int, IComponent>> _componentStores = new Dictionary<Type, Dictionary<int, IComponent>>();
+        
+        // 引用EntityManager以访问GlobalEntity
+        private EntityManager _entityManager;
+
+        /// <summary>
+        /// 初始化ComponentManager并设置EntityManager引用
+        /// </summary>
+        /// <param name="entityManager">实体管理器</param>
+        public void Init(EntityManager entityManager)
+        {
+            _entityManager = entityManager;
+        }
 
         /// <summary>
         /// [新增] 获取所有拥有指定组件类型的实体ID，并按ID排序以保证确定性。
@@ -38,6 +50,16 @@ namespace ZLockstep.Simulation.ECS
 
             _componentStores[componentType][entity.Id] = component;
         }
+        
+        /// <summary>
+        /// 为全局实体添加组件
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <param name="component">组件实例</param>
+        public void AddGlobalComponent<T>(T component) where T : IComponent
+        {
+            AddComponent(_entityManager.GlobalEntity, component);
+        }
 
         public T GetComponent<T>(Entity entity) where T : IComponent
         {
@@ -49,11 +71,31 @@ namespace ZLockstep.Simulation.ECS
 
             return default;
         }
+        
+        /// <summary>
+        /// 获取全局实体的组件
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <returns>组件实例</returns>
+        public T GetGlobalComponent<T>() where T : IComponent
+        {
+            return GetComponent<T>(_entityManager.GlobalEntity);
+        }
 
         public bool HasComponent<T>(Entity entity) where T : IComponent
         {
             var componentType = typeof(T);
             return _componentStores.ContainsKey(componentType) && _componentStores[componentType].ContainsKey(entity.Id);
+        }
+        
+        /// <summary>
+        /// 检查全局实体是否拥有指定组件
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <returns>是否拥有组件</returns>
+        public bool HasGlobalComponent<T>() where T : IComponent
+        {
+            return HasComponent<T>(_entityManager.GlobalEntity);
         }
 
         public void RemoveComponent<T>(Entity entity) where T : IComponent
@@ -63,6 +105,15 @@ namespace ZLockstep.Simulation.ECS
             {
                 store.Remove(entity.Id);
             }
+        }
+        
+        /// <summary>
+        /// 移除全局实体的组件
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        public void RemoveGlobalComponent<T>() where T : IComponent
+        {
+            RemoveComponent<T>(_entityManager.GlobalEntity);
         }
 
         public void EntityDestroyed(Entity entity)

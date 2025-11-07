@@ -16,6 +16,11 @@ namespace ZLockstep.Simulation.ECS
         private ComponentManager _componentManager;
 
         /// <summary>
+        /// 全局实体，用于处理全局组件
+        /// </summary>
+        public Entity GlobalEntity { get; private set; }
+
+        /// <summary>
         /// 当前活跃的实体总数
         /// </summary>
         public int ActiveEntityCount => _nextEntityId - _recycledEntityIds.Count;
@@ -29,6 +34,12 @@ namespace ZLockstep.Simulation.ECS
         {
             _nextEntityId = 0;
             _componentManager = componentManager;
+            
+            // 创建全局实体，使用特殊ID -1
+            GlobalEntity = new Entity(-1);
+            
+            // 初始化ComponentManager中的EntityManager引用
+            _componentManager.Init(this);
         }
 
         /// <summary>
@@ -59,6 +70,10 @@ namespace ZLockstep.Simulation.ECS
         /// <param name="entity">要销毁的实体</param>
         public void DestroyEntity(Entity entity)
         {
+            // 全局实体不能被销毁
+            if (entity.Id == GlobalEntity.Id)
+                return;
+
             // 在销毁实体前，先移除其所有关联的组件
             _componentManager.EntityDestroyed(entity);
 
