@@ -14,9 +14,11 @@ namespace ZLockstep.Sync.Command.Commands
     /// 移动命令
     /// 让一个或多个单位移动到指定位置
     /// </summary>
+    [CommandType(CommandTypes.Move)]
     public class MoveCommand : BaseCommand
     {
-        public override int CommandType => CommandTypes.Move;
+        // 移除CommandType属性，使用特性替代
+        // public override int CommandType => CommandTypes.Move;
 
         /// <summary>
         /// 要移动的实体ID列表

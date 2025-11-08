@@ -7,6 +7,8 @@ using ZLockstep.View;
 using System.Collections.Generic;
 using zUnity;
 using Newtonsoft.Json;
+using System;
+using System.Reflection;
 
 public class WebSocketNetworkAdaptor : INetworkAdapter
 {
@@ -23,6 +25,9 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
         // 绑定网络适配器
         _game.FrameSyncManager.NetworkAdapter = this;
+        
+        // 初始化命令映射
+        CommandMapper.Initialize();
     }
     
     public void OnDispatchMessageQueue()
@@ -62,20 +67,16 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
                             // 根据命令类型创建相应的命令对象
                             ICommand command = null;
-                            switch (commandType)
+                            
+                            // 使用映射关系替代switch语句
+                            if (CommandMapper.CommandTypeMap.ContainsKey(commandType))
                             {
-                                case CommandTypes.CreateUnit:
-                                    command = JsonConvert.DeserializeObject<CreateUnitCommand>(input["command"].ToString());
-                                    break;
-                                case CommandTypes.Move:
-                                    command = JsonConvert.DeserializeObject<MoveCommand>(input["command"].ToString());
-                                    break;
-                                case CommandTypes.EntityMove:
-                                    command = JsonConvert.DeserializeObject<EntityMoveCommand>(input["command"].ToString());
-                                    break;
-                                default:
-                                    zUDebug.LogWarning($"[Ra2Demo] 未知的命令类型: {commandType}");
-                                    break;
+                                Type commandClass = CommandMapper.CommandTypeMap[commandType];
+                                command = (ICommand)JsonConvert.DeserializeObject(input["command"].ToString(), commandClass);
+                            }
+                            else
+                            {
+                                zUDebug.LogWarning($"[Ra2Demo] 未知的命令类型: {commandType}");
                             }
 
                             if (command != null)
@@ -87,7 +88,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
                             print = true;
                         }
                     }
-                    catch (System.Exception ex)
+                    catch (Exception ex)
                     {
                         zUDebug.LogError($"[Ra2Demo] 解析命令时出错: {ex.Message}");
                     }

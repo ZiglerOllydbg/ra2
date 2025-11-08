@@ -10,9 +10,11 @@ namespace ZLockstep.Sync.Command.Commands
     /// <summary>
     /// 创建单位命令
     /// </summary>
+    [CommandType(CommandTypes.CreateUnit)]
     public class CreateUnitCommand : BaseCommand
     {
-        public override int CommandType => CommandTypes.CreateUnit;
+        // 移除CommandType属性，使用特性替代
+        // public override int CommandType => CommandTypes.CreateUnit;
 
         /// <summary>
         /// 单位类型ID

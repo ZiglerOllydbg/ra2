@@ -11,10 +11,10 @@ namespace ZLockstep.Sync.Command.Commands
     /// 实体移动命令
     /// 直接使用导航系统设置移动目标
     /// </summary>
+    
+    [CommandType(CommandTypes.EntityMove)]
     public class EntityMoveCommand : BaseCommand
     {
-        public override int CommandType => CommandTypes.EntityMove;
-
         /// <summary>
         /// 要移动的实体ID列表
         /// </summary>

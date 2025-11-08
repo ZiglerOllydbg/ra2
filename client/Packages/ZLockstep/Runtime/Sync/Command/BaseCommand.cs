@@ -11,7 +11,8 @@ namespace ZLockstep.Sync.Command
     [Serializable]
     public abstract class BaseCommand : ICommand
     {
-        public abstract int CommandType { get; }
+        // 移除CommandType属性，使用特性替代
+        // public abstract int CommandType { get; }
         
         public int PlayerId { get; set; }
         
@@ -29,4 +30,3 @@ namespace ZLockstep.Sync.Command
         public abstract void Execute(zWorld world);
     }
 }
-

@@ -23,7 +23,7 @@ namespace ZLockstep.Sync.Command
         /// <summary>
         /// 命令类型ID（用于序列化和网络传输）
         /// </summary>
-        int CommandType { get; }
+        // int CommandType { get; }
 
         /// <summary>
         /// 发出命令的玩家ID

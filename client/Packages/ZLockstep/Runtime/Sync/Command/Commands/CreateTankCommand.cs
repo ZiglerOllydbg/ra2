@@ -11,9 +11,9 @@ namespace ZLockstep.Sync.Command.Commands
     /// <summary>
     /// 创建坦克命令
     /// </summary>
+    [CommandType(CommandTypes.CreateUnit)]
     public class CreateTankCommand : BaseCommand
     {
-        public override int CommandType => CommandTypes.CreateUnit;
 
         /// <summary>
         /// 阵营ID

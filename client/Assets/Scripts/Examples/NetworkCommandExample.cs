@@ -77,7 +77,7 @@ public class NetworkCommandExample : MonoBehaviour
         // 5. 本地也提交命令（确保一致性）
         worldBridge.SubmitCommand(command);
 
-        Debug.Log($"[Network] 发送本地命令: 类型={command.CommandType}, 执行帧={command.ExecuteFrame}");
+        Debug.Log($"[Network] 发送本地命令: 类型={command}, 执行帧={command.ExecuteFrame}");
     }
 
     /// <summary>

@@ -109,9 +109,11 @@ namespace Game.RA2.Client
                 data = new List<MyCommand>()
             };
 
+            int commandType = CommandMapper.GetCommandType(command.GetType());
+
             MyCommand myCommand = new MyCommand
             {
-                commandType = command.CommandType,
+                commandType = commandType,
                 command = command
             };
 

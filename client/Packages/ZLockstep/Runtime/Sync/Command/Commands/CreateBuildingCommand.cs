@@ -9,9 +9,10 @@ namespace ZLockstep.Sync.Command.Commands
     /// 创建建筑命令
     /// 用于在地图上建造静态建筑（基地、防御塔等）
     /// </summary>
+    [CommandType(CommandTypes.BuildStructure)]
     public class CreateBuildingCommand : BaseCommand
     {
-        public override int CommandType => CommandTypes.BuildStructure;
+
 
         /// <summary>
         /// 建筑类型

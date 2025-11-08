@@ -125,7 +125,7 @@ namespace ZLockstep.Sync
                     // 先按PlayerId排序，再按CommandType排序
                     int result = a.PlayerId.CompareTo(b.PlayerId);
                     if (result == 0)
-                        result = a.CommandType.CompareTo(b.CommandType);
+                        result = CommandMapper.GetCommandType(a.GetType()).CompareTo(CommandMapper.GetCommandType(b.GetType()));
                     return result;
                 });
 
