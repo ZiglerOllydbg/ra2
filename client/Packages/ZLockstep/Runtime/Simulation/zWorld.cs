@@ -45,6 +45,7 @@ namespace ZLockstep.Simulation
         public EventManager EventManager { get; private set; }
         public TimeManager TimeManager { get; private set; }
         public CommandManager CommandManager { get; private set; }
+        public GMManager GMManager { get; private set; }
         
         // 添加Game实例引用
         public Game GameInstance { get; set; }
@@ -71,8 +72,7 @@ namespace ZLockstep.Simulation
             SystemManager = new SystemManager(this);
             EventManager = new EventManager();
             CommandManager = new CommandManager(this);
-
-            // TODO: 在这里注册所有的游戏系统 (e.g., SystemManager.RegisterSystem(new MovementSystem());)
+            GMManager = new GMManager(this);
         }
 
         /// <summary>

@@ -15,6 +15,7 @@ namespace ZLockstep.Sync.Command
         public const int Attack = 4;
         public const int Stop = 5;
         public const int Patrol = 6;
+        public const int GMCommand = 7;
         
         // 建筑相关命令 (100-199)
         public const int BuildStructure = 100;

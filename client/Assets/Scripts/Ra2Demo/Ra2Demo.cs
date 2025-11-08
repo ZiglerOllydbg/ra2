@@ -76,8 +76,12 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] private Transform viewRoot;
     [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
     private PresentationSystem _presentationSystem;
-    private GMManager _gmManager;
+
+    // GM相关
     private bool _isConsoleVisible = false;
+    private string _inputFieldGM = "";
+    private Vector2 _scrollPosition;
+    private readonly List<string> _logHistory = new();
 
     private void Awake()
     {
@@ -87,9 +91,6 @@ public class Ra2Demo : MonoBehaviour
         // 如果没有分配 worldBridge，尝试自动查找
         _game = new BattleGame(Mode, 20, 0);
         _game.Init();
-
-        // 初始化GM系统
-        _gmManager = new GMManager(_game);
 
         // 初始化小地图系统
         InitializeMiniMap();
@@ -558,7 +559,6 @@ public class Ra2Demo : MonoBehaviour
         if (Keyboard.current.backquoteKey.wasPressedThisFrame)
         {
             _isConsoleVisible = !_isConsoleVisible;
-            _gmManager.IsConsoleVisible = _isConsoleVisible;
         }
 
         // 如果控制台可见，确保输入字段获得焦点
@@ -1221,7 +1221,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void DrawGMConsole()
     {
-        if (!_gmManager.IsConsoleVisible) return;
+        if (!_isConsoleVisible) return;
 
         // 设置更暗的背景色
         Color backgroundColor = new Color(0f, 0f, 0f, 0.95f);
@@ -1237,8 +1237,8 @@ public class Ra2Demo : MonoBehaviour
     private void DrawGMConsoleWindow(int windowID)
     {
         // 日志显示区域（可滚动）
-        _gmManager.ScrollPosition = GUILayout.BeginScrollView(_gmManager.ScrollPosition);
-        foreach (var log in _gmManager.LogHistory)
+        _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+        foreach (var log in _logHistory)
         {
             GUILayout.Label(log);
         }
@@ -1247,20 +1247,20 @@ public class Ra2Demo : MonoBehaviour
         GUILayout.BeginHorizontal();
         // 输入框
         GUI.SetNextControlName("InputField");
-        _gmManager.InputField = GUILayout.TextField(_gmManager.InputField, GUILayout.ExpandWidth(true));
+        _inputFieldGM = GUILayout.TextField(_inputFieldGM, GUILayout.ExpandWidth(true));
         // 确保输入框获得焦点
         if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
         {
-            _gmManager.ExecuteCommand(_gmManager.InputField);
-            _gmManager.InputField = "";
+            _game.SubmitCommand(new GMCommand(_inputFieldGM));
+            _logHistory.Add($"[GM] {_inputFieldGM}");
             Event.current.Use(); // 防止重复处理
         }
         GUILayout.FlexibleSpace();
         // 执行按钮
         if (GUILayout.Button("Execute", GUILayout.Width(60)))
         {
-            _gmManager.ExecuteCommand(_gmManager.InputField);
-            _gmManager.InputField = "";
+            _game.SubmitCommand(new GMCommand(_inputFieldGM));
+            _logHistory.Add($"[GM] {_inputFieldGM}");
         }
         GUILayout.EndHorizontal();
         GUI.FocusControl("InputField");

@@ -1,44 +1,46 @@
 // GMManager.cs
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
+using ZLockstep.Simulation;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 
 public class GMManager
 {
-    public static GMManager Instance;
-    
     // 存储指令和对应方法的字典
-    private Dictionary<string, Action<string[]>> _commandDictionary = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Action<string[]>> _commandDictionary = new(StringComparer.OrdinalIgnoreCase);
 
-    // 控制台UI相关（简易实现）
-    public bool IsConsoleVisible = false;
-    public string InputField = "";
-    public Vector2 ScrollPosition;
-    public List<string> LogHistory = new List<string>();
+    private readonly zWorld _world;
     
-    private ZLockstep.Sync.Game _game;
-
-    public GMManager(ZLockstep.Sync.Game game)
+    public GMManager(zWorld world)
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            _game = game;
-            RegisterCommands(); // 注册所有指令
-        }
+        _world = world;
+        RegisterCommands(); // 注册所有指令
     }
 
     // 注册指令的方法
     private void RegisterCommands()
     {
-        _commandDictionary.Add("help", (args) => { AddLog("Available Commands: additem, setlevel, god, addmoney, addtank"); });
-        _commandDictionary.Add("additem", AddItem);
-        _commandDictionary.Add("setlevel", SetLevel);
-        _commandDictionary.Add("god", ToggleGodMode);
-        _commandDictionary.Add("addmoney", AddMoney);
-        _commandDictionary.Add("addtank", AddTank);
+        _commandDictionary.Clear();
+        
+        // 使用反射注册所有带有GMCommandAttribute的方法
+        MethodInfo[] methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        
+        foreach (MethodInfo method in methods)
+        {
+            GMCommandAttribute attribute = method.GetCustomAttribute<GMCommandAttribute>();
+            if (attribute != null)
+            {
+                string commandName = attribute.CommandName;
+                Action<string[]> action = (Action<string[]>)Delegate.CreateDelegate(typeof(Action<string[]>), this, method);
+                _commandDictionary[commandName] = action;
+            }
+        }
+        
+        // 特殊处理help命令，因为它是动态生成的
+        _commandDictionary.Add("help", (args) => { AddLog("Available Commands: " + string.Join(", ", _commandDictionary.Keys)); });
     }
 
     // 执行指令的核心方法
@@ -77,11 +79,11 @@ public class GMManager
 
     private void AddLog(string log)
     {
-        LogHistory.Add(log);
-        Debug.Log($"[GM] {log}"); // 同时输出到Unity控制台
+        zUDebug.Log($"[GM] {log}"); // 同时输出到Unity控制台
     }
 
     // ========== 具体的GM指令方法 ==========
+    [GMCommand("additem")]
     private void AddItem(string[] args)
     {
         if (args.Length < 2)
@@ -95,6 +97,7 @@ public class GMManager
         AddLog($"GM: Added item {itemId} x {amount}");
     }
 
+    [GMCommand("setlevel")]
     private void SetLevel(string[] args)
     {
         if (args.Length < 1)
@@ -107,6 +110,7 @@ public class GMManager
         AddLog($"GM: Set level to {level}");
     }
 
+    [GMCommand("god")]
     private void ToggleGodMode(string[] args)
     {
         // 切换无敌模式
@@ -115,6 +119,7 @@ public class GMManager
         AddLog($"GM: God Mode Toggled");
     }
 
+    [GMCommand("addmoney")]
     private void AddMoney(string[] args)
     {
         if (args.Length < 1)
@@ -127,10 +132,11 @@ public class GMManager
         AddLog($"GM: Added money: {amount}");
     }
 
+    [GMCommand("addtank")]
     private void AddTank(string[] args)
     {
         // 获取BattleGame实例
-        if (_game == null)
+        if (_world == null)
         {
             AddLog("Error: BattleGame instance not found");
             return;
@@ -174,7 +180,7 @@ public class GMManager
             maxSpeed: (zfloat)10
         );
 
-        _game.SubmitCommand(createTankCommand);
+        _world.GameInstance.SubmitCommand(createTankCommand);
 
         AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {playerId}");
     }
