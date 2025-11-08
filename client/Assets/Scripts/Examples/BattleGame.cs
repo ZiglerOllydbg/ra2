@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Sync.Command;
 
 namespace Game.Examples
 {
@@ -63,6 +64,8 @@ namespace Game.Examples
         /// </summary>
         public new void Init()
         {
+            // 初始化命令映射
+            CommandMapper.Initialize();
             // 初始化地图和导航系统
             InitializeMapAndNavigation();
             // 先调用基类初始化
@@ -150,6 +153,9 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(AISystem);
             AISystem.Initialize(NavSystem);
 
+            // TODO 注册结算系统
+            // World.SystemManager.RegisterSystem(new SettlementSystem());
+
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
 
@@ -164,9 +170,6 @@ namespace Game.Examples
                 zUDebug.LogError("[BattleGame] 世界未初始化，无法执行创世阶段");
                 return;
             }
-
-            // 注册结算系统
-            World.SystemManager.RegisterSystem(new SettlementSystem());
 
             zUDebug.Log($"[BattleGame] 开始创世阶段，初始化游戏世界状态");
 
@@ -321,7 +324,7 @@ namespace Game.Examples
             return unitCreatedEvent;
         }
 
-        private UnitCreatedEvent? CreateUnitEntity(int playerId, string type, zVector3 position)
+        public UnitCreatedEvent? CreateUnitEntity(int playerId, string type, zVector3 position)
         {
             // 根据单位类型确定单位类型ID
             int unitType = 1; // 默认为动员兵

@@ -25,9 +25,6 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
         // 绑定网络适配器
         _game.FrameSyncManager.NetworkAdapter = this;
-        
-        // 初始化命令映射
-        CommandMapper.Initialize();
     }
     
     public void OnDispatchMessageQueue()

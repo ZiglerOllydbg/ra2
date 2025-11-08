@@ -76,6 +76,8 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] private Transform viewRoot;
     [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
     private PresentationSystem _presentationSystem;
+    private GMManager _gmManager;
+    private bool _isConsoleVisible = false;
 
     private void Awake()
     {
@@ -85,6 +87,9 @@ public class Ra2Demo : MonoBehaviour
         // 如果没有分配 worldBridge，尝试自动查找
         _game = new BattleGame(Mode, 20, 0);
         _game.Init();
+
+        // 初始化GM系统
+        _gmManager = new GMManager(this);
 
         // 初始化小地图系统
         InitializeMiniMap();
@@ -195,6 +200,11 @@ public class Ra2Demo : MonoBehaviour
 
     }
 
+
+    public BattleGame GetBattleGame()
+    {
+        return _game;
+    }
 
     private void OnEnable()
     {
@@ -544,6 +554,19 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        // 通过按 "~" 键呼出/关闭控制台
+        if (Keyboard.current.backquoteKey.wasPressedThisFrame)
+        {
+            _isConsoleVisible = !_isConsoleVisible;
+            _gmManager.IsConsoleVisible = _isConsoleVisible;
+        }
+
+        // 如果控制台可见，确保输入字段获得焦点
+        if (_isConsoleVisible)
+        {
+            GUI.FocusControl("InputField");
+        }
+
         // 更新框选状态
         if (isSelecting && Mouse.current != null)
         {
@@ -840,12 +863,14 @@ public class Ra2Demo : MonoBehaviour
             
             GUILayout.EndArea();
         }
-        
+
         // 绘制游戏结束界面
         if (_presentationSystem.IsGameOver)
         {
             DrawGameOverUI();
         }
+        
+        DrawGMConsole();
     }
     
     /// <summary>
@@ -1191,6 +1216,56 @@ public class Ra2Demo : MonoBehaviour
 
     }
     
+    /// <summary>
+    /// 绘制GM控制台
+    /// </summary>
+    private void DrawGMConsole()
+    {
+        if (!_gmManager.IsConsoleVisible) return;
+
+        // 设置更暗的背景色
+        Color backgroundColor = new Color(0f, 0f, 0f, 0.95f);
+        Color oldBackgroundColor = GUI.backgroundColor;
+        GUI.backgroundColor = backgroundColor;
+        
+        // 简易的IMGUI控制台界面
+        GUILayout.Window(0, new Rect(0, 0, Screen.width, Screen.height * 0.3f), DrawGMConsoleWindow, "GM Console");
+        
+        GUI.backgroundColor = oldBackgroundColor;
+    }
+    
+    private void DrawGMConsoleWindow(int windowID)
+    {
+        // 日志显示区域（可滚动）
+        _gmManager.ScrollPosition = GUILayout.BeginScrollView(_gmManager.ScrollPosition);
+        foreach (var log in _gmManager.LogHistory)
+        {
+            GUILayout.Label(log);
+        }
+        GUILayout.EndScrollView();
+
+        GUILayout.BeginHorizontal();
+        // 输入框
+        GUI.SetNextControlName("InputField");
+        _gmManager.InputField = GUILayout.TextField(_gmManager.InputField, GUILayout.ExpandWidth(true));
+        // 确保输入框获得焦点
+        if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
+        {
+            _gmManager.ExecuteCommand(_gmManager.InputField);
+            _gmManager.InputField = "";
+            Event.current.Use(); // 防止重复处理
+        }
+        GUILayout.FlexibleSpace();
+        // 执行按钮
+        if (GUILayout.Button("Execute", GUILayout.Width(60)))
+        {
+            _gmManager.ExecuteCommand(_gmManager.InputField);
+            _gmManager.InputField = "";
+        }
+        GUILayout.EndHorizontal();
+        GUI.FocusControl("InputField");
+    }
+
     /// <summary>
     /// 移动相机到我方工厂位置
     /// </summary>
