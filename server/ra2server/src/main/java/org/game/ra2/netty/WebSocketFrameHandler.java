@@ -1,17 +1,21 @@
 package org.game.ra2.netty;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.game.ra2.util.ObjectMapperProvider;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.game.ra2.service.MatchService;
 import org.game.ra2.service.RoomService;
 import org.game.ra2.service.RoomServiceManager;
 import org.game.ra2.service.WebSocketSessionManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.game.ra2.util.ObjectMapperProvider;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     private static final Logger logger = LogManager.getLogger(WebSocketFrameHandler.class);
@@ -71,7 +75,16 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSo
             JsonNode jsonNode = ObjectMapperProvider.getInstance().readTree(request);
             String type = jsonNode.get("type").asText();
 
-            if (type.equals("match")) {// 添加到匹配队列
+            if (type.equals("ping")) { // 处理ping消息，返回pong
+                Map<String, String> pongResponse = new HashMap<>();
+                pongResponse.put("type", "pong");
+                String jsonResponse = ObjectMapperProvider.getInstance().writeValueAsString(pongResponse);
+                ctx.channel().writeAndFlush(new TextWebSocketFrame(jsonResponse)).addListener((ChannelFutureListener) future -> {
+                    if (!future.isSuccess()) {
+                        logger.error("发送pong消息失败 - channelId: {}", channelId, future.cause());
+                    }
+                });
+            } else if (type.equals("match")) {// 添加到匹配队列
                 matchService.addMessage(channelId, jsonNode);
             } else {// 其他消息根据房间信息转发
                 String roomId = WebSocketSessionManager.getInstance().getRoomIdByChannel(channelId);

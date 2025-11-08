@@ -116,9 +116,11 @@ public class Room {
             int frame = data.get("frame").asInt();
 
             if (frame < currentFrame) {
-                logger.warn("收到 {} 过期的帧输入：{}, currentFrame={}", channelId, frame, currentFrame);
+                logger.warn("[{}] 收到过期的帧：{}, 当前帧={}, 数据：{}", channelId, frame, currentFrame, data.toString());
                 return;
             }
+
+            logger.info("[{}] 收到帧输入帧: {}, 当前帧：{}, 数据: {}", channelId, frame, currentFrame, data.toString());
 
             JsonNode inputs = data.get("data");
 

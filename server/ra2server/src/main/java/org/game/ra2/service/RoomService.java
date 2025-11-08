@@ -292,8 +292,8 @@ public class RoomService {
                 factory.put("x", 32);
                 factory.put("y", 32);
             } else if (camp == Camp.Blue) { // 蓝色阵营 - 右下角
-                factory.put("x", 224);
-                factory.put("y", 224);
+                factory.put("x", 32);
+                factory.put("y", 64);
             } else if (camp == Camp.Green) { // 绿色阵营 - 左下角
                 factory.put("x", 32);
                 factory.put("y", 224);
@@ -332,10 +332,10 @@ public class RoomService {
                 // 设置坦克位置，围绕工厂分布 (在256*256场景中)
                 if (camp == Camp.Red) { // 红色阵营
                     tank.put("x", 32 + i * 8);
-                    tank.put("y", 64);
+                    tank.put("y", 32);
                 } else if (camp == Camp.Blue) { // 蓝色阵营
-                    tank.put("x", 224 - i * 8);
-                    tank.put("y", 192);
+                    tank.put("x", 32 + i * 8);
+                    tank.put("y", 64);
                 } else if (camp == Camp.Green) { // 绿色阵营
                     tank.put("x", 32 + i * 8);
                     tank.put("y", 192);
