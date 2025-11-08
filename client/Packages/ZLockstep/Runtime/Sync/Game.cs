@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using ZLockstep.Simulation.ECS.Components;
 using zUnity;
 using ZLockstep.Simulation.Events;
-using System;
 using ZLockstep.Flow;
 
 namespace ZLockstep.Sync
@@ -145,13 +144,13 @@ namespace ZLockstep.Sync
             if (Mode == GameMode.NetworkClient)
             {
                 FrameSyncManager = new FrameSyncManager(World);
-                UnityEngine.Debug.Log($"[Game] 网络客户端模式 - 启用帧同步");
+                zUDebug.Log($"[Game] 网络客户端模式 - 启用帧同步");
             }
 
             // 注册游戏系统
             RegisterSystems();
 
-            UnityEngine.Debug.Log($"[Game] 初始化完成 - 模式:{Mode}, 帧率:{_frameRate}, 玩家ID:{_localPlayerId}");
+            zUDebug.Log($"[Game] 初始化完成 - 模式:{Mode}, 帧率:{_frameRate}, 玩家ID:{_localPlayerId}");
         }
 
         /// <summary>

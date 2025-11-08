@@ -669,7 +669,7 @@ public class Ra2Demo : MonoBehaviour
         };
 
         _game.SubmitCommand(moveCommand);
-        Debug.Log($"[Test] 发送移动命令: {validEntityIds.Count}个单位 → {worldPosition}");
+        // Debug.Log($"[Test] 发送移动命令: {validEntityIds.Count}个单位 → {worldPosition}");
     }
 
     #region 调试辅助
@@ -1172,7 +1172,7 @@ public class Ra2Demo : MonoBehaviour
         isMatched = true;
         
         // data.Data为输入数据列表
-        zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, data={data}");
+        zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, InitialState={data.InitialState}");
 
         GlobalInfoComponent globalInfoComponent = new GlobalInfoComponent(data.CampId);
         _game.World.ComponentManager.AddGlobalComponent(globalInfoComponent);
@@ -1201,7 +1201,7 @@ public class Ra2Demo : MonoBehaviour
         if (_game != null && _game.FrameSyncManager != null)
         {
             // 确认第0帧（空帧），启动帧同步逻辑
-            _game.FrameSyncManager.ConfirmFrame(0, new System.Collections.Generic.List<ICommand>());
+            _game.FrameSyncManager.ConfirmFrame(0, new List<ICommand>());
         }
 
         zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");

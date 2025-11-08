@@ -178,7 +178,7 @@ namespace ZLockstep.Sync
                 _frameCommands[frame] = new List<ICommand>(commands);
             }
 
-            // Debug.Log($"[FrameSyncManager] 服务器确认Frame {frame}，命令数={commands?.Count ?? 0}");
+            zUDebug.Log($"[FrameSyncManager] 服务器确认帧：{_confirmedFrame}, 当前帧：{_currentFrame}, 命令数：{commands?.Count ?? 0}");
         }
 
         /// <summary>
@@ -237,6 +237,7 @@ namespace ZLockstep.Sync
         /// </summary>
         public void SubmitLocalCommand(ICommand command)
         {
+            // command.ExecuteFrame = _currentFrame + 2;
             command.ExecuteFrame = _currentFrame + 2;
             // 1. 加入待确认列表
             _pendingLocalCommands.Add(command);
@@ -244,7 +245,7 @@ namespace ZLockstep.Sync
             // 2. 发送到服务器
             NetworkAdapter?.SendCommandToServer(command);
 
-            Debug.Log($"[FrameSyncManager] 提交本地命令：{command.GetType().Name}，等待服务器确认");
+            zUDebug.Log($"[FrameSyncManager] 发送命令到服务器：{command}, _currentFrame：{_currentFrame}, _confirmedFrame：{_confirmedFrame}");
         }
 
         /// <summary>

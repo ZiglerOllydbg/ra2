@@ -122,7 +122,7 @@ namespace Game.RA2.Client
             string json = JsonConvert.SerializeObject(frameInput);
             
             SendMessage(json);
-            Debug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: {json}");
+            zUDebug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: {json}");
         }
         
         private async void SendMessage(string message)

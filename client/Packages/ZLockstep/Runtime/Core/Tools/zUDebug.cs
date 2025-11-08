@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using UnityEngine;
 
@@ -11,30 +11,30 @@ public class zUDebug
 	{
 #if !ONLYCSHARP
 		if (enable)
-			UnityEngine.Debug.Log(obj);
+			UnityEngine.Debug.Log($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #else
-		Console.WriteLine(obj.ToString());
+		Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #endif
 	}
 
 	[Conditional("ZLOGENABLE")]
-	public static void LogWarning(object s)
+	public static void LogWarning(object obj)
 	{
 #if !ONLYCSHARP
 		if (enable)
-			UnityEngine.Debug.LogWarning(s);
+			UnityEngine.Debug.LogWarning($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #else
-		//Console.WriteLine(s.ToString());
+		Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #endif
 	}
 
-	public static void LogError(object s)
+	public static void LogError(object obj)
 	{
 #if !ONLYCSHARP
 		if (enable)
-			UnityEngine.Debug.LogError(s);
+			UnityEngine.Debug.LogError($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #else
-		Console.WriteLine(s.ToString());
+		Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #endif
 	}
 }
