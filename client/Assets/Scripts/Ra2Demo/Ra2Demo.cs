@@ -546,6 +546,8 @@ public class Ra2Demo : MonoBehaviour
     
     private void FixedUpdate()
     {
+        _networkAdaptor?.OnDispatchMessageQueue();
+
         if (_game != null)
         {
             _game.Update();
@@ -569,6 +571,17 @@ public class Ra2Demo : MonoBehaviour
             GUI.FocusControl("InputField");
         }
 
+        InputAction();
+
+        // 表现系统：插值更新
+        if (_presentationSystem != null)
+        {
+            _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
+        }
+    }
+
+    private void InputAction()
+    {
         // 更新框选状态
         if (isSelecting && Mouse.current != null)
         {
@@ -589,22 +602,14 @@ public class Ra2Demo : MonoBehaviour
             // 确保在鼠标释放时也结束框选（额外的安全检查）
             EndSelectionBox();
         }
-        
+
         // 右键点击发送移动命令
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
             SendMoveCommandForSelectedUnit();
         }
-
-        _networkAdaptor?.OnDispatchMessageQueue();
-        
-
-        // 表现系统：插值更新
-        if (_presentationSystem != null)
-        {
-            _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
-        }
     }
+
 
     /// <summary>
     /// 发送移动命令给选中的单位

@@ -83,14 +83,15 @@ namespace Game.RA2.Client
             {
                 // 记录发送ping的时间
                 lastPingTime = DateTime.UtcNow;
-                
-                var pingMessage = new JObject
+
+                Ping ping = new()
                 {
-                    ["type"] = "ping"
+                    type = "ping"
                 };
                 
-                SendMessage(pingMessage.ToString());
-                // Debug.Log($"[{clientId}] 发送ping");
+                string json = JsonConvert.SerializeObject(ping);
+                SendMessage(json);
+                Debug.Log($"[{clientId}] 发送ping");
             }
         }
         
@@ -130,16 +131,21 @@ namespace Game.RA2.Client
             SendMessage(request.ToString());
             Debug.Log($"[{clientId}] 发送匹配请求: {request}");
         }
-        
+
         public void SendReady()
         {
             var request = new JObject
             {
                 ["type"] = "ready"
             };
-            
+
             SendMessage(request.ToString());
             Debug.Log($"[{clientId}] 发送准备就绪");
+        }
+
+        public class Ping
+        {
+            public string type;
         }
 
         public class FrameInput
