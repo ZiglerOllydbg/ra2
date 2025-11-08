@@ -973,13 +973,15 @@ public class Ra2Demo : MonoBehaviour
         {
             _presentationSystem.DestroyAllViews();
         }
-        
+
         // 销毁旧的游戏实例和相关组件
         if (_game != null)
         {
             // 注意：C#中没有显式的销毁方法，我们只需要解除引用
             _game = null;
         }
+
+        _client?.Disconnect();
         
         // 重置网络适配器
         _networkAdaptor = null;
