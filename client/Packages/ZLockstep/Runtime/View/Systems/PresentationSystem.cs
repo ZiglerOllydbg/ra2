@@ -53,6 +53,29 @@ namespace ZLockstep.View.Systems
         }
 
         /// <summary>
+        /// 销毁所有已创建的视图对象
+        /// </summary>
+        public void DestroyAllViews()
+        {
+            if (_viewRoot == null)
+                return;
+
+            // 销毁所有子对象（游戏对象）
+            for (int i = _viewRoot.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(_viewRoot.GetChild(i).gameObject);
+            }
+
+            // 清理游戏结束状态
+            IsGameOver = false;
+            IsVictory = false;
+            WinningCampId = -1;
+            
+            // 清理死亡实体列表
+            _dyingEntities.Clear();
+        }
+
+        /// <summary>
         /// 设置Game对象引用（由GameWorldBridge调用）
         /// </summary>
         public void SetGame(Game game)

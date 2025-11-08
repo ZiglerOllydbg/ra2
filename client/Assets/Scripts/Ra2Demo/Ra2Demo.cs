@@ -968,17 +968,24 @@ public class Ra2Demo : MonoBehaviour
         selectedEntityIds.Clear();
         selectedEntityId = -1;
         
+        // 销毁所有视图对象
+        if (_presentationSystem != null)
+        {
+            _presentationSystem.DestroyAllViews();
+        }
+        
         // 销毁旧的游戏实例和相关组件
         if (_game != null)
         {
             // 注意：C#中没有显式的销毁方法，我们只需要解除引用
             _game = null;
         }
-
+        
         // 重置网络适配器
         _networkAdaptor = null;
-        // 重置表现系统
-        _presentationSystem = null;
+        
+        // 重新连接到服务器
+        ConnectToServer();
         
         zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
