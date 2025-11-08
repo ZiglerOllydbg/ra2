@@ -18,14 +18,14 @@ public class GMManager
     public Vector2 ScrollPosition;
     public List<string> LogHistory = new List<string>();
     
-    private Ra2Demo _ra2DemoInstance;
+    private ZLockstep.Sync.Game _game;
 
-    public GMManager(Ra2Demo ra2Demo)
+    public GMManager(ZLockstep.Sync.Game game)
     {
         if (Instance == null)
         {
             Instance = this;
-            _ra2DemoInstance = ra2Demo;
+            _game = game;
             RegisterCommands(); // 注册所有指令
         }
     }
@@ -130,8 +130,7 @@ public class GMManager
     private void AddTank(string[] args)
     {
         // 获取BattleGame实例
-        var battleGame = _ra2DemoInstance.GetBattleGame();
-        if (battleGame == null)
+        if (_game == null)
         {
             AddLog("Error: BattleGame instance not found");
             return;
@@ -144,7 +143,7 @@ public class GMManager
         // 创建一个平面（y=0）来接收射线
         Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
         float distance;
-        Vector3 worldPosition = Vector3.zero;
+        Vector3 worldPosition;
         
         if (groundPlane.Raycast(ray, out distance))
         {
@@ -175,9 +174,8 @@ public class GMManager
             maxSpeed: (zfloat)10
         );
 
-        battleGame.SubmitCommand(createTankCommand);
+        _game.SubmitCommand(createTankCommand);
 
-        // battleGame.World.CommandManager.SubmitCommand(createTankCommand);
         AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {playerId}");
     }
 }
