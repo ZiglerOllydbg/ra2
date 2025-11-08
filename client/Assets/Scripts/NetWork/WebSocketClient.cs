@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using ZLockstep.Sync.Command;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Timers;
 
 namespace Game.RA2.Client
 {
@@ -18,6 +19,14 @@ namespace Game.RA2.Client
         private bool matched = false;
         private bool gameStarted = false;
         
+        // 心跳检测相关字段
+        private Timer pingTimer;
+        private DateTime lastPongTime;
+        private DateTime lastPingTime; // 记录发送ping的时间
+        private long currentPing = -1; // 当前ping值（毫秒），-1表示未计算
+        private readonly int pingInterval = 5000; // 5秒发送一次ping
+        private readonly int pongTimeout = 10000; // 10秒内没收到pong认为断开
+        
         // 移除了消息队列，直接使用事件
         public event Action<string> OnConnected;
         public event Action<string> OnDisconnected;
@@ -25,17 +34,64 @@ namespace Game.RA2.Client
         public event Action<MatchSuccessData> OnMatchSuccess;
         public event Action OnGameStart;
         public event Action<FrameSyncData> OnFrameSync;
+        public event Action OnPingTimeout; // 新增：Ping超时事件
+        public event Action<long> OnPingUpdated; // 新增：Ping值更新事件
         
         public WebSocketClient(string serverUrl, string clientId)
         {
             this.clientId = clientId;
             this.webSocket = new WebSocket(serverUrl);
             
+            // 初始化心跳相关组件
+            pingTimer = new Timer(pingInterval);
+            pingTimer.Elapsed += (sender, e) => SendPing();
+            lastPongTime = DateTime.UtcNow;
+            lastPingTime = DateTime.UtcNow; // 初始化ping时间
+            currentPing = -1; // 初始化ping值为未计算状态
+            
             // 注册事件处理器
             webSocket.OnOpen += HandleWebSocketOpen;
             webSocket.OnMessage += HandleWebSocketMessage;
             webSocket.OnClose += HandleWebSocketClose;
             webSocket.OnError += HandleWebSocketError;
+        }
+        
+        // 启动心跳检测
+        public void StartHeartbeat()
+        {
+            if (pingTimer != null)
+            {
+                pingTimer.Start();
+                Debug.Log($"[{clientId}] 心跳检测已启动");
+            }
+        }
+        
+        // 停止心跳检测
+        public void StopHeartbeat()
+        {
+            if (pingTimer != null)
+            {
+                pingTimer.Stop();
+                Debug.Log($"[{clientId}] 心跳检测已停止");
+            }
+        }
+        
+        // 发送ping消息
+        private void SendPing()
+        {
+            if (IsConnected)
+            {
+                // 记录发送ping的时间
+                lastPingTime = DateTime.UtcNow;
+                
+                var pingMessage = new JObject
+                {
+                    ["type"] = "ping"
+                };
+                
+                SendMessage(pingMessage.ToString());
+                // Debug.Log($"[{clientId}] 发送ping");
+            }
         }
         
         public async void Connect()
@@ -136,9 +192,23 @@ namespace Game.RA2.Client
         // 分发WebSocket消息，需要在Update中调用
         public void DispatchMessageQueue()
         {
-#if !UNITY_WEBGL || UNITY_EDITOR
             webSocket?.DispatchMessageQueue();
-#endif
+            // 检查pong超时
+            CheckPongTimeout();
+        }
+        
+        // 检查pong超时
+        private void CheckPongTimeout()
+        {
+            if (isConnected && pingTimer.Enabled)
+            {
+                var elapsed = DateTime.UtcNow - lastPongTime;
+                if (elapsed.TotalMilliseconds > pongTimeout)
+                {
+                    Debug.Log($"[{clientId}] 心跳超时，连接可能已断开");
+                    OnPingTimeout?.Invoke();
+                }
+            }
         }
         
         // WebSocket事件处理
@@ -148,6 +218,9 @@ namespace Game.RA2.Client
             Debug.Log($"[{clientId}] 连接建立成功");
             
             OnConnected?.Invoke("连接建立成功");
+            
+            // 启动心跳检测
+            StartHeartbeat();
             
             // 注意：不再在连接成功后立即发送匹配请求
             // 而是由调用者决定何时发送匹配请求
@@ -179,6 +252,9 @@ namespace Game.RA2.Client
                     case "frameSync":
                         HandleFrameSync(json);
                         break;
+                    case "pong":
+                        HandlePong();
+                        break;
                     default:
                         Debug.Log($"[{clientId}] 收到未知消息类型: {type}");
                         break;
@@ -188,6 +264,20 @@ namespace Game.RA2.Client
             {
                 Debug.LogError($"处理消息时发生错误: {e.Message}");
             }
+        }
+        
+        // 处理pong消息
+        private void HandlePong()
+        {
+            lastPongTime = DateTime.UtcNow;
+            
+            // 计算ping值（毫秒）
+            currentPing = (long)(lastPongTime - lastPingTime).TotalMilliseconds;
+            
+            // 触发ping更新事件
+            OnPingUpdated?.Invoke(currentPing);
+            
+            // Debug.Log($"[{clientId}] 收到pong，ping: {currentPing}ms");
         }
         
         private void HandleMatchSuccess(JObject message)
@@ -243,6 +333,9 @@ namespace Game.RA2.Client
             string reason = GetCloseCodeDescription(closeCode);
             Debug.Log($"[{clientId}] 连接关闭: {reason}");
             
+            // 停止心跳检测
+            StopHeartbeat();
+            
             OnDisconnected?.Invoke(reason);
         }
         
@@ -271,8 +364,21 @@ namespace Game.RA2.Client
         
         public void Dispose()
         {
+            // 停止心跳检测
+            StopHeartbeat();
+            
+            // 释放定时器资源
+            if (pingTimer != null)
+            {
+                pingTimer.Dispose();
+                pingTimer = null;
+            }
+            
             webSocket?.Close();
         }
+        
+        // 获取当前ping值（毫秒），-1表示未计算
+        public long CurrentPing => currentPing;
         
         public bool IsConnected => isConnected && webSocket?.State == WebSocketState.Open;
         public bool IsMatched => matched;

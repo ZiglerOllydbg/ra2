@@ -81,6 +81,9 @@ public class Ra2Demo : MonoBehaviour
     private bool _isConsoleVisible = false;
     private string _inputFieldGM = "";
     private Vector2 _scrollPosition;
+    
+    // Ping相关
+    private long currentPing = -1; // 当前ping值（毫秒）
 
     private void Awake()
     {
@@ -781,6 +784,16 @@ public class Ra2Demo : MonoBehaviour
             }
             GUILayout.EndArea();
         }
+        else
+        {
+            // 绘制ping值显示（在连接后始终显示）
+            GUIStyle pingStyle = new GUIStyle(GUI.skin.label);
+            pingStyle.fontSize = 20;
+            pingStyle.normal.textColor = Color.white;
+            
+            string pingText = currentPing >= 0 ? $"Ping: {currentPing}ms" : "Ping: --";
+            GUI.Label(new Rect(20, 20, 200, 30), pingText, pingStyle);
+        }
 
         // 绘制中央的匹配/准备按钮
         if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
@@ -821,8 +834,8 @@ public class Ra2Demo : MonoBehaviour
         }
         else if (isReady)
         {
-            // 将暂停/继续按钮定位在左上角
-            Rect pauseButtonRect = new Rect(20, 20, 300, 200);
+            // 将暂停/继续按钮定位在左上角（在ping显示下方）
+            Rect pauseButtonRect = new Rect(20, 60, 300, 200);
             GUILayout.BeginArea(pauseButtonRect);
             
             if (!isPaused)
@@ -1144,6 +1157,7 @@ public class Ra2Demo : MonoBehaviour
         _client.OnConnected += OnConnected;
         _client.OnMatchSuccess += OnMatchSuccess;
         _client.OnGameStart += OnGameStart;
+        _client.OnPingUpdated += OnPingUpdated; // 订阅ping更新事件
 
         // 连接网络适配器和客户端
         _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
@@ -1213,6 +1227,14 @@ public class Ra2Demo : MonoBehaviour
         Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
         RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
 
+    }
+    
+    /// <summary>
+    /// Ping值更新事件处理
+    /// </summary>
+    private void OnPingUpdated(long ping)
+    {
+        currentPing = ping;
     }
     
     /// <summary>
