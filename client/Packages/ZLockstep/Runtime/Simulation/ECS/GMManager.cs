@@ -13,6 +13,8 @@ public class GMManager
     private readonly Dictionary<string, Action<string[]>> _commandDictionary = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly zWorld _world;
+
+    public List<string> LogHistory = new();
     
     public GMManager(zWorld world)
     {
@@ -79,6 +81,7 @@ public class GMManager
 
     private void AddLog(string log)
     {
+        LogHistory.Add($"GM: {log}");
         zUDebug.Log($"[GM] {log}"); // 同时输出到Unity控制台
     }
 

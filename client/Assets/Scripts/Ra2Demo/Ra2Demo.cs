@@ -81,7 +81,6 @@ public class Ra2Demo : MonoBehaviour
     private bool _isConsoleVisible = false;
     private string _inputFieldGM = "";
     private Vector2 _scrollPosition;
-    private readonly List<string> _logHistory = new();
 
     private void Awake()
     {
@@ -1238,7 +1237,9 @@ public class Ra2Demo : MonoBehaviour
     {
         // 日志显示区域（可滚动）
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-        foreach (var log in _logHistory)
+
+        var logHistory = _game.World.GMManager.LogHistory;
+        foreach (var log in logHistory)
         {
             GUILayout.Label(log);
         }
@@ -1252,7 +1253,6 @@ public class Ra2Demo : MonoBehaviour
         if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
         {
             _game.SubmitCommand(new GMCommand(_inputFieldGM));
-            _logHistory.Add($"[GM] {_inputFieldGM}");
             Event.current.Use(); // 防止重复处理
         }
         GUILayout.FlexibleSpace();
@@ -1260,7 +1260,6 @@ public class Ra2Demo : MonoBehaviour
         if (GUILayout.Button("Execute", GUILayout.Width(60)))
         {
             _game.SubmitCommand(new GMCommand(_inputFieldGM));
-            _logHistory.Add($"[GM] {_inputFieldGM}");
         }
         GUILayout.EndHorizontal();
         GUI.FocusControl("InputField");
