@@ -89,7 +89,7 @@ public class Ra2Demo : MonoBehaviour
         _game.Init();
 
         // 初始化GM系统
-        _gmManager = new GMManager(this);
+        _gmManager = new GMManager(_game);
 
         // 初始化小地图系统
         InitializeMiniMap();
