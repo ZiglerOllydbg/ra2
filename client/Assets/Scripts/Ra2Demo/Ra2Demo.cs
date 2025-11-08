@@ -984,9 +984,6 @@ public class Ra2Demo : MonoBehaviour
         // 重置网络适配器
         _networkAdaptor = null;
         
-        // 重新连接到服务器
-        ConnectToServer();
-        
         zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
     
