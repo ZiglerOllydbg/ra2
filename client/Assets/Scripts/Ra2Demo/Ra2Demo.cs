@@ -90,10 +90,6 @@ public class Ra2Demo : MonoBehaviour
         _mainCamera = Camera.main;
         _controls = new RTSControl();
 
-        // 如果没有分配 worldBridge，尝试自动查找
-        _game = new BattleGame(Mode, 20, 0);
-        _game.Init();
-
         // 初始化小地图系统
         InitializeMiniMap();
 
@@ -101,7 +97,8 @@ public class Ra2Demo : MonoBehaviour
         LoadRoomTypeSelection();
         LoadLocalServerOption();
 
-        InitializeUnityView();
+        // 注意：不再在Awake中初始化游戏，而是在匹配成功后初始化
+        // InitializeUnityView();
     }
     
     /// <summary>
@@ -546,7 +543,8 @@ public class Ra2Demo : MonoBehaviour
     
     private void FixedUpdate()
     {
-        _networkAdaptor?.OnDispatchMessageQueue();
+        // 每帧开始先处理网络消息
+        _client?.DispatchMessageQueue();
 
         if (_game != null)
         {
@@ -882,7 +880,7 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 绘制游戏结束界面
-        if (_presentationSystem.IsGameOver)
+        if (_presentationSystem !=null && _presentationSystem.IsGameOver)
         {
             DrawGameOverUI();
         }
@@ -960,8 +958,28 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void RestartGame()
     {
-        // TODO: 实现重新开始游戏逻辑
-        // 可能需要重新加载场景或重置游戏状态
+        // 重置游戏状态
+        isConnected = false;
+        isMatched = false;
+        isReady = false;
+        isPaused = false;
+        
+        // 清空选中单位列表
+        selectedEntityIds.Clear();
+        selectedEntityId = -1;
+        
+        // 销毁旧的游戏实例和相关组件
+        if (_game != null)
+        {
+            // 注意：C#中没有显式的销毁方法，我们只需要解除引用
+            _game = null;
+        }
+
+        // 重置网络适配器
+        _networkAdaptor = null;
+        // 重置表现系统
+        _presentationSystem = null;
+        
         zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
     
@@ -1164,8 +1182,8 @@ public class Ra2Demo : MonoBehaviour
         _client.OnGameStart += OnGameStart;
         _client.OnPingUpdated += OnPingUpdated; // 订阅ping更新事件
 
-        // 连接网络适配器和客户端
-        _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
+        // 连接网络适配器和客户端 (注意：此时_game还未创建)
+        // _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
         
         // 连接服务器
         zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
@@ -1189,6 +1207,16 @@ public class Ra2Demo : MonoBehaviour
     private void OnMatchSuccess(MatchSuccessData data)
     {
         isMatched = true;
+        
+        // 创建BattleGame实例
+        _game = new BattleGame(Mode, 20, 0);
+        _game.Init();
+        
+        // 初始化Unity视图层
+        InitializeUnityView();
+        
+        // 连接网络适配器和客户端 (现在_game已经创建)
+        _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
         
         // data.Data为输入数据列表
         zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, InitialState={data.InitialState}");

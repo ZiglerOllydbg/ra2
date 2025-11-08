@@ -26,11 +26,6 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
         // 绑定网络适配器
         _game.FrameSyncManager.NetworkAdapter = this;
     }
-    
-    public void OnDispatchMessageQueue()
-    {
-        _client?.DispatchMessageQueue();
-    }
 
     public void SendCommandToServer(ICommand command)
     {
