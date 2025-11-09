@@ -48,12 +48,16 @@ namespace ZLockstep.Sync.Command.Commands
                     {
                         entities.Add(new Entity(entityId));
                     }
-                    
-                    navSystem.SetMultipleTargets(entities, TargetPosition);
-                    
-                    if (entities.Count > 0)
+
+                    if (entities.Count > 1)
                     {
-                        UnityEngine.Debug.Log($"[EntityMoveCommand] 玩家{PlayerId} 命令{entities.Count}个单位移动到 {TargetPosition}");
+                        navSystem.SetScatterTargets(entities, TargetPosition);
+                        zUDebug.Log($"[StandaloneBattleDemo] 散点移动{entities.Count}个单位到{TargetPosition}");
+                    }
+                    else
+                    {
+                        navSystem.SetMultipleTargets(entities, TargetPosition);
+                        zUDebug.Log($"[StandaloneBattleDemo] 移动{entities.Count}个单位到{TargetPosition}");
                     }
                 }
                 else
