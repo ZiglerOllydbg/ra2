@@ -391,6 +391,7 @@ namespace ZLockstep.View
 
         #region Inspector信息显示
 
+#if UNITY_EDITOR
         [UnityEditor.CustomEditor(typeof(GameWorldBridge))]
         public class GameWorldBridgeEditor : UnityEditor.Editor
         {
@@ -421,6 +422,7 @@ namespace ZLockstep.View
                 }
             }
         }
+#endif
 
         #endregion
     }
