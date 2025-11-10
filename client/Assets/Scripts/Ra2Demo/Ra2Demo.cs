@@ -837,25 +837,13 @@ public class Ra2Demo : MonoBehaviour
         }
         else if (isReady)
         {
-            // 将暂停/继续按钮定位在左上角（在ping显示下方）
-            Rect pauseButtonRect = new Rect(20, 60, 300, 200);
-            GUILayout.BeginArea(pauseButtonRect);
+            // 将重新开始按钮定位在左上角（在ping显示下方）
+            Rect restartButtonRect = new Rect(20, 60, 300, 200);
+            GUILayout.BeginArea(restartButtonRect);
             
-            if (!isPaused)
+            if (GUILayout.Button("重新开始", buttonStyle))
             {
-                if (GUILayout.Button("暂停", buttonStyle))
-                {
-                    // worldBridge.PauseGame();
-                    isPaused = true;
-                }
-            }
-            else
-            {
-                if (GUILayout.Button("继续", buttonStyle))
-                {
-                    // worldBridge.ResumeGame();
-                    isPaused = false;
-                }
+                RestartGame();
             }
             
             GUILayout.EndArea();
