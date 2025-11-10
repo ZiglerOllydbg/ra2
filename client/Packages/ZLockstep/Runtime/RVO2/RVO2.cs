@@ -139,6 +139,28 @@ namespace ZLockstep.RVO
         }
 
         /// <summary>
+        /// 移除指定的智能体
+        /// </summary>
+        /// <param name="agentId">要移除的智能体ID</param>
+        public void RemoveAgent(int agentId)
+        {
+            int index = -1;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                if (agents[i].id == agentId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if (index != -1)
+            {
+                agents.RemoveAt(index);
+            }
+        }
+
+        /// <summary>
         /// 计算智能体的新速度（ORCA算法核心）
         /// </summary>
         private void ComputeNewVelocity(RVO2Agent agent)

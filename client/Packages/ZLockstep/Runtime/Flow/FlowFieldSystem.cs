@@ -782,6 +782,7 @@ namespace ZLockstep.Flow
                     Radius = navigator.Radius,
                     MaxSpeed = navigator.MaxSpeed
                 });
+                 rvoSimulator.RemoveAgent(navigator.RvoAgentId);
             }
 
             // 移除组件

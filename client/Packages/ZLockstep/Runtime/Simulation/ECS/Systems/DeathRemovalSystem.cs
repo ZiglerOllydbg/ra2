@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.View;
+using ZLockstep.Flow;
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -25,8 +26,16 @@ namespace ZLockstep.Simulation.ECS.Systems
                 var death = ComponentManager.GetComponent<DeathComponent>(entity);
 
                 // 检查是否应该移除尸体；检查是否存在可视化组件
-                if (death.ShouldRemove(currentTick) && HasViewComponent(entity))
+                if (death.ShouldRemove(currentTick) && !HasViewComponent(entity))
                 {
+                    // 如果实体有导航组件，则先移除导航能力
+                    if (ComponentManager.HasComponent<FlowFieldNavigatorComponent>(entity))
+                    {
+                        var flowFieldSystem = World.GameInstance.GetNavSystem();
+                        flowFieldSystem?.RemoveNavigator(entity);
+                        ComponentManager.RemoveComponent<FlowFieldNavigatorComponent>(entity);
+                    }
+                    
                     // 销毁实体
                     World.EntityManager.DestroyEntity(entity);
                     zUDebug.Log($"[DeathRemovalSystem] 实体{entityId}尸体保留时间到期，已移除");
