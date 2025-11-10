@@ -18,6 +18,7 @@ namespace ZLockstep.View.Systems
     /// 2. 同步逻辑位置到Unity Transform
     /// 3. 处理动画播放
     /// 4. 管理UI显示
+    /// 5. 管理单位描边效果
     /// </summary>
     public class PresentationSystem : PresentationBaseSystem
     {
@@ -252,6 +253,17 @@ namespace ZLockstep.View.Systems
             viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
             viewObject.transform.position = evt.Position.ToVector3();
 
+            // 添加描边组件（默认不启用）
+            try 
+            {
+                var outlineComponent = viewObject.AddComponent<OutlineComponent>();
+                outlineComponent.enabled = false;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[PresentationSystem] 无法为对象 {viewObject.name} 添加描边组件: {ex.Message}");
+            }
+
             // 创建并添加ViewComponent
             var entity = new Entity(evt.EntityId);
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
@@ -402,6 +414,17 @@ namespace ZLockstep.View.Systems
             viewObject.transform.rotation = transform.Rotation.ToQuaternion();
             viewObject.transform.localScale = transform.Scale.ToVector3();
 
+            // 添加描边组件（默认不启用）
+            try 
+            {
+                var outlineComponent = viewObject.AddComponent<OutlineComponent>();
+                outlineComponent.enabled = false;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[PresentationSystem] 无法为对象 {viewObject.name} 添加描边组件: {ex.Message}");
+            }
+
             // 创建并添加ViewComponent
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
             ComponentManager.AddComponent(entity, viewComponent);
@@ -521,6 +544,50 @@ namespace ZLockstep.View.Systems
                     targetRot,
                     deltaTime * interpolationSpeed
                 );
+            }
+        }
+
+        /// <summary>
+        /// 启用或禁用实体的描边效果
+        /// </summary>
+        /// <param name="entityId">实体ID</param>
+        /// <param name="enable">是否启用描边</param>
+        public void EnableEntityOutline(int entityId, bool enable)
+        {
+            var entity = new Entity(entityId);
+            if (!ComponentManager.HasComponent<ViewComponent>(entity))
+                return;
+
+            var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
+            if (viewComponent.GameObject == null)
+                return;
+
+            var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
+            if (outlineComponent != null)
+            {
+                outlineComponent.enabled = enable;
+            }
+        }
+
+        /// <summary>
+        /// 设置实体的描边颜色
+        /// </summary>
+        /// <param name="entityId">实体ID</param>
+        /// <param name="color">描边颜色</param>
+        public void SetEntityOutlineColor(int entityId, Color color)
+        {
+            var entity = new Entity(entityId);
+            if (!ComponentManager.HasComponent<ViewComponent>(entity))
+                return;
+
+            var viewComponent = ComponentManager.GetComponent<ViewComponent>(entity);
+            if (viewComponent.GameObject == null)
+                return;
+
+            var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
+            if (outlineComponent != null)
+            {
+                outlineComponent.OutlineColor = color;
             }
         }
 

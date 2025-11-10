@@ -178,7 +178,7 @@ namespace ZLockstep.Sync
                 _frameCommands[frame] = new List<ICommand>(commands);
             }
 
-            zUDebug.Log($"[FrameSyncManager] 服务器确认帧：{_confirmedFrame}, 当前帧：{_currentFrame}, 命令数：{commands?.Count ?? 0}");
+            // zUDebug.Log($"[FrameSyncManager] 服务器确认帧：{_confirmedFrame}, 当前帧：{_currentFrame}, 命令数：{commands?.Count ?? 0}");
         }
 
         /// <summary>

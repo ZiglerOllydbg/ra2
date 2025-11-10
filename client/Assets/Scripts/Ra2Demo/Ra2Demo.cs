@@ -243,19 +243,8 @@ public class Ra2Demo : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
-            // 检测是否点击到了单位
-            isClickOnUnit = CheckIfClickOnUnit(ray);
-            
-            // 如果点击在单位上，直接选择单位
-            if (isClickOnUnit)
-            {
-                DetectAndSelectUnit(ray);
-            }
-            else
-            {
-                // 如果点击在空白区域，开始框选
-                StartSelectionBox(screenPosition);
-            }
+            // 直接开始框选，移除单位点击检测
+            StartSelectionBox(screenPosition);
         }
     }
 
@@ -361,28 +350,11 @@ public class Ra2Demo : MonoBehaviour
                     Vector3 logicPosition = transform.Position.ToVector3();
                     if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
                     {
-                        // 检查是否按住Ctrl键进行多选
-                        if (Keyboard.current != null && Keyboard.current.ctrlKey.isPressed)
-                        {
-                            // 如果已经选中则取消选中，否则添加到选中列表
-                            if (selectedEntityIds.Contains(entityId))
-                            {
-                                selectedEntityIds.Remove(entityId);
-                                Debug.Log($"[Test] 取消选中单位: EntityId={entityId}");
-                            }
-                            else
-                            {
-                                selectedEntityIds.Add(entityId);
-                                Debug.Log($"[Test] 添加选中单位: EntityId={entityId}");
-                            }
-                        }
-                        else
-                        {
-                            // 单选模式：清空之前选择并选中当前单位
-                            selectedEntityIds.Clear();
-                            selectedEntityIds.Add(entityId);
-                            Debug.Log($"[Test] 选中单位: EntityId={entityId}");
-                        }
+                        // 只保留框选，移除单选和Ctrl键多选功能
+                        // 清空之前选择并选中当前单位
+                        selectedEntityIds.Clear();
+                        selectedEntityIds.Add(entityId);
+                        Debug.Log($"[Test] 选中单位: EntityId={entityId}");
                         
                         // 兼容旧的单选变量
                         selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
@@ -399,31 +371,7 @@ public class Ra2Demo : MonoBehaviour
     /// <returns>是否点击在单位上</returns>
     private bool CheckIfClickOnUnit(Ray ray)
     {
-        if (_game == null || _game.World == null)
-            return false;
-
-        // 射线检测单位
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-        {
-            // 查找对应的逻辑实体
-            var entities = _game.World.ComponentManager
-                .GetAllEntityIdsWith<TransformComponent>();
-            
-            foreach (var entityId in entities)
-            {
-                var entity = new Entity(entityId);
-                var transform = _game.World.ComponentManager
-                    .GetComponent<TransformComponent>(entity);
-                
-                // 比较位置来确定是否是同一个单位（简化实现）
-                Vector3 logicPosition = transform.Position.ToVector3();
-                if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
-                {
-                    return true;
-                }
-            }
-        }
-        
+        // 移除单位点击检测，始终返回false以确保总是开始框选
         return false;
     }
     
@@ -466,18 +414,10 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void EndSelectionBox()
     {
-        // 如果鼠标按下时点击在单位上，则不执行框选逻辑
-        if (isClickOnUnit)
-        {
-            isSelecting = false;
-            isClickOnUnit = false;
-            return;
-        }
-
+        // 移除isClickOnUnit检查，只保留框选逻辑
         if (!isSelecting) return;
 
         isSelecting = false;
-        isClickOnUnit = false;
 
         // 计算拖拽距离
         float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
@@ -496,14 +436,9 @@ public class Ra2Demo : MonoBehaviour
 
         Rect selectionRect = new Rect(x, y, width, height);
 
-        // 检查是否按住Ctrl键进行多选
-        bool isMultiSelect = Keyboard.current != null && Keyboard.current.ctrlKey.isPressed;
-
-        // 如果不是多选模式，清空之前的选择
-        if (!isMultiSelect)
-        {
-            selectedEntityIds.Clear();
-        }
+        // 清空之前的选择
+        ClearAllOutlines();
+        // selectedEntityIds.Clear();
 
         // 查找框选区域内的单位
         if (_game != null && _game.World != null)
@@ -517,6 +452,12 @@ public class Ra2Demo : MonoBehaviour
                 var transform = _game.World.ComponentManager
                     .GetComponent<TransformComponent>(entity);
 
+                // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
+                if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                {
+                    continue; // 跳过非本地玩家单位
+                }
+
                 // 将世界坐标转换为屏幕坐标
                 Vector3 worldPosition = transform.Position.ToVector3();
                 Vector3 screenPos = _mainCamera.WorldToScreenPoint(worldPosition);
@@ -527,17 +468,20 @@ public class Ra2Demo : MonoBehaviour
                 // 检查单位是否在框选区域内
                 if (selectionRect.Contains(screenPos))
                 {
-                    // 如果已经选中则跳过，否则添加到选中列表
-                    if (!selectedEntityIds.Contains(entityId))
-                    {
-                        selectedEntityIds.Add(entityId);
-                        Debug.Log($"[Test] 框选添加单位: EntityId={entityId}");
-                    }
+                    // 添加到选中列表
+                    selectedEntityIds.Add(entityId);
+                    Debug.Log($"[Test] 框选添加单位: EntityId={entityId}");
                 }
             }
 
             // 兼容旧的单选变量
             selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
+        }
+
+        // 为所有新选中的单位启用OutlineComponent
+        foreach (int entityId in selectedEntityIds)
+        {
+            EnableOutlineForEntity(entityId);
         }
     }
     
@@ -636,6 +580,8 @@ public class Ra2Demo : MonoBehaviour
             if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
             {
                 Debug.Log($"[Test] 选中的单位 {entityId} 已不存在");
+                // 禁用该单位的OutlineComponent
+                DisableOutlineForEntity(entityId);
                 continue;
             }
 
@@ -643,6 +589,8 @@ public class Ra2Demo : MonoBehaviour
             if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
             {
                 Debug.Log($"[Test] 选中的单位 {entityId} 不属于当前玩家");
+                // 禁用该单位的OutlineComponent
+                DisableOutlineForEntity(entityId);
                 continue;
             }
             
@@ -953,7 +901,7 @@ public class Ra2Demo : MonoBehaviour
         isPaused = false;
         
         // 清空选中单位列表
-        selectedEntityIds.Clear();
+        ClearAllOutlines(); // 清除所有单位的描边
         selectedEntityId = -1;
         
         // 销毁所有视图对象
@@ -1359,5 +1307,69 @@ public class Ra2Demo : MonoBehaviour
         }
         
         zUDebug.Log("[Ra2Demo] 未找到我方工厂");
+    }
+
+    /// <summary>
+    /// 为指定实体启用OutlineComponent
+    /// </summary>
+    /// <param name="entityId">实体ID</param>
+    private void EnableOutlineForEntity(int entityId)
+    {
+        if (_game == null || _game.World == null || _presentationSystem == null)
+            return;
+
+        var entity = new Entity(entityId);
+        if (_game.World.ComponentManager.HasComponent<ViewComponent>(entity))
+        {
+            var viewComponent = _game.World.ComponentManager.GetComponent<ViewComponent>(entity);
+            if (viewComponent != null && viewComponent.GameObject != null)
+            {
+                var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
+                if (outlineComponent != null)
+                {
+                    outlineComponent.enabled = true;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 为指定实体禁用OutlineComponent
+    /// </summary>
+    /// <param name="entityId">实体ID</param>
+    private void DisableOutlineForEntity(int entityId)
+    {
+        if (_game == null || _game.World == null || _presentationSystem == null)
+            return;
+
+        var entity = new Entity(entityId);
+        if (_game.World.ComponentManager.HasComponent<ViewComponent>(entity))
+        {
+            var viewComponent = _game.World.ComponentManager.GetComponent<ViewComponent>(entity);
+            if (viewComponent != null && viewComponent.GameObject != null)
+            {
+                var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
+                if (outlineComponent != null)
+                {
+                    outlineComponent.enabled = false;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 清除所有单位的OutlineComponent
+    /// </summary>
+    private void ClearAllOutlines()
+    {
+        if (_game == null || _game.World == null || _presentationSystem == null)
+            return;
+
+        // 禁用之前选中单位的OutlineComponent
+        foreach (int entityId in selectedEntityIds)
+        {
+            DisableOutlineForEntity(entityId);
+        }
+        selectedEntityIds.Clear();
     }
 }
