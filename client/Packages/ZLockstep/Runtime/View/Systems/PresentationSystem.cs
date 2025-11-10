@@ -4,6 +4,7 @@ using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Sync;
+using ZLockstep.View.Components;
 using static ZLockstep.Simulation.ECS.Systems.SettlementSystem;
 
 
