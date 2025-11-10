@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": {
+      "version": "file:UniTask",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.lowlevel.zlockstep": {
       "version": "file:ZLockstep",
       "depth": 0,
@@ -174,6 +180,12 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "zframework": {
+      "version": "file:ZFramework",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",
