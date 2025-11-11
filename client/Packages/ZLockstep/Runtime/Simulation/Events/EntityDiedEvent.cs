@@ -12,11 +12,6 @@ namespace ZLockstep.Simulation.Events
         /// 死亡实体的ID
         /// </summary>
         public int EntityId;
-
-        /// <summary>
-        /// 死亡实体的阵营ID
-        /// </summary>
-        public int CampId;
     }
 }
 

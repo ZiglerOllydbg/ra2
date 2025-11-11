@@ -66,7 +66,6 @@ namespace ZLockstep.Simulation.ECS.Systems
                     var diedEvent = new EntityDiedEvent
                     {
                         EntityId = entity.Id,
-                        CampId = campId
                     };
                     EventManager.Publish(diedEvent);
 

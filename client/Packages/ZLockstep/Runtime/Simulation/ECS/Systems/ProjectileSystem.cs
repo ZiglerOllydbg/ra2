@@ -139,14 +139,18 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private void DestroyProjectile(int projectileId)
         {
-            // 发布单位销毁事件，确保表现层能同步销毁视觉对象
-            var destroyEvent = new UnitDestroyedEvent
+            Entity projectile = new Entity(projectileId);
+            // 添加死亡组件
+            var deathComponent = new DeathComponent(World.TimeManager.Tick, 0);
+            ComponentManager.AddComponent(projectile, deathComponent);
+
+            // 发布死亡事件（通知表现层播放死亡动画）
+            var diedEvent = new EntityDiedEvent
             {
                 EntityId = projectileId
             };
-            EventManager.Publish(destroyEvent);
+            EventManager.Publish(diedEvent);
             
-            Entity projectile = new Entity(projectileId);
             // 只移除逻辑组件，保留ViewComponent给表现层处理
             ComponentManager.RemoveComponent<ProjectileComponent>(projectile);
             ComponentManager.RemoveComponent<TransformComponent>(projectile);
