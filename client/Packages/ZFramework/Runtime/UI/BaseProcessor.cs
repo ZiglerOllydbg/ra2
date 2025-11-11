@@ -5,6 +5,7 @@ using ZFrame;
 
 /// <summary>
 /// 基本Processor（扩展，增加网络通讯消息处理的功能）
+/// 这里其实更类似一个Controller，主要用于和外部其他Processor通信，向下控制Panel里的data，修改完后，刷新UI
 /// </summary>
 public abstract class BaseProcessor : Processor
 {
