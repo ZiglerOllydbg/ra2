@@ -50,23 +50,109 @@ public abstract class BasePanel
     /// 是否已经销毁掉了
     /// </summary>
     protected bool isDisposed = false;
+
+    #region 状态管理（使用状态机替代多个bool标志）
+
     /// <summary>
-    /// 是否在打开状态
+    /// 当前面板状态
     /// </summary>
-    public bool IsOpen { get; protected set; }
+    private PanelState state = PanelState.Uninitialized;
+
     /// <summary>
-    /// 是否可见
-    /// 在加载完毕后 如果还是打开状态就立即可见
+    /// 获取当前状态
     /// </summary>
-    public bool IsVisiable { get; protected set; }
+    public PanelState State => state;
+
     /// <summary>
-    /// 是否正在加载中
+    /// 兼容属性：是否在打开状态（包括加载中、已加载、正在打开、已打开）
     /// </summary>
-    public bool IsLoading { get; protected set; }
+    public bool IsOpen => state == PanelState.Loading ||
+                          state == PanelState.Loaded ||
+                          state == PanelState.Opening ||
+                          state == PanelState.Opened;
+
+    /// <summary>
+    /// 兼容属性：是否可见（已打开并显示）
+    /// </summary>
+    public bool IsVisiable => state == PanelState.Opened;
+
+    /// <summary>
+    /// 兼容属性：是否正在加载中
+    /// </summary>
+    public bool IsLoading => state == PanelState.Loading;
+
     /// <summary>
     /// 是否有GameObject
     /// </summary>
     public bool IsHasGameObject { get => PanelObject != null; }
+
+    /// <summary>
+    /// 状态转换（集中管理，便于调试和追踪）
+    /// </summary>
+    private void TransitionTo(PanelState newState)
+    {
+        // 状态转换合法性检查
+        if (!IsValidTransition(state, newState))
+        {
+            this.LogError($"Invalid state transition: {state} -> {newState} for Panel: {ModelData.PanelID}");
+            return;
+        }
+
+        var oldState = state;
+        state = newState;
+
+        this.Log($"[State] {oldState} -> {newState} (Panel: {ModelData.PanelID})");
+
+        // 可选：发布状态变化事件
+        OnStateChanged(oldState, newState);
+    }
+
+    /// <summary>
+    /// 检查状态转换是否合法
+    /// </summary>
+    private bool IsValidTransition(PanelState from, PanelState to)
+    {
+        // 允许相同状态转换（幂等）
+        if (from == to) return true;
+
+        // 定义合法的状态转换
+        switch (from)
+        {
+            case PanelState.Uninitialized:
+                return to == PanelState.Closed;
+
+            case PanelState.Closed:
+                return to == PanelState.Loading || to == PanelState.Loaded;
+
+            case PanelState.Loading:
+                return to == PanelState.Loaded || to == PanelState.Closed;
+
+            case PanelState.Loaded:
+                return to == PanelState.Opening || to == PanelState.Closed;
+
+            case PanelState.Opening:
+                return to == PanelState.Opened || to == PanelState.Closing;
+
+            case PanelState.Opened:
+                return to == PanelState.Closing;
+
+            case PanelState.Closing:
+                return to == PanelState.Closed;
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// 状态变化事件（子类可重写）
+    /// </summary>
+    protected virtual void OnStateChanged(PanelState oldState, PanelState newState)
+    {
+        // 子类可以在这里监听状态变化
+    }
+
+    #endregion
 
     /// <summary>
     /// 界面皮肤SkinID
@@ -126,6 +212,9 @@ public abstract class BasePanel
         OnInit();
 
         RegisterPanel();
+
+        // 初始化完成后转换到Closed状态
+        TransitionTo(PanelState.Closed);
     }
 
     #endregion
@@ -154,89 +243,77 @@ public abstract class BasePanel
     {
         this.Open(PanelSkinID.None);
     }
+
     /// <summary>
-    /// 打开面板
+    /// 打开面板（使用状态机重构）
     /// </summary>
     public virtual void Open(PanelSkinID __panelSkinID = PanelSkinID.None)
     {
-        //未打开且不可见
-        if (!IsOpen)
+        switch (state)
         {
-            PanelManager.instance.OpenPanel(this);
+            case PanelState.Closed:
+            case PanelState.Uninitialized:
+                // 通知PanelManager
+                PanelManager.instance.OpenPanel(this);
 
-            IsOpen = true;
+                // 检查是否需要加载/重新加载资源
+                bool needReload = PanelObject == null ||
+                                  (this.panelSkinID != PanelSkinID.None && __panelSkinID != PanelSkinID.None && this.panelSkinID != __panelSkinID);
 
-            if (IsLoading)
-            {
-                this.LogWarning($"Panel is loading...PanelID: { ModelData.PanelID }");
-                return;
-            }
+                if (needReload)
+                {
+                    // 如果需要更换皮肤，先释放旧资源
+                    if (PanelObject != null && this.panelSkinID != __panelSkinID)
+                    {
+                        CloseByActionType(true);
+                    }
 
-            //Debugger.Log("Panel", $"【窗口】 ModelData.PanelID:{ ModelData.PanelID} __panelSkinID:{__panelSkinID}");
-            TryOpen(__panelSkinID);
-        }
-        else
-        {
-            if (this.IsVisiable)
-                this.OnOpen();
+                    // 开始加载资源
+                    this.panelSkinID = __panelSkinID;
+                    TransitionTo(PanelState.Loading);
+                    LoadUIPrefab(__panelSkinID);
+                }
+                else
+                {
+                    // 资源已存在，直接打开
+                    this.panelSkinID = __panelSkinID;
+                    TransitionTo(PanelState.Loaded);
+                    BeginOpen();
+                }
+                break;
+
+            case PanelState.Loading:
+                // 正在加载中，什么都不做（等加载完成后自动打开）
+                this.LogWarning($"Panel is loading, please wait... PanelID: {ModelData.PanelID}");
+                break;
+
+            case PanelState.Opened:
+                // 已经打开，触发OnOpen回调
+                OnOpen();
+                break;
+
+            case PanelState.Opening:
+            case PanelState.Loaded:
+                // 这些状态下重复调用Open，不做处理
+                this.LogWarning($"Panel is already opening or loaded. State: {state}, PanelID: {ModelData.PanelID}");
+                break;
+
+            default:
+                this.LogWarning($"Cannot open panel in state: {state}, PanelID: {ModelData.PanelID}");
+                break;
         }
     }
+
     protected virtual void OnOpen() { }
     protected virtual void OnClose() { }
-    /// <summary>
-    /// 尝试打开面板
-    /// </summary>
-    protected virtual void TryOpen(PanelSkinID __panelSkinID = PanelSkinID.None)
-    {
-        //TODO 打开面板开始计时
-
-        if ((this.panelSkinID != PanelSkinID.None || __panelSkinID != PanelSkinID.None) && this.panelSkinID != __panelSkinID)
-        {
-            //如果与上一个类型不相同，需要卸载 然后重新加载
-            //新传入的皮肤不是空
-            //上一个类型
-            if (PanelObject != null)
-            {
-                //这种情况下可以尝试直接打开
-                //这里需要假设在Loading状态 走相同的逻辑
-                IsLoading = true;
-
-                //先根据配置，归还掉当前的界面,同步销毁UI 
-                this.CloseByActionType(true);
-            }
-
-            //然后重新加载
-            this.LoadUIPrefab(__panelSkinID);
-        }
-        else
-        {
-            // 如果仅仅是隐藏模式，直接尝试打开，否则重新加载
-            if (PanelObject != null)
-            {
-                //这种情况下可以尝试直接打开
-                //这里需要假设在Loading状态 走相同的逻辑
-                IsLoading = true;
-
-                BorrowComplete(this.ModelData.PanelID, __panelSkinID, this.PanelObject);
-            }
-            else
-            {
-                LoadUIPrefab(__panelSkinID);
-            }
-        }
-
-        this.panelSkinID = __panelSkinID;
-    }
 
     /// <summary>
     /// 加载 Prefab
     /// </summary>
     protected virtual void LoadUIPrefab(PanelSkinID __panelSkinID = PanelSkinID.None)
     {
-        IsLoading = true;
-
+        // 状态已在Open()中设置为Loading，这里直接加载资源
         PanelManager.instance.BorrowUIRes(this.ModelData.PanelID, __panelSkinID, BorrowComplete);
-
     }
 
     /// <summary>
@@ -307,71 +384,85 @@ public abstract class BasePanel
 
         if (!this.IsVisiable)
         {
-            TryOpen();
+            Open();
         }
     }
 
 
     /// <summary>
-    /// 借完
+    /// 资源加载完成回调（异步）
     /// </summary>
-    /// <param name="_panelID"></param>
-    /// <param name="_go"></param>
     protected virtual void BorrowComplete(PanelID _panelID, PanelSkinID __panelSkinID, GameObject _go)
     {
-        if (_go)
+        if (_go == null)
         {
-            this.PanelObject = _go;
-
-            var rectTransform = this.PanelObject?.GetComponent<RectTransform>();
-
-            if (rectTransform) //发现有部分UI会自动修改这里的数据，强制纠正过来了。
-            {
-                rectTransform.offsetMax = Vector2.zero;
-
-                rectTransform.offsetMin = Vector2.zero;
-            }
-            this.SetParent(PanelManager.instance.GetParentByPanelDepthType(this.ModelData.PanelUIDepthType));
-
-            OnLoaded();
-
-            InitializePanelData();
-        }
-        else
-        {
-            //加载失败的情况
-            IsLoading = false;
-
+            // 加载失败
+            this.LogError($"Load UI failed! PanelID: {ModelData.PanelID}");
+            TransitionTo(PanelState.Closed);
             OnLoadComplete?.Invoke(false);
-
             Destroy();
-        }
-    }
-
-    /// <summary>
-    /// 加载完毕
-    /// </summary>
-    protected virtual void OnLoaded()
-    {
-        if (!IsLoading)
-        {
-            this.LogWarning("Wrong open state, load down with out loading state!");
             return;
         }
 
-        IsLoading = false;
+        // 设置PanelObject和基础属性
+        this.PanelObject = _go;
 
-        //如果这个时候发现还是打开状态
-        if (this.IsOpen)
+        var rectTransform = this.PanelObject?.GetComponent<RectTransform>();
+        if (rectTransform) //发现有部分UI会自动修改这里的数据，强制纠正过来了。
         {
-            SetUIReadyThenGetPanelComponent();
+            rectTransform.offsetMax = Vector2.zero;
+            rectTransform.offsetMin = Vector2.zero;
+        }
 
-            ReallyOpen();
+        this.SetParent(PanelManager.instance.GetParentByPanelDepthType(this.ModelData.PanelUIDepthType));
+        InitializePanelData();
+
+        // 转换到Loaded状态
+        TransitionTo(PanelState.Loaded);
+
+        // 检查加载完成时面板是否仍需要打开
+        if (state == PanelState.Closed)
+        {
+            // 加载期间被关闭了，直接释放资源
+            this.LogWarning($"Panel was closed during loading. PanelID: {ModelData.PanelID}");
+            CloseByActionType();
         }
         else
         {
-            CloseByActionType();
+            // 正常打开流程
+            BeginOpen();
         }
+    }
+
+    /// <summary>
+    /// 开始打开面板（资源已加载）
+    /// </summary>
+    private void BeginOpen()
+    {
+        TransitionTo(PanelState.Opening);
+
+        SetUIReadyThenGetPanelComponent();
+
+        // TODO: 播放打开动画
+        // 动画完成后调用 OnOpenAnimationComplete()
+        // 目前没有动画，直接完成
+
+        OnOpenAnimationComplete();
+    }
+
+    /// <summary>
+    /// 打开动画完成
+    /// </summary>
+    private void OnOpenAnimationComplete()
+    {
+        TransitionTo(PanelState.Opened);
+
+        this.UIDepth = this.UIDepth;
+
+        UpdateData();
+        BecameVisible();
+
+        OnLoadComplete?.Invoke(true);
     }
 
     /// <summary>
@@ -403,37 +494,6 @@ public abstract class BasePanel
         return go;
     }
 
-    /// <summary>
-    /// 真正打开 UI
-    /// </summary>
-    protected virtual void ReallyOpen()
-    {
-        if (!IsVisiable)
-        {
-            //TODO UI面板打开计时停止
-
-            this.UIDepth = this.UIDepth;
-
-            //Get UIObject Component
-            //if (PanelObject != null)
-                //uiObject = PanelObject.GetComponent<UIObject>();
-
-            //需要手动设置下,将画布下的比例调整到 4:3 的
-            this.CanvasRectTransAdapt();
-
-            IsVisiable = true;
-
-            UpdateData();
-
-            //TODO PlayOpenAnimation
-
-
-            this.BecameVisible();
-
-            //加载完成给外面一个通知
-            OnLoadComplete?.Invoke(true);
-        }
-    }
 
     /// <summary>
     /// 刷新数据
@@ -521,37 +581,82 @@ public abstract class BasePanel
 
     public virtual void Close()
     {
-        this.Log("BasePanel Close << " + ModelData.PanelID);
         this.Close(false);
     }
 
     /// <summary>
-    /// 带参数 ，是否立即销毁当前UI资源
+    /// 关闭面板（使用状态机重构）
     /// </summary>
     /// <param name="__isSynchronousDestory">是否立即销毁当前UI资源</param>
     public virtual void Close(bool __isSynchronousDestory = false)
     {
-        if (IsOpen)
+        this.Log($"BasePanel Close << PanelID: {ModelData.PanelID}, CurrentState: {state}");
+
+        switch (state)
         {
-            IsVisiable = false;
+            case PanelState.Opened:
+                // 正常关闭流程
+                TransitionTo(PanelState.Closing);
+                BeginClose(__isSynchronousDestory);
+                break;
 
-            IsOpen = false;
+            case PanelState.Loading:
+                // 加载中被关闭，标记为需要关闭
+                // 等加载完成后在BorrowComplete中会检查状态并关闭
+                this.LogWarning($"Close during loading, will close after loaded. PanelID: {ModelData.PanelID}");
+                TransitionTo(PanelState.Closed);
+                break;
 
-            this.OnLoadComplete = null;
+            case PanelState.Opening:
+            case PanelState.Loaded:
+                // 正在打开或已加载但未显示，直接关闭
+                TransitionTo(PanelState.Closing);
+                BeginClose(__isSynchronousDestory);
+                break;
 
-            //TODO 清理缓存池
-            BecameInvisible();
-
-            CloseByActionType(__isSynchronousDestory);
-
-            PanelManager.instance.ClosePanel(this);
-        }
-        else
-        {
+            case PanelState.Closed:
+            case PanelState.Closing:
+                // 已经关闭或正在关闭，不需要操作
 #if UNITY_EDITOR
-            this.LogWarning($"Don't close on closing state! PanelID: { ModelData.PanelID }");
+                this.LogWarning($"Panel is already closed or closing. State: {state}, PanelID: {ModelData.PanelID}");
 #endif
+                break;
+
+            default:
+                this.LogWarning($"Cannot close panel in state: {state}, PanelID: {ModelData.PanelID}");
+                break;
         }
+    }
+
+    /// <summary>
+    /// 开始关闭面板
+    /// </summary>
+    private void BeginClose(bool isSynchronousDestory = false)
+    {
+        this.OnLoadComplete = null;
+
+        // 如果面板可见，触发不可见事件
+        if (state == PanelState.Opened || state == PanelState.Closing)
+        {
+            BecameInvisible();
+        }
+
+        // TODO: 播放关闭动画
+        // 动画完成后调用 OnCloseAnimationComplete()
+        // 目前没有动画，直接完成
+
+        OnCloseAnimationComplete(isSynchronousDestory);
+    }
+
+    /// <summary>
+    /// 关闭动画完成
+    /// </summary>
+    private void OnCloseAnimationComplete(bool isSynchronousDestory = false)
+    {
+        TransitionTo(PanelState.Closed);
+
+        CloseByActionType(isSynchronousDestory);
+        PanelManager.instance.ClosePanel(this);
     }
 
     /// <summary>
