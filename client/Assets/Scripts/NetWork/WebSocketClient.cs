@@ -41,9 +41,10 @@ namespace Game.RA2.Client
         {
             this.clientId = clientId;
             this.webSocket = new WebSocket(serverUrl);
-            
+
             // 初始化心跳相关组件
             pingTimer = new Timer(pingInterval);
+            SendPing();
             pingTimer.Elapsed += (sender, e) => SendPing();
             lastPongTime = DateTime.UtcNow;
             lastPingTime = DateTime.UtcNow; // 初始化ping时间
@@ -77,24 +78,23 @@ namespace Game.RA2.Client
         }
         
         // 发送ping消息
-        private void SendPing()
+        public void SendPing()
         {
             if (IsConnected)
             {
                 // 记录发送ping的时间
                 lastPingTime = DateTime.UtcNow;
-
                 Ping ping = new()
                 {
                     type = "ping"
                 };
-                
+
                 string json = JsonConvert.SerializeObject(ping);
                 SendMessage(json);
                 Debug.Log($"[{clientId}] 发送ping");
             }
         }
-        
+
         public async void Connect()
         {
             if (!isConnected)
