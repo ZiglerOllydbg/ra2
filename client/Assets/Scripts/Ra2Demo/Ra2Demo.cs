@@ -777,15 +777,13 @@ public class Ra2Demo : MonoBehaviour
             return;
 
         // 获取活跃的流场
-        var activeFields = _game.FlowFieldManager.GetType()
-            .GetField("flowFields", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.GetValue(_game.FlowFieldManager) as System.Collections.Generic.Dictionary<int, FlowField>;
+        var activeFields = _game.FlowFieldManager.GetActiveFields();
 
         if (activeFields == null)
             return;
 
         float gridSize = (float)_game.MapManager.GetGridSize();
-        int flowFieldDisplayInterval = 3; // 间隔显示，避免太密集
+        int flowFieldDisplayInterval = 1; // 间隔显示，避免太密集
 
         foreach (var field in activeFields.Values)
         {
@@ -831,7 +829,7 @@ public class Ra2Demo : MonoBehaviour
                     Gizmos.color = Color.Lerp(Color.red, Color.green, t);
                     
                     // 绘制方向箭头
-                    DrawArrow(worldPos, dir * 0.5f);
+                    DrawArrow(worldPos, dir * 0.8f);
                 }
             }
         }

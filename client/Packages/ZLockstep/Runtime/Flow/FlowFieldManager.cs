@@ -336,6 +336,11 @@ namespace ZLockstep.Flow
             return fieldById.Count;
         }
 
+        public Dictionary<int, FlowField> GetActiveFields()
+        {
+            return fieldById;
+        }
+
         /// <summary>
         /// 获取流场信息
         /// </summary>
