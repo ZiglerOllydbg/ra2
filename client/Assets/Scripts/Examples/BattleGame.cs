@@ -154,7 +154,7 @@ namespace Game.Examples
             AISystem.Initialize(NavSystem);
 
             // 注册结算系统
-            World.SystemManager.RegisterSystem(new SettlementSystem());
+            // World.SystemManager.RegisterSystem(new SettlementSystem());
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
@@ -196,7 +196,9 @@ namespace Game.Examples
                         float y = building["y"]?.ToObject<float>() ?? 0;
 
                         // 根据类型创建建筑实体
-                        var entityEvent = CreateBuildingEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
+                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, 1,
+                        new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
+                        width:10, height:4, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);

@@ -12,6 +12,7 @@ using Game.Examples;
 using ZLockstep.Sync;
 using ZLockstep.View.Systems;
 using ZLockstep.Simulation.ECS.Systems;
+using ZLockstep.Flow;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -84,6 +85,11 @@ public class Ra2Demo : MonoBehaviour
     
     // Ping相关
     private long currentPing = -1; // 当前ping值（毫秒）
+
+    // 网格、障碍物和流场显示控制
+    private bool showGrid = false;
+    private bool showObstacles = false;
+    private bool showFlowField = false;
 
     private void Awake()
     {
@@ -681,8 +687,174 @@ public class Ra2Demo : MonoBehaviour
                 }
             }
         }
+        
+        // 绘制网格、障碍物和流场
+        if (_game != null && _game.MapManager != null)
+        {
+            // 1. 绘制网格和障碍物
+            if (showGrid || showObstacles)
+            {
+                DrawGridAndObstacles();
+            }
+
+            // 2. 绘制流场
+            if (showFlowField && _game.FlowFieldManager != null)
+            {
+                DrawFlowFields();
+            }
+        }
     }
 
+    /// <summary>
+    /// 绘制网格和障碍物
+    /// </summary>
+    private void DrawGridAndObstacles()
+    {
+        if (_game == null || _game.MapManager == null)
+            return;
+
+        int width = _game.MapManager.GetWidth();
+        int height = _game.MapManager.GetHeight();
+        float gridSize = (float)_game.MapManager.GetGridSize();
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                bool walkable = _game.MapManager.IsWalkable(x, y);
+                Vector3 worldPos = new Vector3(
+                    x * gridSize + gridSize * 0.5f,
+                    0.01f,
+                    y * gridSize + gridSize * 0.5f
+                );
+
+                // 绘制障碍物
+                if (!walkable && showObstacles)
+                {
+                    Gizmos.color = new Color(0.8f, 0.2f, 0.2f, 0.7f);
+                    Gizmos.DrawCube(worldPos, new Vector3(gridSize * 0.95f, 0.2f, gridSize * 0.95f));
+                }
+                // 绘制网格线
+                else if (showGrid)
+                {
+                    Gizmos.color = new Color(0.3f, 0.3f, 0.3f, 0.3f);
+                    // 只绘制底部和左边线，避免重复
+                    Vector3 bottomLeft = worldPos - new Vector3(gridSize * 0.5f, 0, gridSize * 0.5f);
+                    Vector3 bottomRight = bottomLeft + new Vector3(gridSize, 0, 0);
+                    Vector3 topLeft = bottomLeft + new Vector3(0, 0, gridSize);
+                    
+                    Gizmos.DrawLine(bottomLeft, bottomRight);
+                    Gizmos.DrawLine(bottomLeft, topLeft);
+                }
+            }
+        }
+
+        // 绘制地图边界
+        if (showGrid)
+        {
+            Gizmos.color = Color.yellow;
+            float mapWidth = width * gridSize;
+            float mapHeight = height * gridSize;
+            
+            Vector3 corner1 = new Vector3(0, 0.02f, 0);
+            Vector3 corner2 = new Vector3(mapWidth, 0.02f, 0);
+            Vector3 corner3 = new Vector3(mapWidth, 0.02f, mapHeight);
+            Vector3 corner4 = new Vector3(0, 0.02f, mapHeight);
+            
+            Gizmos.DrawLine(corner1, corner2);
+            Gizmos.DrawLine(corner2, corner3);
+            Gizmos.DrawLine(corner3, corner4);
+            Gizmos.DrawLine(corner4, corner1);
+        }
+    }
+
+    /// <summary>
+    /// 绘制流场方向
+    /// </summary>
+    private void DrawFlowFields()
+    {
+        if (_game == null || _game.FlowFieldManager == null)
+            return;
+
+        // 获取活跃的流场
+        var activeFields = _game.FlowFieldManager.GetType()
+            .GetField("flowFields", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(_game.FlowFieldManager) as System.Collections.Generic.Dictionary<int, FlowField>;
+
+        if (activeFields == null)
+            return;
+
+        float gridSize = (float)_game.MapManager.GetGridSize();
+        int flowFieldDisplayInterval = 3; // 间隔显示，避免太密集
+
+        foreach (var field in activeFields.Values)
+        {
+            if (field.referenceCount <= 0)
+                continue;
+
+            // 绘制目标点
+            Vector3 targetPos = new Vector3(
+                field.targetGridX * gridSize + gridSize * 0.5f,
+                0.5f,
+                field.targetGridY * gridSize + gridSize * 0.5f
+            );
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(targetPos, 1f);
+            Gizmos.DrawSphere(targetPos, 0.3f);
+
+            // 绘制流场箭头（间隔显示，避免太密集）
+            for (int y = 0; y < field.height; y += flowFieldDisplayInterval)
+            {
+                for (int x = 0; x < field.width; x += flowFieldDisplayInterval)
+                {
+                    if (!_game.MapManager.IsWalkable(x, y))
+                        continue;
+
+                    int idx = field.GetIndex(x, y);
+                    zVector2 direction = field.directions[idx];
+                    
+                    if (direction.sqrMagnitude < new zfloat(0, 100)) // 0.01
+                        continue;
+
+                    Vector3 worldPos = new Vector3(
+                        x * gridSize + gridSize * 0.5f,
+                        0.3f,
+                        y * gridSize + gridSize * 0.5f
+                    );
+
+                    Vector3 dir = new Vector3((float)direction.x, 0, (float)direction.y);
+                    
+                    // 根据到目标的距离设置颜色
+                    float cost = (float)field.costs[idx];
+                    float maxCost = field.width + field.height;
+                    float t = 1f - (cost / maxCost);
+                    Gizmos.color = Color.Lerp(Color.red, Color.green, t);
+                    
+                    // 绘制方向箭头
+                    DrawArrow(worldPos, dir * 0.5f);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 绘制箭头（辅助方法）
+    /// </summary>
+    private void DrawArrow(Vector3 start, Vector3 direction)
+    {
+        if (direction.magnitude < 0.001f)
+            return;
+
+        Vector3 end = start + direction;
+        Gizmos.DrawLine(start, end);
+        
+        // 箭头头部
+        Vector3 right = Quaternion.Euler(0, 30, 0) * -direction * 0.3f;
+        Vector3 left = Quaternion.Euler(0, -30, 0) * -direction * 0.3f;
+        
+        Gizmos.DrawLine(end, end + right);
+        Gizmos.DrawLine(end, end + left);
+    }
     #endregion
 
     private void OnGUI()
@@ -737,13 +909,36 @@ public class Ra2Demo : MonoBehaviour
         }
         else
         {
-            // 绘制ping值显示（在连接后始终显示）
+            // 将重新开始按钮定位在左上角
+            Rect restartButtonRect = new Rect(20, 20, 300, 200);
+            GUILayout.BeginArea(restartButtonRect);
+            
+            if (GUILayout.Button("重新开始", buttonStyle))
+            {
+                RestartGame();
+            }
+            
+            GUILayout.EndArea();
+            
+            // 绘制ping值显示（在重新开始按钮下方）
             GUIStyle pingStyle = new GUIStyle(GUI.skin.label);
             pingStyle.fontSize = 20;
             pingStyle.normal.textColor = Color.white;
             
             string pingText = currentPing >= 0 ? $"Ping: {currentPing}ms" : "Ping: --";
-            GUI.Label(new Rect(20, 20, 200, 30), pingText, pingStyle);
+            GUI.Label(new Rect(20, 90, 200, 30), pingText, pingStyle);
+            
+            // 绘制调试显示开关（在ping值显示下方）
+            GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
+            toggleStyle.fontSize = 16;
+            
+            Rect toggleRect = new Rect(20, 130, 200, 150);
+            GUILayout.BeginArea(toggleRect);
+            showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
+            showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
+            showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
+            GUILayout.EndArea();
+
         }
 
         // 绘制中央的匹配/准备按钮
@@ -779,19 +974,6 @@ public class Ra2Demo : MonoBehaviour
             else if (isMatched && !isReady)
             {
                 GUILayout.Label("等待中", buttonStyle);
-            }
-            
-            GUILayout.EndArea();
-        }
-        else if (isReady)
-        {
-            // 将重新开始按钮定位在左上角（在ping显示下方）
-            Rect restartButtonRect = new Rect(20, 60, 300, 200);
-            GUILayout.BeginArea(restartButtonRect);
-            
-            if (GUILayout.Button("重新开始", buttonStyle))
-            {
-                RestartGame();
             }
             
             GUILayout.EndArea();

@@ -31,9 +31,12 @@ namespace ZLockstep.Flow
             logicGridSize = gridSize;
             
             // 流场地图尺寸减半（使用更大的格子）
-            flowWidth = width / 2;
-            flowHeight = height / 2;
-            flowGridSize = gridSize * zfloat.Two;
+            // flowWidth = width / 2;
+            // flowHeight = height / 2;
+            // flowGridSize = gridSize * zfloat.Two;
+            flowWidth = width;
+            flowHeight = height;
+            flowGridSize = gridSize;
             
             // 初始化格子数据
             walkableGrid = new bool[width * height];
