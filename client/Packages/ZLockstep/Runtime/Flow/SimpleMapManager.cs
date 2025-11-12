@@ -124,12 +124,12 @@ namespace ZLockstep.Flow
         {
             // 流场格子对应2x2的逻辑格子
             // 只要有一个逻辑格子可走，流场格子就可走
-            int logicX = gridX * 2;
-            int logicY = gridY * 2;
+            int logicX = gridX;
+            int logicY = gridY;
             
-            for (int dy = 0; dy < 2; dy++)
+            for (int dy = 0; dy < 1; dy++)
             {
-                for (int dx = 0; dx < 2; dx++)
+                for (int dx = 0; dx < 1; dx++)
                 {
                     int lx = logicX + dx;
                     int ly = logicY + dy;

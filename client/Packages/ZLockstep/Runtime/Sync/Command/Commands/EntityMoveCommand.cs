@@ -49,12 +49,12 @@ namespace ZLockstep.Sync.Command.Commands
                         entities.Add(new Entity(entityId));
                     }
 
-                    if (entities.Count > 1)
-                    {
-                        navSystem.SetScatterTargets(entities, TargetPosition);
-                        zUDebug.Log($"[StandaloneBattleDemo] 散点移动{entities.Count}个单位到{TargetPosition}");
-                    }
-                    else
+                    // if (entities.Count > 1)
+                    // {
+                    //     navSystem.SetScatterTargets(entities, TargetPosition);
+                    //     zUDebug.Log($"[StandaloneBattleDemo] 散点移动{entities.Count}个单位到{TargetPosition}");
+                    // }
+                    // else
                     {
                         navSystem.SetMultipleTargets(entities, TargetPosition);
                         zUDebug.Log($"[StandaloneBattleDemo] 移动{entities.Count}个单位到{TargetPosition}");

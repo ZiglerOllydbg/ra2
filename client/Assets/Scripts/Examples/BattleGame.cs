@@ -198,7 +198,7 @@ namespace Game.Examples
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, 1,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        width:10, height:4, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        width:16, height:10, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
