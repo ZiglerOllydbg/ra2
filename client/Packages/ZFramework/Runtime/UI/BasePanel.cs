@@ -1,5 +1,4 @@
-﻿using Edu100.Enum;
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
@@ -94,14 +93,14 @@ public abstract class BasePanel
         // 状态转换合法性检查
         if (!IsValidTransition(state, newState))
         {
-            this.LogError($"Invalid state transition: {state} -> {newState} for Panel: {ModelData.PanelID}");
+            this.LogError($"Invalid state transition: {state} -> {newState} for Panel: {ModelData.currentPanelID}");
             return;
         }
 
         var oldState = state;
         state = newState;
 
-        this.Log($"[State] {oldState} -> {newState} (Panel: {ModelData.PanelID})");
+        this.Log($"[State] {oldState} -> {newState} (Panel: {ModelData.currentPanelID})");
 
         // 可选：发布状态变化事件
         OnStateChanged(oldState, newState);
@@ -284,7 +283,7 @@ public abstract class BasePanel
 
             case PanelState.Loading:
                 // 正在加载中，什么都不做（等加载完成后自动打开）
-                this.LogWarning($"Panel is loading, please wait... PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Panel is loading, please wait... PanelID: {ModelData.currentPanelID}");
                 break;
 
             case PanelState.Opened:
@@ -295,11 +294,11 @@ public abstract class BasePanel
             case PanelState.Opening:
             case PanelState.Loaded:
                 // 这些状态下重复调用Open，不做处理
-                this.LogWarning($"Panel is already opening or loaded. State: {state}, PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Panel is already opening or loaded. State: {state}, PanelID: {ModelData.currentPanelID}");
                 break;
 
             default:
-                this.LogWarning($"Cannot open panel in state: {state}, PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Cannot open panel in state: {state}, PanelID: {ModelData.currentPanelID}");
                 break;
         }
     }
@@ -313,15 +312,15 @@ public abstract class BasePanel
     protected virtual void LoadUIPrefab(PanelSkinID __panelSkinID = PanelSkinID.None)
     {
         // 状态已在Open()中设置为Loading，这里直接加载资源
-        PanelManager.instance.BorrowUIRes(this.ModelData.PanelID, __panelSkinID, BorrowComplete);
+        PanelManager.instance.BorrowUIRes(this.ModelData.currentPanelID, __panelSkinID, BorrowComplete);
     }
 
     /// <summary>
     /// 预加载UI资源
     /// </summary>
-    public void PrestrainUIRes(PanelSkinID _panelSkinID, Action<PanelID, PanelSkinID, GameObject> _prestrainComplete)
+    public void PrestrainUIRes(PanelSkinID _panelSkinID, Action<string, PanelSkinID, GameObject> _prestrainComplete)
     {
-        this.Log($"【BasePanel】 PrestrainUIRes 预加载资源 panelID:{this.ModelData?.PanelID}  _panelSkinID:{_panelSkinID}  _prestrainComplete:{_prestrainComplete}");
+        this.Log($"【BasePanel】 PrestrainUIRes 预加载资源 panelID:{this.ModelData?.currentPanelID}  _panelSkinID:{_panelSkinID}  _prestrainComplete:{_prestrainComplete}");
 
         if ((this.panelSkinID != PanelSkinID.None || _panelSkinID != PanelSkinID.None) && this.panelSkinID != _panelSkinID)
         {
@@ -338,7 +337,7 @@ public abstract class BasePanel
             //这里需要假设在Loading状态 走相同的逻辑
             //IsLoading = true;
 
-            PanelManager.instance.BorrowUIRes(this.ModelData.PanelID, _panelSkinID, PrestrainBorrowComplete);
+            PanelManager.instance.BorrowUIRes(this.ModelData.currentPanelID, _panelSkinID, PrestrainBorrowComplete);
         }
         else
         {
@@ -348,18 +347,18 @@ public abstract class BasePanel
             if (PanelObject != null)
             {
                 //这种情况下可以尝试直接打开
-                PrestrainBorrowComplete(this.ModelData.PanelID, _panelSkinID, this.PanelObject);
+                PrestrainBorrowComplete(this.ModelData.currentPanelID, _panelSkinID, this.PanelObject);
             }
             else
             {
                 //然后重新加载
-                PanelManager.instance.BorrowUIRes(this.ModelData.PanelID, _panelSkinID, PrestrainBorrowComplete);
+                PanelManager.instance.BorrowUIRes(this.ModelData.currentPanelID, _panelSkinID, PrestrainBorrowComplete);
             }
         }
 
         this.panelSkinID = _panelSkinID;
         ///
-        void PrestrainBorrowComplete(PanelID __panelID, PanelSkinID __panelSkinID, GameObject __go)
+        void PrestrainBorrowComplete(string __panelID, PanelSkinID __panelSkinID, GameObject __go)
         {
             this.Log($"【BasePanel】 PrestrainBorrowComplete 预加载资源，给回调");
 
@@ -392,12 +391,12 @@ public abstract class BasePanel
     /// <summary>
     /// 资源加载完成回调（异步）
     /// </summary>
-    protected virtual void BorrowComplete(PanelID _panelID, PanelSkinID __panelSkinID, GameObject _go)
+    protected virtual void BorrowComplete(string _panelID, PanelSkinID __panelSkinID, GameObject _go)
     {
         if (_go == null)
         {
             // 加载失败
-            this.LogError($"Load UI failed! PanelID: {ModelData.PanelID}");
+            this.LogError($"Load UI failed! PanelID: {ModelData.currentPanelID}");
             TransitionTo(PanelState.Closed);
             OnLoadComplete?.Invoke(false);
             Destroy();
@@ -424,7 +423,7 @@ public abstract class BasePanel
         if (state == PanelState.Closed)
         {
             // 加载期间被关闭了，直接释放资源
-            this.LogWarning($"Panel was closed during loading. PanelID: {ModelData.PanelID}");
+            this.LogWarning($"Panel was closed during loading. PanelID: {ModelData.currentPanelID}");
             CloseByActionType();
         }
         else
@@ -531,7 +530,7 @@ public abstract class BasePanel
     /// </summary>
     protected virtual void OnBecameVisible()
     {
-        this.Log("OnBecameVisible >> " + ModelData.PanelID);
+        this.Log("OnBecameVisible >> " + ModelData.currentPanelID);
     }
 
     /// <summary>
@@ -576,7 +575,7 @@ public abstract class BasePanel
     /// </summary>
     protected virtual void OnBecameInvisible()
     {
-        this.Log("OnBecameInvisible << " + ModelData.PanelID);
+        this.Log("OnBecameInvisible << " + ModelData.currentPanelID);
     }
 
     public virtual void Close()
@@ -590,7 +589,7 @@ public abstract class BasePanel
     /// <param name="__isSynchronousDestory">是否立即销毁当前UI资源</param>
     public virtual void Close(bool __isSynchronousDestory = false)
     {
-        this.Log($"BasePanel Close << PanelID: {ModelData.PanelID}, CurrentState: {state}");
+        this.Log($"BasePanel Close << PanelID: {ModelData.currentPanelID}, CurrentState: {state}");
 
         switch (state)
         {
@@ -603,7 +602,7 @@ public abstract class BasePanel
             case PanelState.Loading:
                 // 加载中被关闭，标记为需要关闭
                 // 等加载完成后在BorrowComplete中会检查状态并关闭
-                this.LogWarning($"Close during loading, will close after loaded. PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Close during loading, will close after loaded. PanelID: {ModelData.currentPanelID}");
                 TransitionTo(PanelState.Closed);
                 break;
 
@@ -618,12 +617,12 @@ public abstract class BasePanel
             case PanelState.Closing:
                 // 已经关闭或正在关闭，不需要操作
 #if UNITY_EDITOR
-                this.LogWarning($"Panel is already closed or closing. State: {state}, PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Panel is already closed or closing. State: {state}, PanelID: {ModelData.currentPanelID}");
 #endif
                 break;
 
             default:
-                this.LogWarning($"Cannot close panel in state: {state}, PanelID: {ModelData.PanelID}");
+                this.LogWarning($"Cannot close panel in state: {state}, PanelID: {ModelData.currentPanelID}");
                 break;
         }
     }
@@ -669,7 +668,7 @@ public abstract class BasePanel
             case PanelRemoveActionType.Default:
 
                 if (PanelObject != null)
-                    PanelManager.instance.GiveBackUIRes(this.ModelData.PanelID, this.panelSkinID, this.GiveBackUI(), __isSynchronousDestory);
+                    PanelManager.instance.GiveBackUIRes(this.ModelData.currentPanelID, this.panelSkinID, this.GiveBackUI(), __isSynchronousDestory);
                 else
                     this.LogWarning($"PanelObject was null when the panel closed by removeActionType: { ModelData.RemoveActionType }");
 
@@ -704,7 +703,7 @@ public abstract class BasePanel
             Close();
 
         if (PanelObject != null)
-            PanelManager.instance.GiveBackUIRes(this.ModelData.PanelID, this.panelSkinID, this.GiveBackUI());
+            PanelManager.instance.GiveBackUIRes(this.ModelData.currentPanelID, this.panelSkinID, this.GiveBackUI());
 
 
         isDisposed = true;

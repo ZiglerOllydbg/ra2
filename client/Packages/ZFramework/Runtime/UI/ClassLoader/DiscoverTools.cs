@@ -38,7 +38,7 @@ public static class DiscoverTools
         List<Type> typesList = new List<Type>(types);
 
         // 添加通用发现模块
-        //typesList.Add(typeof(MessageDiscover));
+        typesList.Add(typeof(UIModuleDiscover));
         typesList.Add(typeof(ModuleDiscover));
 
         for (var item = typesList.GetEnumerator(); item.MoveNext();)

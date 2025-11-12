@@ -1,5 +1,4 @@
-﻿using Edu100.Enum;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -126,6 +125,6 @@ public static class PanelDepthAlloter
         if (panelDepthDic.TryGetValue(_panel.ModelData.PanelUIDepthType, out UIPanelDepthDefine panelDefine))
             return panelDefine;
 
-        throw new Exception($"No corresponding type found! PanelID: { _panel.ModelData.PanelID } / PanelType: { _panel.ModelData.PanelUIDepthType }");
+        throw new Exception($"No corresponding type found! PanelID: { _panel.ModelData.currentPanelID } / PanelType: { _panel.ModelData.PanelUIDepthType }");
     }
 }
