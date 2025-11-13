@@ -796,7 +796,7 @@ public class Ra2Demo : MonoBehaviour
                 0.5f,
                 field.targetGridY * gridSize + gridSize * 0.5f
             );
-            Gizmos.color = Color.yellow;
+            Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(targetPos, 1f);
             Gizmos.DrawSphere(targetPos, 0.3f);
 
