@@ -1,5 +1,4 @@
-﻿using Edu100.Enum;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ZFrame;
@@ -63,7 +62,7 @@ public static class PanelExtension
     /// <param name="_processor"></param>
     /// <param name="_panelID"></param>
     /// <returns></returns>
-    public static T New<T>(this T _t, IDispathMessage _processor, PanelID _panelID) where T : BasePanel
+    public static T New<T>(this T _t, IDispathMessage _processor, string _panelID) where T : BasePanel
     {
         var panel = PanelManager.instance.GetPanelByID(_panelID);
         if (panel != null)
@@ -79,6 +78,19 @@ public static class PanelExtension
         var uiModel = UIModuleDiscover.GetUIModel(_panelID);
 
         return NewPanel<T>(_processor, uiModel);
+    }
+
+    /// <summary>
+    /// 构造方法（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="_t"></param>
+    /// <param name="_processor"></param>
+    /// <param name="_panelID"></param>
+    /// <returns></returns>
+    public static T New<T>(this T _t, IDispathMessage _processor, PanelID _panelID) where T : BasePanel
+    {
+        return New(_t, _processor, _panelID.ToString());
     }
 
 

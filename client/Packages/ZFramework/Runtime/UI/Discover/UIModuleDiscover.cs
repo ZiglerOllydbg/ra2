@@ -1,5 +1,4 @@
-﻿using Edu100.Enum;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -17,7 +16,7 @@ public class UIModuleDiscover : BaseDiscover
     /// <summary>
     /// panel 字典
     /// </summary>
-    private static Dictionary<PanelID, UIModelData> panelDic;
+    private static Dictionary<string, UIModelData> panelDic;
     /// <summary>
     /// UIModelData List
     /// </summary>
@@ -32,33 +31,25 @@ public class UIModuleDiscover : BaseDiscover
     /// </summary>
     /// <param name="_panelID"></param>
     /// <returns></returns>
-    public static UIModelData GetUIModel(PanelID _panelID)
+    public static UIModelData GetUIModel(string _panelID)
     {
         if (panelDic == null)
         {
-            //var tableConfig = Table_Client_Ui_Config.GetPrimary((int)_panelID);
-
-            //if (tableConfig == null)
-            //{
-            //    Debugger.Log("UIModuleDiscover", $" InItUIModelData not ready!! :{_panelID}");
-            //    return null;
-            //}
-
-            panelDic = new Dictionary<PanelID, UIModelData>();
+            panelDic = new Dictionary<string, UIModelData>();
             Debugger.Log("UIModuleDiscover",$" InItUIModelData :{_panelID}");
-            panelDataList = InItUIModelData();
+            panelDataList = InitUIModelData();
 
             for (int i = 0; i < panelDataList.Count; i++)
             {
                 var panelData = panelDataList[i];
 
-                if (!panelDic.ContainsKey(panelData.PanelID))
+                if (!panelDic.ContainsKey(panelData.currentPanelID))
                 {
-                    panelDic[panelData.PanelID] = panelData;
+                    panelDic[panelData.currentPanelID] = panelData;
                 }
                 else
                 {
-                    throw new Exception($"PanelID can't define more times. { panelData.PanelID }");
+                    throw new Exception($"PanelID can't define more times. { panelData.currentPanelID }");
                 }
             }
         }
@@ -76,10 +67,20 @@ public class UIModuleDiscover : BaseDiscover
     }
 
     /// <summary>
+    /// 获取 UIModel Data（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_panelID"></param>
+    /// <returns></returns>
+    public static UIModelData GetUIModel(PanelID _panelID)
+    {
+        return GetUIModel(_panelID.ToString());
+    }
+
+    /// <summary>
     /// 数据驱动初始化 UIModel
     /// </summary>
     /// <returns></returns>
-    private static List<UIModelData> InItUIModelData()
+    private static List<UIModelData> InitUIModelData()
     {
         List<UIModelData> uiModelList = new List<UIModelData>();
 
@@ -105,7 +106,7 @@ public class UIModuleDiscover : BaseDiscover
     /// </summary>
     /// <param name="_parentPanelID"></param>
     /// <returns></returns>
-    public static List<UIModelData> GetSubPanel(PanelID _parentPanelID)
+    public static List<UIModelData> GetSubPanel(string _parentPanelID)
     {
         cacheModelDataList.Clear();
 
@@ -129,6 +130,16 @@ public class UIModuleDiscover : BaseDiscover
         }
 
         return cacheModelDataList;
+    }
+
+    /// <summary>
+    /// 获得父面板的所有子面板（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_parentPanelID"></param>
+    /// <returns></returns>
+    public static List<UIModelData> GetSubPanel(PanelID _parentPanelID)
+    {
+        return GetSubPanel(_parentPanelID.ToString());
     }
 
     public override void OnDiscoverModule(Type _type, Attribute _attribute)

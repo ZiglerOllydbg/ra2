@@ -1,5 +1,4 @@
-﻿using Edu100.Enum;
-using System;
+﻿using System;
 
 /// <summary>
 /// 用来约束 UI 上下限的Attribute

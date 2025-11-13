@@ -8,12 +8,15 @@ public class Main : MonoBehaviour
     void Start()
     {
         frame = new Frame();
+
+        DiscoverTools.Discover(typeof(Main).Assembly);
+
         Frame.DispatchEvent(new StartUpEvent());
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }

@@ -9,10 +9,10 @@ public class FirstProcessor : BaseProcessor
     {
         get
         {
-            if (!_demoPanel)
+            if (_demoPanel == null)
             {
-                //_demoPanel = PanelManager.instance.OpenPanel<DemoPanel>(this, null);
-
+                // 使用字符串ID，业务层可以定义自己的枚举并通过ToString()转换
+                _demoPanel = _demoPanel.New<DemoPanel>(this, "DemoPanel");
             }
             return _demoPanel;
         }

@@ -1,10 +1,10 @@
 ﻿//#define LOAD_LOCAL
 using Cysharp.Threading.Tasks;
-using Edu100.Enum;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
+using UnityEngine.UI;
 using ZLib;
 
 /// <summary>
@@ -26,10 +26,55 @@ public class PanelManager : Singleton<PanelManager>
         ObjectShare<UIShareObj>.destroyDelay = 5.0f;//UI延迟销毁时间
     }
 
-    public static Transform UIRoot;
-    public static Transform HideRoot;
+    private static Transform _uiRoot;
 
-    public static string UI_RES_PATH;
+    public static Transform UIRoot
+    {
+        get
+        {
+            if (_uiRoot == null)
+            {
+                _uiRoot = GameObject.Find("UIRoot").transform;
+
+                if (_uiRoot == null)
+                {
+                    var uiGo = new GameObject();
+
+                    uiGo.AddComponent<Canvas>();
+                    uiGo.AddComponent<CanvasScaler>();
+                    uiGo.AddComponent<GraphicRaycaster>();
+
+                    _uiRoot = uiGo.transform;
+                }
+            }
+
+            return _uiRoot;
+        }
+    }
+
+    private static Transform _hideRoot;
+    public static Transform HideRoot
+    {
+        get
+        {
+            if (_hideRoot == null)
+            {
+                _hideRoot = GameObject.Find("UIHideRoot").transform;
+
+                if (_hideRoot == null)
+                {
+                    var hideGo = new GameObject();
+
+                    hideGo.SetActive(false);
+
+                    _hideRoot = hideGo.transform;
+                }
+            }
+            return _hideRoot;
+        }
+    }
+
+    public static string UI_RES_PATH = "UI/";
 
     public static string atlasConfigPath;
 
@@ -42,7 +87,7 @@ public class PanelManager : Singleton<PanelManager>
     /// <summary>
     /// 所有注册的面板列表
     /// </summary>
-    private Dictionary<PanelID, BasePanel> allPanelDic = new Dictionary<PanelID, BasePanel>();
+    private Dictionary<string, BasePanel> allPanelDic = new Dictionary<string, BasePanel>();
 
     /// <summary>
     /// 当前正在显示的 Panel 列表
@@ -76,10 +121,10 @@ public class PanelManager : Singleton<PanelManager>
         if (_panel.ModelData == null)
             throw new Exception("Can't add Panel with null modelData to PanelManager!");
 
-        if (_panel.ModelData.PanelID != PanelID.PREFABE_ID_INVAILD && !allPanelDic.ContainsKey(_panel.ModelData.PanelID))
-            allPanelDic[_panel.ModelData.PanelID] = _panel;
+        if (!string.IsNullOrEmpty(_panel.ModelData.currentPanelID) && !allPanelDic.ContainsKey(_panel.ModelData.currentPanelID))
+            allPanelDic[_panel.ModelData.currentPanelID] = _panel;
         else
-            throw new Exception($"PanelManager exist the same panel: { _panel.ModelData.PanelID }");
+            throw new Exception($"PanelManager exist the same panel: {_panel.ModelData.currentPanelID}");
     }
 
     /// <summary>
@@ -90,8 +135,8 @@ public class PanelManager : Singleton<PanelManager>
     {
         if (!object.ReferenceEquals(_panel, null) && _panel.ModelData != null)
         {
-            if (!allPanelDic.Remove(_panel.ModelData.PanelID))
-                this.LogError($"Complete Panel failed! { _panel.ModelData.PanelID }");
+            if (!allPanelDic.Remove(_panel.ModelData.currentPanelID))
+                this.LogError($"Complete Panel failed! {_panel.ModelData.currentPanelID}");
         }
         else
             throw new Exception("Panel or ModelData can't be null!");
@@ -99,8 +144,8 @@ public class PanelManager : Singleton<PanelManager>
     /// <summary>
     /// 根据类型获取一个面板界面
     /// </summary>
-    /// <param name="_panel"></param>
-    public BasePanel GetPanelByID(PanelID __panelID)
+    /// <param name="__panelID"></param>
+    public BasePanel GetPanelByID(string __panelID)
     {
         if (allPanelDic.TryGetValue(__panelID, out BasePanel __panel))
         {
@@ -110,6 +155,15 @@ public class PanelManager : Singleton<PanelManager>
         //   this.LogError("Panel or ModelData can't be null!");
 
         return null;
+    }
+
+    /// <summary>
+    /// 根据类型获取一个面板界面（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="__panelID"></param>
+    public BasePanel GetPanelByID(PanelID __panelID)
+    {
+        return GetPanelByID(__panelID.ToString());
     }
 
     /// <summary>
@@ -124,7 +178,7 @@ public class PanelManager : Singleton<PanelManager>
         _panel.UIDepth = GetNeedUIDepthByType(_panel);
 
         if (_panel.UIDepth >= range.UpperLimit)
-            throw new Exception($"Panel { _panel.ModelData.PanelName }'s depth { _panel.UIDepth } out of range");
+            throw new Exception($"Panel {_panel.ModelData.PanelName}'s depth {_panel.UIDepth} out of range");
 
         if (!showPanelList.Contains(_panel))
             showPanelList.Add(_panel);
@@ -154,7 +208,7 @@ public class PanelManager : Singleton<PanelManager>
                 {
                     var showPanel = showPanelList[i];
 
-                    if (showPanel != null && showPanel.ModelData.PanelID != modelData.PanelID)
+                    if (showPanel != null && showPanel.ModelData.currentPanelID != modelData.currentPanelID)
                     {
                         if (showPanel.UIDepth > depth && showPanel.ModelData.PanelUIDepthType == modelData.PanelUIDepthType)
                             depth = showPanel.UIDepth;
@@ -303,8 +357,9 @@ public class PanelManager : Singleton<PanelManager>
     /// 但是一定要还回来
     /// </summary>
     /// <param name="_panelID"></param>
+    /// <param name="__panelSkinID"></param>
     /// <param name="_borrowComplete"></param>
-    public void BorrowUIRes(PanelID _panelID, PanelSkinID __panelSkinID, Action<PanelID, PanelSkinID, GameObject> _borrowComplete)
+    public void BorrowUIRes(string _panelID, PanelSkinID __panelSkinID, Action<string, PanelSkinID, GameObject> _borrowComplete)
     {
         var url = GetPanelPath(_panelID, __panelSkinID);
 
@@ -353,12 +408,33 @@ public class PanelManager : Singleton<PanelManager>
     }
 
     /// <summary>
+    /// 允许外面借一个回来（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_panelID"></param>
+    /// <param name="__panelSkinID"></param>
+    /// <param name="_borrowComplete"></param>
+    public void BorrowUIRes(PanelID _panelID, PanelSkinID __panelSkinID, Action<PanelID, PanelSkinID, GameObject> _borrowComplete)
+    {
+        BorrowUIRes(_panelID.ToString(), __panelSkinID, (panelID, skinID, go) =>
+        {
+            if (Enum.TryParse<PanelID>(panelID, out PanelID enumPanelID))
+            {
+                _borrowComplete?.Invoke(enumPanelID, skinID, go);
+            }
+            else
+            {
+                _borrowComplete?.Invoke(PanelID.PREFABE_ID_INVAILD, skinID, go);
+            }
+        });
+    }
+
+    /// <summary>
     /// 预热一个面板
     /// </summary>
     /// <param name="_panelID"></param>
     /// <param name="__panelSkinID"></param>
     /// <param name="_borrowComplete"></param>
-    public void WarmUp(PanelID _panelID, PanelSkinID __panelSkinID, Action<PanelID, PanelSkinID, GameObject> _borrowComplete)
+    public void WarmUp(string _panelID, PanelSkinID __panelSkinID, Action<string, PanelSkinID, GameObject> _borrowComplete)
     {
         var url = GetPanelPath(_panelID, __panelSkinID);
 
@@ -403,14 +479,36 @@ public class PanelManager : Singleton<PanelManager>
         }
     }
 
+    /// <summary>
+    /// 预热一个面板（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_panelID"></param>
+    /// <param name="__panelSkinID"></param>
+    /// <param name="_borrowComplete"></param>
+    public void WarmUp(PanelID _panelID, PanelSkinID __panelSkinID, Action<PanelID, PanelSkinID, GameObject> _borrowComplete)
+    {
+        WarmUp(_panelID.ToString(), __panelSkinID, (panelID, skinID, go) =>
+        {
+            if (Enum.TryParse<PanelID>(panelID, out PanelID enumPanelID))
+            {
+                _borrowComplete?.Invoke(enumPanelID, skinID, go);
+            }
+            else
+            {
+                _borrowComplete?.Invoke(PanelID.PREFABE_ID_INVAILD, skinID, go);
+            }
+        });
+    }
+
 
     /// <summary>
     /// 归还计数
     /// </summary>
     /// <param name="_paneID"></param>
+    /// <param name="__panelSkinID"></param>
     /// <param name="_panelGo"></param>
     /// <param name="__isSynchronousDestory">是否同步 销毁 </param>
-    public void GiveBackUIRes(PanelID _paneID, PanelSkinID __panelSkinID, GameObject _panelGo, bool __isSynchronousDestory = false)
+    public void GiveBackUIRes(string _paneID, PanelSkinID __panelSkinID, GameObject _panelGo, bool __isSynchronousDestory = false)
     {
         var url = GetPanelPath(_paneID, __panelSkinID);
         //减少引用计数
@@ -422,6 +520,18 @@ public class PanelManager : Singleton<PanelManager>
 
             this.DestoryPanelGameObject(__isSynchronousDestory, _panelGo);
         }
+    }
+
+    /// <summary>
+    /// 归还计数（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_paneID"></param>
+    /// <param name="__panelSkinID"></param>
+    /// <param name="_panelGo"></param>
+    /// <param name="__isSynchronousDestory">是否同步 销毁 </param>
+    public void GiveBackUIRes(PanelID _paneID, PanelSkinID __panelSkinID, GameObject _panelGo, bool __isSynchronousDestory = false)
+    {
+        GiveBackUIRes(_paneID.ToString(), __panelSkinID, _panelGo, __isSynchronousDestory);
     }
 
     /// <summary>
@@ -448,13 +558,14 @@ public class PanelManager : Singleton<PanelManager>
     /// 获取 Panel 的路径
     /// </summary>
     /// <param name="_panelID"></param>
+    /// <param name="__panelSkinID"></param>
     /// <returns></returns>
-    private string GetPanelPath(PanelID _panelID, PanelSkinID __panelSkinID)
+    private string GetPanelPath(string _panelID, PanelSkinID __panelSkinID)
     {
         var panelPath = GetPanelPath();
 
 
-        var url = $"{ UI_RES_PATH }{ panelPath }";
+        var url = $"{UI_RES_PATH}{panelPath}";
 
         return url;
 
@@ -482,8 +593,9 @@ public class PanelManager : Singleton<PanelManager>
     /// 加载 UI 资源
     /// </summary>
     /// <param name="_panelID"></param>
+    /// <param name="__panelSkinID"></param>
     /// <param name="_cache"></param>
-    private void OnResourcesLoad(PanelID _panelID, PanelSkinID __panelSkinID, LoadUICache _cache)
+    private void OnResourcesLoad(string _panelID, PanelSkinID __panelSkinID, LoadUICache _cache)
     {
         //this.Log("LoadUIObject : " + _cache.Url);
 
@@ -607,7 +719,7 @@ public class PanelManager : Singleton<PanelManager>
         /// <summary>
         /// 回调 list
         /// </summary>
-        public List<Action<PanelID, PanelSkinID, GameObject>> CallBackList { get; } = new List<Action<PanelID, PanelSkinID, GameObject>>();
+        public List<Action<string, PanelSkinID, GameObject>> CallBackList { get; } = new List<Action<string, PanelSkinID, GameObject>>();
         /// <summary>
         /// 添加几次引用计数
         /// </summary>
@@ -617,8 +729,9 @@ public class PanelManager : Singleton<PanelManager>
         /// 执行回调
         /// </summary>
         /// <param name="_panelID"></param>
+        /// <param name="__panelSkinID"></param>
         /// <param name="_go"></param>
-        public void ExcuteCallBack(PanelID _panelID, PanelSkinID __panelSkinID, GameObject _go)
+        public void ExcuteCallBack(string _panelID, PanelSkinID __panelSkinID, GameObject _go)
         {
             for (int i = 0; i < CallBackList.Count; i++)
             {

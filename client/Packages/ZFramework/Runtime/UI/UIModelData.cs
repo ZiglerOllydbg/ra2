@@ -1,6 +1,4 @@
-﻿using Edu100.Enum;
-//using Edu100.Table;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -10,11 +8,11 @@ public class UIModelData
 {
     #region 静态数据
 
-    public PanelID ParentID { get; } = PanelID.PREFABE_ID_INVAILD;
+    public string ParentID { get; } = "";
     /// <summary>
-    /// 面板ID类型
+    /// 面板ID类型（字符串ID）
     /// </summary>
-    public PanelID PanelID { get; } = PanelID.PREFABE_ID_INVAILD;
+    public string currentPanelID { get; } = "";
     /// <summary>
     /// 面板深度类型
     /// </summary>
@@ -116,11 +114,11 @@ public class UIModelData
     /// <summary>
     /// UIModel Data 缓存数据
     /// </summary>
-    private static Dictionary<PanelID, UIModelData> cacheModelDataDic = new Dictionary<PanelID, UIModelData>();
+    private static Dictionary<string, UIModelData> cacheModelDataDic = new Dictionary<string, UIModelData>();
     /// <summary>
     /// 深度类型分类
     /// </summary>
-    private static Dictionary<PanelID, ClientUIDepthTypeID> panelTypeDic = new Dictionary<PanelID, ClientUIDepthTypeID>();
+    private static Dictionary<string, ClientUIDepthTypeID> panelTypeDic = new Dictionary<string, ClientUIDepthTypeID>();
 
     private UIModelData()
     { }
@@ -133,7 +131,7 @@ public class UIModelData
     /// <param name="_classType"></param>
     public UIModelData(UIModelAttribute _attribute, Type _classType)
     {
-        this.PanelID = _attribute.panelID;
+        this.currentPanelID = _attribute.panelID;
         this.ClassType = _classType;
 
         this.ReadyType = _attribute.ReadyType;
@@ -146,11 +144,27 @@ public class UIModelData
         //if (_config != null)
         //{
         this.TabIndex = 0;// _config.ui_inparent_tabindex;
-        this.ParentID = 0;// (PanelID)_config.ui_parent_id;
+        this.ParentID = "";// _config.ui_parent_id;
         this.ParentLinkPoint = "";// _config.ui_parent_link_point;
-        this.PanelPath = GetDemoPanelPrefabName(PanelID);// _config.ui_res_name;
-        this.PanelUIDepthType = GetDemoUIDepthType(PanelID);// ClientUIDepthTypeID.GameMid;// (ClientUIDepthTypeID)_config.ui_depth_type;
-        this.PanelName = GetDemoPanelCHName(PanelID);// _config.name;
+        
+        // 从业务层配置的属性中读取路径、名称和深度类型
+        // 如果业务层未配置（panelPath为空），则尝试使用默认方法（向后兼容）
+        bool hasBusinessConfig = !string.IsNullOrEmpty(_attribute.panelPath);
+        
+        this.PanelPath = hasBusinessConfig 
+            ? _attribute.panelPath 
+            : GetDemoPanelPrefabName(currentPanelID);
+        
+        // 如果业务层配置了panelPath，则使用业务层配置的panelUIDepthType
+        // 否则尝试使用默认方法（向后兼容）
+        this.PanelUIDepthType = hasBusinessConfig
+            ? _attribute.panelUIDepthType 
+            : GetDemoUIDepthType(currentPanelID);
+        
+        this.PanelName = hasBusinessConfig && !string.IsNullOrEmpty(_attribute.panelName)
+            ? _attribute.panelName 
+            : (hasBusinessConfig ? "" : GetDemoPanelCHName(currentPanelID));
+        
         this.PanelUIType = ClientUITypeID.System;// (ClientUITypeID)_config.ui_type;
         this.OpenSoundID = 0;// _config.ui_open_sound_id;
         this.CloseSoundID = 0;// _config.ui_close_sound_id;
@@ -161,84 +175,94 @@ public class UIModelData
                                                     //}
 
 
-        if (!cacheModelDataDic.ContainsKey(PanelID))
-            cacheModelDataDic[PanelID] = this;
+        if (string.IsNullOrEmpty(currentPanelID))
+            throw new Exception("PanelID cannot be null or empty!");
+
+        if (!cacheModelDataDic.ContainsKey(currentPanelID))
+            cacheModelDataDic[currentPanelID] = this;
         else
-            throw new Exception($"UIModelData Init Repeated, PanelID: { PanelID }");
+            throw new Exception($"UIModelData Init Repeated, PanelID: { currentPanelID }");
     }
 
-    private string GetDemoPanelPrefabName(PanelID panelID)
+    private string GetDemoPanelPrefabName(string panelID)
     {
-        switch (panelID)
+        // 尝试解析为PanelID枚举以支持向后兼容
+        if (Enum.TryParse<PanelID>(panelID, out PanelID enumPanelID))
         {
-            case PanelID.Demo_ShowPicture:
-                return "Panel_ShowPicture";
+            switch (enumPanelID)
+            {
+                case PanelID.Demo_ShowPicture:
+                    return "Panel_ShowPicture";
 
-            case PanelID.Demo_CharacterCollection:
-                return "Panel_CharacterCollection";
+                case PanelID.Demo_CharacterCollection:
+                    return "Panel_CharacterCollection";
 
-            case PanelID.Demo_ExcitationStar:
-                return "Panel_ExcitationStar";
+                case PanelID.Demo_ExcitationStar:
+                    return "Panel_ExcitationStar";
 
-            case PanelID.Demo_SpeechRecognition:
-                return "Panel_SpeechRecognition";
+                case PanelID.Demo_SpeechRecognition:
+                    return "Panel_SpeechRecognition";
 
-            case PanelID.Demo_Bubble:
-                return "Panel_Bubble";
+                case PanelID.Demo_Bubble:
+                    return "Panel_Bubble";
 
-            case PanelID.Demo_PauseBack:
-                return "Panel_PauseBack";
+                case PanelID.Demo_PauseBack:
+                    return "Panel_PauseBack";
 
-            case PanelID.Demo_MoonGame:
-                return "Panel_MoonGame";
+                case PanelID.Demo_MoonGame:
+                    return "Panel_MoonGame";
 
-            case PanelID.Demo_SkyGame:
-                return "Panel_SkyGame";
+                case PanelID.Demo_SkyGame:
+                    return "Panel_SkyGame";
 
-            case PanelID.Demo_ChineseCharacterTeach:
-                return "Panel_ChineseCharacterTeach";
+                case PanelID.Demo_ChineseCharacterTeach:
+                    return "Panel_ChineseCharacterTeach";
 
-            case PanelID.Exercise3Game:
-                return "Panel_Exercise3Game";
-
+                case PanelID.Exercise3Game:
+                    return "Panel_Exercise3Game";
+            }
         }
 
         return "";
     }
 
-    private string GetDemoPanelCHName(PanelID panelID)
+    private string GetDemoPanelCHName(string panelID)
     {
-        switch (panelID)
+        // 尝试解析为PanelID枚举以支持向后兼容
+        if (Enum.TryParse<PanelID>(panelID, out PanelID enumPanelID))
         {
-            case PanelID.Demo_ShowPicture:
-                return "Demo照片展示UI";
+            switch (enumPanelID)
+            {
+                case PanelID.Demo_ShowPicture:
+                    return "Demo照片展示UI";
 
-            case PanelID.Demo_CharacterCollection:
-                return "Demo汉字收集UI";
+                case PanelID.Demo_CharacterCollection:
+                    return "Demo汉字收集UI";
 
-            case PanelID.Demo_ExcitationStar:
-                return "Demo激励送星UI";
+                case PanelID.Demo_ExcitationStar:
+                    return "Demo激励送星UI";
 
-            case PanelID.Demo_SpeechRecognition:
-                return "Demo语音识别UI";
+                case PanelID.Demo_SpeechRecognition:
+                    return "Demo语音识别UI";
 
-            case PanelID.Demo_Bubble:
-                return "Demo气泡UI";
+                case PanelID.Demo_Bubble:
+                    return "Demo气泡UI";
 
-            case PanelID.Demo_PauseBack:
-                return "Demo暂停退出UI";
+                case PanelID.Demo_PauseBack:
+                    return "Demo暂停退出UI";
 
-            case PanelID.Demo_MoonGame:
-                return "Demo月字收集UI";
+                case PanelID.Demo_MoonGame:
+                    return "Demo月字收集UI";
 
-            case PanelID.Demo_SkyGame:
-                return "Demo天字收集UI";
+                case PanelID.Demo_SkyGame:
+                    return "Demo天字收集UI";
 
-            case PanelID.Demo_ChineseCharacterTeach:
-                return "Demo汉字教学UI";
+                case PanelID.Demo_ChineseCharacterTeach:
+                    return "Demo汉字教学UI";
 
-            case PanelID.Exercise3Game:
-                return "3-1到3-1练习题";
+                case PanelID.Exercise3Game:
+                    return "3-1到3-1练习题";
+            }
         }
 
         return "";
@@ -249,39 +273,43 @@ public class UIModelData
     /// </summary>
     /// <param name="panelID"></param>
     /// <returns></returns>
-    private ClientUIDepthTypeID GetDemoUIDepthType(PanelID panelID)
+    private ClientUIDepthTypeID GetDemoUIDepthType(string panelID)
     {
-        switch (panelID)
+        // 尝试解析为PanelID枚举以支持向后兼容
+        if (Enum.TryParse<PanelID>(panelID, out PanelID enumPanelID))
         {
-            case PanelID.Demo_ShowPicture:
-                return ClientUIDepthTypeID.GameMid;
+            switch (enumPanelID)
+            {
+                case PanelID.Demo_ShowPicture:
+                    return ClientUIDepthTypeID.GameMid;
 
-            case PanelID.Demo_CharacterCollection:
-                return ClientUIDepthTypeID.GameTop;
+                case PanelID.Demo_CharacterCollection:
+                    return ClientUIDepthTypeID.GameTop;
 
-            case PanelID.Demo_ExcitationStar:
-                return ClientUIDepthTypeID.GameMaxTop;
+                case PanelID.Demo_ExcitationStar:
+                    return ClientUIDepthTypeID.GameMaxTop;
 
-            case PanelID.Demo_SpeechRecognition:
-                return ClientUIDepthTypeID.GameMaxTop;
+                case PanelID.Demo_SpeechRecognition:
+                    return ClientUIDepthTypeID.GameMaxTop;
 
-            case PanelID.Demo_Bubble:
-                return ClientUIDepthTypeID.GameMaxTop;
+                case PanelID.Demo_Bubble:
+                    return ClientUIDepthTypeID.GameMaxTop;
 
-            case PanelID.Demo_PauseBack:
-                return ClientUIDepthTypeID.GameSpecial;
+                case PanelID.Demo_PauseBack:
+                    return ClientUIDepthTypeID.GameSpecial;
 
-            case PanelID.Demo_MoonGame:
-                return ClientUIDepthTypeID.GameMid;
+                case PanelID.Demo_MoonGame:
+                    return ClientUIDepthTypeID.GameMid;
 
-            case PanelID.Demo_SkyGame:
-                return ClientUIDepthTypeID.GameMid;
+                case PanelID.Demo_SkyGame:
+                    return ClientUIDepthTypeID.GameMid;
 
-            case PanelID.Demo_ChineseCharacterTeach:
-                return ClientUIDepthTypeID.GameMid;
+                case PanelID.Demo_ChineseCharacterTeach:
+                    return ClientUIDepthTypeID.GameMid;
 
-            case PanelID.Exercise3Game:
-                return ClientUIDepthTypeID.GameMid;
+                case PanelID.Exercise3Game:
+                    return ClientUIDepthTypeID.GameMid;
+            }
         }
 
         return ClientUIDepthTypeID.GameMid;
@@ -315,7 +343,7 @@ public class UIModelData
     /// </summary>
     /// <param name="_panelID"></param>
     /// <returns></returns>
-    public static UIModelData GetCacheModelData(PanelID _panelID)
+    public static UIModelData GetCacheModelData(string _panelID)
     {
         if (cacheModelDataDic.TryGetValue(_panelID, out UIModelData data))
             return data;
@@ -324,15 +352,35 @@ public class UIModelData
     }
 
     /// <summary>
+    /// 获取缓存的ModelData（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_panelID"></param>
+    /// <returns></returns>
+    public static UIModelData GetCacheModelData(PanelID _panelID)
+    {
+        return GetCacheModelData(_panelID.ToString());
+    }
+
+    /// <summary>
     /// 获取面板类型
     /// </summary>
     /// <param name="_panelID"></param>
     /// <returns></returns>
-    public static ClientUIDepthTypeID GetPanelType(PanelID _panelID)
+    public static ClientUIDepthTypeID GetPanelType(string _panelID)
     {
         if (panelTypeDic.TryGetValue(_panelID, out ClientUIDepthTypeID type))
             return type;
 
         throw new Exception($"UIModelData has't init, panelID: { _panelID }");
+    }
+
+    /// <summary>
+    /// 获取面板类型（支持PanelID枚举，向后兼容）
+    /// </summary>
+    /// <param name="_panelID"></param>
+    /// <returns></returns>
+    public static ClientUIDepthTypeID GetPanelType(PanelID _panelID)
+    {
+        return GetPanelType(_panelID.ToString());
     }
 }
