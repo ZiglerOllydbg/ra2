@@ -43,7 +43,20 @@ namespace ZLockstep.Flow
         /// 格子坐标转换为世界坐标（格子中心）
         /// </summary>
         zVector2 GridToWorld(int gridX, int gridY);
-        void SetWalkable(int x, int y, bool v);
+        
+        /// <summary>
+        /// 设置指定格子的可行走性
+        /// </summary>
+        void SetWalkable(int x, int y, bool walkable);
+        
+        /// <summary>
+        /// 设置矩形区域的可行走性
+        /// </summary>
+        void SetWalkableRect(int minX, int minY, int maxX, int maxY, bool walkable);
+        
+        /// <summary>
+        /// 设置圆形区域的可行走性
+        /// </summary>
+        void SetWalkableCircle(int centerX, int centerY, int radius, bool walkable);
     }
 }
-

@@ -106,13 +106,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 8. 更新地图：将建筑占据的格子标记为不可行走
             if (MapManager != null)
             {
-                for (int x = gridX; x < gridX + Width && x < MapManager.GetWidth(); x++)
-                {
-                    for (int y = gridY; y < gridY + Height && y < MapManager.GetHeight(); y++)
-                    {
-                        MapManager.SetWalkable(x, y, false);
-                    }
-                }
+                MapManager.SetWalkableRect(gridX, gridY, gridX + Width, gridY + Height, false);
             }
 
             // 9. 标记流场为脏（需要重新计算）
@@ -190,4 +184,3 @@ namespace ZLockstep.Sync.Command.Commands
         }
     }
 }
-

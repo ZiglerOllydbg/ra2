@@ -75,13 +75,7 @@ namespace ZLockstep.Simulation.ECS
             // 8. 更新地图：将建筑占据的格子标记为不可行走
             if (mapManager != null)
             {
-                for (int x = gridX - width / 2; x < gridX + width / 2 && x < mapManager.GetWidth(); x++)
-                {
-                    for (int y = gridY - height / 2; y < gridY + height / 2 && y < mapManager.GetHeight(); y++)
-                    {
-                        mapManager.SetWalkable(x, y, false);
-                    }
-                }
+                mapManager.SetWalkableRect(gridX - width / 2, gridY - height / 2, gridX + width / 2, gridY + height / 2, false);
             }
 
             // 9. 标记流场为脏（需要重新计算）
