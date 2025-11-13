@@ -14,6 +14,11 @@ namespace ZLockstep.RVO
     /// 4. 执行一步模拟: sim.DoStep(deltaTime);
     /// 5. 获取实际速度: zVector2 velocity = sim.GetAgentVelocity(agentId);
     /// 6. 更新位置: position += velocity * deltaTime;
+    /// 
+    /// ID分配机制:
+    /// 每个智能体在添加时会被分配一个唯一ID，该ID在整个模拟器生命周期内保持唯一性，
+    /// 即使在移除某些智能体后也不会被重复使用。这是通过使用独立的递增计数器实现的，
+    /// 确保了每个新添加的智能体都会获得一个新的、唯一的ID，避免了ID冲突问题。
     /// </summary>
     public class RVO2Simulator
     {
@@ -21,6 +26,11 @@ namespace ZLockstep.RVO
         /// 所有智能体列表
         /// </summary>
         private List<RVO2Agent> agents = new List<RVO2Agent>();
+        
+        /// <summary>
+        /// 用于生成唯一ID的计数器
+        /// </summary>
+        private int nextAgentId = 0;
 
         /// <summary>
         /// 时间步长
@@ -57,54 +67,78 @@ namespace ZLockstep.RVO
             agent.maxSpeed = maxSpeed;
             agent.maxNeighbors = maxNeighbors;
             agent.timeHorizon = timeHorizon;
-            agent.id = agents.Count;
+            agent.id = nextAgentId++;
 
             agents.Add(agent);
+            // 按照agent.id进行升序排列
+            agents.Sort((a, b) => a.id.CompareTo(b.id));
             return agent.id;
         }
 
         /// <summary>
         /// 设置智能体的期望速度
+        /// 通过遍历查找匹配的agent.id，而不是直接使用agentId作为数组索引，
+        /// 确保在智能体被移除后仍能正确访问剩余的智能体。
         /// </summary>
         public void SetAgentPrefVelocity(int agentId, zVector2 prefVelocity)
         {
-            if (agentId >= 0 && agentId < agents.Count)
+            for (int i = 0; i < agents.Count; i++)
             {
-                agents[agentId].prefVelocity = prefVelocity;
+                if (agents[i].id == agentId)
+                {
+                    agents[i].prefVelocity = prefVelocity;
+                    return;
+                }
             }
         }
 
         /// <summary>
         /// 设置智能体的位置
+        /// 通过遍历查找匹配的agent.id，而不是直接使用agentId作为数组索引，
+        /// 确保在智能体被移除后仍能正确访问剩余的智能体。
         /// </summary>
         public void SetAgentPosition(int agentId, zVector2 position)
         {
-            if (agentId >= 0 && agentId < agents.Count)
+            for (int i = 0; i < agents.Count; i++)
             {
-                agents[agentId].position = position;
+                if (agents[i].id == agentId)
+                {
+                    agents[i].position = position;
+                    return;
+                }
             }
         }
 
         /// <summary>
         /// 获取智能体的位置
+        /// 通过遍历查找匹配的agent.id，而不是直接使用agentId作为数组索引，
+        /// 确保在智能体被移除后仍能正确访问剩余的智能体。
         /// </summary>
         public zVector2 GetAgentPosition(int agentId)
         {
-            if (agentId >= 0 && agentId < agents.Count)
+            for (int i = 0; i < agents.Count; i++)
             {
-                return agents[agentId].position;
+                if (agents[i].id == agentId)
+                {
+                    return agents[i].position;
+                }
             }
             return zVector2.zero;
         }
 
         /// <summary>
         /// 获取智能体的速度
+        /// 通过遍历查找匹配的agent.id，而不是直接使用agentId作为数组索引，
+        /// 确保在智能体被移除后仍能正确访问剩余的智能体。
         /// </summary>
         public zVector2 GetAgentVelocity(int agentId)
         {
-            if (agentId >= 0 && agentId < agents.Count)
+            for (int i = 0; i < agents.Count; i++)
             {
-                return agents[agentId].velocity;
+                if (agents[i].id == agentId)
+                {
+                    return agents[i].velocity;
+                }
             }
             return zVector2.zero;
         }
@@ -139,29 +173,8 @@ namespace ZLockstep.RVO
         }
 
         /// <summary>
-        /// 移除指定的智能体
-        /// </summary>
-        /// <param name="agentId">要移除的智能体ID</param>
-        public void RemoveAgent(int agentId)
-        {
-            int index = -1;
-            for (int i = 0; i < agents.Count; i++)
-            {
-                if (agents[i].id == agentId)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            
-            if (index != -1)
-            {
-                agents.RemoveAt(index);
-            }
-        }
-
-        /// <summary>
         /// 计算智能体的新速度（ORCA算法核心）
+        /// 通过遍历所有其他智能体来构建ORCA线约束，注意跳过自身。
         /// </summary>
         private void ComputeNewVelocity(RVO2Agent agent)
         {
@@ -380,6 +393,30 @@ namespace ZLockstep.RVO
         }
 
         /// <summary>
+        /// 移除指定的智能体
+        /// 通过遍历查找匹配的agent.id来定位要移除的智能体，
+        /// 确保即使在移除操作后，剩余智能体的索引发生变化也不会影响正确性。
+        /// </summary>
+        /// <param name="agentId">要移除的智能体ID</param>
+        public void RemoveAgent(int agentId)
+        {
+            int index = -1;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                if (agents[i].id == agentId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if (index != -1)
+            {
+                agents.RemoveAt(index);
+            }
+        }
+
+        /// <summary>
         /// 获取智能体数量
         /// </summary>
         public int GetNumAgents()
@@ -398,6 +435,7 @@ namespace ZLockstep.RVO
 
     /// <summary>
     /// RVO智能体
+    /// 每个智能体都有一个唯一的ID，在整个模拟器生命周期内保持不变。
     /// </summary>
     public class RVO2Agent
     {

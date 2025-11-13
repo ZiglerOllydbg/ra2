@@ -11,6 +11,16 @@ namespace ZLockstep.Flow
     /// 流场导航系统
     /// 处理所有使用流场寻路的实体
     /// 继承自BaseSystem，集成到现有ECS框架
+    /// 
+    /// 该系统结合了流场寻路(Flow Field Pathfinding)和RVO避障算法(Reciprocal Velocity Obstacles)
+    /// 实现高效的群体寻路和避障功能，特别适用于RTS游戏中大量单位的移动控制
+    /// 主要功能包括：
+    /// 1. 流场生成与管理
+    /// 2. RVO避障代理管理
+    /// 3. 单位移动控制与同步
+    /// 4. 散点目标分配（适用于编队分散）
+    /// 5. 卡住检测与处理
+    /// 6. 到达目标检测
     /// </summary>
     public class FlowFieldNavigationSystem : BaseSystem
     {
@@ -25,8 +35,6 @@ namespace ZLockstep.Flow
             public zfloat MaxSpeed;
         }
 
-        private List<PooledAgent> rvoFreeList = new List<PooledAgent>();
-
         // Debug: 最近一次散点集合
         private readonly List<zVector2> debugScatterPoints = new List<zVector2>();
         public System.Collections.Generic.IReadOnlyList<zVector2> DebugScatterPoints => debugScatterPoints;
@@ -39,6 +47,9 @@ namespace ZLockstep.Flow
         /// 初始化流场导航系统
         /// 在系统注册到World后调用
         /// </summary>
+        /// <param name="ffMgr">流场管理器</param>
+        /// <param name="rvoSim">RVO避障模拟器</param>
+        /// <param name="gameMap">游戏地图接口</param>
         public void InitializeNavigation(FlowFieldManager ffMgr, RVO2Simulator rvoSim, IFlowFieldMap gameMap)
         {
             flowFieldManager = ffMgr;
@@ -53,7 +64,15 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 为实体添加流场导航能力
+        /// 主要功能：
+        /// 1. 获取实体当前位置
+        /// 2. 创建导航组件
+        /// 3. 创建或复用RVO避障代理
+        /// 4. 将导航组件与实体关联
         /// </summary>
+        /// <param name="entity">需要添加导航能力的实体</param>
+        /// <param name="radius">实体的半径（用于碰撞检测）</param>
+        /// <param name="maxSpeed">实体的最大移动速度</param>
         public void AddNavigator(Entity entity, zfloat radius, zfloat maxSpeed)
         {
             // 获取实体位置
@@ -65,27 +84,13 @@ namespace ZLockstep.Flow
             
             // 在RVO中创建智能体
             // 优化的RVO参数，减少卡死在角落的情况
-            int rvoAgentId = -1;
-            // 先尝试从池中复用同参数代理
-            int poolIndex = rvoFreeList.FindIndex(p => p.Radius == radius && p.MaxSpeed == maxSpeed);
-            if (poolIndex >= 0)
-            {
-                var pooled = rvoFreeList[poolIndex];
-                rvoFreeList.RemoveAt(poolIndex);
-                rvoAgentId = pooled.AgentId;
-                rvoSimulator.SetAgentPosition(rvoAgentId, pos2D);
-                rvoSimulator.SetAgentPrefVelocity(rvoAgentId, zVector2.zero);
-            }
-            else
-            {
-                rvoAgentId = rvoSimulator.AddAgent(
+            int rvoAgentId = rvoSimulator.AddAgent(
                     pos2D,
                     radius,
                     maxSpeed,
                     maxNeighbors: 10,
                     timeHorizon: new zfloat(1, 5000)  // 降低到1.5，减少过早反应
                 );
-            }
             navigator.RvoAgentId = rvoAgentId;
 
             ComponentManager.AddComponent(entity, navigator);
@@ -93,7 +98,14 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 设置实体的移动目标
+        /// 主要功能：
+        /// 1. 释放实体当前的流场资源
+        /// 2. 请求新的流场数据
+        /// 3. 更新导航状态（重置卡住检测等）
+        /// 4. 设置目标位置组件
         /// </summary>
+        /// <param name="entity">需要设置目标的实体</param>
+        /// <param name="targetPos">目标位置</param>
         public void SetMoveTarget(Entity entity, zVector2 targetPos)
         {
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
@@ -124,6 +136,8 @@ namespace ZLockstep.Flow
         /// <summary>
         /// 批量设置多个实体的目标（常见于RTS选中操作）
         /// </summary>
+        /// <param name="entities">需要设置目标的实体列表</param>
+        /// <param name="targetPos">目标位置</param>
         public void SetMultipleTargets(List<Entity> entities, zVector2 targetPos)
         {
             foreach (var entity in entities)
@@ -134,7 +148,16 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 为多个单位设置散点目标，复用同一个多源流场
+        /// 主要功能：
+        /// 1. 计算编队中单位的最大半径，确定分散间距
+        /// 2. 生成蜂窝状候选散点分布
+        /// 3. 将候选点投影到可行走区域并去重
+        /// 4. 请求共享的多源流场（一个流场服务多个目标点）
+        /// 5. 使用贪心算法为每个单位分配最近的散点
+        /// 6. 为每个单位设置个人目标点和共享流场ID
         /// </summary>
+        /// <param name="entities">需要设置目标的实体列表</param>
+        /// <param name="groupCenter">编队中心位置</param>
         public void SetScatterTargets(List<Entity> entities, zVector2 groupCenter)
         {
             if (entities == null || entities.Count == 0)
@@ -219,7 +242,7 @@ namespace ZLockstep.Flow
                 navigator.HasReachedTarget = false;
                 navigator.StuckFrames = 0;
                 // 放宽到达半径，减少相互挤动
-                zfloat minArrival = navigator.Radius * new zfloat(0, 15000); // 1.5x radius
+                zfloat minArrival = navigator.Radius * new zfloat(1, 5000); // 1.5x radius
                 if (navigator.ArrivalRadius < minArrival)
                 {
                     navigator.ArrivalRadius = minArrival;
@@ -235,6 +258,18 @@ namespace ZLockstep.Flow
             }
         }
 
+        /// <summary>
+        /// 生成六边形格子分布的候选点
+        /// 主要功能：
+        /// 1. 使用六边形格子布局生成候选点集
+        /// 2. 根据指定的环数和最大数量限制生成点
+        /// 3. 按距离中心点的远近对生成的点进行排序
+        /// </summary>
+        /// <param name="center">中心点位置</param>
+        /// <param name="spacing">点之间的间隔距离</param>
+        /// <param name="rings">生成的环数</param>
+        /// <param name="maxCount">生成点的最大数量</param>
+        /// <returns>按距离排序的候选点列表</returns>
         private List<zVector2> GenerateHexLattice(zVector2 center, zfloat spacing, int rings, int maxCount)
         {
             List<zVector2> pts = new List<zVector2>();
@@ -296,6 +331,16 @@ namespace ZLockstep.Flow
             return pos;
         }
 
+        /// <summary>
+        /// 贪心分配算法：为每个实体分配最近的未使用散点
+        /// 主要功能：
+        /// 1. 遍历所有实体，为每个实体寻找最近的可用散点
+        /// 2. 使用贪心策略，优先为每个实体分配距离最近的点
+        /// 3. 处理点数不足的情况，复用最近的点
+        /// </summary>
+        /// <param name="entities">需要分配目标点的实体列表</param>
+        /// <param name="points">可用的目标点列表</param>
+        /// <returns>实体与目标点的映射关系</returns>
         private Dictionary<Entity, zVector2> GreedyAssign(List<Entity> entities, List<zVector2> points)
         {
             Dictionary<Entity, zVector2> result = new Dictionary<Entity, zVector2>();
@@ -335,6 +380,11 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 清除实体的移动目标
+        /// 主要功能：
+        /// 1. 释放实体当前占用的流场资源
+        /// 2. 重置导航状态（流场ID和到达标志）
+        /// 3. 移除目标组件
+        /// 4. 停止RVO智能体的移动
         /// </summary>
         public void ClearMoveTarget(Entity entity)
         {
@@ -361,6 +411,11 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 系统更新（每帧调用）
+        /// 主要功能：
+        /// 1. 更新流场管理器
+        /// 2. 为每个有导航组件的实体设置期望速度
+        /// 3. 执行RVO避障计算
+        /// 4. 同步位置回Transform组件
         /// </summary>
         public override void Update()
         {
@@ -391,6 +446,12 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 更新单个实体的导航
+        /// 主要功能：
+        /// 1. 检查实体是否存活或有移动能力
+        /// 2. 获取流场方向并计算期望速度
+        /// 3. 处理卡住检测和随机扰动
+        /// 4. 实现到达目标检测
+        /// 5. 设置RVO期望速度
         /// </summary>
         private void UpdateEntityNavigation(Entity entity)
         {
@@ -602,6 +663,10 @@ namespace ZLockstep.Flow
         /// 计算滑动速度（沿墙滑行）
         /// 当预测到碰撞时，将速度投影到墙壁的切线方向
         /// </summary>
+        /// <param name="currentPos">当前位置</param>
+        /// <param name="desiredVelocity">期望速度</param>
+        /// <param name="map">地图接口</param>
+        /// <returns>沿墙滑行的速度向量</returns>
         private zVector2 GetSlideVelocity(zVector2 currentPos, zVector2 desiredVelocity, IFlowFieldMap map)
         {
             // 检测碰撞法线方向
@@ -636,6 +701,10 @@ namespace ZLockstep.Flow
         /// 检测墙壁法线方向
         /// 通过检查周围格子，找出障碍物的方向
         /// </summary>
+        /// <param name="currentPos">当前位置</param>
+        /// <param name="moveDir">移动方向</param>
+        /// <param name="map">地图接口</param>
+        /// <returns>墙壁法线方向向量</returns>
         private zVector2 DetectWallNormal(zVector2 currentPos, zVector2 moveDir, IFlowFieldMap map)
         {
             zVector2 checkPos = currentPos + moveDir.normalized * map.GetGridSize();
@@ -770,24 +839,21 @@ namespace ZLockstep.Flow
             if (navigator.CurrentFlowFieldId >= 0)
             {
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
+                navigator.CurrentFlowFieldId = -1;
+                navigator.HasReachedTarget = false;
             }
 
             // 将 RVO 代理归还池并冻结
             if (navigator.RvoAgentId >= 0)
             {
-                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                rvoFreeList.Add(new PooledAgent
-                {
-                    AgentId = navigator.RvoAgentId,
-                    Radius = navigator.Radius,
-                    MaxSpeed = navigator.MaxSpeed
-                });
-                 rvoSimulator.RemoveAgent(navigator.RvoAgentId);
+                rvoSimulator.RemoveAgent(navigator.RvoAgentId);
+                navigator.RvoAgentId = -1;
             }
 
             // 移除组件
             ComponentManager.RemoveComponent<FlowFieldNavigatorComponent>(entity);
             ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
         }
+
     }
 }
