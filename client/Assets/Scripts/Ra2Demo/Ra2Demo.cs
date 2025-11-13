@@ -935,6 +935,14 @@ public class Ra2Demo : MonoBehaviour
             showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
             showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
             showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
+            
+            // 显示流场数量
+            if (showFlowField && _game != null && _game.FlowFieldManager != null)
+            {
+                int flowFieldCount = _game.FlowFieldManager.GetActiveFieldCount();
+                GUILayout.Label($"流场数量: {flowFieldCount}", toggleStyle);
+            }
+            
             GUILayout.EndArea();
 
         }

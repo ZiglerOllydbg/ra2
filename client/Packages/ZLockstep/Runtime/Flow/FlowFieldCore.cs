@@ -4,7 +4,9 @@ using zUnity;
 namespace ZLockstep.Flow
 {
     /// <summary>
-    /// 流场数据
+    /// 流场数据类
+    /// 用于存储和管理流场相关数据，包括每个网格的方向向量和到目标的代价
+    /// 支持单目标和多目标流场计算
     /// </summary>
     public class FlowField
     {
@@ -76,11 +78,16 @@ namespace ZLockstep.Flow
     }
 
     /// <summary>
-    /// 流场计算器
-    /// 使用Dijkstra算法计算代价场，然后生成方向场
+    /// 流场计算器类
+    /// 负责计算流场数据，使用Dijkstra算法计算代价场，然后生成方向场
+    /// 提供单目标和多目标流场计算功能
     /// </summary>
     public class FlowFieldCalculator
     {
+        /// <summary>
+        /// 网格节点结构体
+        /// 用于在优先队列中存储网格坐标和对应的移动代价
+        /// </summary>
         private struct GridNode
         {
             public int x;
@@ -95,6 +102,10 @@ namespace ZLockstep.Flow
             }
         }
 
+        /// <summary>
+        /// 优先队列类
+        /// 实现最小堆，用于Dijkstra算法中按代价排序处理网格节点
+        /// </summary>
         private class PriorityQueue
         {
             private List<GridNode> nodes = new List<GridNode>();
@@ -162,7 +173,16 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 计算流场
+        /// 主要步骤：
+        /// 1. 初始化所有网格的代价为无穷大
+        /// 2. 使用Dijkstra算法计算从目标点到各点的最短路径代价
+        /// 3. 添加墙壁惩罚使路径远离障碍物
+        /// 4. 根据代价场生成方向场
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口，提供地形信息</param>
+        /// <param name="targetX">目标点X坐标</param>
+        /// <param name="targetY">目标点Y坐标</param>
         public static void Calculate(FlowField field, IFlowFieldMap map, int targetX, int targetY)
         {
             field.targetGridX = targetX;
@@ -188,7 +208,11 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 计算多源流场（多个目标格作为起点）
+        /// 适用于多个单位需要汇聚到同一区域的情况
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口，提供地形信息</param>
+        /// <param name="targets">目标点列表</param>
         public static void CalculateMulti(FlowField field, IFlowFieldMap map, List<(int x, int y)> targets)
         {
             field.isMulti = true;
@@ -236,7 +260,13 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 使用Dijkstra算法计算代价场
+        /// 从单一目标点开始向外扩散计算到各个网格的最短路径代价
+        /// 支持8方向移动，考虑对角线移动成本和穿墙检测
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口</param>
+        /// <param name="targetX">目标点X坐标</param>
+        /// <param name="targetY">目标点Y坐标</param>
         private static void CalculateCostField(FlowField field, IFlowFieldMap map, int targetX, int targetY)
         {
             if (!field.IsValid(targetX, targetY))
@@ -310,7 +340,11 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 多源 Dijkstra 计算代价场
+        /// 从多个目标点同时开始计算到各个网格的最短路径代价
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口</param>
+        /// <param name="targets">目标点列表</param>
         private static void CalculateCostFieldMulti(FlowField field, IFlowFieldMap map, List<(int x, int y)> targets)
         {
             PriorityQueue openSet = new PriorityQueue();
@@ -381,7 +415,10 @@ namespace ZLockstep.Flow
         /// <summary>
         /// 添加墙壁惩罚到代价场
         /// 靠近障碍物的格子增加额外代价，让单位自然远离墙壁
+        /// 这样可以防止单位过于贴近墙壁行走
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口</param>
         private static void AddWallPenalty(FlowField field, IFlowFieldMap map)
         {
             zfloat wallPenalty = new zfloat(0, 5000); // 每个邻近障碍物增加0.5代价
@@ -429,7 +466,11 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 根据代价场生成方向场
+        /// 使用梯度下降法计算每个网格的移动方向，使单位能沿着最优路径移动
+        /// 当梯度法无法计算有效方向时，回退使用加权平均方向
         /// </summary>
+        /// <param name="field">流场对象</param>
+        /// <param name="map">地图接口</param>
         private static void GenerateDirectionField(FlowField field, IFlowFieldMap map)
         {
             for (int y = 0; y < field.height; y++)
