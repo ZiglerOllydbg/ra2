@@ -84,6 +84,16 @@ namespace ZLockstep.Simulation.ECS
                 flowFieldManager.MarkRegionDirty(gridX, gridY, gridX + width, gridY + height);
             }
 
+            // 判断是本地玩家，添加本地玩家组件
+            if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            {
+                var globalInfoComponent = world.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                {
+                    world.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
+                }
+            }
+
             // 10. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
