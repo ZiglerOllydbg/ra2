@@ -89,9 +89,9 @@ public class Ra2Demo : MonoBehaviour
     // 可视化设置
     public bool showUnits = true;          // 显示单位
     public bool showRVOAgents = true;      // 显示RVO智能体
-    public bool showFlowField = true;      // 显示流场方向
     public bool showGrid = true;           // 显示网格
     public bool showObstacles = true;      // 显示障碍物
+    public bool showFlowField = true;      // 显示流场方向
 
     private void Awake()
     {
