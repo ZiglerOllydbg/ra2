@@ -386,7 +386,7 @@ namespace ZLockstep.Flow
         /// 3. 移除目标组件
         /// 4. 停止RVO智能体的移动
         /// </summary>
-        public void ClearMoveTarget(Entity entity)
+        public void ClearMoveTarget(Entity entity, bool reachTarget = false)
         {
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
 
@@ -394,7 +394,7 @@ namespace ZLockstep.Flow
             {
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
                 navigator.CurrentFlowFieldId = -1;
-                navigator.HasReachedTarget = false;
+                navigator.HasReachedTarget = reachTarget;
 
                 ComponentManager.AddComponent(entity, navigator);
             }
@@ -515,9 +515,8 @@ namespace ZLockstep.Flow
                 if (distSq <= arrivalRadiusSq)
                 {
                     navigator.HasReachedTarget = true;
-                    rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                     ComponentManager.AddComponent(entity, navigator);
-                    ClearMoveTarget(entity);
+                    ClearMoveTarget(entity, true);
                     return;
                 }
                 
@@ -576,9 +575,8 @@ namespace ZLockstep.Flow
             {
                 // 已经到达目标，停止移动
                 navigator.HasReachedTarget = true;
-                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 ComponentManager.AddComponent(entity, navigator);
-                ClearMoveTarget(entity);
+                ClearMoveTarget(entity, true);
                 return;
             }
 
@@ -599,9 +597,8 @@ namespace ZLockstep.Flow
                     if (navigator.NearSlowFrames >= 6)
                     {
                         navigator.HasReachedTarget = true;
-                        rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                         ComponentManager.AddComponent(entity, navigator);
-                        ClearMoveTarget(entity);
+                        ClearMoveTarget(entity, true);
                         return;
                     }
                 }
@@ -749,6 +746,13 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 同步RVO位置到Transform组件
+        /// 
+        /// 主要功能：
+        /// 1. 获取RVO模拟器中的智能体位置并同步到实体的Transform组件
+        /// 2. 处理已到达目标的实体，确保其速度为零
+        /// 3. 处理正在原地转向的实体，冻结其位置更新
+        /// 4. 检测并处理碰撞情况，防止实体进入障碍物
+        /// 5. 同步智能体速度到VelocityComponent组件（如果存在）
         /// </summary>
         private void SyncPosition(Entity entity)
         {
