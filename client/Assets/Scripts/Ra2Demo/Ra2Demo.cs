@@ -86,10 +86,12 @@ public class Ra2Demo : MonoBehaviour
     // Ping相关
     private long currentPing = -1; // 当前ping值（毫秒）
 
-    // 网格、障碍物和流场显示控制
-    private bool showGrid = false;
-    private bool showObstacles = false;
-    private bool showFlowField = false;
+    // 可视化设置
+    public bool showUnits = true;          // 显示单位
+    public bool showRVOAgents = true;      // 显示RVO智能体
+    public bool showFlowField = true;      // 显示流场方向
+    public bool showGrid = true;           // 显示网格
+    public bool showObstacles = true;      // 显示障碍物
 
     private void Awake()
     {
@@ -650,6 +652,39 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 显示所有已创建的单位（从逻辑层读取）
+        if (showUnits)
+        {
+            DrawUnits();
+        }
+        
+        // 绘制RVO agents
+        if (showRVOAgents)
+        {
+            DrawRVOAgents();
+        }
+        
+        // 绘制网格、障碍物和流场
+        if (_game != null && _game.MapManager != null)
+        {
+            // 1. 绘制网格和障碍物
+            if (showGrid || showObstacles)
+            {
+                DrawGridAndObstacles();
+            }
+
+            // 2. 绘制流场
+            if (showFlowField && _game.FlowFieldManager != null)
+            {
+                DrawFlowFields();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 绘制所有单位
+    /// </summary>
+    private void DrawUnits()
+    {
         if (_game != null && _game.World != null)
         {
             var transforms = _game.World.ComponentManager
@@ -687,22 +722,62 @@ public class Ra2Demo : MonoBehaviour
                 }
             }
         }
-        
-        // 绘制网格、障碍物和流场
-        if (_game != null && _game.MapManager != null)
-        {
-            // 1. 绘制网格和障碍物
-            if (showGrid || showObstacles)
-            {
-                DrawGridAndObstacles();
-            }
+    }
 
-            // 2. 绘制流场
-            if (showFlowField && _game.FlowFieldManager != null)
+    /// <summary>
+    /// 绘制RVO agents用于调试
+    /// </summary>
+    private void DrawRVOAgents()
+    {
+        if (_game == null || _game.RvoSimulator == null)
+            return;
+
+        var agents = _game.RvoSimulator.GetAgents();
+        if (agents == null)
+            return;
+
+        foreach (var agent in agents)
+        {
+            // 获取agent位置
+            Vector3 pos = new Vector3((float)agent.position.x, 0.1f, (float)agent.position.y);
+            
+            // 绘制agent半径（白色）
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireSphere(pos, (float)agent.radius);
+            
+            // 绘制agent位置（红色球体）
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(pos, 0.1f);
+            
+            // 绘制agent速度（蓝色箭头）
+            if (agent.velocity.sqrMagnitude > zfloat.Epsilon)
             {
-                DrawFlowFields();
+                Vector3 velocity = new Vector3((float)agent.velocity.x, 0, (float)agent.velocity.y);
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(pos, pos + velocity);
+                // 绘制箭头头部
+                DrawArrowHead(pos + velocity, velocity.normalized, 0.3f);
             }
+            
+            // 绘制agent ID
+            #if UNITY_EDITOR
+            UnityEditor.Handles.Label(pos + Vector3.up * 0.5f, $"ID: {agent.id}");
+            #endif
         }
+    }
+
+    /// <summary>
+    /// 绘制箭头头部
+    /// </summary>
+    /// <param name="position">箭头尖端位置</param>
+    /// <param name="direction">箭头方向</param>
+    /// <param name="size">箭头大小</param>
+    private void DrawArrowHead(Vector3 position, Vector3 direction, float size)
+    {
+        Vector3 right = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 180 + 30, 0) * new Vector3(0, 0, 1);
+        Vector3 left = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 180 - 30, 0) * new Vector3(0, 0, 1);
+        Gizmos.DrawLine(position, position + right * size);
+        Gizmos.DrawLine(position, position + left * size);
     }
 
     /// <summary>
@@ -929,18 +1004,35 @@ public class Ra2Demo : MonoBehaviour
             // 绘制调试显示开关（在ping值显示下方）
             GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
             toggleStyle.fontSize = 16;
+            toggleStyle.normal.textColor = Color.green;
+            // 选中颜色
+            toggleStyle.onNormal.textColor = Color.red;
+            
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.fontSize = 16;
+            labelStyle.normal.textColor = Color.white;
             
             Rect toggleRect = new Rect(20, 130, 200, 150);
             GUILayout.BeginArea(toggleRect);
+            showUnits = GUILayout.Toggle(showUnits, "显示单位", toggleStyle);
+            showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示RVO智能体", toggleStyle);
+            
             showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
             showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
             showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
-            
+
             // 显示流场数量
             if (showFlowField && _game != null && _game.FlowFieldManager != null)
             {
                 int flowFieldCount = _game.FlowFieldManager.GetActiveFieldCount();
-                GUILayout.Label($"流场数量: {flowFieldCount}", toggleStyle);
+                GUILayout.Label($"流场数量: {flowFieldCount}", labelStyle);
+            }
+            
+            // 显示RVO agents数量
+            if (showRVOAgents && _game != null && _game.RvoSimulator != null)
+            {
+                int rvoAgentCount = _game.RvoSimulator.GetNumAgents();
+                GUILayout.Label($"RVO智能体数量: {rvoAgentCount}", labelStyle);
             }
             
             GUILayout.EndArea();

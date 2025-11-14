@@ -256,7 +256,7 @@ namespace ZLockstep.RVO
         /// 算法流程：
         /// 1. 遍历所有其他智能体，计算相对位置和相对速度
         /// 2. 根据距离关系判断是否会发生碰撞
-        /// 3. 对每种情况（无碰撞、未来碰撞、已碰撞）分别计算ORCA约束线
+        /// 3. 对每种情况（无碰撞、未来会碰撞、已碰撞）分别计算ORCA约束线
         /// 4. 调用线性规划求解器在所有约束线下找到最接近期望速度的可行速度
         /// 
         /// 特殊处理：
@@ -267,6 +267,8 @@ namespace ZLockstep.RVO
         /// <param name="agent">需要计算新速度的目标智能体</param>
         private void ComputeNewVelocity(RVO2Agent agent)
         {
+            zUDebug.Log($"[RVO2] 开始计算智能体 {agent.id} 的新速度，期望速度: {agent.prefVelocity}, 当前速度: {agent.velocity}");
+
             // 构建ORCA线
             List<ORCALine> orcaLines = new List<ORCALine>();
 
@@ -301,6 +303,8 @@ namespace ZLockstep.RVO
 
                         line.direction = new zVector2(unitW.y, -unitW.x);
                         u = unitW * (combinedRadius / agent.timeHorizon - wLength);
+                        
+                        zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到截断圆，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
                     }
                     else
                     {
@@ -323,6 +327,8 @@ namespace ZLockstep.RVO
 
                         zfloat dotProduct2 = zVector2.Dot(relativeVelocity, line.direction);
                         u = line.direction * dotProduct2 - relativeVelocity;
+                        
+                        zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到腿部，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
                     }
                 }
                 else
@@ -335,6 +341,7 @@ namespace ZLockstep.RVO
                     // 防止除以零
                     if (wLength < new zfloat(0, 1000)) // 0.001
                     {
+                        zUDebug.LogWarning($"[RVO2] 智能体 {agent.id} 与 {other.id} 距离过近且相对速度太小，跳过避障计算");
                         continue; // 跳过这个障碍物
                     }
                     
@@ -342,6 +349,8 @@ namespace ZLockstep.RVO
 
                     line.direction = new zVector2(unitW.y, -unitW.x);
                     u = unitW * (combinedRadius * invTimeStep - wLength);
+                    
+                    zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 已发生碰撞，需要立即避开，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
                 }
 
                 line.point = agent.velocity + u * zfloat.Half;
@@ -350,6 +359,8 @@ namespace ZLockstep.RVO
 
             // 使用线性规划找到最优速度
             zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
+            zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
+            
             // 存储到newVelocity字段，而不是直接修改velocity
             // 这样保证所有智能体在计算时看到的是同一时刻的velocity状态
             agent.newVelocity = newVelocity;
@@ -597,6 +608,18 @@ namespace ZLockstep.RVO
         public void Clear()
         {
             agents.Clear();
+        }
+
+        /// <summary>
+        /// 获取所有智能体的只读列表
+        /// 
+        /// 返回模拟器中所有活跃智能体的只读列表，可用于调试和可视化。
+        /// 注意：不要修改返回的列表，因为它直接引用内部数据结构。
+        /// </summary>
+        /// <returns>所有智能体的只读列表</returns>
+        public IReadOnlyList<RVO2Agent> GetAgents()
+        {
+            return agents.AsReadOnly();
         }
     }
 
