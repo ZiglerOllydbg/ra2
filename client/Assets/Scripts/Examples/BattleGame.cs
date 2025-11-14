@@ -118,14 +118,11 @@ namespace Game.Examples
         /// </summary>
         protected override void RegisterSystems()
         {
-            //  创建并注册导航系统
+            //  创建并注册导航系统(去掉MovementSystem基础移动系统)
             NavSystem = new FlowFieldNavigationSystem();
             World.SystemManager.RegisterSystem(NavSystem);
             NavSystem.InitializeNavigation(FlowFieldManager, RvoSimulator, MapManager);
             zUDebug.Log("[BattleGame] 导航系统注册完成");
-
-            // 注册基础移动系统
-            // World.SystemManager.RegisterSystem(new MovementSystem());
 
             // 注册自动追击系统（在战斗系统之前，确保单位能追到敌人）
             var autoChaseSystem = new AutoChaseSystem();
