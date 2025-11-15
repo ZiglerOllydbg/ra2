@@ -150,7 +150,7 @@ namespace ZLockstep.Flow
         /// 为多个单位设置散点目标，复用同一个多源流场
         /// 主要功能：
         /// 1. 计算编队中单位的最大半径，确定分散间距
-        /// 2. 生成蜂窝状候选散点分布
+        /// 2. 生成方形候选散点分布（默认）
         /// 3. 将候选点投影到可行走区域并去重
         /// 4. 请求共享的多源流场（一个流场服务多个目标点）
         /// 5. 使用贪心算法为每个单位分配最近的散点
@@ -171,16 +171,14 @@ namespace ZLockstep.Flow
                 if (nav.Radius > maxRadius) maxRadius = nav.Radius;
             }
             // 基础间距：约 4x 半径，并至少为 2 个网格尺寸，保证明显分散
-            zfloat spacing = maxRadius * new zfloat(4);
+            zfloat spacing = maxRadius * new zfloat(2);
             zfloat minSpacing = map.GetGridSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
-            // 生成候选散点（蜂窝格）
-            // 计算所需环数：1 + 3r(r+1) 覆盖点数 >= N
-            int ringsNeeded = 0;
-            while (1 + 3 * ringsNeeded * (ringsNeeded + 1) < entities.Count) ringsNeeded++;
-            int rings = System.Math.Max(6, ringsNeeded + 1);
-            var candidates = GenerateHexLattice(groupCenter, spacing, rings, entities.Count * 6);
+            // 生成候选散点（方形格，默认）
+            // 计算所需的行列数：rows*cols >= N
+            int pointsPerSide = System.Math.Max(6, (int)zMathf.Sqrt((zfloat)entities.Count) + 1);
+            var candidates = GenerateSquareLattice(groupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 6);
 
             // 投影到最近可走格并去重
             List<zVector2> scatterPoints = new List<zVector2>();
@@ -201,8 +199,8 @@ namespace ZLockstep.Flow
                 }
                 if (scatterPoints.Count < entities.Count)
                 {
-                    rings += 4;
-                    candidates = GenerateHexLattice(groupCenter, spacing, rings, entities.Count * 8);
+                    pointsPerSide += 2;
+                    candidates = GenerateSquareLattice(groupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 8);
                     attempts++;
                 }
             }
@@ -214,8 +212,8 @@ namespace ZLockstep.Flow
             if (fieldId < 0)
                 return;
 
-            // 贪心分配散点
-            var assigned = GreedyAssign(entities, scatterPoints);
+            // 使用保持相对位置的分配算法
+            var assigned = PositionPreservingAssign(entities, scatterPoints, groupCenter);
 
             // 记录 Debug 散点
             debugScatterPoints.Clear();
@@ -303,6 +301,109 @@ namespace ZLockstep.Flow
             return pts;
         }
 
+        /// <summary>
+        /// 生成方形分布的候选点
+        /// 主要功能：
+        /// 1. 在正方形区域内生成均匀分布的候选点集
+        /// 2. 根据指定的行列数和最大数量限制生成点
+        /// 3. 按距离中心点的远近对生成的点进行排序
+        /// </summary>
+        /// <param name="center">中心点位置</param>
+        /// <param name="spacing">点之间的间隔距离</param>
+        /// <param name="rows">生成的行数</param>
+        /// <param name="cols">生成的列数</param>
+        /// <param name="maxCount">生成点的最大数量</param>
+        /// <returns>按距离排序的候选点列表</returns>
+        private List<zVector2> GenerateSquareLattice(zVector2 center, zfloat spacing, int rows, int cols, int maxCount)
+        {
+            List<zVector2> pts = new List<zVector2>();
+            
+            // 计算起始点，使中心对齐
+            zfloat startX = center.x - (cols - 1) * spacing * new zfloat(0, 5000);
+            zfloat startY = center.y - (rows - 1) * spacing * new zfloat(0, 5000);
+
+            for (int row = 0; row < rows; row++)
+            {
+                for (int col = 0; col < cols; col++)
+                {
+                    zVector2 p = new zVector2(
+                        startX + col * spacing,
+                        startY + row * spacing
+                    );
+                    pts.Add(p);
+                    
+                    if (pts.Count >= maxCount)
+                        goto END;
+                }
+            }
+            
+        END:
+            // 按距中心排序
+            pts.Sort((p1, p2) =>
+            {
+                zfloat d1 = (p1 - center).sqrMagnitude;
+                zfloat d2 = (p2 - center).sqrMagnitude;
+                if (d1 < d2) return -1;
+                if (d1 > d2) return 1;
+                return 0;
+            });
+            return pts;
+        }
+
+        /// <summary>
+        /// 生成圆形分布的候选点
+        /// 主要功能：
+        /// 1. 围绕中心点以同心圆方式生成候选点集
+        /// 2. 根据指定的环数和每环点数生成点
+        /// 3. 按距离中心点的远近对生成的点进行排序
+        /// </summary>
+        /// <param name="center">中心点位置</param>
+        /// <param name="spacing">点之间的间隔距离</param>
+        /// <param name="rings">生成的环数</param>
+        /// <param name="pointsPerRing">每环的点数</param>
+        /// <param name="maxCount">生成点的最大数量</param>
+        /// <returns>按距离排序的候选点列表</returns>
+        private List<zVector2> GenerateCircularLattice(zVector2 center, zfloat spacing, int rings, int pointsPerRing, int maxCount)
+        {
+            List<zVector2> pts = new List<zVector2>();
+            
+            // 添加中心点
+            pts.Add(center);
+            if (maxCount <= 1) 
+                return pts;
+
+            for (int ring = 1; ring <= rings; ring++)
+            {
+                zfloat radius = spacing * (zfloat)ring;
+                int pointsInThisRing = pointsPerRing * ring;
+                
+                for (int i = 0; i < pointsInThisRing; i++)
+                {
+                    zfloat angle = (zfloat)i * zMathf.PI * 2 / (zfloat)pointsInThisRing;
+                    zVector2 p = new zVector2(
+                        center.x + radius * zMathf.Cos(angle),
+                        center.y + radius * zMathf.Sin(angle)
+                    );
+                    pts.Add(p);
+                    
+                    if (pts.Count >= maxCount)
+                        goto END;
+                }
+            }
+            
+        END:
+            // 按距中心排序
+            pts.Sort((p1, p2) =>
+            {
+                zfloat d1 = (p1 - center).sqrMagnitude;
+                zfloat d2 = (p2 - center).sqrMagnitude;
+                if (d1 < d2) return -1;
+                if (d1 > d2) return 1;
+                return 0;
+            });
+            return pts;
+        }
+
         private zVector2 ProjectToWalkable(zVector2 pos, int maxRing)
         {
             map.WorldToGrid(pos, out int gx, out int gy);
@@ -332,7 +433,7 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
-        /// 贪心分配算法：为每个实体分配最近的未使用散点
+        /// 贪心分配算法：为每个实体分配最近的散点
         /// 主要功能：
         /// 1. 遍历所有实体，为每个实体寻找最近的可用散点
         /// 2. 使用贪心策略，优先为每个实体分配距离最近的点
@@ -375,6 +476,113 @@ namespace ZLockstep.Flow
                     result[entities[i]] = points[0];
                 }
             }
+            return result;
+        }
+
+        /// <summary>
+        /// 保持相对位置的分配算法：根据实体间的相对位置关系，分配散点以保持编队形状
+        /// 主要功能：
+        /// 1. 计算实体的相对位置关系（相对于编队中心）
+        /// 2. 计算散点的相对位置关系（相对于散点中心）
+        /// 3. 按照实体与散点的相对位置匹配程度进行分配
+        /// </summary>
+        /// <param name="entities">需要分配目标点的实体列表</param>
+        /// <param name="points">可用的目标点列表</param>
+        /// <param name="groupCenter">编队中心位置</param>
+        /// <returns>实体与目标点的映射关系</returns>
+        private Dictionary<Entity, zVector2> PositionPreservingAssign(List<Entity> entities, List<zVector2> points, zVector2 groupCenter)
+        {
+            Dictionary<Entity, zVector2> result = new Dictionary<Entity, zVector2>();
+            
+            // 获取实体相对于编队中心的位置
+            List<zVector2> entityOffsets = new List<zVector2>();
+            foreach (var e in entities)
+            {
+                var t = ComponentManager.GetComponent<TransformComponent>(e);
+                zVector2 p = new zVector2(t.Position.x, t.Position.z);
+                entityOffsets.Add(p - groupCenter);
+            }
+            
+            // 标记已使用的散点
+            bool[] used = new bool[points.Count];
+            
+            // 为每个实体分配散点
+            for (int i = 0; i < entities.Count; i++)
+            {
+                zVector2 entityOffset = entityOffsets[i];
+                int bestPoint = -1;
+                zfloat bestScore = zfloat.Infinity;
+                
+                // 寻找最适合的散点
+                for (int j = 0; j < points.Count; j++)
+                {
+                    if (used[j]) continue;
+                    
+                    zVector2 pointOffset = points[j] - groupCenter;
+                    // 计算相对位置差异（考虑距离和角度）
+                    zfloat distanceDiff = zMathf.Abs(entityOffset.magnitude - pointOffset.magnitude);
+                    zfloat angleDiff = zMathf.Abs(zMathf.Atan2(entityOffset.y, entityOffset.x) - zMathf.Atan2(pointOffset.y, pointOffset.x));
+                    
+                    // 角度差需要处理周期性
+                    if (angleDiff > zMathf.PI)
+                        angleDiff = zMathf.PI * 2 - angleDiff;
+                    
+                    // 综合评分（距离差异权重较大）
+                    zfloat score = distanceDiff * new zfloat(2) + angleDiff;
+                    
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        bestPoint = j;
+                    }
+                }
+                
+                // 分配最佳散点
+                if (bestPoint >= 0)
+                {
+                    used[bestPoint] = true;
+                    result[entities[i]] = points[bestPoint];
+                }
+            }
+            
+            // 兜底：若点不足，为未分配的实体分配最近的可用点
+            for (int i = 0; i < entities.Count; i++)
+            {
+                if (!result.ContainsKey(entities[i]))
+                {
+                    zVector2 entityPos = new zVector2(
+                        ComponentManager.GetComponent<TransformComponent>(entities[i]).Position.x,
+                        ComponentManager.GetComponent<TransformComponent>(entities[i]).Position.z
+                    );
+                    
+                    int nearestPoint = -1;
+                    zfloat nearestDistance = zfloat.Infinity;
+                    
+                    for (int j = 0; j < points.Count; j++)
+                    {
+                        if (used[j]) continue;
+                        
+                        zfloat distance = (points[j] - entityPos).sqrMagnitude;
+                        if (distance < nearestDistance)
+                        {
+                            nearestDistance = distance;
+                            nearestPoint = j;
+                        }
+                    }
+                    
+                    if (nearestPoint >= 0)
+                    {
+                        used[nearestPoint] = true;
+                        result[entities[i]] = points[nearestPoint];
+                    }
+                    else
+                    {
+                        // 如果所有点都被使用，分配第一个点
+                        result[entities[i]] = points[0];
+                    }
+                }
+            }
+            
             return result;
         }
 

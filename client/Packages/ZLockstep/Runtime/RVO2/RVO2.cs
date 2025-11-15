@@ -47,9 +47,24 @@ namespace ZLockstep.RVO
         private zfloat timeStep = zfloat.Zero;
 
         /// <summary>
+        /// 速度平滑因子，用于减少震荡
+        /// 0表示完全使用新速度，1表示完全保持当前速度
+        /// </summary>
+        private zfloat velocitySmoothingFactor = new zfloat(0, 2000); // 0.2
+
+        /// <summary>
         /// 默认的时间范围参数
         /// </summary>
         public zfloat defaultTimeHorizon = new zfloat(2);
+
+        /// <summary>
+        /// 设置速度平滑因子
+        /// </summary>
+        /// <param name="smoothingFactor">平滑因子，0表示无平滑，1表示完全保持当前速度</param>
+        public void SetVelocitySmoothingFactor(zfloat smoothingFactor)
+        {
+            velocitySmoothingFactor = smoothingFactor;
+        }
 
         /// <summary>
         /// 添加一个智能体到模拟器中
@@ -360,6 +375,12 @@ namespace ZLockstep.RVO
             // 使用线性规划找到最优速度
             zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
             zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
+            
+            // 应用速度平滑以减少震荡
+            if (agent.velocity != zVector2.zero && newVelocity != zVector2.zero)
+            {
+                newVelocity = zVector2.Lerp(newVelocity, agent.velocity, velocitySmoothingFactor);
+            }
             
             // 存储到newVelocity字段，而不是直接修改velocity
             // 这样保证所有智能体在计算时看到的是同一时刻的velocity状态
