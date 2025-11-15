@@ -510,8 +510,8 @@ MonoBehaviour:
   showUnits: 0
   showRVOAgents: 1
   showGrid: 1
-  showObstacles: 0
-  showFlowField: 0
+  showObstacles: 1
+  showFlowField: 1
 --- !u!1 &1104682289
 GameObject:
   m_ObjectHideFlags: 0

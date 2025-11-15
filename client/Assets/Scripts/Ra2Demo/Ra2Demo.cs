@@ -858,7 +858,7 @@ public class Ra2Demo : MonoBehaviour
             return;
 
         float gridSize = (float)_game.MapManager.GetGridSize();
-        int flowFieldDisplayInterval = 1; // 间隔显示，避免太密集
+        int flowFieldDisplayInterval = 2; // 间隔显示，避免太密集
 
         foreach (var field in activeFields.Values)
         {
