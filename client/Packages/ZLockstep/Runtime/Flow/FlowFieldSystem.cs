@@ -55,6 +55,12 @@ namespace ZLockstep.Flow
             flowFieldManager = ffMgr;
             rvoSimulator = rvoSim;
             map = gameMap;
+            
+            // 设置RVO模拟器引用到流场管理器
+            flowFieldManager.SetRvoSimulator(rvoSimulator);
+            
+            // 设置流场管理器引用到RVO模拟器
+            rvoSimulator.SetFlowFieldManager(flowFieldManager);
         }
 
         protected override void OnInitialize()
@@ -108,6 +114,10 @@ namespace ZLockstep.Flow
         /// <param name="targetPos">目标位置</param>
         public void SetMoveTarget(Entity entity, zVector2 targetPos)
         {
+            // 将目标位置对齐到网格中心
+            map.WorldToGrid(targetPos, out int targetGridX, out int targetGridY);
+            zVector2 alignedTargetPos = map.GridToWorld(targetGridX, targetGridY);
+
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
 
@@ -117,8 +127,21 @@ namespace ZLockstep.Flow
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
             }
 
+            // 在请求新流场之前，移除该实体作为动态障碍物
+            if (navigator.RvoAgentId >= 0)
+            {
+                var map = flowFieldManager.GetMap();
+                if (map is SimpleMapManager simpleMap)
+                {
+                    simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
+                }
+                // 重置智能体的静止状态
+                rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
+                flowFieldManager.MarkDynamicObstaclesNeedUpdate();
+            }
+
             // 请求新流场
-            navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(targetPos);
+            navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(alignedTargetPos);
             navigator.HasReachedTarget = false;
             // 重置卡住状态
             navigator.StuckFrames = 0;
@@ -129,7 +152,7 @@ namespace ZLockstep.Flow
             ComponentManager.AddComponent(entity, navigator);
 
             // 添加或更新目标组件
-            var target = MoveTargetComponent.Create(targetPos);
+            var target = MoveTargetComponent.Create(alignedTargetPos);
             ComponentManager.AddComponent(entity, target);
         }
 
@@ -163,6 +186,10 @@ namespace ZLockstep.Flow
             if (entities == null || entities.Count == 0)
                 return;
 
+            // 将编队中心位置对齐到网格中心
+            map.WorldToGrid(groupCenter, out int centerGridX, out int centerGridY);
+            zVector2 alignedGroupCenter = map.GridToWorld(centerGridX, centerGridY);
+
             // 统计最大半径，确定最小间距
             zfloat maxRadius = zfloat.Zero;
             foreach (var e in entities)
@@ -175,10 +202,27 @@ namespace ZLockstep.Flow
             zfloat minSpacing = map.GetGridSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
+            // 在请求新流场之前，移除所有实体作为动态障碍物
+            foreach (var e in entities)
+            {
+                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(e);
+                if (navigator.RvoAgentId >= 0)
+                {
+                    var map = flowFieldManager.GetMap();
+                    if (map is SimpleMapManager simpleMap)
+                    {
+                        simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
+                    }
+                    // 重置智能体的静止状态
+                    rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
+                }
+            }
+            flowFieldManager.MarkDynamicObstaclesNeedUpdate();
+
             // 生成候选散点（方形格，默认）
             // 计算所需的行列数：rows*cols >= N
             int pointsPerSide = System.Math.Max(6, (int)zMathf.Sqrt((zfloat)entities.Count) + 1);
-            var candidates = GenerateSquareLattice(groupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 6);
+            var candidates = GenerateSquareLattice(alignedGroupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 6);
 
             // 投影到最近可走格并去重
             List<zVector2> scatterPoints = new List<zVector2>();
@@ -200,7 +244,7 @@ namespace ZLockstep.Flow
                 if (scatterPoints.Count < entities.Count)
                 {
                     pointsPerSide += 2;
-                    candidates = GenerateSquareLattice(groupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 8);
+                    candidates = GenerateSquareLattice(alignedGroupCenter, spacing, pointsPerSide, pointsPerSide, entities.Count * 8);
                     attempts++;
                 }
             }
@@ -213,17 +257,17 @@ namespace ZLockstep.Flow
                 return;
 
             // 使用保持相对位置的分配算法
-            var assigned = PositionPreservingAssign(entities, scatterPoints, groupCenter);
+            var assigned = PositionPreservingAssign(entities, scatterPoints, alignedGroupCenter);
 
             // 记录 Debug 散点
             debugScatterPoints.Clear();
             debugScatterPoints.AddRange(scatterPoints);
-            debugScatterCenter = groupCenter;
+            debugScatterCenter = alignedGroupCenter;
             // 半径取最大距离
             zfloat maxR = zfloat.Zero;
             foreach (var p in scatterPoints)
             {
-                zfloat d = (p - groupCenter).magnitude;
+                zfloat d = (p - alignedGroupCenter).magnitude;
                 if (d > maxR) maxR = d;
             }
             debugScatterRadius = maxR;
@@ -283,7 +327,10 @@ namespace ZLockstep.Flow
                     for (int j = -r; j <= r; j++)
                     {
                         zVector2 p = center + a * (zfloat)i + b * (zfloat)j;
-                        pts.Add(p);
+                        // 将点对齐到网格中心
+                        map.WorldToGrid(p, out int gridX, out int gridY);
+                        zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                        pts.Add(alignedPoint);
                         if (pts.Count >= maxCount) goto END;
                     }
                 }
@@ -330,7 +377,10 @@ namespace ZLockstep.Flow
                         startX + col * spacing,
                         startY + row * spacing
                     );
-                    pts.Add(p);
+                    // 将点对齐到网格中心
+                    map.WorldToGrid(p, out int gridX, out int gridY);
+                    zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                    pts.Add(alignedPoint);
                     
                     if (pts.Count >= maxCount)
                         goto END;
@@ -368,7 +418,10 @@ namespace ZLockstep.Flow
             List<zVector2> pts = new List<zVector2>();
             
             // 添加中心点
-            pts.Add(center);
+            // 将中心点对齐到网格中心
+            map.WorldToGrid(center, out int centerGridX, out int centerGridY);
+            zVector2 alignedCenter = map.GridToWorld(centerGridX, centerGridY);
+            pts.Add(alignedCenter);
             if (maxCount <= 1) 
                 return pts;
 
@@ -384,7 +437,10 @@ namespace ZLockstep.Flow
                         center.x + radius * zMathf.Cos(angle),
                         center.y + radius * zMathf.Sin(angle)
                     );
-                    pts.Add(p);
+                    // 将点对齐到网格中心
+                    map.WorldToGrid(p, out int gridX, out int gridY);
+                    zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                    pts.Add(alignedPoint);
                     
                     if (pts.Count >= maxCount)
                         goto END;
@@ -395,8 +451,8 @@ namespace ZLockstep.Flow
             // 按距中心排序
             pts.Sort((p1, p2) =>
             {
-                zfloat d1 = (p1 - center).sqrMagnitude;
-                zfloat d2 = (p2 - center).sqrMagnitude;
+                zfloat d1 = (p1 - alignedCenter).sqrMagnitude;
+                zfloat d2 = (p2 - alignedCenter).sqrMagnitude;
                 if (d1 < d2) return -1;
                 if (d1 > d2) return 1;
                 return 0;
@@ -597,7 +653,7 @@ namespace ZLockstep.Flow
         public void ClearMoveTarget(Entity entity, bool reachTarget = false)
         {
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
-
+            
             if (navigator.CurrentFlowFieldId >= 0)
             {
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
@@ -982,7 +1038,12 @@ namespace ZLockstep.Flow
                 // 冻结代理：速度为零，位置对齐 Transform
                 rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 zVector2 freezePos = new zVector2(transform.Position.x, transform.Position.z);
-                rvoSimulator.SetAgentPosition(navigator.RvoAgentId, freezePos);
+                // 对齐网格
+                flowFieldManager.GetMap().WorldToGrid(freezePos, out int gx, out int gy);
+                zVector2 fixedPos = new zVector2(gx, gy);
+                rvoSimulator.SetAgentPosition(navigator.RvoAgentId, fixedPos);
+                // freezePos transform.Position
+                zUDebug.Log($"navigator.RvoAgentId: {navigator.RvoAgentId}, freezePos: {freezePos}, transform.Position: {fixedPos}");
 
                 // 同步零速度到 VelocityComponent（若存在）
                 if (ComponentManager.HasComponent<VelocityComponent>(entity))

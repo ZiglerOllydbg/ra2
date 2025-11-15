@@ -58,5 +58,20 @@ namespace ZLockstep.Flow
         /// 设置圆形区域的可行走性
         /// </summary>
         void SetWalkableCircle(int centerX, int centerY, int radius, bool walkable);
+        
+        /// <summary>
+        /// 添加动态障碍物
+        /// </summary>
+        void AddDynamicObstacle(int agentId, zVector2 position, zfloat radius);
+        
+        /// <summary>
+        /// 移除动态障碍物
+        /// </summary>
+        void RemoveDynamicObstacle(int agentId);
+        
+        /// <summary>
+        /// 清除所有动态障碍物
+        /// </summary>
+        void ClearDynamicObstacles();
     }
 }

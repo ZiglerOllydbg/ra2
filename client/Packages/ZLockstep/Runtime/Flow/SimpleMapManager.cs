@@ -1,4 +1,5 @@
 using zUnity;
+using System.Collections.Generic;
 
 namespace ZLockstep.Flow
 {
@@ -13,6 +14,25 @@ namespace ZLockstep.Flow
         private zfloat gridSize;
         
         private bool[] walkableGrid;
+        private Dictionary<int, DynamicObstacleInfo> dynamicObstacles; // agentId -> obstacle info
+        private HashSet<long> occupiedCells; // cells occupied by dynamic obstacles
+
+        /// <summary>
+        /// 动态障碍物信息
+        /// </summary>
+        private class DynamicObstacleInfo
+        {
+            public zVector2 position;
+            public zfloat radius;
+            public HashSet<long> occupiedCells;
+            
+            public DynamicObstacleInfo(zVector2 pos, zfloat r)
+            {
+                position = pos;
+                radius = r;
+                occupiedCells = new HashSet<long>();
+            }
+        }
 
         /// <summary>
         /// 初始化地图
@@ -32,6 +52,10 @@ namespace ZLockstep.Flow
             {
                 walkableGrid[i] = true;
             }
+            
+            // 初始化动态障碍物集合
+            dynamicObstacles = new Dictionary<int, DynamicObstacleInfo>();
+            occupiedCells = new HashSet<long>();
         }
 
         /// <summary>
@@ -80,6 +104,72 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
+        /// 添加动态障碍物
+        /// </summary>
+        public void AddDynamicObstacle(int agentId, zVector2 position, zfloat radius)
+        {
+            // 移除已存在的同ID障碍物
+            RemoveDynamicObstacle(agentId);
+            
+            // 创建新的动态障碍物信息
+            var obstacleInfo = new DynamicObstacleInfo(position, radius);
+            
+            // 计算影响的格子范围
+            WorldToGrid(position, out int centerX, out int centerY);
+            int radiusInCells = (int)(radius / gridSize) + 1;
+            
+            for (int y = centerY - radiusInCells; y <= centerY + radiusInCells; y++)
+            {
+                for (int x = centerX - radiusInCells; x <= centerX + radiusInCells; x++)
+                {
+                    if (x >= 0 && x < width && y >= 0 && y < height)
+                    {
+                        zVector2 cellCenter = GridToWorld(x, y);
+                        zfloat distance = (cellCenter - position).magnitude;
+                        
+                        // 如果格子中心到智能体中心的距离小于半径，则认为该格子被占据
+                        if (distance <= radius)
+                        {
+                            long key = ((long)x) | (((long)y) << 32);
+                            obstacleInfo.occupiedCells.Add(key);
+                            occupiedCells.Add(key);
+                        }
+                    }
+                }
+            }
+            
+            // 添加到动态障碍物字典
+            dynamicObstacles[agentId] = obstacleInfo;
+        }
+
+        /// <summary>
+        /// 移除动态障碍物
+        /// </summary>
+        public void RemoveDynamicObstacle(int agentId)
+        {
+            if (dynamicObstacles.TryGetValue(agentId, out DynamicObstacleInfo obstacleInfo))
+            {
+                // 从占用格子集合中移除
+                foreach (long cellKey in obstacleInfo.occupiedCells)
+                {
+                    occupiedCells.Remove(cellKey);
+                }
+                
+                // 从动态障碍物字典中移除
+                dynamicObstacles.Remove(agentId);
+            }
+        }
+
+        /// <summary>
+        /// 清除所有动态障碍物
+        /// </summary>
+        public void ClearDynamicObstacles()
+        {
+            dynamicObstacles.Clear();
+            occupiedCells.Clear();
+        }
+
+        /// <summary>
         /// 获取格子是否可行走
         /// </summary>
         public bool IsLogicWalkable(int x, int y)
@@ -112,6 +202,13 @@ namespace ZLockstep.Flow
         {
             if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
             {
+                // 检查是否为动态障碍物
+                long key = ((long)gridX) | (((long)gridY) << 32);
+                if (occupiedCells.Contains(key))
+                {
+                    return false;
+                }
+                
                 return walkableGrid[gridY * width + gridX];
             }
             return false;
@@ -154,6 +251,8 @@ namespace ZLockstep.Flow
             {
                 walkableGrid[i] = true;
             }
+            dynamicObstacles.Clear();
+            occupiedCells.Clear();
         }
     }
 }
