@@ -134,8 +134,25 @@ namespace ZLockstep.Simulation.ECS
             int playerId,
             int unitType,
             zVector3 position,
-            int prefabId)
+            int prefabId,
+            FlowFieldNavigationSystem navSystem)
         {
+            // 根据单位类型确定单位参数
+            zfloat radius = (zfloat)2;
+            zfloat maxSpeed = (zfloat)3.0f;
+            
+            switch (unitType)
+            {
+                case 2: // 坦克
+                    radius = (zfloat)2;
+                    maxSpeed = (zfloat)6.0f;
+                    break;
+                default: // 默认为动员兵或其他单位
+                    radius = (zfloat)2;
+                    maxSpeed = (zfloat)3.0f;
+                    break;
+            }
+
             // 1. 创建单位实体
             var entity = world.EntityManager.CreateEntity();
 
@@ -144,25 +161,76 @@ namespace ZLockstep.Simulation.ECS
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one
+                Scale = zVector3.one * radius
             });
 
-            // 3. 添加Unit组件（根据类型）
+            // 3. 添加阵营组件
+            var camp = CampComponent.Create(playerId);
+            world.ComponentManager.AddComponent(entity, camp);
+
+            // 4. 添加Unit组件（根据类型）
             var unitComponent = CreateUnitComponent(unitType, playerId);
+            unitComponent.PrefabId = prefabId;
+            unitComponent.MoveSpeed = maxSpeed;
             world.ComponentManager.AddComponent(entity, unitComponent);
 
-            // 4. 添加Health组件
+            // 5. 添加Health组件
             var healthComponent = CreateUnitHealthComponent(unitType);
             world.ComponentManager.AddComponent(entity, healthComponent);
 
-            // 5. 如果单位有攻击能力，添加Attack组件
+            // 6. 如果单位有攻击能力，添加Attack组件
             if (CanUnitAttack(unitType))
             {
                 var attackComponent = CreateUnitAttackComponent(unitType);
                 world.ComponentManager.AddComponent(entity, attackComponent);
             }
 
-            // 6. 创建事件对象并返回
+            // 7. 添加速度组件
+            world.ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
+
+            // 8. 添加导航能力
+            // 注意：NavSystem需要在外部添加，因为我们可能没有NavSystem的引用
+            navSystem.AddNavigator(entity, radius, maxSpeed);
+
+            // 9. 添加旋转相关组件
+            // 根据单位类型添加不同的载具类型组件
+            VehicleTypeComponent vehicleType;
+            if (unitType == 1) // 动员兵
+            {
+                vehicleType = VehicleTypeComponent.CreateInfantry();
+            }
+            else if (unitType == 2) // 坦克
+            {
+                vehicleType = VehicleTypeComponent.CreateHeavyTank();
+            }
+            else
+            {
+                vehicleType = VehicleTypeComponent.CreateInfantry(); // 默认
+            }
+            world.ComponentManager.AddComponent(entity, vehicleType);
+
+            // 添加旋转状态组件
+            var rotationState = RotationStateComponent.Create();
+            world.ComponentManager.AddComponent(entity, rotationState);
+
+            // 如果有炮塔，添加炮塔组件
+            if (vehicleType.HasTurret)
+            {
+                var turret = TurretComponent.CreateDefault();
+                world.ComponentManager.AddComponent(entity, turret);
+            }
+
+            // 判断是本地玩家，添加本地玩家组件
+            if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            {
+                var globalInfoComponent = world.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                {
+                    world.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
+                }
+            }
+
+            // 10. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,

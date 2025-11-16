@@ -150,6 +150,9 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(AISystem);
             AISystem.Initialize(NavSystem);
 
+            // 注册生产系统
+            World.SystemManager.RegisterSystem(new ProduceSystem());
+
             // 注册结算系统
             // World.SystemManager.RegisterSystem(new SettlementSystem());
 
