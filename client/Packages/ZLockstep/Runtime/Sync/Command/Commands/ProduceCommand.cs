@@ -39,7 +39,23 @@ namespace ZLockstep.Sync.Command.Commands
         public override void Execute(zWorld world)
         {
             var entity = new Entity(EntityId);
-            
+
+            // 阵营是否一致
+            if (world.ComponentManager.HasComponent<CampComponent>(entity))
+            {
+                var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
+                if (campComponent.CampId != PlayerId)
+                {
+                    UnityEngine.Debug.LogWarning($"[ProduceCommand] 玩家 {PlayerId} 尝试控制不属于自己的建筑 {EntityId}");
+                    return;
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不具有阵营组件");
+                return;
+            }
+
             // 检查实体是否存在且具有ProduceComponent组件
             if (!world.ComponentManager.HasComponent<ProduceComponent>(entity))
             {

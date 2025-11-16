@@ -314,7 +314,13 @@ public class Ra2Demo : MonoBehaviour
         foreach (var entityId in entities)
         {
             var entity = new Entity(entityId);
-            
+
+            // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
+            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+            {
+                continue; // 跳过非本地玩家单位
+            }
+        
             // 确保实体同时具有建筑组件和变换组件
             if (!_game.World.ComponentManager.HasComponent<BuildingComponent>(entity) ||
                 !_game.World.ComponentManager.HasComponent<TransformComponent>(entity))

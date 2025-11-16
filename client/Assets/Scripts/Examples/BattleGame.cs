@@ -154,7 +154,7 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new ProduceSystem());
 
             // 注册结算系统
-            // World.SystemManager.RegisterSystem(new SettlementSystem());
+            World.SystemManager.RegisterSystem(new SettlementSystem());
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
