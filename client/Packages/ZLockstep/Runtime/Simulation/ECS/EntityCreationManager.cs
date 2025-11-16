@@ -2,6 +2,7 @@ using zUnity;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
+using System.Collections.Generic;
 
 namespace ZLockstep.Simulation.ECS
 {
@@ -94,7 +95,16 @@ namespace ZLockstep.Simulation.ECS
                 }
             }
 
-            // 10. 创建事件对象并返回
+            // 10. 如果是工厂建筑，添加生产组件
+            if (buildingType == 1) // 工厂建筑
+            {
+                // 支持生产动员兵和坦克
+                var supportedUnitTypes = new HashSet<int> { 1, 2 }; // 1=动员兵, 2=坦克
+                var produceComponent = ProduceComponent.Create(supportedUnitTypes);
+                world.ComponentManager.AddComponent(entity, produceComponent);
+            }
+
+            // 11. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,

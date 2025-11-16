@@ -72,6 +72,10 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
+    
+    // 添加工厂生产相关字段
+    private int selectedFactoryEntityId = -1; // 选中的工厂实体ID
+    private bool showFactoryUI = false; // 是否显示工厂UI
 
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
@@ -251,8 +255,12 @@ public class Ra2Demo : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
-            // 直接开始框选，移除单位点击检测
-            StartSelectionBox(screenPosition);
+            // 检测是否点击到建筑
+            if (!TryHandleBuildingClick(ray, hit))
+            {
+                // 如果没有点击到建筑，则开始框选
+                StartSelectionBox(screenPosition);
+            }
         }
     }
 
@@ -286,6 +294,60 @@ public class Ra2Demo : MonoBehaviour
         }
 
         Debug.LogWarning("[Test] 无法获取点击位置！请确保有地面碰撞体或使用默认平面。");
+        return false;
+    }
+
+    /// <summary>
+    /// 尝试处理建筑点击
+    /// </summary>
+    /// <param name="ray">射线</param>
+    /// <returns>是否点击到建筑</returns>
+    private bool TryHandleBuildingClick(Ray ray, RaycastHit hit)
+    {
+        if (_game == null || _game.World == null)
+            return false;
+
+        // 获取所有具有生产功能的建筑实体
+        var entities = _game.World.ComponentManager
+            .GetAllEntityIdsWith<ProduceComponent>();
+            
+        foreach (var entityId in entities)
+        {
+            var entity = new Entity(entityId);
+            
+            // 确保实体同时具有建筑组件和变换组件
+            if (!_game.World.ComponentManager.HasComponent<BuildingComponent>(entity) ||
+                !_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
+            {
+                continue;
+            }
+            
+            var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
+            var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
+            
+            // 获取建筑位置和尺寸
+            Vector3 buildingPosition = transform.Position.ToVector3();
+            float buildingWidth = building.Width;
+            float buildingHeight = building.Height;
+            
+            // 检查点击位置是否在建筑范围内
+            // 假设建筑以中心点为基准
+            float halfWidth = buildingWidth / 2f;
+            float halfHeight = buildingHeight / 2f;
+            
+            if (hit.point.x >= buildingPosition.x - halfWidth && 
+                hit.point.x <= buildingPosition.x + halfWidth &&
+                hit.point.z >= buildingPosition.z - halfHeight && 
+                hit.point.z <= buildingPosition.z + halfHeight)
+            {
+                // 选中工厂
+                selectedFactoryEntityId = entityId;
+                showFactoryUI = true;
+                Debug.Log($"[Test] 选中工厂: EntityId={entityId}");
+                return true;
+            }
+        }
+        
         return false;
     }
 
@@ -937,6 +999,12 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
+        // 绘制工厂生产UI
+        if (showFactoryUI && selectedFactoryEntityId != -1)
+        {
+            DrawFactoryProductionUI();
+        }
+
         // 绘制框选区域
         DrawSelectionBox();
 
@@ -1102,6 +1170,155 @@ public class Ra2Demo : MonoBehaviour
         }
         
         DrawGMConsole();
+    }
+    
+    /// <summary>
+    /// 绘制工厂生产UI
+    /// </summary>
+    private void DrawFactoryProductionUI()
+    {
+        if (_game == null || _game.World == null)
+            return;
+
+        var entity = new Entity(selectedFactoryEntityId);
+        if (!_game.World.ComponentManager.HasComponent<ProduceComponent>(entity))
+            return;
+
+        var produceComponent = _game.World.ComponentManager.GetComponent<ProduceComponent>(entity);
+        
+        // 创建一个半透明背景
+        GUIStyle bgStyle = new GUIStyle();
+        Texture2D bgTexture = new Texture2D(1, 1);
+        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
+        bgTexture.Apply();
+        bgStyle.normal.background = bgTexture;
+        
+        // 绘制背景
+        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
+        
+        // 绘制工厂UI面板
+        GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
+        panelStyle.fontSize = 24;
+        
+        Rect panelRect = new Rect((Screen.width - 500) / 2, (Screen.height - 400) / 2, 500, 400);
+        GUILayout.BeginArea(panelRect, "工厂生产", panelStyle);
+        
+        // 增大标签字体
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.fontSize = 20;
+        
+        // 增大按钮字体
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle.fontSize = 20;
+        
+        // 显示支持生产的单位类型
+        foreach (var unitType in produceComponent.SupportedUnitTypes)
+        {
+            int produceNumber = produceComponent.ProduceNumbers.ContainsKey(unitType) ? 
+                produceComponent.ProduceNumbers[unitType] : 0;
+            int progress = produceComponent.ProduceProgress.ContainsKey(unitType) ? 
+                produceComponent.ProduceProgress[unitType] : 0;
+                
+            // 显示单位类型名称和数量
+            string unitTypeName = GetUnitTypeName(unitType);
+            GUILayout.Label($"{unitTypeName}: {produceNumber}/99", labelStyle);
+            
+            // 绘制进度条 (放在数量下面)
+            Rect progressRect = GUILayoutUtility.GetLastRect();
+            progressRect.y += progressRect.height + 5;
+            progressRect.width = 300;
+            progressRect.height = 20;
+            
+            // 背景
+            GUI.color = Color.gray;
+            GUI.DrawTexture(new Rect(progressRect.x, progressRect.y, progressRect.width, progressRect.height), Texture2D.whiteTexture);
+            
+            // 进度
+            GUI.color = Color.green;
+            GUI.DrawTexture(new Rect(progressRect.x, progressRect.y, progressRect.width * progress / 100f, progressRect.height), Texture2D.whiteTexture);
+            
+            // 进度文本
+            GUI.color = Color.white;
+            GUIStyle progressLabelStyle = new GUIStyle(labelStyle);
+            progressLabelStyle.alignment = TextAnchor.MiddleCenter;
+            GUI.Label(new Rect(progressRect.x, progressRect.y, progressRect.width, progressRect.height), $"进度: {progress}%", progressLabelStyle);
+            
+            GUILayout.Space(progressRect.height + 5);
+            
+            // 增加和减少按钮
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(100); // 左边空白
+            
+            // 减少按钮
+            if (GUILayout.Button("-", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber > 0)
+            {
+                SendProduceCommand(unitType, -1);
+            }
+            
+            GUILayout.Space(20); // 中间空白
+            
+            // 增加按钮
+            if (GUILayout.Button("+", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber < 99)
+            {
+                SendProduceCommand(unitType, 1);
+            }
+            
+            GUILayout.Space(100); // 右边空白
+            GUILayout.EndHorizontal();
+            
+            GUILayout.Space(20); // 单位类型之间的间隔
+        }
+        
+        // 关闭按钮
+        GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
+        closeStyle.fontSize = 20;
+        if (GUILayout.Button("关闭", closeStyle, GUILayout.Height(40)))
+        {
+            showFactoryUI = false;
+            selectedFactoryEntityId = -1;
+        }
+        
+        GUILayout.EndArea();
+    }
+    
+    /// <summary>
+    /// 获取单位类型名称
+    /// </summary>
+    /// <param name="unitType">单位类型</param>
+    /// <returns>单位类型名称</returns>
+    private string GetUnitTypeName(int unitType)
+    {
+        switch (unitType)
+        {
+            case 1: return "动员兵";
+            case 2: return "坦克";
+            case 3: return "矿车";
+            default: return $"单位{unitType}";
+        }
+    }
+    
+    /// <summary>
+    /// 发送生产命令
+    /// </summary>
+    /// <param name="unitType">单位类型</param>
+    /// <param name="changeValue">变化值</param>
+    private void SendProduceCommand(int unitType, int changeValue)
+    {
+        if (_game == null || selectedFactoryEntityId == -1)
+            return;
+            
+        var produceCommand = new ProduceCommand(
+            playerId: 0,
+            entityId: selectedFactoryEntityId,
+            unitType: unitType,
+            changeValue: changeValue
+        )
+        {
+            Source = CommandSource.Local
+        };
+        
+        _game.SubmitCommand(produceCommand);
+        Debug.Log($"[Test] 发送生产命令: 工厂{selectedFactoryEntityId} 单位类型{unitType} 变化值{changeValue}");
     }
     
     /// <summary>

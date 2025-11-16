@@ -451,7 +451,7 @@ namespace ZLockstep.RVO
 
             // 使用线性规划找到最优速度
             zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
-            zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
+            // zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
             
             // 应用速度平滑以减少震荡
             if (agent.velocity != zVector2.zero && newVelocity != zVector2.zero)

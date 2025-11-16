@@ -12,8 +12,13 @@ namespace ZLockstep.Simulation.ECS
         Normal = 0,
         
         /// <summary>
+        /// 生产系统
+        /// </summary>
+        Produce = 1,
+        
+        /// <summary>
         /// 表现系统
         /// </summary>
-        Presentation = 1
+        Presentation = 2
     }
 }
