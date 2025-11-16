@@ -120,7 +120,7 @@ namespace ZLockstep.RVO
             agent.position = position;
             agent.velocity = zVector2.zero;
             agent.prefVelocity = zVector2.zero;
-            agent.radius = radius;
+            agent.radius = radius - new zfloat(0, 1000);
             agent.maxSpeed = maxSpeed;
             agent.maxNeighbors = maxNeighbors;
             agent.timeHorizon = timeHorizon;
@@ -322,7 +322,7 @@ namespace ZLockstep.RVO
         {
             zfloat moveDistance = (agent.position - agent.lastPosition).magnitude;
             
-            if (moveDistance < stationaryThreshold)
+            if (moveDistance < stationaryThreshold && agent.prefVelocity == zVector2.zero)
             {
                 agent.stationaryFrames++;
                 if (agent.stationaryFrames >= stationaryFrameThreshold)

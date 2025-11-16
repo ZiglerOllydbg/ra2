@@ -424,7 +424,7 @@ namespace ZLockstep.Flow
             // 添加新的动态障碍物
             foreach (var agent in stationaryAgents)
             {
-                (map as SimpleMapManager).AddDynamicObstacle(agent.id, agent.position, agent.radius);
+                (map as SimpleMapManager).AddDynamicObstacle(agent.id, agent.position, agent.radius * 3 / 2);
             }
         }
 
