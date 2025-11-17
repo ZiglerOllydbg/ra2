@@ -76,6 +76,7 @@ public class Ra2Demo : MonoBehaviour
     // 添加工厂生产相关字段
     private int selectedFactoryEntityId = -1; // 选中的工厂实体ID
     private bool showFactoryUI = false; // 是否显示工厂UI
+    private bool showProductionList = false; // 是否显示生产建筑列表
 
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
@@ -306,56 +307,7 @@ public class Ra2Demo : MonoBehaviour
     /// <returns>是否点击到建筑</returns>
     private bool TryHandleBuildingClick(Ray ray, RaycastHit hit)
     {
-        if (_game == null || _game.World == null)
-            return false;
-
-        // 获取所有具有生产功能的建筑实体
-        var entities = _game.World.ComponentManager
-            .GetAllEntityIdsWith<ProduceComponent>();
-            
-        foreach (var entityId in entities)
-        {
-            var entity = new Entity(entityId);
-
-            // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
-            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
-            {
-                continue; // 跳过非本地玩家单位
-            }
-        
-            // 确保实体同时具有建筑组件和变换组件
-            if (!_game.World.ComponentManager.HasComponent<BuildingComponent>(entity) ||
-                !_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
-            {
-                continue;
-            }
-            
-            var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
-            var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
-            
-            // 获取建筑位置和尺寸
-            Vector3 buildingPosition = transform.Position.ToVector3();
-            float buildingWidth = building.Width;
-            float buildingHeight = building.Height;
-            
-            // 检查点击位置是否在建筑范围内
-            // 假设建筑以中心点为基准
-            float halfWidth = buildingWidth / 2f;
-            float halfHeight = buildingHeight / 2f;
-            
-            if (hit.point.x >= buildingPosition.x - halfWidth && 
-                hit.point.x <= buildingPosition.x + halfWidth &&
-                hit.point.z >= buildingPosition.z - halfHeight && 
-                hit.point.z <= buildingPosition.z + halfHeight)
-            {
-                // 选中工厂
-                selectedFactoryEntityId = entityId;
-                showFactoryUI = true;
-                Debug.Log($"[Test] 选中工厂: EntityId={entityId}");
-                return true;
-            }
-        }
-        
+        // 移除点击工厂自动打开UI的功能
         return false;
     }
 
@@ -401,56 +353,6 @@ public class Ra2Demo : MonoBehaviour
         _game.SubmitCommand(createCommand);
 
         Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}");
-    }
-
-    /// <summary>
-    /// 检测并选择单位
-    /// </summary>
-    private void DetectAndSelectUnit(Ray ray)
-    {
-        if (_game == null || _game.World == null)
-            return;
-
-        // 射线检测单位
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-        {
-            // 查找对应的逻辑实体
-                var entities = _game.World.ComponentManager
-                    .GetAllEntityIdsWith<TransformComponent>();
-                
-                foreach (var entityId in entities)
-                {
-                    var entity = new Entity(entityId);
-                    var transform = _game.World.ComponentManager
-                        .GetComponent<TransformComponent>(entity);
-                    
-                    // 比较位置来确定是否是同一个单位（简化实现）
-                    Vector3 logicPosition = transform.Position.ToVector3();
-                    if (Vector3.Distance(logicPosition, hit.point) < 1.0f)
-                    {
-                        // 只保留框选，移除单选和Ctrl键多选功能
-                        // 清空之前选择并选中当前单位
-                        selectedEntityIds.Clear();
-                        selectedEntityIds.Add(entityId);
-                        Debug.Log($"[Test] 选中单位: EntityId={entityId}");
-                        
-                        // 兼容旧的单选变量
-                        selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
-                        return;
-                    }
-                }
-        }
-    }
-    
-    /// <summary>
-    /// 检查是否点击在单位上
-    /// </summary>
-    /// <param name="ray">射线</param>
-    /// <returns>是否点击在单位上</returns>
-    private bool CheckIfClickOnUnit(Ray ray)
-    {
-        // 移除单位点击检测，始终返回false以确保总是开始框选
-        return false;
     }
     
     /// <summary>
@@ -534,6 +436,11 @@ public class Ra2Demo : MonoBehaviour
                 if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
                 {
                     continue; // 跳过非本地玩家单位
+                }
+
+                if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+                {
+                    continue; // 跳过非单位实体
                 }
 
                 // 将世界坐标转换为屏幕坐标
@@ -1007,6 +914,60 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
+        // 绘制中央的匹配/准备按钮
+        if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
+        {
+            // 将匹配和准备按钮定位在屏幕中央
+            float screenWidth = Screen.width;
+            float screenHeight = Screen.height;
+            float buttonWidth = 200;
+            float buttonHeight = 100;
+            
+            Rect buttonRect = new Rect(
+                (screenWidth - buttonWidth) / 2,
+                (screenHeight - buttonHeight) / 2,
+                buttonWidth,
+                buttonHeight
+            );
+
+            GUILayout.BeginArea(buttonRect);
+            
+            if (!isConnected)
+            {
+                GUILayout.Space(10);
+                if (GUILayout.Button("匹配", buttonStyle))
+                {
+                    ConnectToServer();
+                }
+            }
+            else if (isConnected && !isMatched)
+            {
+                GUILayout.Label("匹配中...", buttonStyle);
+            }
+            else if (isMatched && !isReady)
+            {
+                GUILayout.Label("等待中", buttonStyle);
+            }
+            
+            GUILayout.EndArea();
+        }
+        
+        // 绘制生产按钮（左下角）
+        if (isReady)
+        {
+            Rect productionButtonRect = new Rect(20, Screen.height - 80, 100, 60);
+            if (GUI.Button(productionButtonRect, "生产", buttonStyle))
+            {
+                showProductionList = !showProductionList;
+            }
+            
+            // 绘制生产建筑列表
+            if (showProductionList)
+            {
+                DrawProductionBuildingList();
+            }
+        }
+        
         // 绘制工厂生产UI
         if (showFactoryUI && selectedFactoryEntityId != -1)
         {
@@ -1115,57 +1076,23 @@ public class Ra2Demo : MonoBehaviour
 
         }
 
-        // 绘制中央的匹配/准备按钮
-        if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
-        {
-            // 将匹配和准备按钮定位在屏幕中央
-            float screenWidth = Screen.width;
-            float screenHeight = Screen.height;
-            float buttonWidth = 200;
-            float buttonHeight = 100;
-            
-            Rect buttonRect = new Rect(
-                (screenWidth - buttonWidth) / 2,
-                (screenHeight - buttonHeight) / 2,
-                buttonWidth,
-                buttonHeight
-            );
-
-            GUILayout.BeginArea(buttonRect);
-            
-            if (!isConnected)
-            {
-                GUILayout.Space(10);
-                if (GUILayout.Button("匹配", buttonStyle))
-                {
-                    ConnectToServer();
-                }
-            }
-            else if (isConnected && !isMatched)
-            {
-                GUILayout.Label("匹配中...", buttonStyle);
-            }
-            else if (isMatched && !isReady)
-            {
-                GUILayout.Label("等待中", buttonStyle);
-            }
-            
-            GUILayout.EndArea();
-        }
-        
         // 显示选中的单位信息
         if (isReady && selectedEntityIds.Count > 0)
         {
-            Rect infoRect = new Rect(Screen.width - 250, 20, 230, 60);
+            Rect infoRect = new Rect(Screen.width / 2 - 100, 20, 300, 60);
             GUILayout.BeginArea(infoRect, GUI.skin.box);
+            
+            GUIStyle centeredLabelStyle = new GUIStyle(GUI.skin.label);
+            centeredLabelStyle.fontSize = 20;
+            centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
             
             if (selectedEntityIds.Count == 1)
             {
-                GUILayout.Label($"选中单位: {selectedEntityIds[0]}", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+                GUILayout.Label($"选中单位: {selectedEntityIds[0]}", centeredLabelStyle);
             }
             else
             {
-                GUILayout.Label($"选中单位: {selectedEntityIds.Count}个", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+                GUILayout.Label($"选中单位: {selectedEntityIds.Count}个", centeredLabelStyle);
             }
             
             GUILayout.EndArea();
@@ -1209,7 +1136,17 @@ public class Ra2Demo : MonoBehaviour
         panelStyle.fontSize = 24;
         
         Rect panelRect = new Rect((Screen.width - 500) / 2, (Screen.height - 400) / 2, 500, 400);
-        GUILayout.BeginArea(panelRect, "工厂生产", panelStyle);
+        GUI.Box(panelRect, "", panelStyle);
+        
+        // 显示标题
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.fontSize = 24;
+        titleStyle.alignment = TextAnchor.MiddleCenter;
+        GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "工厂生产", titleStyle);
+        
+        // 创建内容区域（为标题预留空间）
+        Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
+        GUILayout.BeginArea(contentRect, panelStyle);
         
         // 增大标签字体
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
@@ -1260,7 +1197,7 @@ public class Ra2Demo : MonoBehaviour
             // 减少按钮
             if (GUILayout.Button("-", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber > 0)
             {
-                SendProduceCommand(unitType, -1);
+                SendProduceCommand(selectedFactoryEntityId, unitType, -1);
             }
             
             GUILayout.Space(20); // 中间空白
@@ -1268,7 +1205,7 @@ public class Ra2Demo : MonoBehaviour
             // 增加按钮
             if (GUILayout.Button("+", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber < 99)
             {
-                SendProduceCommand(unitType, 1);
+                SendProduceCommand(selectedFactoryEntityId, unitType, 1);
             }
             
             GUILayout.Space(100); // 右边空白
@@ -1312,12 +1249,23 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="changeValue">变化值</param>
     private void SendProduceCommand(int unitType, int changeValue)
     {
-        if (_game == null || selectedFactoryEntityId == -1)
+        SendProduceCommand(selectedFactoryEntityId, unitType, changeValue);
+    }
+    
+    /// <summary>
+    /// 发送生产命令
+    /// </summary>
+    /// <param name="factoryEntityId">工厂实体ID</param>
+    /// <param name="unitType">单位类型</param>
+    /// <param name="changeValue">变化值</param>
+    private void SendProduceCommand(int factoryEntityId, int unitType, int changeValue)
+    {
+        if (_game == null || factoryEntityId == -1)
             return;
             
         var produceCommand = new ProduceCommand(
             playerId: 0,
-            entityId: selectedFactoryEntityId,
+            entityId: factoryEntityId,
             unitType: unitType,
             changeValue: changeValue
         )
@@ -1326,7 +1274,7 @@ public class Ra2Demo : MonoBehaviour
         };
         
         _game.SubmitCommand(produceCommand);
-        Debug.Log($"[Test] 发送生产命令: 工厂{selectedFactoryEntityId} 单位类型{unitType} 变化值{changeValue}");
+        Debug.Log($"[Test] 发送生产命令: 工厂{factoryEntityId} 单位类型{unitType} 变化值{changeValue}");
     }
     
     /// <summary>
@@ -1881,5 +1829,132 @@ public class Ra2Demo : MonoBehaviour
             DisableOutlineForEntity(entityId);
         }
         selectedEntityIds.Clear();
+    }
+    
+    /// <summary>
+    /// 绘制生产建筑列表
+    /// </summary>
+    private void DrawProductionBuildingList()
+    {
+        if (_game == null || _game.World == null)
+            return;
+
+        // 获取所有具有生产功能且属于本地玩家的建筑实体
+        List<int> productionBuildings = GetLocalPlayerProductionBuildings();
+        
+        if (productionBuildings.Count == 0)
+            return;
+
+        // 创建一个半透明背景
+        GUIStyle bgStyle = new GUIStyle();
+        Texture2D bgTexture = new Texture2D(1, 1);
+        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
+        bgTexture.Apply();
+        bgStyle.normal.background = bgTexture;
+        
+        // 绘制背景
+        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
+        
+        // 绘制面板
+        GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
+        panelStyle.fontSize = 24;
+        
+        Rect panelRect = new Rect((Screen.width - 300) / 2, (Screen.height - 200) / 2, 300, 200);
+        GUI.Box(panelRect, "", panelStyle);
+        
+        // 显示标题
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.fontSize = 24;
+        titleStyle.alignment = TextAnchor.MiddleCenter;
+        GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "选择生产建筑", titleStyle);
+        
+        // 创建内容区域（为标题预留空间）
+        Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
+        GUILayout.BeginArea(contentRect);
+        
+        // 增大按钮字体
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle.fontSize = 20;
+        
+        // 显示所有生产建筑
+        foreach (int entityId in productionBuildings)
+        {
+            var entity = new Entity(entityId);
+            if (_game.World.ComponentManager.HasComponent<BuildingComponent>(entity))
+            {
+                var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
+                string buildingName = GetBuildingTypeName(building.BuildingType);
+                if (GUILayout.Button($"{buildingName} (ID: {entityId})", buttonStyle, GUILayout.Height(40)))
+                {
+                    // 选中该建筑并打开生产界面
+                    selectedFactoryEntityId = entityId;
+                    showFactoryUI = true;
+                    showProductionList = false;
+                }
+            }
+        }
+        
+        // 关闭按钮
+        GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
+        closeStyle.fontSize = 20;
+        if (GUILayout.Button("关闭", closeStyle, GUILayout.Height(40)))
+        {
+            showProductionList = false;
+        }
+        
+        GUILayout.EndArea();
+    }
+    
+    /// <summary>
+    /// 获取所有本地玩家的生产建筑
+    /// </summary>
+    /// <returns>生产建筑实体ID列表</returns>
+    private List<int> GetLocalPlayerProductionBuildings()
+    {
+        List<int> result = new List<int>();
+        
+        if (_game == null || _game.World == null)
+            return result;
+
+        // 获取所有具有生产功能的建筑实体
+        var entities = _game.World.ComponentManager
+            .GetAllEntityIdsWith<ProduceComponent>();
+            
+        foreach (var entityId in entities)
+        {
+            var entity = new Entity(entityId);
+
+            // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
+            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+            {
+                continue; // 跳过非本地玩家单位
+            }
+            
+            // 确保实体同时具有建筑组件
+            if (!_game.World.ComponentManager.HasComponent<BuildingComponent>(entity))
+            {
+                continue;
+            }
+            
+            result.Add(entityId);
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// 获取建筑类型名称
+    /// </summary>
+    /// <param name="buildingType">建筑类型</param>
+    /// <returns>建筑类型名称</returns>
+    private string GetBuildingTypeName(int buildingType)
+    {
+        switch (buildingType)
+        {
+            case 1: return "战车工厂";
+            case 2: return "兵营";
+            case 3: return "矿场";
+            default: return $"建筑{buildingType}";
+        }
     }
 }
