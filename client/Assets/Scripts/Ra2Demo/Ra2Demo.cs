@@ -96,6 +96,8 @@ public class Ra2Demo : MonoBehaviour
     public bool showGrid = true;           // 显示网格
     public bool showObstacles = true;      // 显示障碍物
     public bool showFlowField = true;      // 显示流场方向
+    // settlement系统
+    public bool EnableSettlementSystem = true;
 
     private void Awake()
     {
@@ -1659,6 +1661,7 @@ public class Ra2Demo : MonoBehaviour
         
         // 创建BattleGame实例
         _game = new BattleGame(Mode, 20, 0);
+        _game.EnableSettlementSystem = EnableSettlementSystem;
         _game.Init();
         
         // 初始化Unity视图层

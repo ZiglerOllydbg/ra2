@@ -45,6 +45,8 @@ namespace Game.Examples
         /// </summary>
         public SimpleAISystem AISystem { get; private set; }
 
+        public bool EnableSettlementSystem { get; set; }
+
         public BattleGame(GameMode mode = GameMode.Standalone, int frameRate = 30, int localPlayerId = 0)
             : base(mode, frameRate, localPlayerId)
         {
@@ -154,7 +156,10 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new ProduceSystem());
 
             // 注册结算系统
-            World.SystemManager.RegisterSystem(new SettlementSystem());
+            if (EnableSettlementSystem)
+            {
+                World.SystemManager.RegisterSystem(new SettlementSystem());
+            }
 
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
