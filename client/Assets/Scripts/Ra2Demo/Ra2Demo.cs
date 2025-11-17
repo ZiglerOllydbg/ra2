@@ -29,9 +29,9 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] private int prefabId = 1; // 预制体ID（对应unitPrefabs数组索引）
 
     [Header("小地图设置")]
-    [SerializeField] private MiniMapController miniMapController; // 小地图控制器
-    [SerializeField] private Rect miniMapRect = new Rect(20, -1, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从底部计算）
-    [SerializeField] private int miniMapMargin = 80; // 小地图边距
+    private MiniMapController miniMapController; // 小地图控制器
+    private Rect miniMapRect = new Rect(-1, 0, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从右侧/底部计算）
+    private int miniMapMargin = 10; // 小地图边距
 
     private RTSControl _controls;
     private Camera _mainCamera;
@@ -1435,14 +1435,13 @@ public class Ra2Demo : MonoBehaviour
     {
         if (_miniMapTexture != null)
         {
-            // 计算小地图的实际位置（支持从底部对齐）
+            // 计算小地图的实际位置（支持从底部和右侧对齐）
             Rect actualMiniMapRect = miniMapRect;
-            if (miniMapRect.y == -1) // 特殊值表示从底部计算位置
+            if (miniMapRect.y == -1 || miniMapRect.x == -1) // 特殊值表示从底部计算位置
             {
-                actualMiniMapRect = new Rect(miniMapMargin, 
-                                           Screen.height - miniMapRect.height - miniMapMargin, 
-                                           miniMapRect.width, 
-                                           miniMapRect.height);
+                float xPos = miniMapRect.x == -1 ? Screen.width - miniMapRect.width - miniMapMargin : miniMapMargin;
+                float yPos = miniMapRect.y == -1 ? Screen.height - miniMapRect.height - miniMapMargin : miniMapMargin;
+                actualMiniMapRect = new Rect(xPos, yPos, miniMapRect.width, miniMapRect.height);
             }
             
             // 检测小地图点击事件
@@ -1467,7 +1466,7 @@ public class Ra2Demo : MonoBehaviour
             GUI.DrawTexture(textureRect, _miniMapTexture, ScaleMode.StretchToFill, true);
             
             // 可选：在小地图上绘制一个表示主相机视角的框
-            DrawCameraViewIndicator();
+            DrawCameraViewIndicator(actualMiniMapRect);
         }
     }
     
@@ -1502,7 +1501,7 @@ public class Ra2Demo : MonoBehaviour
             float y = Mathf.Min(guiStartY, guiEndY);
             float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
             float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
-            
+
             Rect selectionRect = new Rect(x, y, width, height);
             
             // 绘制半透明的框选区域
@@ -1563,7 +1562,7 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 在小地图上绘制主相机视角指示器
     /// </summary>
-    private void DrawCameraViewIndicator()
+    private void DrawCameraViewIndicator(Rect actualMiniMapRect)
     {
         if (_mainCamera == null || miniMapController == null)
             return;
@@ -1581,10 +1580,15 @@ public class Ra2Demo : MonoBehaviour
         float cameraY = Mathf.Clamp((cameraPosition.z - mapBounds.y) / mapHeight * 256f, 0, 256);
         
         // 计算小地图在屏幕上的实际位置
-        Rect actualMiniMapRect = miniMapRect;
         if (miniMapRect.y == -1) // 特殊值表示从底部计算位置
         {
-            actualMiniMapRect = new Rect(miniMapMargin, 
+            float xPos = miniMapRect.x == -1 ? Screen.width - miniMapRect.width - miniMapMargin : miniMapMargin;
+            if (miniMapRect.x == -1) // 特殊值表示从右侧计算位置
+            {
+                xPos = Screen.width - miniMapRect.width - miniMapMargin;
+            }
+            
+            actualMiniMapRect = new Rect(xPos, 
                                        Screen.height - miniMapRect.height - miniMapMargin, 
                                        miniMapRect.width, 
                                        miniMapRect.height);
