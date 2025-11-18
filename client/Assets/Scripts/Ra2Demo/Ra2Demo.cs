@@ -955,8 +955,13 @@ public class Ra2Demo : MonoBehaviour
         // 绘制生产按钮（左下角）
         if (isReady)
         {
-            Rect productionButtonRect = new Rect(20, Screen.height - 80, 100, 60);
-            if (GUI.Button(productionButtonRect, "生产", buttonStyle))
+            GUIStyle produceButtonStyle = new GUIStyle(GUI.skin.button);
+            produceButtonStyle.fontSize = 24;
+            produceButtonStyle.fixedHeight = 80;
+            produceButtonStyle.fixedWidth = 80;
+
+            Rect productionButtonRect = new(20, Screen.height - 100, 80, 80);
+            if (GUI.Button(productionButtonRect, "生产", produceButtonStyle))
             {
                 showProductionList = !showProductionList;
             }

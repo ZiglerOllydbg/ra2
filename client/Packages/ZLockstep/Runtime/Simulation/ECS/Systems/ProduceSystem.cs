@@ -132,7 +132,40 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 发布单位创建事件
             EventManager.Publish(unitEvent);
             
+            // 为新单位设置一个附近的随机目标，触发流场分散逻辑
+            var navSystem = world.GameInstance.GetNavSystem();
+            zVector2 randomTarget = GetRandomTarget(new zVector2(spawnPosition.x, spawnPosition.z), (zfloat)10.0f);
+            navSystem.SetMoveTarget(new Entity(unitEvent.EntityId), randomTarget);
+            
             zUDebug.Log($"[ProduceSystem] 玩家{playerId}的工厂{factoryEntity.Id}生产了单位类型{unitType}，位置{spawnPosition}");
+        }
+        
+        /// <summary>
+        /// 获取指定中心点附近随机位置的目标点
+        /// </summary>
+        /// <param name="center">中心点</param>
+        /// <param name="radius">随机半径</param>
+        /// <returns>随机目标点</returns>
+        private zVector2 GetRandomTarget(zVector2 center, zfloat radius)
+        {
+            // 使用确定性随机数生成器
+            long seed = (World.Tick * 137 + center.x.value * 31 + center.y.value * 17) % 1000000;
+            zRandom random = new zRandom(seed);
+            
+            long randomAngle = zMathf.Abs(random.NextLong()) % 360L;
+            long randomDistance = zMathf.Abs(random.NextLong()) % radius.value;
+            
+            zfloat angle = zfloat.CreateFloat(randomAngle * 10000); // 角度转为弧度
+            zfloat distance = zfloat.CreateFloat(randomDistance);
+            
+            zfloat radian = angle * zMathf.PI / new zfloat(180);
+            zfloat offsetX = zMathf.Cos(radian) * distance;
+            zfloat offsetZ = zMathf.Sin(radian) * distance;
+            
+            return new zVector2(
+                center.x + offsetX,
+                center.y + offsetZ
+            );
         }
     }
 }
