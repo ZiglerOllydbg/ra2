@@ -486,7 +486,6 @@ MonoBehaviour:
     m_Bits: 4294967295
   unitType: 1
   prefabId: 1
-  ServerUrl: ws://127.0.0.1:8080/ws
   viewRoot: {fileID: 0}
   unitPrefabs:
   - {fileID: 6928227026105818065, guid: e32d8e226e915534d8d278c3155526cb, type: 3}

@@ -40,7 +40,8 @@ public class Ra2Demo : MonoBehaviour
     // 添加本地测试选项
     private bool useLocalServer = false;
     public string LocalServerUrl = "ws://127.0.0.1:8080/ws";
-    public string RemoteServerUrl = "ws://www.zhegepai.cn:8080/ws";
+    // ws://101.126.136.178:8080/ws | ws://www.zhegepai.cn:8080/ws
+    public string RemoteServerUrl = "wss://www.zhegepai.cn/ws";
 
     private WebSocketNetworkAdaptor _networkAdaptor; // 保存网络适配器引用
     private WebSocketClient _client; // 添加WebSocket客户端引用
