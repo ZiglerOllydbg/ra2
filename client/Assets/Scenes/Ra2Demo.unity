@@ -315,7 +315,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: CameraTiltMin
-      value: 75
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowKeysRotate
@@ -339,7 +339,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowScreenSideMove
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: CameraScreenSideSpeed
@@ -486,6 +486,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   unitType: 1
   prefabId: 1
+  LocalServerUrl: ws://127.0.0.1:8080/ws
+  RemoteServerUrl: wss://www.zhegepai.cn/ws
   viewRoot: {fileID: 0}
   unitPrefabs:
   - {fileID: 6928227026105818065, guid: e32d8e226e915534d8d278c3155526cb, type: 3}

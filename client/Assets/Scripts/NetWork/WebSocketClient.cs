@@ -198,7 +198,10 @@ namespace Game.RA2.Client
         // 分发WebSocket消息，需要在Update中调用
         public void DispatchMessageQueue()
         {
+            // WebGL平台不需要手动分发消息队列，基于回调机制
+#if !UNITY_WEBGL || UNITY_EDITOR
             webSocket?.DispatchMessageQueue();
+#endif
             // 检查pong超时
             CheckPongTimeout();
         }
