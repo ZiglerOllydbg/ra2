@@ -160,8 +160,13 @@ public class RoomService {
             
             response.set("data", dataArray);
             
-            // 添加初始游戏状态
-            ObjectNode initialState = createInitialGameState();
+            // 添加初始游戏状态 - 根据玩家数量选择不同方法
+            ObjectNode initialState;
+            if (room.getPlayers().size() == 2) {
+                initialState = createInitialGameState2Player();
+            } else {
+                initialState = createInitialGameState();
+            }
             response.set("initialState", initialState);
             
             String message = objectMapper.writeValueAsString(response);
@@ -267,7 +272,149 @@ public class RoomService {
     }
     
     /**
-     * 创建初始游戏状态
+     * 创建初始游戏状态 (适用于2人游戏，地图大小为128*128)
+     * @return 包含所有阵营初始状态的ObjectNode
+     */
+    private ObjectNode createInitialGameState2Player() {
+        ObjectNode initialState = objectMapper.createObjectNode();
+        
+        // 为每个阵营创建初始单位 (仅适用于2个玩家)
+        Player[] players = room.getPlayers().toArray(new Player[0]);
+        for (int p = 0; p < players.length && p < 2; p++) {
+            Player player = players[p];
+            int campId = player.getCamp().getId();
+            Camp camp = player.getCamp();
+            ObjectNode campState = objectMapper.createObjectNode();
+            
+            // 创建建筑物数组
+            ArrayNode buildings = objectMapper.createArrayNode();
+            
+            // 添加主要基地 (没有坦克工厂)
+            ObjectNode base = objectMapper.createObjectNode();
+            base.put("id", "base_" + campId);
+            base.put("type", "base");
+            
+            // 设置基地位置 (在128*128场景中)
+            // 左下角和右上角分别放置两个队伍
+            if (camp == Camp.Red) { // 红色阵营 - 左下角
+                base.put("x", 20);
+                base.put("y", 20);
+            } else if (camp == Camp.Blue) { // 蓝色阵营 - 右上角
+                base.put("x", 108);
+                base.put("y", 108);
+            } else { // 其他阵营默认位置
+                base.put("x", 64);
+                base.put("y", 64);
+            }
+            
+            buildings.add(base);
+            
+            // 添加玩家起始资源点
+            ObjectNode resourcePoint = objectMapper.createObjectNode();
+            resourcePoint.put("id", "resource_point_" + campId);
+            resourcePoint.put("type", "resource_point");
+            resourcePoint.put("amount", 3000);
+            
+            if (camp == Camp.Red) { // 红色阵营资源点
+                resourcePoint.put("x", 25);
+                resourcePoint.put("y", 40);
+            } else if (camp == Camp.Blue) { // 蓝色阵营资源点
+                resourcePoint.put("x", 103);
+                resourcePoint.put("y", 88);
+            } else { // 其他阵营默认位置
+                resourcePoint.put("x", 64);
+                resourcePoint.put("y", 64);
+            }
+            
+            buildings.add(resourcePoint);
+            
+            campState.set("buildings", buildings);
+            
+            // 创建单位数组
+            ArrayNode units = objectMapper.createArrayNode();
+            
+            // 添加3辆坦克
+            for (int i = 1; i <= 3; i++) {
+                ObjectNode tank = objectMapper.createObjectNode();
+                tank.put("id", "tank_" + campId + "_" + i);
+                tank.put("type", "tank");
+                
+                // 设置坦克位置，围绕基地分布 (在128*128场景中)
+                if (camp == Camp.Red) { // 红色阵营
+                    switch (i) {
+                        case 1: 
+                            tank.put("x", 15);
+                            tank.put("y", 20);
+                            break;
+                        case 2:
+                            tank.put("x", 20);
+                            tank.put("y", 15);
+                            break;
+                        case 3:
+                            tank.put("x", 25);
+                            tank.put("y", 20);
+                            break;
+                    }
+                } else if (camp == Camp.Blue) { // 蓝色阵营
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 103);
+                            tank.put("y", 108);
+                            break;
+                        case 2:
+                            tank.put("x", 108);
+                            tank.put("y", 113);
+                            break;
+                        case 3:
+                            tank.put("x", 113);
+                            tank.put("y", 108);
+                            break;
+                    }
+                } else { // 其他阵营
+                    tank.put("x", 56 + i * 8);
+                    tank.put("y", 64);
+                }
+                
+                units.add(tank);
+            }
+            
+            // 添加初始资金2200
+            campState.put("money", 2200);
+            
+            campState.set("units", units);
+            initialState.set(String.valueOf(campId), campState);
+        }
+        
+        // 添加中央中立资源点
+        ObjectNode neutralResources = objectMapper.createObjectNode();
+        ArrayNode neutralBuildings = objectMapper.createArrayNode();
+        
+        // 中立资源点1
+        ObjectNode neutralResource1 = objectMapper.createObjectNode();
+        neutralResource1.put("id", "neutral_resource_1");
+        neutralResource1.put("type", "resource_point");
+        neutralResource1.put("amount", 5000);
+        neutralResource1.put("x", 64);
+        neutralResource1.put("y", 50);
+        neutralBuildings.add(neutralResource1);
+        
+        // 中立资源点2
+        ObjectNode neutralResource2 = objectMapper.createObjectNode();
+        neutralResource2.put("id", "neutral_resource_2");
+        neutralResource2.put("type", "resource_point");
+        neutralResource2.put("amount", 5000);
+        neutralResource2.put("x", 64);
+        neutralResource2.put("y", 78);
+        neutralBuildings.add(neutralResource2);
+        
+        neutralResources.set("buildings", neutralBuildings);
+        initialState.set("neutral", neutralResources);
+        
+        return initialState;
+    }
+
+    /**
+     * 创建初始游戏状态 (适用于多人游戏，地图大小为256*256)
      * @return 包含所有阵营初始状态的ObjectNode
      */
     private ObjectNode createInitialGameState() {
