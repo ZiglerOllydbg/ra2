@@ -1079,6 +1079,8 @@ public class Ra2Demo : MonoBehaviour
             
             GUILayout.EndArea();
 
+            // 显示经济信息（资金和电力）
+            DrawEconomyInfo();
         }
 
         // 显示选中的单位信息
@@ -1961,5 +1963,56 @@ public class Ra2Demo : MonoBehaviour
             case 3: return "矿场";
             default: return $"建筑{buildingType}";
         }
+    }
+
+    /// <summary>
+    /// 绘制经济信息（资金和电力）
+    /// </summary>
+    private void DrawEconomyInfo()
+    {
+        if (_game == null || _game.World == null)
+            return;
+
+        // 检查是否存在全局信息组件
+        if (!_game.World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            return;
+
+        // 获取全局信息组件以确定本地玩家阵营ID
+        var globalInfoComponent = _game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+        
+        // 获取所有经济组件实体
+        var economyEntities = _game.World.ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
+        EconomyComponent economyComponent = new EconomyComponent();
+        bool found = false;
+        
+        // 查找属于本地玩家的经济组件
+        foreach (var entityId in economyEntities)
+        {
+            var entity = new Entity(entityId);
+            if (_game.World.ComponentManager.HasComponent<CampComponent>(entity))
+            {
+                var campComponent = _game.World.ComponentManager.GetComponent<CampComponent>(entity);
+                if (campComponent.CampId == globalInfoComponent.LocalPlayerCampId)
+                {
+                    economyComponent = _game.World.ComponentManager.GetComponent<EconomyComponent>(entity);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        // 如果没找到对应阵营的经济组件，则返回
+        if (!found)
+            return;
+        
+        // 创建GUI样式
+        GUIStyle econStyle = new GUIStyle(GUI.skin.label);
+        econStyle.fontSize = 20;
+        econStyle.normal.textColor = Color.yellow;
+        econStyle.alignment = TextAnchor.UpperCenter;
+        
+        // 绘制经济信息
+        string econText = $"资金: {economyComponent.Money} 电力: {economyComponent.Power}";
+        GUI.Label(new Rect(Screen.width / 2 - 150, 10, 300, 30), econText, econStyle);
     }
 }
