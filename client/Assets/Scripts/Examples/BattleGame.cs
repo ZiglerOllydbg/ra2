@@ -184,6 +184,35 @@ namespace Game.Examples
             // 解析initialState数据并创建初始单位和建筑
             foreach (var playerData in initialState)
             {
+                // 处理中立建筑
+                if (playerData.Key == "neutral")
+                {
+                    var neutralObj = (JObject)playerData.Value;
+                    
+                    // 创建中立建筑
+                    var neutralBuildings = (JArray)neutralObj["buildings"];
+                    if (neutralBuildings != null)
+                    {
+                        foreach (JObject building in neutralBuildings)
+                        {
+                            string id = building["id"]?.ToString();
+                            string type = building["type"]?.ToString();
+                            float x = building["x"]?.ToObject<float>() ?? 0;
+                            float y = building["y"]?.ToObject<float>() ?? 0;
+
+                            // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
+                            var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, 1,
+                            new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
+                            width:4, height:4, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                            if (entityEvent.HasValue)
+                            {
+                                createdEntities.Add(entityEvent.Value);
+                            }
+                        }
+                    }
+                    continue; // 处理完中立建筑后继续下一个
+                }
+
                 string playerIdStr = playerData.Key;
                 int playerId = int.Parse(playerIdStr);
                 
@@ -200,10 +229,30 @@ namespace Game.Examples
                         float x = building["x"]?.ToObject<float>() ?? 0;
                         float y = building["y"]?.ToObject<float>() ?? 0;
 
+                        // 根据类型确定建筑参数
+                        int buildingType = 0; // 默认基地
+                        int width = 10;
+                        int height = 10;
+                        int prefabId = playerId; // 使用playerId作为预制体ID，以区分不同阵营的颜色
+
+                        switch (type)
+                        {
+                            case "base":
+                                buildingType = 0; // 基地
+                                width = 10;
+                                height = 10;
+                                break;
+                            case "resource_point":
+                                buildingType = 3; // 资源点
+                                width = 4;
+                                height = 4;
+                                break;
+                        }
+
                         // 根据类型创建建筑实体
-                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, 1,
+                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        width:12, height:8, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        width: width, height: height, prefabId: prefabId, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
@@ -211,8 +260,6 @@ namespace Game.Examples
                     }
                 }
 
-                var playerCount = 0;
-                
                 // 创建单位
                 var units = (JArray)playerObj["units"];
                 if (units != null)
@@ -230,22 +277,6 @@ namespace Game.Examples
                         {
                             createdEntities.Add(entityEvent.Value);
                         }
-
-                        playerCount++;
-                        // if (playerCount >= 2)
-                        // {
-                        //     break;
-                        // }
-
-                        // TODO 测试代码，创建player2的单位
-                        // if (playerCount < 1) {
-                        //     var entityEvent2 = CreateUnitEntity(2, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y + 32));
-                        //     if (entityEvent2.HasValue)
-                        //     {
-                        //         createdEntities.Add(entityEvent2.Value);
-                        //     }
-                        //     playerCount++;
-                        // }
                     }
                 }
             }

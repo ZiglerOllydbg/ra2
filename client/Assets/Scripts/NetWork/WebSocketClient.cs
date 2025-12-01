@@ -271,7 +271,7 @@ namespace Game.RA2.Client
             }
             catch (Exception e)
             {
-                Debug.LogError($"处理消息时发生错误: {e.Message}");
+                Debug.LogError($"处理消息时发生错误: {e.Message}，message：{message}");
             }
         }
         
