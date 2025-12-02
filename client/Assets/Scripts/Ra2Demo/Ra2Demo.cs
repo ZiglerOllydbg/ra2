@@ -334,31 +334,6 @@ public class Ra2Demo : MonoBehaviour
         hitPoint = ray.origin + ray.direction * t;
         return true;
     }
-
-    /// <summary>
-    /// 在指定位置创建单位（通过Command）
-    /// </summary>
-    private void CreateUnitAtPosition(Vector3 position)
-    {
-        // 转换为逻辑层坐标
-        zVector3 logicPosition = position.ToZVector3();
-
-        // 创建CreateUnitCommand
-        var createCommand = new CreateUnitCommand(
-            playerId: 0,
-            unitType: unitType,
-            position: logicPosition,
-            prefabId: prefabId
-        )
-        {
-            Source = CommandSource.Local
-        };
-
-        // 提交命令到游戏世界
-        _game.SubmitCommand(createCommand);
-
-        Debug.Log($"[Test] 提交创建单位命令: 类型={unitType}, 位置={position}");
-    }
     
     /// <summary>
     /// 开始框选
@@ -1516,16 +1491,6 @@ public class Ra2Demo : MonoBehaviour
             case UnitType.Harvester: return "矿车";
             default: return $"单位{unitType}";
         }
-    }
-    
-    /// <summary>
-    /// 发送生产命令
-    /// </summary>
-    /// <param name="unitType">单位类型</param>
-    /// <param name="changeValue">变化值</param>
-    private void SendProduceCommand(UnitType unitType, int changeValue)
-    {
-        SendProduceCommand(selectedFactoryEntityId, unitType, changeValue);
     }
     
     /// <summary>

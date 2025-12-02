@@ -41,18 +41,16 @@ namespace ZLockstep.Sync.Command.Commands
             var entity = new Entity(EntityId);
 
             // 阵营是否一致
-            if (world.ComponentManager.HasComponent<CampComponent>(entity))
-            {
-                var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
-                if (campComponent.CampId != PlayerId)
-                {
-                    UnityEngine.Debug.LogWarning($"[ProduceCommand] 玩家 {PlayerId} 尝试控制不属于自己的建筑 {EntityId}");
-                    return;
-                }
-            }
-            else
+            if (!world.ComponentManager.HasComponent<CampComponent>(entity))
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不具有阵营组件");
+                return;
+            }
+
+            var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
+            if (campComponent.CampId != PlayerId)
+            {
+                UnityEngine.Debug.LogWarning($"[ProduceCommand] 玩家 {PlayerId} 尝试控制不属于自己的建筑 {EntityId}");
                 return;
             }
 
@@ -63,24 +61,47 @@ namespace ZLockstep.Sync.Command.Commands
                 return;
             }
 
+            // 获取当前生产组件状态
             var produceComponent = world.ComponentManager.GetComponent<ProduceComponent>(entity);
+            int currentNumber = produceComponent.ProduceNumbers.ContainsKey(UnitType) ? 
+                produceComponent.ProduceNumbers[UnitType] : 0;
+            int newNumber = currentNumber + ChangeValue;
             
+            // 限制在0-99范围内
+            newNumber = UnityEngine.Mathf.Clamp(newNumber, 0, 99);
+            
+            // 检查是否是增加生产命令（ChangeValue > 0）
+            if (ChangeValue > 0)
+            {
+                // 检查资金是否足够
+                if (!CheckAndDeductProductionCost(world, campComponent.CampId))
+                {
+                    UnityEngine.Debug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 资金不足，无法生产单位 {UnitType}");
+                    return;
+                }
+            }
+            // 如果是减少生产命令（ChangeValue < 0）并且生产数量确实减少了
+            else if (ChangeValue < 0 && newNumber < currentNumber)
+            {
+                // 返还资金
+                RefundProductionCost(world, campComponent.CampId);
+            }
+
             // 检查单位类型是否支持生产
             if (!produceComponent.SupportedUnitTypes.Contains(UnitType))
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不支持生产单位类型 {UnitType}");
+                // 如果不支持生产，且之前扣除了资金，需要返还资金
+                if (ChangeValue > 0)
+                {
+                    RefundProductionCost(world, campComponent.CampId);
+                }
                 return;
             }
 
             // 更新生产数量
             if (produceComponent.ProduceNumbers.ContainsKey(UnitType))
             {
-                int currentNumber = produceComponent.ProduceNumbers[UnitType];
-                int newNumber = currentNumber + ChangeValue;
-                
-                // 限制在0-99范围内
-                newNumber = UnityEngine.Mathf.Clamp(newNumber, 0, 99);
-                
                 produceComponent.ProduceNumbers[UnitType] = newNumber;
                 
                 // 更新组件
@@ -91,7 +112,106 @@ namespace ZLockstep.Sync.Command.Commands
             else
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 的生产组件中未找到单位类型 {UnitType}");
+                // 如果未找到单位类型，且之前扣除了资金，需要返还资金
+                if (ChangeValue > 0)
+                {
+                    RefundProductionCost(world, campComponent.CampId);
+                }
+                return;
             }
+        }
+
+        /// <summary>
+        /// 检查并扣除生产单位所需的成本
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="campId">阵营ID</param>
+        /// <returns>是否有足够的资源</returns>
+        private bool CheckAndDeductProductionCost(zWorld world, int campId)
+        {
+            // 获取玩家的经济组件
+            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, campId, out var economyComponent, out var economyEntity))
+            {
+                UnityEngine.Debug.LogWarning($"[ProduceCommand] 未找到阵营 {campId} 的经济组件");
+                return false;
+            }
+            
+            // 根据单位类型确定所需资源
+            int costMoney = 0;
+            
+            switch (UnitType)
+            {
+                case UnitType.Infantry: // 动员兵
+                    costMoney = 100;
+                    break;
+                case UnitType.Tank: // 坦克
+                    costMoney = 300;
+                    break;
+                case UnitType.Harvester: // 矿车
+                    costMoney = 500;
+                    break;
+                default:
+                    // 其他单位类型不消耗资源或免费
+                    return true;
+            }
+            
+            // 检查是否有足够的资源
+            if (economyComponent.Money < costMoney)
+            {
+                UnityEngine.Debug.Log($"[ProduceCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
+                return false;
+            }
+            
+            // 扣除资源
+            economyComponent.Money -= costMoney;
+            
+            // 更新经济组件
+            world.ComponentManager.AddComponent(economyEntity, economyComponent);
+            
+            UnityEngine.Debug.Log($"[ProduceCommand] 扣除资源成功。花费资金: {costMoney}。剩余资金: {economyComponent.Money}");
+            return true;
+        }
+
+        /// <summary>
+        /// 返还生产单位所需的成本
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="campId">阵营ID</param>
+        private void RefundProductionCost(zWorld world, int campId)
+        {
+            // 获取玩家的经济组件
+            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, campId, out var economyComponent, out var economyEntity))
+            {
+                UnityEngine.Debug.LogWarning($"[ProduceCommand] 未找到阵营 {campId} 的经济组件");
+                return;
+            }
+            
+            // 根据单位类型确定返还资源
+            int refundMoney = 0;
+            
+            switch (UnitType)
+            {
+                case UnitType.Infantry: // 动员兵
+                    refundMoney = 100;
+                    break;
+                case UnitType.Tank: // 坦克
+                    refundMoney = 300;
+                    break;
+                case UnitType.Harvester: // 矿车
+                    refundMoney = 500;
+                    break;
+                default:
+                    // 其他单位类型不消耗资源或免费
+                    return;
+            }
+            
+            // 返还资源
+            economyComponent.Money += refundMoney;
+            
+            // 更新经济组件
+            world.ComponentManager.AddComponent(economyEntity, economyComponent);
+            
+            UnityEngine.Debug.Log($"[ProduceCommand] 返还资源成功。返还资金: {refundMoney}。剩余资金: {economyComponent.Money}");
         }
 
         public override string ToString()
