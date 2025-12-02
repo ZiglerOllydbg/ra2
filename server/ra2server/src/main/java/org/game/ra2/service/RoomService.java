@@ -309,25 +309,6 @@ public class RoomService {
             
             buildings.add(base);
             
-            // 添加玩家起始资源点
-            ObjectNode resourcePoint = objectMapper.createObjectNode();
-            resourcePoint.put("id", "resource_point_" + campId);
-            resourcePoint.put("type", "resource_point");
-            resourcePoint.put("amount", 3000);
-            
-            if (camp == Camp.Red) { // 红色阵营资源点
-                resourcePoint.put("x", 25);
-                resourcePoint.put("y", 40);
-            } else if (camp == Camp.Blue) { // 蓝色阵营资源点
-                resourcePoint.put("x", 103);
-                resourcePoint.put("y", 88);
-            } else { // 其他阵营默认位置
-                resourcePoint.put("x", 64);
-                resourcePoint.put("y", 64);
-            }
-            
-            buildings.add(resourcePoint);
-            
             campState.set("buildings", buildings);
             
             // 创建单位数组
@@ -388,6 +369,25 @@ public class RoomService {
         // 添加中央中立资源点
         ObjectNode neutralResources = objectMapper.createObjectNode();
         ArrayNode neutralBuildings = objectMapper.createArrayNode();
+        
+        // 添加各阵营的起始资源点到中立资源中
+        // 红色阵营资源点
+        ObjectNode redResourcePoint = objectMapper.createObjectNode();
+        redResourcePoint.put("id", "neutral_resource_point_1");
+        redResourcePoint.put("type", "resource_point");
+        redResourcePoint.put("amount", 3000);
+        redResourcePoint.put("x", 25);
+        redResourcePoint.put("y", 40);
+        neutralBuildings.add(redResourcePoint);
+        
+        // 蓝色阵营资源点
+        ObjectNode blueResourcePoint = objectMapper.createObjectNode();
+        blueResourcePoint.put("id", "neutral_resource_point_2");
+        blueResourcePoint.put("type", "resource_point");
+        blueResourcePoint.put("amount", 3000);
+        blueResourcePoint.put("x", 103);
+        blueResourcePoint.put("y", 88);
+        neutralBuildings.add(blueResourcePoint);
         
         // 中立资源点1
         ObjectNode neutralResource1 = objectMapper.createObjectNode();
@@ -502,8 +502,6 @@ public class RoomService {
                 resourcePoint.put("y", 128);
             }
             
-            buildings.add(resourcePoint);
-            
             campState.set("buildings", buildings);
             
             // 创建单位数组
@@ -555,6 +553,50 @@ public class RoomService {
         // 添加中央中立资源点
         ObjectNode neutralResources = objectMapper.createObjectNode();
         ArrayNode neutralBuildings = objectMapper.createArrayNode();
+        
+        // 添加各阵营的起始资源点到中立资源中
+        for (Player player : room.getPlayers()) {
+            int campId = player.getCamp().getId();
+            Camp camp = player.getCamp();
+            
+            // 为每个阵营添加资源点
+            ObjectNode resourcePoint = objectMapper.createObjectNode();
+            resourcePoint.put("id", "resource_point_" + campId);
+            resourcePoint.put("type", "resource_point");
+            resourcePoint.put("amount", 3000);
+            
+            // 根据阵营设置不同的资源点位置 (在256*256场景中)
+            if (camp == Camp.Red) { // 红色阵营资源点
+                resourcePoint.put("x", 45);
+                resourcePoint.put("y", 55);
+            } else if (camp == Camp.Blue) { // 蓝色阵营资源点
+                resourcePoint.put("x", 205);
+                resourcePoint.put("y", 200);
+            } else if (camp == Camp.Green) { // 绿色阵营资源点
+                resourcePoint.put("x", 45);
+                resourcePoint.put("y", 200);
+            } else if (camp == Camp.Yellow) { // 黄色阵营资源点
+                resourcePoint.put("x", 205);
+                resourcePoint.put("y", 55);
+            } else if (camp == Camp.Orange) { // 橙色阵营资源点
+                resourcePoint.put("x", 145);
+                resourcePoint.put("y", 55);
+            } else if (camp == Camp.Purple) { // 紫色阵营资源点
+                resourcePoint.put("x", 145);
+                resourcePoint.put("y", 200);
+            } else if (camp == Camp.Pink) { // 粉色阵营资源点
+                resourcePoint.put("x", 45);
+                resourcePoint.put("y", 145);
+            } else if (camp == Camp.Brown) { // 棕色阵营资源点
+                resourcePoint.put("x", 205);
+                resourcePoint.put("y", 145);
+            } else { // 其他阵营默认位置
+                resourcePoint.put("x", 128);
+                resourcePoint.put("y", 128);
+            }
+            
+            neutralBuildings.add(resourcePoint);
+        }
         
         // 中立资源点1
         ObjectNode neutralResource1 = objectMapper.createObjectNode();
