@@ -95,7 +95,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <param name="factoryEntity">工厂实体</param>
         /// <param name="unitType">单位类型</param>
         /// <param name="factoryPosition">工厂位置</param>
-        private void CreateUnit(zWorld world, Entity factoryEntity, int unitType, zVector3 factoryPosition)
+        private void CreateUnit(zWorld world, Entity factoryEntity, UnitType unitType, zVector3 factoryPosition)
         {
             // 获取阵营组件以确定玩家ID
             if (!ComponentManager.HasComponent<CampComponent>(factoryEntity))
@@ -113,19 +113,8 @@ namespace ZLockstep.Simulation.ECS.Systems
             spawnPosition.z -= (zfloat)10.0f; // 稍微偏移位置
             
             // 使用EntityCreationManager创建单位
-            int prefabId = 0; // 默认预制体ID
-            switch (unitType)
-            {
-                case 1: // 动员兵
-                    prefabId = 1;
-                    break;
-                case 2: // 坦克
-                    prefabId = 2;
-                    break;
-                case 3: // 矿车
-                    prefabId = 3;
-                    break;
-            }
+            int prefabId = 6; // 默认预制体ID
+
             
             var unitEvent = EntityCreationManager.CreateUnitEntity(World, playerId, unitType, spawnPosition, prefabId, world.GameInstance.GetNavSystem());
             

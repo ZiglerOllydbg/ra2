@@ -80,7 +80,7 @@ public class Ra2Demo : MonoBehaviour
 
     // 添加建造功能相关字段
     private bool showBuildUI = false; // 是否显示建造UI
-    private int buildingToBuild = -1; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
+    private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
     private GameObject previewBuilding; // 预览建筑模型
 
     [Header("Unity资源")]
@@ -475,20 +475,37 @@ public class Ra2Demo : MonoBehaviour
         }
     }
     
+    private int BuildingTypeToPrefabId(BuildingType buildingType)
+    {
+        switch (buildingType)
+        {
+            case BuildingType.Smelter:
+                return 3;
+            case BuildingType.PowerPlant:
+                return 4;
+            case BuildingType.Factory:
+                return 5;
+            default:
+                return -1;
+        }
+    }
+
     /// <summary>
     /// 更新建筑预览位置
     /// </summary>
     private void UpdateBuildingPreview()
     {
         // 如果没有要建造的建筑或游戏未准备好，则不显示预览
-        if (buildingToBuild == -1 || !isReady || _game == null || _game.MapManager == null)
+        if (buildingToBuild == BuildingType.None || !isReady || _game == null || _game.MapManager == null)
             return;
 
         // 如果还没有创建预览对象，则创建它
-        if (previewBuilding == null && buildingToBuild >= 3 && buildingToBuild <= 5)
+        if (previewBuilding == null)
         {
+            int prefabId = BuildingTypeToPrefabId(buildingToBuild);
+
             // 使用对应的预制体创建预览建筑
-            GameObject prefab = unitPrefabs[buildingToBuild];
+            GameObject prefab = unitPrefabs[prefabId];
             if (prefab != null)
             {
                 previewBuilding = Instantiate(prefab);
@@ -548,7 +565,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void PlaceBuilding()
     {
-        if (buildingToBuild == -1 || previewBuilding == null || _game == null)
+        if (buildingToBuild == BuildingType.None || previewBuilding == null || _game == null)
             return;
 
         Vector3 placementPosition = previewBuilding.transform.position;
@@ -556,28 +573,31 @@ public class Ra2Demo : MonoBehaviour
         // 转换为逻辑层坐标
         zVector3 logicPosition = placementPosition.ToZVector3();
 
-        // 创建建筑命令（这里需要创建一个合适的命令类型）
-        // 注意：这可能需要根据实际的命令系统进行调整
-        /*
+        int prefabId = BuildingTypeToPrefabId(buildingToBuild);
+
+        // 创建建筑命令（使用CreateBuildingCommand）
         var createBuildingCommand = new CreateBuildingCommand(
             playerId: 0,
             buildingType: buildingToBuild,
-            position: logicPosition
+            position: logicPosition,
+            width: 2,
+            height: 2,
+            campId: 1,
+            prefabId: prefabId
         )
         {
-            Source = CommandSource.Local
+            Source = CommandSource.Local,
         };
 
         // 提交命令到游戏世界
         _game.SubmitCommand(createBuildingCommand);
-        */
 
         Debug.Log($"[Test] 提交创建建筑命令: 类型={buildingToBuild}, 位置={placementPosition}");
 
         // 清理预览对象
         Destroy(previewBuilding);
         previewBuilding = null;
-        buildingToBuild = -1;
+        buildingToBuild = BuildingType.None;
     }
     
     private void FixedUpdate()
@@ -641,9 +661,13 @@ public class Ra2Demo : MonoBehaviour
         {
             // 确保在鼠标释放时也结束框选（额外的安全检查）
             EndSelectionBox();
-            
+        }
+
+        // 左键点击放置建筑或选择单位
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
             // 如果处于建造模式，放置建筑
-            if (buildingToBuild != -1)
+            if (buildingToBuild != BuildingType.None)
             {
                 PlaceBuilding();
             }
@@ -653,7 +677,7 @@ public class Ra2Demo : MonoBehaviour
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
             // 如果在建造模式下，取消建造
-            if (buildingToBuild != -1)
+            if (buildingToBuild != BuildingType.None)
             {
                 CancelBuilding();
             }
@@ -674,7 +698,7 @@ public class Ra2Demo : MonoBehaviour
             Destroy(previewBuilding);
             previewBuilding = null;
         }
-        buildingToBuild = -1;
+        buildingToBuild = BuildingType.None;
     }
 
     /// <summary>
@@ -1307,17 +1331,17 @@ public class Ra2Demo : MonoBehaviour
         // 显示建筑选项
         if (GUILayout.Button("采矿场", buttonStyle, GUILayout.Height(50)))
         {
-            StartBuildingPlacement(3); // 采矿场对应unitPrefabs[3]
+            StartBuildingPlacement(BuildingType.Smelter); // 采矿场对应unitPrefabs[3]
         }
         
         if (GUILayout.Button("电厂", buttonStyle, GUILayout.Height(50)))
         {
-            StartBuildingPlacement(4); // 电厂对应unitPrefabs[4]
+            StartBuildingPlacement(BuildingType.PowerPlant); // 电厂对应unitPrefabs[4]
         }
         
         if (GUILayout.Button("坦克工厂", buttonStyle, GUILayout.Height(50)))
         {
-            StartBuildingPlacement(5); // 坦克工厂对应unitPrefabs[5]
+            StartBuildingPlacement(BuildingType.Factory); // 坦克工厂对应unitPrefabs[5]
         }
         
         // 关闭按钮
@@ -1335,7 +1359,7 @@ public class Ra2Demo : MonoBehaviour
     /// 开始建筑放置模式
     /// </summary>
     /// <param name="buildingType">建筑类型 (3=采矿场, 4=电厂, 5=坦克工厂)</param>
-    private void StartBuildingPlacement(int buildingType)
+    private void StartBuildingPlacement(BuildingType buildingType)
     {
         buildingToBuild = buildingType;
         showBuildUI = false; // 关闭建造UI
@@ -1348,13 +1372,13 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     /// <param name="buildingType">建筑类型</param>
     /// <returns>建筑名称</returns>
-    private string GetBuildingName(int buildingType)
+    private string GetBuildingName(BuildingType buildingType)
     {
         switch (buildingType)
         {
-            case 3: return "采矿场";
-            case 4: return "电厂";
-            case 5: return "坦克工厂";
+            case BuildingType.Smelter: return "采矿场";
+            case BuildingType.PowerPlant: return "电厂";
+            case BuildingType.Factory: return "坦克工厂";
             default: return $"建筑{buildingType}";
         }
     }
@@ -1483,13 +1507,13 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     /// <param name="unitType">单位类型</param>
     /// <returns>单位类型名称</returns>
-    private string GetUnitTypeName(int unitType)
+    private string GetUnitTypeName(UnitType unitType)
     {
         switch (unitType)
         {
-            case 1: return "动员兵";
-            case 2: return "坦克";
-            case 3: return "矿车";
+            case UnitType.Infantry: return "动员兵";
+            case UnitType.Tank: return "坦克";
+            case UnitType.Harvester: return "矿车";
             default: return $"单位{unitType}";
         }
     }
@@ -1499,7 +1523,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     /// <param name="unitType">单位类型</param>
     /// <param name="changeValue">变化值</param>
-    private void SendProduceCommand(int unitType, int changeValue)
+    private void SendProduceCommand(UnitType unitType, int changeValue)
     {
         SendProduceCommand(selectedFactoryEntityId, unitType, changeValue);
     }
@@ -1510,7 +1534,7 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="factoryEntityId">工厂实体ID</param>
     /// <param name="unitType">单位类型</param>
     /// <param name="changeValue">变化值</param>
-    private void SendProduceCommand(int factoryEntityId, int unitType, int changeValue)
+    private void SendProduceCommand(int factoryEntityId, UnitType unitType, int changeValue)
     {
         if (_game == null || factoryEntityId == -1)
             return;

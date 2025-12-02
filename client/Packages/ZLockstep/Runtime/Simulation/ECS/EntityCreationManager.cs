@@ -7,6 +7,31 @@ using System.Collections.Generic;
 namespace ZLockstep.Simulation.ECS
 {
     /// <summary>
+    /// 建筑类型枚举
+    /// </summary>
+    public enum BuildingType
+    {
+        None = 0,
+        Base = 1,        // 基地
+
+        Mine = 2,        // 矿
+        Smelter = 3,    // 冶金厂
+         
+        PowerPlant = 4,   // 电厂
+        Factory = 5,     // 工厂/防御塔
+    }
+
+    /// <summary>
+    /// 单位类型枚举
+    /// </summary>
+    public enum UnitType
+    {
+        Infantry = 1,    // 动员兵
+        Tank = 2,        // 坦克
+        Harvester = 3    // 矿车
+    }
+
+    /// <summary>
     /// 实体创建管理器
     /// 负责统一管理游戏中各种实体（建筑、单位等）的创建逻辑
     /// </summary>
@@ -28,7 +53,7 @@ namespace ZLockstep.Simulation.ECS
         public static UnitCreatedEvent? CreateBuildingEntity(
             zWorld world, 
             int playerId, 
-            int buildingType, 
+            BuildingType buildingType, 
             zVector3 position, 
             int width, 
             int height, 
@@ -55,7 +80,7 @@ namespace ZLockstep.Simulation.ECS
             }
 
             // 4. 添加建筑组件
-            var buildingComponent = BuildingComponent.Create(buildingType, gridX, gridY, width, height);
+            var buildingComponent = BuildingComponent.Create((int)buildingType, gridX, gridY, width, height);
             world.ComponentManager.AddComponent(entity, buildingComponent);
 
             // 5. 添加阵营组件
@@ -63,13 +88,13 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, campComponent);
 
             // 6. 添加生命值组件
-            var healthComponent = CreateBuildingHealthComponent(buildingType);
+            var healthComponent = CreateBuildingHealthComponent((int)buildingType);
             world.ComponentManager.AddComponent(entity, healthComponent);
 
             // 7. 如果建筑有攻击能力（如防御塔），添加攻击组件
-            if (CanBuildingAttack(buildingType))
+            if (CanBuildingAttack((int)buildingType))
             {
-                var attackComponent = CreateBuildingAttackComponent(buildingType);
+                var attackComponent = CreateBuildingAttackComponent((int)buildingType);
                 world.ComponentManager.AddComponent(entity, attackComponent);
             }
 
@@ -96,10 +121,10 @@ namespace ZLockstep.Simulation.ECS
             }
 
             // 10. 如果是工厂建筑，添加生产组件
-            if (buildingType == 1) // 工厂建筑
+            if (buildingType == BuildingType.Factory) // 工厂建筑
             {
                 // 支持生产动员兵和坦克
-                var supportedUnitTypes = new HashSet<int> { 1, 2 }; // 1=动员兵, 2=坦克
+                var supportedUnitTypes = new HashSet<UnitType> { UnitType.Tank }; // 1=动员兵, 2=坦克
                 var produceComponent = ProduceComponent.Create(supportedUnitTypes);
                 world.ComponentManager.AddComponent(entity, produceComponent);
             }
@@ -108,7 +133,7 @@ namespace ZLockstep.Simulation.ECS
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,
-                UnitType = buildingType,
+                UnitType = (int)buildingType,
                 Position = position,
                 PlayerId = playerId,
                 PrefabId = prefabId
@@ -132,7 +157,7 @@ namespace ZLockstep.Simulation.ECS
         public static UnitCreatedEvent CreateUnitEntity(
             zWorld world,
             int playerId,
-            int unitType,
+            UnitType unitType,
             zVector3 position,
             int prefabId,
             FlowFieldNavigationSystem navSystem)
@@ -143,7 +168,7 @@ namespace ZLockstep.Simulation.ECS
             
             switch (unitType)
             {
-                case 2: // 坦克
+                case UnitType.Tank: // 坦克
                     radius = (zfloat)2;
                     maxSpeed = (zfloat)6.0f;
                     break;
@@ -169,19 +194,19 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加Unit组件（根据类型）
-            var unitComponent = CreateUnitComponent(unitType, playerId);
+            var unitComponent = CreateUnitComponent((int)unitType, playerId);
             unitComponent.PrefabId = prefabId;
             unitComponent.MoveSpeed = maxSpeed;
             world.ComponentManager.AddComponent(entity, unitComponent);
 
             // 5. 添加Health组件
-            var healthComponent = CreateUnitHealthComponent(unitType);
+            var healthComponent = CreateUnitHealthComponent((int)unitType);
             world.ComponentManager.AddComponent(entity, healthComponent);
 
             // 6. 如果单位有攻击能力，添加Attack组件
-            if (CanUnitAttack(unitType))
+            if (CanUnitAttack((int)unitType))
             {
-                var attackComponent = CreateUnitAttackComponent(unitType);
+                var attackComponent = CreateUnitAttackComponent((int)unitType);
                 world.ComponentManager.AddComponent(entity, attackComponent);
             }
 
@@ -195,11 +220,11 @@ namespace ZLockstep.Simulation.ECS
             // 9. 添加旋转相关组件
             // 根据单位类型添加不同的载具类型组件
             VehicleTypeComponent vehicleType;
-            if (unitType == 1) // 动员兵
+            if (unitType == UnitType.Infantry) // 动员兵
             {
                 vehicleType = VehicleTypeComponent.CreateInfantry();
             }
-            else if (unitType == 2) // 坦克
+            else if (unitType == UnitType.Tank) // 坦克
             {
                 vehicleType = VehicleTypeComponent.CreateHeavyTank();
             }
@@ -234,7 +259,7 @@ namespace ZLockstep.Simulation.ECS
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,
-                UnitType = unitType,
+                UnitType = (int)unitType,
                 Position = position,
                 PlayerId = playerId,
                 PrefabId = prefabId
@@ -255,6 +280,10 @@ namespace ZLockstep.Simulation.ECS
                     return new HealthComponent((zfloat)1000.0f);
                 case 1: // 防御塔/工厂
                     return new HealthComponent((zfloat)500.0f);
+                case 2: // 采矿场
+                    return new HealthComponent((zfloat)400.0f);
+                case 3: // 电厂
+                    return new HealthComponent((zfloat)300.0f);
                 default:
                     return new HealthComponent((zfloat)500.0f);
             }

@@ -116,6 +116,16 @@ namespace ZLockstep.Sync
         {
             return null; // 基类返回null，由子类重写
         }
+
+        public virtual IFlowFieldMap GetMapManager()
+        {
+            return null; // 返回BattleGame的NavSystem
+        }
+
+        public virtual FlowFieldManager GetFlowFieldManager()
+        {
+            return null; // 返回BattleGame的NavSystem
+        }
         
         /// <summary>
         /// 构造函数

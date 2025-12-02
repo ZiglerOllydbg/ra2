@@ -11,32 +11,32 @@ namespace ZLockstep.Simulation.ECS.Components
         /// <summary>
         /// 支持生产的单位类型列表
         /// </summary>
-        public HashSet<int> SupportedUnitTypes;
+        public HashSet<UnitType> SupportedUnitTypes;
 
         /// <summary>
         /// 每种单位类型的生产数量
         /// Key: UnitType, Value: 生产数量 (0-99)
         /// </summary>
-        public Dictionary<int, int> ProduceNumbers;
+        public Dictionary<UnitType, int> ProduceNumbers;
 
         /// <summary>
         /// 每种单位类型的生产进度
         /// Key: UnitType, Value: 生产进度 (0-100)
         /// </summary>
-        public Dictionary<int, int> ProduceProgress;
+        public Dictionary<UnitType, int> ProduceProgress;
 
         /// <summary>
         /// 创建生产组件
         /// </summary>
         /// <param name="supportedUnitTypes">支持生产的单位类型列表</param>
         /// <returns>生产组件实例</returns>
-        public static ProduceComponent Create(HashSet<int> supportedUnitTypes)
+        public static ProduceComponent Create(HashSet<UnitType> supportedUnitTypes)
         {
             var component = new ProduceComponent
             {
-                SupportedUnitTypes = supportedUnitTypes ?? new HashSet<int>(),
-                ProduceNumbers = new Dictionary<int, int>(),
-                ProduceProgress = new Dictionary<int, int>()
+                SupportedUnitTypes = supportedUnitTypes ?? new HashSet<UnitType>(),
+                ProduceNumbers = new Dictionary<UnitType, int>(),
+                ProduceProgress = new Dictionary<UnitType, int>()
             };
 
             // 初始化所有支持类型的生产数量和进度

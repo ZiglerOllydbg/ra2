@@ -61,6 +61,18 @@ namespace Game.Examples
             return NavSystem; // 返回BattleGame的NavSystem
         }
 
+        public override IFlowFieldMap GetMapManager()
+        {
+            return MapManager; // 返回BattleGame的NavSystem
+        }
+
+        public override FlowFieldManager GetFlowFieldManager()
+        {
+            return FlowFieldManager; // 返回BattleGame的NavSystem
+        }
+
+        
+
         /// <summary>
         /// 初始化战斗游戏
         /// </summary>
@@ -201,7 +213,7 @@ namespace Game.Examples
                             float y = building["y"]?.ToObject<float>() ?? 0;
 
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
-                            var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, 1,
+                            var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, BuildingType.Mine,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
                             width:4, height:4, prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
@@ -230,21 +242,16 @@ namespace Game.Examples
                         float y = building["y"]?.ToObject<float>() ?? 0;
 
                         // 根据类型确定建筑参数
-                        int buildingType = 0; // 默认基地
+                        BuildingType buildingType = BuildingType.None; // 默认基地
                         int width = 10;
                         int height = 10;
 
                         switch (type)
                         {
                             case "base":
-                                buildingType = 0; // 基地
+                                buildingType = BuildingType.Base; // 基地
                                 width = 10;
                                 height = 10;
-                                break;
-                            case "resource_point":
-                                buildingType = 3; // 资源点
-                                width = 4;
-                                height = 4;
                                 break;
                         }
 
@@ -546,57 +553,6 @@ namespace Game.Examples
                 default:
                     return false;
             }
-        }
-
-        /// <summary>
-        /// 创建建筑
-        /// </summary>
-        public void CreateBuilding(int campId, int buildingType, zVector3 position, int width, int height, int prefabId)
-        {
-            var command = new CreateBuildingCommand(
-                playerId: campId,
-                buildingType: buildingType,
-                position: position,
-                width: width,
-                height: height,
-                campId: campId,
-                prefabId: prefabId
-            );
-
-            // 设置地图和流场管理器引用
-            command.MapManager = MapManager;
-            command.FlowFieldManager = FlowFieldManager;
-
-            // 提交命令
-            SubmitCommand(command);
-        }
-
-        /// <summary>
-        /// 初始化初始基地和单位
-        /// </summary>
-        public void InitializeStartingUnits()
-        {
-            // 玩家基地（左下角）
-            CreateBuilding(
-                campId: 0,
-                buildingType: 0,
-                position: new zVector3(new zfloat(20), zfloat.Zero, new zfloat(20)),
-                width: 10,
-                height: 10,
-                prefabId: 0 // 蓝色基地预制体
-            );
-
-            // AI基地（右上角）
-            CreateBuilding(
-                campId: 1,
-                buildingType: 0,
-                position: new zVector3(new zfloat(230), zfloat.Zero, new zfloat(230)),
-                width: 10,
-                height: 10,
-                prefabId: 1 // 红色基地预制体
-            );
-
-            zUDebug.Log("[BattleGame] 初始基地创建完成");
         }
 
         /// <summary>

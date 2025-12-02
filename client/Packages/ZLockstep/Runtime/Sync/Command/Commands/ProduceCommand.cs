@@ -21,14 +21,14 @@ namespace ZLockstep.Sync.Command.Commands
         /// <summary>
         /// 单位类型
         /// </summary>
-        public int UnitType { get; set; }
+        public UnitType UnitType { get; set; }
 
         /// <summary>
         /// 变化值 (+1 或 -1)
         /// </summary>
         public int ChangeValue { get; set; }
 
-        public ProduceCommand(int playerId, int entityId, int unitType, int changeValue)
+        public ProduceCommand(int playerId, int entityId, UnitType unitType, int changeValue)
             : base(playerId)
         {
             EntityId = entityId;

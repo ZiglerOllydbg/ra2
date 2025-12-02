@@ -77,8 +77,8 @@ public class StandaloneBattleDemo : MonoBehaviour
 
         _battleGame.Init();
 
-        // 创建初始基地
-        _battleGame.InitializeStartingUnits();
+        // // 创建初始基地
+        // _battleGame.InitializeStartingUnits();
 
         Debug.Log("[StandaloneBattleDemo] 战斗游戏初始化完成");
     }
