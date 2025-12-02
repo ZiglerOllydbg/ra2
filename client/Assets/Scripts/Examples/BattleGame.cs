@@ -289,8 +289,8 @@ namespace Game.Examples
                 // 添加经济组件（每个玩家一个全局实体）
                 var money = playerObj["money"]?.ToObject<int>() ?? 2200; // 默认2200资金
                 var economyEntity = World.EntityManager.CreateEntity();
-                World.ComponentManager.AddComponent(economyEntity, ZLockstep.Simulation.ECS.Components.EconomyComponent.Create(money, 0));
-                World.ComponentManager.AddComponent(economyEntity, ZLockstep.Simulation.ECS.Components.CampComponent.Create(playerId));
+                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, 10));
+                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(playerId));
             }
             
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
