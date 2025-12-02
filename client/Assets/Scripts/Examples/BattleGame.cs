@@ -203,7 +203,7 @@ namespace Game.Examples
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
                             var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, 1,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                            width:4, height:4, prefabId:0, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                            width:4, height:4, prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
                             {
                                 createdEntities.Add(entityEvent.Value);
@@ -233,7 +233,6 @@ namespace Game.Examples
                         int buildingType = 0; // 默认基地
                         int width = 10;
                         int height = 10;
-                        int prefabId = playerId; // 使用playerId作为预制体ID，以区分不同阵营的颜色
 
                         switch (type)
                         {
@@ -252,7 +251,7 @@ namespace Game.Examples
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        width: width, height: height, prefabId: prefabId, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        width: width, height: height, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
@@ -386,7 +385,7 @@ namespace Game.Examples
             {
                 case "tank":
                     unitType = 2; // 坦克
-                    prefabId = 2; // 坦克预制体ID
+                    prefabId = 0; // 坦克预制体ID
                     radius = (zfloat)2;
                     maxSpeed = (zfloat)6.0f;
                     break;
