@@ -128,8 +128,31 @@ namespace ZLockstep.Simulation.ECS
                 var produceComponent = ProduceComponent.Create(supportedUnitTypes);
                 world.ComponentManager.AddComponent(entity, produceComponent);
             }
+            // 11. 如果是矿源，添加矿源组件
+            else if (buildingType == BuildingType.Mine) // 矿源
+            {
+                // 添加矿源组件，初始资源5000
+                var mineComponent = MineComponent.CreateDefault();
+                world.ComponentManager.AddComponent(entity, mineComponent);
+            }
+            // 12. 如果是采矿场，添加采矿组件
+            else if (buildingType == BuildingType.Smelter) // 采矿场
+            {
+                // 查找最近的矿源并关联
+                int nearestMineEntityId = FindNearestMine(world, position);
+                if (nearestMineEntityId != -1)
+                {
+                    // 添加采矿组件，关联到最近的矿源
+                    var miningComponent = MiningComponent.Create(nearestMineEntityId);
+                    world.ComponentManager.AddComponent(entity, miningComponent);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogWarning($"[EntityCreationManager] 未能找到附近的矿源，采矿场实体 {entity.Id} 将不会进行采矿");
+                }
+            }
 
-            // 11. 创建事件对象并返回
+            // 13. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,
@@ -380,6 +403,65 @@ namespace ZLockstep.Simulation.ECS
             return unitType == 1 || unitType == 2;
         }
 
+        #endregion
+
+        #region 采矿辅助方法
+        
+        /// <summary>
+        /// 查找距离指定位置最近的矿源
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="position">当前位置</param>
+        /// <returns>最近的矿源实体ID，如果没找到则返回-1</returns>
+        private static int FindNearestMine(zWorld world, zVector3 position)
+        {
+            int nearestMineEntityId = -1;
+            zfloat minDistanceSquared = zfloat.Infinity;
+            
+            // 获取所有具有矿源组件的实体
+            var mineEntities = world.ComponentManager.GetAllEntityIdsWith<MineComponent>();
+            
+            foreach (var entityId in mineEntities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 检查实体是否具有Transform组件
+                if (world.ComponentManager.HasComponent<TransformComponent>(entity))
+                {
+                    var transformComponent = world.ComponentManager.GetComponent<TransformComponent>(entity);
+                    zVector3 minePosition = transformComponent.Position;
+                    
+                    // 计算距离的平方（避免开方运算）
+                    zVector3 delta = position - minePosition;
+                    zfloat distanceSquared = delta.x * delta.x + delta.z * delta.z; // 只考虑水平距离
+                    
+                    // 检查是否是最近的
+                    if (distanceSquared < minDistanceSquared)
+                    {
+                        minDistanceSquared = distanceSquared;
+                        nearestMineEntityId = entityId;
+                    }
+                }
+            }
+            
+            return nearestMineEntityId;
+        }
+        
+        /// <summary>
+        /// 为采矿场分配关联的矿源
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="smelterEntity">采矿场实体</param>
+        /// <param name="mineEntityId">矿源实体ID</param>
+        public static void AssignMineToSmelter(zWorld world, Entity smelterEntity, int mineEntityId)
+        {
+            // 添加采矿组件，关联到指定的矿源
+            var miningComponent = MiningComponent.Create(mineEntityId);
+            world.ComponentManager.AddComponent(smelterEntity, miningComponent);
+            
+            UnityEngine.Debug.Log($"[EntityCreationManager] 为采矿场实体 {smelterEntity.Id} 分配了矿源实体 {mineEntityId}");
+        }
+        
         #endregion
     }
 }

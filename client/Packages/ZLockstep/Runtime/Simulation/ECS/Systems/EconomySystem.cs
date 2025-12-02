@@ -1,0 +1,119 @@
+using System.Collections.Generic;
+using ZLockstep.Simulation.ECS.Components;
+using zUnity;
+
+namespace ZLockstep.Simulation.ECS.Systems
+{
+    /// <summary>
+    /// 经济系统
+    /// 处理游戏中的经济逻辑，包括采矿、资源增长等
+    /// </summary>
+    public class EconomySystem : BaseSystem
+    {
+        public override int GetOrder()
+        {
+            // 经济系统应该在生产系统之后执行
+            return (int)SystemOrder.Produce + 1;
+        }
+
+        public override void Update()
+        {
+            ProcessMining();
+        }
+
+        /// <summary>
+        /// 处理采矿逻辑
+        /// </summary>
+        private void ProcessMining()
+        {
+            // 获取所有具有采矿组件的实体
+            var miningEntities = ComponentManager.GetAllEntityIdsWith<MiningComponent>();
+            
+            foreach (var entityId in miningEntities)
+            {
+                var miningEntity = new Entity(entityId);
+                var miningComponent = ComponentManager.GetComponent<MiningComponent>(miningEntity);
+                
+                // 检查是否正在采矿
+                if (!miningComponent.IsMining)
+                    continue;
+                
+                // 增加采矿计时器
+                miningComponent.MiningTimer++;
+                
+                // 检查是否到达采矿周期
+                if (miningComponent.MiningTimer >= miningComponent.MiningCycleFrames)
+                {
+                    // 重置计时器
+                    miningComponent.MiningTimer = 0;
+                    
+                    // 获取关联的矿源
+                    var mineEntity = new Entity(miningComponent.MineEntityId);
+                    if (ComponentManager.HasComponent<MineComponent>(mineEntity))
+                    {
+                        var mineComponent = ComponentManager.GetComponent<MineComponent>(mineEntity);
+                        
+                        // 检查矿源是否有足够的资源
+                        if (mineComponent.ResourceAmount >= miningComponent.ResourcePerCycle)
+                        {
+                            // 减少矿源资源
+                            mineComponent.ResourceAmount -= miningComponent.ResourcePerCycle;
+                            ComponentManager.AddComponent(mineEntity, mineComponent);
+                            
+                            // 获取采矿场的阵营
+                            if (ComponentManager.HasComponent<CampComponent>(miningEntity))
+                            {
+                                var campComponent = ComponentManager.GetComponent<CampComponent>(miningEntity);
+                                int playerId = campComponent.CampId;
+                                
+                                // 增加玩家资金
+                                AddResourceToPlayer(playerId, miningComponent.ResourcePerCycle);
+                            }
+                        }
+                        else
+                        {
+                            // 矿源资源不足，停止采矿
+                            miningComponent.IsMining = false;
+                        }
+                        
+                        // 更新采矿组件
+                        ComponentManager.AddComponent(miningEntity, miningComponent);
+                    }
+                }
+                else
+                {
+                    // 更新采矿组件的计时器
+                    ComponentManager.AddComponent(miningEntity, miningComponent);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 为指定玩家增加资源
+        /// </summary>
+        /// <param name="playerId">玩家ID</param>
+        /// <param name="amount">资源数量</param>
+        private void AddResourceToPlayer(int playerId, int amount)
+        {
+            // 查找玩家的经济组件
+            var economyEntities = ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
+            
+            foreach (var entityId in economyEntities)
+            {
+                var entity = new Entity(entityId);
+                if (ComponentManager.HasComponent<CampComponent>(entity))
+                {
+                    var campComponent = ComponentManager.GetComponent<CampComponent>(entity);
+                    if (campComponent.CampId == playerId)
+                    {
+                        // 找到玩家的经济组件，增加资金
+                        var economyComponent = ComponentManager.GetComponent<EconomyComponent>(entity);
+                        economyComponent.Money += amount;
+                        ComponentManager.AddComponent(entity, economyComponent);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}

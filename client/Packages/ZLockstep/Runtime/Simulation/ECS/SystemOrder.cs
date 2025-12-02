@@ -17,8 +17,13 @@ namespace ZLockstep.Simulation.ECS
         Produce = 1,
         
         /// <summary>
+        /// 经济系统
+        /// </summary>
+        Economy = 2,
+        
+        /// <summary>
         /// 表现系统
         /// </summary>
-        Presentation = 2
+        Presentation = 3
     }
 }

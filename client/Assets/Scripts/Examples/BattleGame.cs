@@ -167,6 +167,9 @@ namespace Game.Examples
             // 注册生产系统
             World.SystemManager.RegisterSystem(new ProduceSystem());
 
+            // 注册经济系统
+            World.SystemManager.RegisterSystem(new EconomySystem());
+
             // 注册结算系统
             if (EnableSettlementSystem)
             {

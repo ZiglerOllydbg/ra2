@@ -30,12 +30,12 @@ namespace ZLockstep.Simulation.ECS.Components
         }
 
         /// <summary>
-        /// 创建默认经济组件（1000资金，0电力）
+        /// 创建默认经济组件（1500资金，0电力）
         /// </summary>
         /// <returns>经济组件</returns>
         public static EconomyComponent CreateDefault()
         {
-            return new EconomyComponent(1000, 0);
+            return new EconomyComponent(1500, 0);
         }
 
         /// <summary>
