@@ -78,6 +78,11 @@ public class Ra2Demo : MonoBehaviour
     private bool showFactoryUI = false; // 是否显示工厂UI
     private bool showProductionList = false; // 是否显示生产建筑列表
 
+    // 添加建造功能相关字段
+    private bool showBuildUI = false; // 是否显示建造UI
+    private int buildingToBuild = -1; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
+    private GameObject previewBuilding; // 预览建筑模型
+
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
     [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
@@ -470,6 +475,111 @@ public class Ra2Demo : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// 更新建筑预览位置
+    /// </summary>
+    private void UpdateBuildingPreview()
+    {
+        // 如果没有要建造的建筑或游戏未准备好，则不显示预览
+        if (buildingToBuild == -1 || !isReady || _game == null || _game.MapManager == null)
+            return;
+
+        // 如果还没有创建预览对象，则创建它
+        if (previewBuilding == null && buildingToBuild >= 3 && buildingToBuild <= 5)
+        {
+            // 使用对应的预制体创建预览建筑
+            GameObject prefab = unitPrefabs[buildingToBuild];
+            if (prefab != null)
+            {
+                previewBuilding = Instantiate(prefab);
+                
+                // 设置为半透明
+                Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
+                foreach (Renderer renderer in renderers)
+                {
+                    Material[] materials = renderer.materials;
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        // 创建新材质以避免修改原始材质
+                        Material transparentMaterial = new Material(materials[i]);
+                        transparentMaterial.color = new Color(
+                            transparentMaterial.color.r,
+                            transparentMaterial.color.g,
+                            transparentMaterial.color.b,
+                            0.9f // 50% 透明度
+                        );
+                        materials[i] = transparentMaterial;
+                    }
+                    renderer.materials = materials;
+                }
+            }
+        }
+
+        // 更新预览建筑的位置
+        if (previewBuilding != null && Mouse.current != null)
+        {
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
+            if (TryGetGroundPosition(mousePosition, out Vector3 worldPosition))
+            {
+                // 对齐到网格中心
+                zVector2 zWorldPos = new zVector2(
+                    zfloat.CreateFloat((long)(worldPosition.x * zfloat.SCALE_10000)),
+                    zfloat.CreateFloat((long)(worldPosition.z * zfloat.SCALE_10000))
+                );
+                
+                // 使用WorldToGrid将世界坐标转换为网格坐标
+                _game.MapManager.WorldToGrid(zWorldPos, out int gridX, out int gridY);
+                
+                // 使用GridToWorld将网格坐标转换回世界坐标（确保对齐到网格中心）
+                zVector2 alignedWorldPos = _game.MapManager.GridToWorld(gridX, gridY);
+                
+                // 设置预览建筑的位置
+                previewBuilding.transform.position = new Vector3(
+                    (float)alignedWorldPos.x,
+                    0, // 保持原来的Y轴位置
+                    (float)alignedWorldPos.y
+                );
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 放置建筑
+    /// </summary>
+    private void PlaceBuilding()
+    {
+        if (buildingToBuild == -1 || previewBuilding == null || _game == null)
+            return;
+
+        Vector3 placementPosition = previewBuilding.transform.position;
+        
+        // 转换为逻辑层坐标
+        zVector3 logicPosition = placementPosition.ToZVector3();
+
+        // 创建建筑命令（这里需要创建一个合适的命令类型）
+        // 注意：这可能需要根据实际的命令系统进行调整
+        /*
+        var createBuildingCommand = new CreateBuildingCommand(
+            playerId: 0,
+            buildingType: buildingToBuild,
+            position: logicPosition
+        )
+        {
+            Source = CommandSource.Local
+        };
+
+        // 提交命令到游戏世界
+        _game.SubmitCommand(createBuildingCommand);
+        */
+
+        Debug.Log($"[Test] 提交创建建筑命令: 类型={buildingToBuild}, 位置={placementPosition}");
+
+        // 清理预览对象
+        Destroy(previewBuilding);
+        previewBuilding = null;
+        buildingToBuild = -1;
+    }
+    
     private void FixedUpdate()
     {
         // 每帧开始先处理网络消息
@@ -505,6 +615,9 @@ public class Ra2Demo : MonoBehaviour
         {
             _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
         }
+        
+        // 更新建筑预览
+        UpdateBuildingPreview();
     }
 
     private void InputAction()
@@ -528,15 +641,41 @@ public class Ra2Demo : MonoBehaviour
         {
             // 确保在鼠标释放时也结束框选（额外的安全检查）
             EndSelectionBox();
+            
+            // 如果处于建造模式，放置建筑
+            if (buildingToBuild != -1)
+            {
+                PlaceBuilding();
+            }
         }
 
         // 右键点击发送移动命令
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
-            SendMoveCommandForSelectedUnit();
+            // 如果在建造模式下，取消建造
+            if (buildingToBuild != -1)
+            {
+                CancelBuilding();
+            }
+            else
+            {
+                SendMoveCommandForSelectedUnit();
+            }
         }
     }
 
+    /// <summary>
+    /// 取消建筑建造
+    /// </summary>
+    private void CancelBuilding()
+    {
+        if (previewBuilding != null)
+        {
+            Destroy(previewBuilding);
+            previewBuilding = null;
+        }
+        buildingToBuild = -1;
+    }
 
     /// <summary>
     /// 发送移动命令给选中的单位
@@ -964,12 +1103,27 @@ public class Ra2Demo : MonoBehaviour
             if (GUI.Button(productionButtonRect, "生产", produceButtonStyle))
             {
                 showProductionList = !showProductionList;
+                showBuildUI = false; // 确保建造UI关闭
+            }
+            
+            // 绘制建造按钮（在生产按钮右侧）
+            Rect buildButtonRect = new(120, Screen.height - 100, 80, 80);
+            if (GUI.Button(buildButtonRect, "建造", produceButtonStyle))
+            {
+                showBuildUI = !showBuildUI;
+                showProductionList = false; // 确保生产列表关闭
             }
             
             // 绘制生产建筑列表
             if (showProductionList)
             {
                 DrawProductionBuildingList();
+            }
+            
+            // 绘制建造UI
+            if (showBuildUI)
+            {
+                DrawBuildUI();
             }
         }
         
@@ -1112,6 +1266,97 @@ public class Ra2Demo : MonoBehaviour
         }
         
         DrawGMConsole();
+    }
+    
+    /// <summary>
+    /// 绘制建造UI
+    /// </summary>
+    private void DrawBuildUI()
+    {
+        // 创建一个半透明背景
+        GUIStyle bgStyle = new GUIStyle();
+        Texture2D bgTexture = new Texture2D(1, 1);
+        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
+        bgTexture.Apply();
+        bgStyle.normal.background = bgTexture;
+        
+        // 绘制背景
+        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
+        
+        // 绘制建造面板
+        GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
+        panelStyle.fontSize = 24;
+        
+        Rect panelRect = new Rect((Screen.width - 300) / 2, (Screen.height - 300) / 2, 300, 300);
+        GUI.Box(panelRect, "", panelStyle);
+        
+        // 显示标题
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.fontSize = 24;
+        titleStyle.alignment = TextAnchor.MiddleCenter;
+        GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "选择建筑类型", titleStyle);
+        
+        // 创建内容区域（为标题预留空间）
+        Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
+        GUILayout.BeginArea(contentRect);
+        
+        // 增大按钮字体
+        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+        buttonStyle.fontSize = 20;
+        
+        // 显示建筑选项
+        if (GUILayout.Button("采矿场", buttonStyle, GUILayout.Height(50)))
+        {
+            StartBuildingPlacement(3); // 采矿场对应unitPrefabs[3]
+        }
+        
+        if (GUILayout.Button("电厂", buttonStyle, GUILayout.Height(50)))
+        {
+            StartBuildingPlacement(4); // 电厂对应unitPrefabs[4]
+        }
+        
+        if (GUILayout.Button("坦克工厂", buttonStyle, GUILayout.Height(50)))
+        {
+            StartBuildingPlacement(5); // 坦克工厂对应unitPrefabs[5]
+        }
+        
+        // 关闭按钮
+        GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
+        closeStyle.fontSize = 20;
+        if (GUILayout.Button("关闭", closeStyle, GUILayout.Height(40)))
+        {
+            showBuildUI = false;
+        }
+        
+        GUILayout.EndArea();
+    }
+    
+    /// <summary>
+    /// 开始建筑放置模式
+    /// </summary>
+    /// <param name="buildingType">建筑类型 (3=采矿场, 4=电厂, 5=坦克工厂)</param>
+    private void StartBuildingPlacement(int buildingType)
+    {
+        buildingToBuild = buildingType;
+        showBuildUI = false; // 关闭建造UI
+        
+        Debug.Log($"[Test] 开始放置建筑: {GetBuildingName(buildingType)}");
+    }
+    
+    /// <summary>
+    /// 获取建筑名称
+    /// </summary>
+    /// <param name="buildingType">建筑类型</param>
+    /// <returns>建筑名称</returns>
+    private string GetBuildingName(int buildingType)
+    {
+        switch (buildingType)
+        {
+            case 3: return "采矿场";
+            case 4: return "电厂";
+            case 5: return "坦克工厂";
+            default: return $"建筑{buildingType}";
+        }
     }
     
     /// <summary>
