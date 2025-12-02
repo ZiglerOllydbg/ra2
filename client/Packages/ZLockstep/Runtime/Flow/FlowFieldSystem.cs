@@ -1043,7 +1043,7 @@ namespace ZLockstep.Flow
                 zVector2 fixedPos = new zVector2(gx, gy);
                 rvoSimulator.SetAgentPosition(navigator.RvoAgentId, fixedPos);
                 // freezePos transform.Position
-                zUDebug.Log($"navigator.RvoAgentId: {navigator.RvoAgentId}, freezePos: {freezePos}, transform.Position: {fixedPos}");
+                // zUDebug.Log($"navigator.RvoAgentId: {navigator.RvoAgentId}, freezePos: {freezePos}, transform.Position: {fixedPos}");
 
                 // 同步零速度到 VelocityComponent（若存在）
                 if (ComponentManager.HasComponent<VelocityComponent>(entity))

@@ -1304,17 +1304,17 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fontSize = 20;
         
         // 显示建筑选项
-        if (GUILayout.Button("采矿场", buttonStyle, GUILayout.Height(50)))
+        if (GUILayout.Button("采矿场(800$,5电)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.Smelter); // 采矿场对应unitPrefabs[3]
         }
         
-        if (GUILayout.Button("电厂", buttonStyle, GUILayout.Height(50)))
+        if (GUILayout.Button("电厂(500$)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.PowerPlant); // 电厂对应unitPrefabs[4]
         }
         
-        if (GUILayout.Button("坦克工厂", buttonStyle, GUILayout.Height(50)))
+        if (GUILayout.Button("坦克工厂(1000$,5电)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.Factory); // 坦克工厂对应unitPrefabs[5]
         }
@@ -1486,8 +1486,8 @@ public class Ra2Demo : MonoBehaviour
     {
         switch (unitType)
         {
-            case UnitType.Infantry: return "动员兵";
-            case UnitType.Tank: return "坦克";
+            case UnitType.Infantry: return "动员兵()";
+            case UnitType.Tank: return "坦克(300$)";
             case UnitType.Harvester: return "矿车";
             default: return $"单位{unitType}";
         }

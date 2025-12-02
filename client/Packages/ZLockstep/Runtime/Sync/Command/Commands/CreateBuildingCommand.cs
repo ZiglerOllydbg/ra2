@@ -129,6 +129,12 @@ namespace ZLockstep.Sync.Command.Commands
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
                 return false;
             }
+
+            if (economyComponent.Power < costPower)
+            {
+                UnityEngine.Debug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
+                return false;
+            }
             
             // 扣除资源
             economyComponent.Money -= costMoney;

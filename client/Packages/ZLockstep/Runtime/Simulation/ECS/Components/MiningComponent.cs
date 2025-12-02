@@ -43,8 +43,8 @@ namespace ZLockstep.Simulation.ECS.Components
             MineEntityId = mineEntityId;
             MiningTimer = 0;
             IsMining = true;
-            ResourcePerCycle = 50;
-            MiningCycleFrames = 100;
+            ResourcePerCycle = 10;
+            MiningCycleFrames = 20;
         }
 
         /// <summary>

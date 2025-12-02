@@ -177,13 +177,12 @@ namespace ZLockstep.Simulation.ECS
         /// <param name="position">位置</param>
         /// <param name="prefabId">预制体ID</param>
         /// <returns>创建的实体事件</returns>
-        public static UnitCreatedEvent CreateUnitEntity(
+        public static UnitCreatedEvent? CreateUnitEntity(
             zWorld world,
             int playerId,
             UnitType unitType,
             zVector3 position,
-            int prefabId,
-            FlowFieldNavigationSystem navSystem)
+            int prefabId)
         {
             // 根据单位类型确定单位参数
             zfloat radius = (zfloat)2;
@@ -238,7 +237,7 @@ namespace ZLockstep.Simulation.ECS
 
             // 8. 添加导航能力
             // 注意：NavSystem需要在外部添加，因为我们可能没有NavSystem的引用
-            navSystem.AddNavigator(entity, radius, maxSpeed);
+            world.GameInstance.GetNavSystem().AddNavigator(entity, radius, maxSpeed);
 
             // 9. 添加旋转相关组件
             // 根据单位类型添加不同的载具类型组件

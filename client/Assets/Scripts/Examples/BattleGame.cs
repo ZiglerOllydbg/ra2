@@ -166,7 +166,6 @@ namespace Game.Examples
 
             // 注册生产系统
             World.SystemManager.RegisterSystem(new ProduceSystem());
-
             // 注册经济系统
             World.SystemManager.RegisterSystem(new EconomySystem());
 
@@ -280,11 +279,13 @@ namespace Game.Examples
                         float x = unit["x"]?.ToObject<float>() ?? 0;
                         float y = unit["y"]?.ToObject<float>() ?? 0;
                         
-                        // 根据类型创建单位实体
-                        var entityEvent = CreateUnitEntity(playerId, type, new zVector3((zfloat)x, zfloat.Zero, (zfloat)y));
-                        if (entityEvent.HasValue)
+                        // 使用EntityCreationManager创建单位
+                        int prefabId = 6; // 默认预制体ID
+                        var unitEvent = EntityCreationManager.CreateUnitEntity(World, playerId, UnitType.Tank, 
+                            new zVector3((zfloat)x, zfloat.Zero, (zfloat)y), prefabId);
+                        if (unitEvent.HasValue)
                         {
-                            createdEntities.Add(entityEvent.Value);
+                            createdEntities.Add(unitEvent.Value);
                         }
                     }
                 }
@@ -300,87 +301,6 @@ namespace Game.Examples
             _genesisEntities = createdEntities;
             
             zUDebug.Log($"[BattleGame] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
-        }
-
-        private UnitCreatedEvent? CreateBuildingEntity(int playerId, string type, zVector3 position)
-        {
-            // 根据建筑类型确定建筑类型ID和尺寸
-            int buildingType = 0; // 默认为基地
-            int width = 2;
-            int height = 2;
-            int prefabId = 0;
-            
-            switch (type)
-            {
-                case "tankFactory":
-                    buildingType = 1; // 假设1为坦克工厂
-                    width = 10;
-                    height = 10;
-                    prefabId = 0; // 假设2为坦克工厂预制体ID
-                    break;
-                default:
-                    buildingType = 0; // 基地
-                    width = 2;
-                    height = 2;
-                    prefabId = 0; // 假设1为基地预制体ID
-                    break;
-            }
-
-            // 1. 创建建筑实体
-            var entity = World.EntityManager.CreateEntity();
-
-            // 2. 添加Transform组件
-            World.ComponentManager.AddComponent(entity, new TransformComponent
-            {
-                Position = position,
-                Rotation = zQuaternion.identity,
-                Scale = zVector3.one * (zfloat)10
-            });
-
-            // 3. 添加建筑组件
-            var buildingComponent = BuildingComponent.Create(
-                buildingType, 0, 0, width, height); // 网格坐标暂时设为0，需要实际计算
-            World.ComponentManager.AddComponent(entity, buildingComponent);
-
-            // 4. 添加阵营组件
-            var campComponent = CampComponent.Create(playerId);
-            World.ComponentManager.AddComponent(entity, campComponent);
-
-            // 5. 添加生命值组件
-            var healthComponent = CreateBuildingHealthComponent(buildingType);
-            World.ComponentManager.AddComponent(entity, healthComponent);
-
-            // 6. 如果建筑有攻击能力（如防御塔），添加攻击组件
-            if (CanBuildingAttack(buildingType))
-            {
-                var attackComponent = CreateBuildingAttackComponent(buildingType);
-                World.ComponentManager.AddComponent(entity, attackComponent);
-            }
-
-            // 判断是本地玩家，添加本地玩家组件
-            if (World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
-            {
-                var globalInfoComponent = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-                if (globalInfoComponent.LocalPlayerCampId == playerId)
-                {
-                    World.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
-                }
-            }
-
-            // 7. 创建但不发布事件，返回事件对象
-            var unitCreatedEvent = new UnitCreatedEvent
-            {
-                EntityId = entity.Id,
-                UnitType = buildingType,
-                Position = position,
-                PlayerId = playerId,
-                PrefabId = prefabId
-            };
-
-            zUDebug.Log($"[BattleGame] 创建建筑: Player {playerId}, Type {type} (ID: {buildingType}), Position {position}");
-            
-            // 返回事件对象，而不是直接发布
-            return unitCreatedEvent;
         }
 
         public UnitCreatedEvent? CreateUnitEntity(int playerId, string type, zVector3 position)
