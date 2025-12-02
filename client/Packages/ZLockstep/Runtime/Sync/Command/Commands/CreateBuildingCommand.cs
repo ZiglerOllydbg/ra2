@@ -3,7 +3,6 @@ using ZLockstep.Simulation;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
 using ZLockstep.Simulation.ECS;
-using ZLockstep.Simulation.ECS.Components;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -95,29 +94,7 @@ namespace ZLockstep.Sync.Command.Commands
         private bool CheckAndDeductResources(zWorld world)
         {
             // 获取玩家的经济组件
-            var economyEntities = world.ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
-            EconomyComponent economyComponent = new EconomyComponent();
-            bool found = false;
-            int economyEntityId = -1;
-            
-            // 查找属于当前玩家的经济组件
-            foreach (var entityId in economyEntities)
-            {
-                var entity = new Entity(entityId);
-                if (world.ComponentManager.HasComponent<CampComponent>(entity))
-                {
-                    var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
-                    if (campComponent.CampId == CampId)
-                    {
-                        economyComponent = world.ComponentManager.GetComponent<EconomyComponent>(entity);
-                        economyEntityId = entityId;
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!found)
+            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, CampId, out var economyComponent, out var economyEntity))
             {
                 UnityEngine.Debug.LogWarning($"[CreateBuildingCommand] 未找到阵营 {CampId} 的经济组件");
                 return false;
@@ -158,7 +135,6 @@ namespace ZLockstep.Sync.Command.Commands
             economyComponent.Power -= costPower; // 增加电力供应
             
             // 更新经济组件
-            var economyEntity = new Entity(economyEntityId);
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
             UnityEngine.Debug.Log($"[CreateBuildingCommand] 扣除资源成功。花费资金: {costMoney}, 获得电力: {costPower}。剩余资金: {economyComponent.Money}, 总电力: {economyComponent.Power}");

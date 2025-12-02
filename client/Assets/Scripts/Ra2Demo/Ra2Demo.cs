@@ -2249,30 +2249,12 @@ public class Ra2Demo : MonoBehaviour
         // 获取全局信息组件以确定本地玩家阵营ID
         var globalInfoComponent = _game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
         
-        // 获取所有经济组件实体
-        var economyEntities = _game.World.ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
-        EconomyComponent economyComponent = new EconomyComponent();
-        bool found = false;
-        
         // 查找属于本地玩家的经济组件
-        foreach (var entityId in economyEntities)
+        if (!EconomyUtils.TryGetEconomyComponentForCamp(_game.World.ComponentManager, globalInfoComponent.LocalPlayerCampId, out var economyComponent, out _))
         {
-            var entity = new Entity(entityId);
-            if (_game.World.ComponentManager.HasComponent<CampComponent>(entity))
-            {
-                var campComponent = _game.World.ComponentManager.GetComponent<CampComponent>(entity);
-                if (campComponent.CampId == globalInfoComponent.LocalPlayerCampId)
-                {
-                    economyComponent = _game.World.ComponentManager.GetComponent<EconomyComponent>(entity);
-                    found = true;
-                    break;
-                }
-            }
-        }
-        
-        // 如果没找到对应阵营的经济组件，则返回
-        if (!found)
+            UnityEngine.Debug.LogWarning($"[Ra2Demo] 未找到本地玩家阵营 {globalInfoComponent.LocalPlayerCampId} 的经济组件");
             return;
+        }
         
         // 创建GUI样式
         GUIStyle econStyle = new GUIStyle(GUI.skin.label);
