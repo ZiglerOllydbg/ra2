@@ -27,6 +27,9 @@ namespace ZLockstep.View.Systems
         private Transform _viewRoot;
         private Dictionary<int, GameObject> _unitPrefabs;
 
+        // 存储正在建造的建筑的建造模型
+        private Dictionary<int, GameObject> _constructionModels = new Dictionary<int, GameObject>();
+
         /// <summary>
         /// 是否启用平滑插值（在FixedUpdate之间）
         /// </summary>
@@ -75,6 +78,9 @@ namespace ZLockstep.View.Systems
             
             // 清理死亡实体列表
             _dyingEntities.Clear();
+            
+            // 清理建造模型
+            _constructionModels.Clear();
         }
 
         /// <summary>
@@ -105,7 +111,6 @@ namespace ZLockstep.View.Systems
 
         /// <summary>
         /// 处理实体死亡事件
-        /// 触发死亡动画，并将实体添加到死亡列表中用于跟踪动画状态
         /// </summary>
         private void ProcessEntityDiedEvents()
         {
@@ -133,6 +138,17 @@ namespace ZLockstep.View.Systems
                 
                 // 添加到死亡列表，用于后续跟踪动画状态
                 _dyingEntities.Add((evt.EntityId, viewComponent.Animator));
+                
+                // 移除建造模型（如果存在）
+                if (_constructionModels.ContainsKey(evt.EntityId))
+                {
+                    var constructionModel = _constructionModels[evt.EntityId];
+                    if (constructionModel != null)
+                    {
+                        Object.Destroy(constructionModel);
+                    }
+                    _constructionModels.Remove(evt.EntityId);
+                }
             }
         }
 
@@ -254,6 +270,18 @@ namespace ZLockstep.View.Systems
             viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
             viewObject.transform.position = evt.Position.ToVector3();
 
+            // 检查实体是否是正在建造的建筑
+            // 如果是，则在上方额外显示预制体ID 8（建造模型）
+            if (_game != null && _game.World != null)
+            {
+                var entity = new Entity(evt.EntityId);
+                if (_game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
+                {
+                    // 在当前预制体上方显示建造模型
+                    ShowConstructionModel(viewObject, entity);
+                }
+            }
+
             // 添加描边组件（默认不启用）
             try 
             {
@@ -266,9 +294,9 @@ namespace ZLockstep.View.Systems
             }
 
             // 创建并添加ViewComponent
-            var entity = new Entity(evt.EntityId);
+            var entityForView = new Entity(evt.EntityId);
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
-            ComponentManager.AddComponent(entity, viewComponent);
+            ComponentManager.AddComponent(entityForView, viewComponent);
 
             // 添加玩家单位指示器组件（弹道不需要）
             if (evt.UnitType != 100)
@@ -321,6 +349,54 @@ namespace ZLockstep.View.Systems
             Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
 
             return projectile;
+        }
+
+        /// <summary>
+        /// 为缺失视图的实体创建 GameObject
+        /// </summary>
+        private void CreateViewForMissingEntity(Entity entity)
+        {
+            var unit = ComponentManager.GetComponent<UnitComponent>(entity);
+            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+
+            // 获取预制体
+            if (!_unitPrefabs.TryGetValue(unit.PrefabId, out var prefab))
+            {
+                Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={unit.UnitType}");
+                return;
+            }
+
+            // 实例化GameObject
+            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
+            viewObject.name = $"Unit_{entity.Id}_Type{unit.UnitType}_P{unit.PlayerId}_Resynced";
+            viewObject.transform.position = transform.Position.ToVector3();
+            viewObject.transform.rotation = transform.Rotation.ToQuaternion();
+            viewObject.transform.localScale = transform.Scale.ToVector3();
+
+            // 检查实体是否是正在建造的建筑
+            // 如果是，则在上方额外显示预制体ID 8（建造模型）
+            if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
+            {
+                // 在当前预制体上方显示建造模型
+                ShowConstructionModel(viewObject, entity);
+            }
+
+            // 添加描边组件（默认不启用）
+            try 
+            {
+                var outlineComponent = viewObject.AddComponent<OutlineComponent>();
+                outlineComponent.enabled = false;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[PresentationSystem] 无法为对象 {viewObject.name} 添加描边组件: {ex.Message}");
+            }
+
+            // 创建并添加ViewComponent
+            var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
+            ComponentManager.AddComponent(entity, viewComponent);
+
+            Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
         }
 
         /// <summary>
@@ -394,46 +470,6 @@ namespace ZLockstep.View.Systems
         }
 
         /// <summary>
-        /// 为缺失视图的实体创建 GameObject
-        /// </summary>
-        private void CreateViewForMissingEntity(Entity entity)
-        {
-            var unit = ComponentManager.GetComponent<UnitComponent>(entity);
-            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-
-            // 获取预制体
-            if (!_unitPrefabs.TryGetValue(unit.PrefabId, out var prefab))
-            {
-                Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={unit.UnitType}");
-                return;
-            }
-
-            // 实例化GameObject
-            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
-            viewObject.name = $"Unit_{entity.Id}_Type{unit.UnitType}_P{unit.PlayerId}_Resynced";
-            viewObject.transform.position = transform.Position.ToVector3();
-            viewObject.transform.rotation = transform.Rotation.ToQuaternion();
-            viewObject.transform.localScale = transform.Scale.ToVector3();
-
-            // 添加描边组件（默认不启用）
-            try 
-            {
-                var outlineComponent = viewObject.AddComponent<OutlineComponent>();
-                outlineComponent.enabled = false;
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogWarning($"[PresentationSystem] 无法为对象 {viewObject.name} 添加描边组件: {ex.Message}");
-            }
-
-            // 创建并添加ViewComponent
-            var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
-            ComponentManager.AddComponent(entity, viewComponent);
-
-            Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
-        }
-
-        /// <summary>
         /// 将逻辑实体的数据同步到Unity GameObject
         /// </summary>
         private void SyncEntityToView(Entity entity)
@@ -443,6 +479,38 @@ namespace ZLockstep.View.Systems
 
             if (view.GameObject == null || view.Transform == null)
                 return;
+
+            // 检查是否是正在建造的建筑
+            if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
+            {
+                // 确保建造模型存在
+                if (!_constructionModels.ContainsKey(entity.Id))
+                {
+                    ShowConstructionModel(view.GameObject, entity);
+                }
+                else
+                {
+                    // 更新建造模型的位置
+                    var constructionModel = _constructionModels[entity.Id];
+                    if (constructionModel != null)
+                    {
+                        constructionModel.transform.position = logicTransform.Position.ToVector3() + Vector3.up * 2; // 在上方显示
+                    }
+                }
+            }
+            else
+            {
+                // 建筑已经建造完成，移除建造模型
+                if (_constructionModels.ContainsKey(entity.Id))
+                {
+                    var constructionModel = _constructionModels[entity.Id];
+                    if (constructionModel != null)
+                    {
+                        Object.Destroy(constructionModel);
+                    }
+                    _constructionModels.Remove(entity.Id);
+                }
+            }
 
             // 记录上一帧位置（用于插值）
             if (view.EnableInterpolation)
@@ -589,6 +657,34 @@ namespace ZLockstep.View.Systems
             if (outlineComponent != null)
             {
                 outlineComponent.OutlineColor = color;
+            }
+        }
+
+        /// <summary>
+        /// 为正在建造的建筑显示建造模型
+        /// </summary>
+        /// <param name="parentObject">父对象（建筑模型）</param>
+        /// <param name="entity">实体</param>
+        private void ShowConstructionModel(GameObject parentObject, Entity entity)
+        {
+            // 获取建造模型预制体
+            if (_unitPrefabs.TryGetValue(8, out var constructionPrefab))
+            {
+                // 实例化建造模型
+                GameObject constructionModel = Object.Instantiate(constructionPrefab, parentObject.transform);
+                constructionModel.name = $"ConstructionModel_Entity_{entity.Id}";
+                
+                // 设置建造模型的位置（在父对象上方）
+                constructionModel.transform.localPosition = Vector3.up * 2;
+                
+                // 将建造模型添加到字典中
+                _constructionModels[entity.Id] = constructionModel;
+                
+                Debug.Log($"[PresentationSystem] 为正在建造的实体 {entity.Id} 显示建造模型");
+            }
+            else
+            {
+                Debug.LogWarning($"[PresentationSystem] 找不到预制体ID为8的建造模型");
             }
         }
 

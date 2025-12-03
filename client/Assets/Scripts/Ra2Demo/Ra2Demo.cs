@@ -2148,6 +2148,9 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 获取所有本地玩家的生产建筑
     /// </summary>
+    /// <summary>
+    /// 获取所有本地玩家的生产建筑
+    /// </summary>
     /// <returns>生产建筑实体ID列表</returns>
     private List<int> GetLocalPlayerProductionBuildings()
     {
@@ -2156,27 +2159,16 @@ public class Ra2Demo : MonoBehaviour
         if (_game == null || _game.World == null)
             return result;
 
-        // 获取所有具有生产功能的建筑实体
-        var entities = _game.World.ComponentManager
-            .GetAllEntityIdsWith<ProduceComponent>();
-            
-        foreach (var entityId in entities)
+        // 使用GetComponentsWithCondition一次性获取符合条件的实体
+        var components = _game.World.ComponentManager
+            .GetComponentsWithCondition<ProduceComponent>(entity => 
+                _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
+                !_game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
+                _game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
+                
+        foreach (var (_, entity) in components)
         {
-            var entity = new Entity(entityId);
-
-            // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
-            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
-            {
-                continue; // 跳过非本地玩家单位
-            }
-            
-            // 确保实体同时具有建筑组件
-            if (!_game.World.ComponentManager.HasComponent<BuildingComponent>(entity))
-            {
-                continue;
-            }
-            
-            result.Add(entityId);
+            result.Add(entity.Id);
         }
         
         return result;
