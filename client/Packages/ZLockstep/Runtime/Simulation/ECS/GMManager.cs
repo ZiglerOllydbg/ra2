@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using ZLockstep.Simulation;
+using ZLockstep.Simulation.ECS;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 
@@ -166,25 +167,25 @@ public class GMManager
         }
 
         // 默认参数
-        int playerId = 0; // 默认为玩家0（本地玩家）
+        int campId = 0; // 默认为玩家0（本地玩家）
 
         // 解析参数
         if (args.Length >= 1)
         {
-            int.TryParse(args[0], out playerId);
+            int.TryParse(args[0], out campId);
         }
 
         CreateTankCommand createTankCommand = new(
-            campId: playerId,
-            unitType: 2, // 坦克类型
+            campId: campId,
+            unitType: UnitType.Tank, // 坦克类型
             position: new zVector3((zfloat)worldPosition.x, (zfloat)worldPosition.y, (zfloat)worldPosition.z),
-            prefabId: 2, // 坦克预制体ID
+            prefabId: 6, // 坦克预制体ID
             radius: (zfloat)2,
             maxSpeed: (zfloat)10
         );
 
         _world.GameInstance.SubmitCommand(createTankCommand);
 
-        AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {playerId}");
+        AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {campId}");
     }
 }
