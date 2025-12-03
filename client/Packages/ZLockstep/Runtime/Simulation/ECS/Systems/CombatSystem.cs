@@ -246,7 +246,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 UnitType = (int)UnitType.Projectile, // 100表示弹道类型
                 Position = sourcePos,
                 PlayerId = sourceCampId,
-                PrefabId = 7 // 弹道预制体ID
+                PrefabId = -1 // 弹道预制体ID
             });
 
             zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}, 伤害{damage}");
