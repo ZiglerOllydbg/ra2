@@ -446,6 +446,7 @@ GameObject:
   m_Component:
   - component: {fileID: 812412503}
   - component: {fileID: 812412504}
+  - component: {fileID: 812412505}
   m_Layer: 0
   m_Name: TestManager
   m_TagString: Untagged
@@ -500,12 +501,24 @@ MonoBehaviour:
   - {fileID: 4346800480097175460, guid: ebedda77d76648c4284d6770520b7d94, type: 3}
   - {fileID: 8690058942472112195}
   - {fileID: 0}
-  showUnits: 0
-  showRVOAgents: 0
-  showGrid: 0
-  showObstacles: 0
-  showFlowField: 0
   EnableSettlementSystem: 0
+--- !u!114 &812412505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812412501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4498538b62f81b944830e17c2de20918, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  showUnits: 1
+  showRVOAgents: 1
+  showGrid: 1
+  showObstacles: 1
+  showFlowField: 1
 --- !u!1 &1104682289
 GameObject:
   m_ObjectHideFlags: 0
