@@ -498,7 +498,7 @@ public class Ra2Demo : MonoBehaviour
                             transparentMaterial.color.r,
                             transparentMaterial.color.g,
                             transparentMaterial.color.b,
-                            0.3f // 50% 透明度
+                            0.5f // 50% 透明度
                         );
                         
                         // 确保材质支持透明渲染
