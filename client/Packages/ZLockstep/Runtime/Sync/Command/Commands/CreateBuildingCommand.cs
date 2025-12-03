@@ -107,7 +107,7 @@ namespace ZLockstep.Sync.Command.Commands
             {
                 case BuildingType.PowerPlant: // 发电厂
                     costMoney = 500;
-                    costPower = -10;
+                    costPower = 0;
                     break;
                 case BuildingType.Smelter: // 采矿场
                     costMoney = 800;
@@ -137,7 +137,11 @@ namespace ZLockstep.Sync.Command.Commands
             
             // 扣除资源
             economyComponent.Money -= costMoney;
-            economyComponent.Power -= costPower; // 增加电力供应
+            if (costPower > 0)
+            {
+                economyComponent.Power -= costPower; // 扣除电力供应
+                zUDebug.Log($"[CreateBuildingCommand] 扣除电力成功。消耗电力: {costPower}。剩余电力: {economyComponent.Power}");
+            }
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
