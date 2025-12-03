@@ -231,7 +231,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             ComponentManager.AddComponent(projectile, new UnitComponent
             {
                 UnitType = 100, // 100=弹道类型
-                PrefabId = 4,   // 弹道预制体ID
+                PrefabId = 9,   // 弹道预制体ID
                 PlayerId = sourceCampId,
                 MoveSpeed = projComponent.Speed
             });
@@ -243,10 +243,10 @@ namespace ZLockstep.Simulation.ECS.Systems
             World.EventManager.Publish(new UnitCreatedEvent
             {
                 EntityId = projectile.Id,
-                UnitType = 100, // 100表示弹道类型
+                UnitType = (int)UnitType.Projectile, // 100表示弹道类型
                 Position = sourcePos,
                 PlayerId = sourceCampId,
-                PrefabId = 4 // 弹道预制体ID
+                PrefabId = 7 // 弹道预制体ID
             });
 
             zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}, 伤害{damage}");

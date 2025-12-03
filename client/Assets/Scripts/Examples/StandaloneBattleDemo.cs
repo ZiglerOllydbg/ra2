@@ -224,16 +224,16 @@ public class StandaloneBattleDemo : MonoBehaviour
     /// </summary>
     private void CreateTank(int campId, zVector2 position, int prefabId)
     {
-        Entity entity = _battleGame.CreateTank(campId, position, prefabId, tankRadius, tankMaxSpeed);
+        // Entity entity = _battleGame.CreateTank(campId, position, prefabId, tankRadius, tankMaxSpeed);
 
-        // 自动选中新创建的己方单位
-        if (campId == 0)
-        {
-            _selectedUnits.Clear();
-            _selectedUnits.Add(entity);
-        }
+        // // 自动选中新创建的己方单位
+        // if (campId == 0)
+        // {
+        //     _selectedUnits.Clear();
+        //     _selectedUnits.Add(entity);
+        // }
 
-        Debug.Log($"[StandaloneBattleDemo] 创建坦克: 阵营{campId}, 位置{position}");
+        // Debug.Log($"[StandaloneBattleDemo] 创建坦克: 阵营{campId}, 位置{position}");
     }
 
     /// <summary>

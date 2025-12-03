@@ -18,7 +18,10 @@ namespace ZLockstep.Simulation.ECS
         Smelter = 3,    // 冶金厂
          
         PowerPlant = 4,   // 电厂
-        Factory = 5,     // 工厂/防御塔
+        Factory = 5,     // 坦克工厂
+
+        // 防御塔
+        Tower = 6,
     }
 
     /// <summary>
@@ -26,9 +29,11 @@ namespace ZLockstep.Simulation.ECS
     /// </summary>
     public enum UnitType
     {
-        Infantry = 1,    // 动员兵
-        Tank = 2,        // 坦克
-        Harvester = 3    // 矿车
+        Tank = 1,        // 坦克
+        Infantry = 2,    // 动员兵
+        Harvester = 3,    // 矿车
+        
+        Projectile = 100,   // 弹丸
     }
 
     /// <summary>
@@ -88,14 +93,17 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, campComponent);
 
             // 6. 添加生命值组件
-            var healthComponent = CreateBuildingHealthComponent((int)buildingType);
-            world.ComponentManager.AddComponent(entity, healthComponent);
-
-            // 7. 如果建筑有攻击能力（如防御塔），添加攻击组件
-            if (CanBuildingAttack((int)buildingType))
+            var healthComponent = CreateBuildingHealthComponent(buildingType);
+            if (healthComponent.HasValue)
             {
-                var attackComponent = CreateBuildingAttackComponent((int)buildingType);
-                world.ComponentManager.AddComponent(entity, attackComponent);
+                world.ComponentManager.AddComponent(entity, healthComponent.Value);
+            }
+            
+            // 7. 如果建筑有攻击能力（如防御塔），添加攻击组件
+            var attackComponent = CreateBuildingAttackComponent(buildingType);
+            if (attackComponent.HasValue)
+            {
+                world.ComponentManager.AddComponent(entity, attackComponent.Value);
             }
 
             // 8. 更新地图：将建筑占据的格子标记为不可行走
@@ -302,28 +310,30 @@ namespace ZLockstep.Simulation.ECS
 
         #region 建筑辅助方法
 
-        private static HealthComponent CreateBuildingHealthComponent(int buildingType)
+        private static HealthComponent? CreateBuildingHealthComponent(BuildingType buildingType)
         {
             switch (buildingType)
             {
-                case 0: // 基地
+                case BuildingType.Base: // 基地
                     return new HealthComponent((zfloat)1000.0f);
-                case 1: // 防御塔/工厂
+                case BuildingType.Factory: // 坦克工厂
                     return new HealthComponent((zfloat)500.0f);
-                case 2: // 采矿场
+                case BuildingType.Mine: // 矿场，不可攻击
+                    return null;
+                case BuildingType.Smelter: // 采矿场
                     return new HealthComponent((zfloat)400.0f);
-                case 3: // 电厂
+                case BuildingType.PowerPlant: // 电厂
                     return new HealthComponent((zfloat)300.0f);
                 default:
-                    return new HealthComponent((zfloat)500.0f);
+                    return null;
             }
         }
 
-        private static AttackComponent CreateBuildingAttackComponent(int buildingType)
+        private static AttackComponent? CreateBuildingAttackComponent(BuildingType buildingType)
         {
             switch (buildingType)
             {
-                case 1: // 防御塔
+                case BuildingType.Tower: // 防御塔
                     return new AttackComponent
                     {
                         Damage = (zfloat)40.0f,
@@ -333,14 +343,8 @@ namespace ZLockstep.Simulation.ECS
                         TargetEntityId = -1
                     };
                 default:
-                    return AttackComponent.CreateDefault();
+                    return null;
             }
-        }
-
-        private static bool CanBuildingAttack(int buildingType)
-        {
-            // 只有防御塔类型的建筑可以攻击
-            return buildingType == 1;
         }
 
         #endregion

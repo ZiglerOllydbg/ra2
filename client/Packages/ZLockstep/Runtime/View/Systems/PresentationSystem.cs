@@ -253,7 +253,7 @@ namespace ZLockstep.View.Systems
             else
             {
                 // 找不到预制体，根据类型创建默认可视化
-                if (evt.UnitType == 100) // 100=弹道类型
+                if (evt.UnitType == (int)UnitType.Projectile) // 100=弹道类型
                 {
                     viewObject = CreateDefaultProjectileView(evt);
                 }
