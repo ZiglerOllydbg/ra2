@@ -45,7 +45,7 @@ GameObject:
   - component: {fileID: 8076639037104100618}
   - component: {fileID: 8076639037104100619}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Camp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -333,7 +333,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8076639038309483391}
   m_Layer: 0
-  m_Name: Flag
+  m_Name: Camp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
