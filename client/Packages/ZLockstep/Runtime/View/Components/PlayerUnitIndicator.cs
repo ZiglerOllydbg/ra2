@@ -39,7 +39,7 @@ namespace ZLockstep.View.Components
                 return;
 
             Color targetColor = GetCampColor(_unitPlayerId);
-            ApplyColorToRenderers(targetColor);
+            // ApplyColorToRenderers(targetColor);
         }
 
         /// <summary>

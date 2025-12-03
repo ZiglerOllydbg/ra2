@@ -498,8 +498,22 @@ public class Ra2Demo : MonoBehaviour
                             transparentMaterial.color.r,
                             transparentMaterial.color.g,
                             transparentMaterial.color.b,
-                            0.9f // 50% 透明度
+                            0.3f // 50% 透明度
                         );
+                        
+                        // 确保材质支持透明渲染
+                        if (transparentMaterial.HasProperty("_Mode"))
+                        {
+                            transparentMaterial.SetFloat("_Mode", 3); // Transparent mode
+                            transparentMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                            transparentMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                            transparentMaterial.SetInt("_ZWrite", 0);
+                            transparentMaterial.DisableKeyword("_ALPHATEST_ON");
+                            transparentMaterial.DisableKeyword("_ALPHABLEND_ON");
+                            transparentMaterial.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                            transparentMaterial.renderQueue = 3000;
+                        }
+                        
                         materials[i] = transparentMaterial;
                     }
                     renderer.materials = materials;
