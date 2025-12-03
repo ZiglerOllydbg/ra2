@@ -64,10 +64,10 @@ namespace ZLockstep.Simulation.ECS.Systems
                             if (ComponentManager.HasComponent<CampComponent>(miningEntity))
                             {
                                 var campComponent = ComponentManager.GetComponent<CampComponent>(miningEntity);
-                                int playerId = campComponent.CampId;
+                                int campId = campComponent.CampId;
                                 
                                 // 增加玩家资金
-                                AddResourceToPlayer(playerId, miningComponent.ResourcePerCycle);
+                                AddResourceToPlayer(campId, miningComponent.ResourcePerCycle);
                             }
                         }
                         else
@@ -91,28 +91,20 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <summary>
         /// 为指定玩家增加资源
         /// </summary>
-        /// <param name="playerId">玩家ID</param>
+        /// <param name="campId">玩家ID</param>
         /// <param name="amount">资源数量</param>
-        private void AddResourceToPlayer(int playerId, int amount)
+        private void AddResourceToPlayer(int campId, int amount)
         {
             // 查找玩家的经济组件
-            var economyEntities = ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
+            var (economyComponent, entity) = ComponentManager.GetComponentWithCondition<EconomyComponent>(
+                e => ComponentManager.HasComponent<CampComponent>(e) && 
+                     ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
             
-            foreach (var entityId in economyEntities)
+            if (entity.Id != -1)
             {
-                var entity = new Entity(entityId);
-                if (ComponentManager.HasComponent<CampComponent>(entity))
-                {
-                    var campComponent = ComponentManager.GetComponent<CampComponent>(entity);
-                    if (campComponent.CampId == playerId)
-                    {
-                        // 找到玩家的经济组件，增加资金
-                        var economyComponent = ComponentManager.GetComponent<EconomyComponent>(entity);
-                        economyComponent.Money += amount;
-                        ComponentManager.AddComponent(entity, economyComponent);
-                        break;
-                    }
-                }
+                // 找到玩家的经济组件，增加资金
+                economyComponent.Money += amount;
+                ComponentManager.AddComponent(entity, economyComponent);
             }
         }
     }

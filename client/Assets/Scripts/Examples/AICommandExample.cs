@@ -87,7 +87,7 @@ public class AICommandExample : MonoBehaviour
         );
 
         var createCommand = new CreateUnitCommand(
-            playerId: aiPlayerId,
+            campId: aiPlayerId,
             unitType: 2, // 创建坦克
             position: randomPosition,
             prefabId: 2
@@ -113,7 +113,7 @@ public class AICommandExample : MonoBehaviour
         );
 
         var moveCommand = new MoveCommand(
-            playerId: aiPlayerId,
+            campId: aiPlayerId,
             entityIds: aiUnits.ToArray(),
             targetPosition: randomTarget
         )

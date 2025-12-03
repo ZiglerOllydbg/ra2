@@ -175,7 +175,7 @@ public class GMManager
         }
 
         CreateTankCommand createTankCommand = new(
-            playerId: playerId,
+            campId: playerId,
             unitType: 2, // 坦克类型
             position: new zVector3((zfloat)worldPosition.x, (zfloat)worldPosition.y, (zfloat)worldPosition.z),
             prefabId: 2, // 坦克预制体ID

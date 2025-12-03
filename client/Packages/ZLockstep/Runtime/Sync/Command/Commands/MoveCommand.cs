@@ -35,8 +35,8 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public zfloat StopDistance { get; set; }
 
-        public MoveCommand(int playerId, int[] entityIds, zVector3 targetPosition, zfloat stopDistance = default)
-            : base(playerId)
+        public MoveCommand(int campId, int[] entityIds, zVector3 targetPosition, zfloat stopDistance = default)
+            : base(campId)
         {
             EntityIds = entityIds;
             TargetPosition = targetPosition;
@@ -64,9 +64,9 @@ namespace ZLockstep.Sync.Command.Commands
                 }
 
                 var unit = world.ComponentManager.GetComponent<UnitComponent>(entity);
-                if (unit.PlayerId != PlayerId)
+                if (unit.PlayerId != CampId)
                 {
-                    UnityEngine.Debug.LogWarning($"[MoveCommand] Entity_{entityId} 不属于玩家{PlayerId}！");
+                    UnityEngine.Debug.LogWarning($"[MoveCommand] Entity_{entityId} 不属于玩家{CampId}！");
                     continue;
                 }
 
@@ -79,7 +79,7 @@ namespace ZLockstep.Sync.Command.Commands
 
             if (successCount > 0)
             {
-                UnityEngine.Debug.Log($"[MoveCommand] 玩家{PlayerId} 命令{successCount}个单位移动到 {TargetPosition}");
+                UnityEngine.Debug.Log($"[MoveCommand] 玩家{CampId} 命令{successCount}个单位移动到 {TargetPosition}");
             }
         }
 
@@ -87,7 +87,7 @@ namespace ZLockstep.Sync.Command.Commands
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append($"[MoveCommand] 玩家{PlayerId} 命令{EntityIds.Length}个单位移动到 {TargetPosition}");
+            sb.Append($"[MoveCommand] 玩家{CampId} 命令{EntityIds.Length}个单位移动到 {TargetPosition}");
             return sb.ToString();
         }
 

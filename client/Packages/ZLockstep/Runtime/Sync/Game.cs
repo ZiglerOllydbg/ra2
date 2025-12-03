@@ -324,7 +324,7 @@ namespace ZLockstep.Sync
                         return;
                     }
 
-                    command.PlayerId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
+                    command.CampId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
 
                     FrameSyncManager.SubmitLocalCommand(command);
                     break;

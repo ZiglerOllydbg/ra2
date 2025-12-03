@@ -95,7 +95,7 @@ public class CatchUpExample : MonoBehaviour
             if (frame % 10 == 0)
             {
                 var cmd = new CreateUnitCommand(
-                    playerId: 0,
+                    campId: 0,
                     unitType: 1,
                     position: new zVector3(
                         zfloat.CreateFloat(Random.Range(-5, 5) * 65536),

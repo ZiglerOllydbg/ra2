@@ -3,6 +3,7 @@ using ZLockstep.Simulation;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
 using ZLockstep.Simulation.ECS;
+using ZLockstep.Simulation.ECS.Components;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -33,24 +34,18 @@ namespace ZLockstep.Sync.Command.Commands
         public int Height { get; set; }
 
         /// <summary>
-        /// 阵营ID
-        /// </summary>
-        public int CampId { get; set; }
-
-        /// <summary>
         /// 预制体ID（用于表现层）
         /// </summary>
         public int PrefabId { get; set; }
 
-        public CreateBuildingCommand(int playerId, BuildingType buildingType, zVector3 position, 
-            int width, int height, int campId, int prefabId)
-            : base(playerId)
+        public CreateBuildingCommand(int campId, BuildingType buildingType, zVector3 position, 
+            int width, int height, int prefabId)
+            : base(campId)
         {
             BuildingType = buildingType;
             Position = position;
             Width = width;
             Height = height;
-            CampId = campId;
             PrefabId = prefabId;
         }
 
@@ -66,7 +61,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 使用EntityCreationManager创建建筑实体
             var unitCreatedEvent = EntityCreationManager.CreateBuildingEntity(
                 world, 
-                PlayerId, 
+                CampId, 
                 BuildingType, 
                 Position, 
                 Width, 
@@ -94,7 +89,11 @@ namespace ZLockstep.Sync.Command.Commands
         private bool CheckAndDeductResources(zWorld world)
         {
             // 获取玩家的经济组件
-            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, CampId, out var economyComponent, out var economyEntity))
+            var (economyComponent, economyEntity) = world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+                e => world.ComponentManager.HasComponent<CampComponent>(e) && 
+                world.ComponentManager.GetComponent<CampComponent>(e).CampId == CampId);
+            
+            if (economyEntity.Id == -1)
             {
                 UnityEngine.Debug.LogWarning($"[CreateBuildingCommand] 未找到阵营 {CampId} 的经济组件");
                 return false;

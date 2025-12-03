@@ -123,7 +123,7 @@ namespace ZLockstep.Sync
                 commands.Sort((a, b) => 
                 {
                     // 先按PlayerId排序，再按CommandType排序
-                    int result = a.PlayerId.CompareTo(b.PlayerId);
+                    int result = a.CampId.CompareTo(b.CampId);
                     if (result == 0)
                         result = CommandMapper.GetCommandType(a.GetType()).CompareTo(CommandMapper.GetCommandType(b.GetType()));
                     return result;

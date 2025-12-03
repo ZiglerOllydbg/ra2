@@ -33,8 +33,8 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public int PrefabId { get; set; }
 
-        public CreateUnitCommand(int playerId, int unitType, zVector3 position, int prefabId = 0)
-            : base(playerId)
+        public CreateUnitCommand(int campId, int unitType, zVector3 position, int prefabId = 0)
+            : base(campId)
         {
             UnitType = unitType;
             Position = position;
@@ -76,11 +76,11 @@ namespace ZLockstep.Sync.Command.Commands
                 EntityId = entity.Id,
                 UnitType = UnitType,
                 Position = Position,
-                PlayerId = PlayerId,
+                PlayerId = CampId,
                 PrefabId = PrefabId
             });
 
-            UnityEngine.Debug.Log($"[CreateUnitCommand] 玩家{PlayerId} 创建了单位类型{UnitType} 在位置{Position}，Entity ID: {entity.Id}");
+            UnityEngine.Debug.Log($"[CreateUnitCommand] 玩家{CampId} 创建了单位类型{UnitType} 在位置{Position}，Entity ID: {entity.Id}");
         }
 
         #region 辅助方法
@@ -90,13 +90,13 @@ namespace ZLockstep.Sync.Command.Commands
             switch (unitType)
             {
                 case 1: // 动员兵
-                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(PlayerId);
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(CampId);
                 case 2: // 犀牛坦克
-                    return Simulation.ECS.Components.UnitComponent.CreateTank(PlayerId);
+                    return Simulation.ECS.Components.UnitComponent.CreateTank(CampId);
                 case 3: // 矿车
-                    return Simulation.ECS.Components.UnitComponent.CreateHarvester(PlayerId);
+                    return Simulation.ECS.Components.UnitComponent.CreateHarvester(CampId);
                 default:
-                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(PlayerId);
+                    return Simulation.ECS.Components.UnitComponent.CreateInfantry(CampId);
             }
         }
 
@@ -162,7 +162,7 @@ namespace ZLockstep.Sync.Command.Commands
         // tostring
         public override string ToString()
         {
-            return $"[CreateUnitCommand] 玩家{PlayerId} 创建了单位类型{UnitType} 在位置{Position} PrefabId: {PrefabId}";
+            return $"[CreateUnitCommand] 玩家{CampId} 创建了单位类型{UnitType} 在位置{Position} PrefabId: {PrefabId}";
         }
     }
 }

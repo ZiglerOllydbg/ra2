@@ -552,12 +552,11 @@ public class Ra2Demo : MonoBehaviour
 
         // 创建建筑命令（使用CreateBuildingCommand）
         var createBuildingCommand = new CreateBuildingCommand(
-            playerId: 0,
+            campId: 0,
             buildingType: buildingToBuild,
             position: logicPosition,
             width: 2,
             height: 2,
-            campId: 1,
             prefabId: prefabId
         )
         {
@@ -737,7 +736,7 @@ public class Ra2Demo : MonoBehaviour
 
         // 创建移动命令
         var moveCommand = new EntityMoveCommand(
-            playerId: 0,
+            campId: 0,
             entityIds: validEntityIds.ToArray(),
             targetPosition: new zVector2(x, z)
         )
@@ -1505,7 +1504,7 @@ public class Ra2Demo : MonoBehaviour
             return;
             
         var produceCommand = new ProduceCommand(
-            playerId: 0,
+            campId: 0,
             entityId: factoryEntityId,
             unitType: unitType,
             changeValue: changeValue
@@ -2215,7 +2214,11 @@ public class Ra2Demo : MonoBehaviour
         var globalInfoComponent = _game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
         
         // 查找属于本地玩家的经济组件
-        if (!EconomyUtils.TryGetEconomyComponentForCamp(_game.World.ComponentManager, globalInfoComponent.LocalPlayerCampId, out var economyComponent, out _))
+        var (economyComponent, _) = _game.World.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+            e => _game.World.ComponentManager.HasComponent<CampComponent>(e) && 
+            _game.World.ComponentManager.GetComponent<CampComponent>(e).CampId == globalInfoComponent.LocalPlayerCampId);
+        
+        if (economyComponent.Equals(default(EconomyComponent)))
         {
             UnityEngine.Debug.LogWarning($"[Ra2Demo] 未找到本地玩家阵营 {globalInfoComponent.LocalPlayerCampId} 的经济组件");
             return;

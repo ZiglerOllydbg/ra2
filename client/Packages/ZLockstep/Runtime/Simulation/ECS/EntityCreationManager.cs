@@ -41,7 +41,7 @@ namespace ZLockstep.Simulation.ECS
         /// 创建建筑实体（创世阶段使用）
         /// </summary>
         /// <param name="world">游戏世界实例</param>
-        /// <param name="playerId">玩家ID</param>
+        /// <param name="campId">玩家ID</param>
         /// <param name="buildingType">建筑类型</param>
         /// <param name="position">位置</param>
         /// <param name="width">建筑宽度</param>
@@ -52,7 +52,7 @@ namespace ZLockstep.Simulation.ECS
         /// <returns>创建的实体事件</returns>
         public static UnitCreatedEvent? CreateBuildingEntity(
             zWorld world, 
-            int playerId, 
+            int campId, 
             BuildingType buildingType, 
             zVector3 position, 
             int width, 
@@ -84,7 +84,7 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, buildingComponent);
 
             // 5. 添加阵营组件
-            var campComponent = CampComponent.Create(playerId);
+            var campComponent = CampComponent.Create(campId);
             world.ComponentManager.AddComponent(entity, campComponent);
 
             // 6. 添加生命值组件
@@ -114,7 +114,7 @@ namespace ZLockstep.Simulation.ECS
             if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
             {
                 var globalInfoComponent = world.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                if (globalInfoComponent.LocalPlayerCampId == campId)
                 {
                     world.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
                 }
@@ -158,11 +158,11 @@ namespace ZLockstep.Simulation.ECS
                 EntityId = entity.Id,
                 UnitType = (int)buildingType,
                 Position = position,
-                PlayerId = playerId,
+                PlayerId = campId,
                 PrefabId = prefabId
             };
 
-            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{playerId} 创建了建筑类型{buildingType} " +
+            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
                 $"在位置{position}（格子{gridX},{gridY}），尺寸{width}x{height}，Entity ID: {entity.Id}");
             
             return unitCreatedEvent;
@@ -172,14 +172,14 @@ namespace ZLockstep.Simulation.ECS
         /// 创建单位实体（创世阶段使用）
         /// </summary>
         /// <param name="world">游戏世界实例</param>
-        /// <param name="playerId">玩家ID</param>
+        /// <param name="campId">玩家ID</param>
         /// <param name="unitType">单位类型</param>
         /// <param name="position">位置</param>
         /// <param name="prefabId">预制体ID</param>
         /// <returns>创建的实体事件</returns>
         public static UnitCreatedEvent? CreateUnitEntity(
             zWorld world,
-            int playerId,
+            int campId,
             UnitType unitType,
             zVector3 position,
             int prefabId)
@@ -212,11 +212,11 @@ namespace ZLockstep.Simulation.ECS
             });
 
             // 3. 添加阵营组件
-            var camp = CampComponent.Create(playerId);
+            var camp = CampComponent.Create(campId);
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加Unit组件（根据类型）
-            var unitComponent = CreateUnitComponent((int)unitType, playerId);
+            var unitComponent = CreateUnitComponent((int)unitType, campId);
             unitComponent.PrefabId = prefabId;
             unitComponent.MoveSpeed = maxSpeed;
             world.ComponentManager.AddComponent(entity, unitComponent);
@@ -271,7 +271,7 @@ namespace ZLockstep.Simulation.ECS
             if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
             {
                 var globalInfoComponent = world.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-                if (globalInfoComponent.LocalPlayerCampId == playerId)
+                if (globalInfoComponent.LocalPlayerCampId == campId)
                 {
                     world.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
                 }
@@ -283,11 +283,11 @@ namespace ZLockstep.Simulation.ECS
                 EntityId = entity.Id,
                 UnitType = (int)unitType,
                 Position = position,
-                PlayerId = playerId,
+                PlayerId = campId,
                 PrefabId = prefabId
             };
 
-            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{playerId} 创建了单位类型{unitType} 在位置{position}，Entity ID: {entity.Id}");
+            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了单位类型{unitType} 在位置{position}，Entity ID: {entity.Id}");
             
             return unitCreatedEvent;
         }

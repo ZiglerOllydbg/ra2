@@ -36,7 +36,7 @@ public class NetworkCommandExample : MonoBehaviour
         int executeFrame = 100;
 
         var remoteCreateCommand = new CreateUnitCommand(
-            playerId: 2, // 远程玩家ID
+            campId: 2, // 远程玩家ID
             unitType: 1,
             position: new zVector3(5, 0, 5),
             prefabId: 1
@@ -60,7 +60,7 @@ public class NetworkCommandExample : MonoBehaviour
     public void SendLocalCommandToNetwork(ICommand command)
     {
         // 1. 设置命令属性
-        command.PlayerId = localPlayerId;
+        command.CampId = localPlayerId;
         command.Source = CommandSource.Local;
         
         // 2. 计算预定执行帧（当前帧 + 网络延迟补偿）
@@ -101,7 +101,7 @@ public class NetworkCommandExample : MonoBehaviour
     public void TestSendCreateUnitCommand()
     {
         var command = new CreateUnitCommand(
-            playerId: localPlayerId,
+            campId: localPlayerId,
             unitType: 1,
             position: new zVector3(0, 0, 0),
             prefabId: 1
@@ -117,7 +117,7 @@ public class NetworkCommandExample : MonoBehaviour
     public void TestSendMoveCommand()
     {
         var command = new MoveCommand(
-            playerId: localPlayerId,
+            campId: localPlayerId,
             entityIds: new[] { 0 }, // 假设Entity ID为0
             targetPosition: new zVector3(10, 0, 10)
         );

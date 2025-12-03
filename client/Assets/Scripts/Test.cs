@@ -135,7 +135,7 @@ public class Test : MonoBehaviour
 
         // 创建CreateUnitCommand
         var createCommand = new CreateUnitCommand(
-            playerId: playerId,
+            campId: playerId,
             unitType: unitType,
             position: logicPosition,
             prefabId: prefabId
@@ -193,7 +193,7 @@ public class Test : MonoBehaviour
         {
             // 创建移动命令
             var moveCommand = new MoveCommand(
-                playerId: playerId,
+                campId: playerId,
                 entityIds: playerUnits.ToArray(),
                 targetPosition: worldPosition.ToZVector3()
             )

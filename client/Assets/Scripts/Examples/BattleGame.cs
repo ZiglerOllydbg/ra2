@@ -227,8 +227,8 @@ namespace Game.Examples
                     continue; // 处理完中立建筑后继续下一个
                 }
 
-                string playerIdStr = playerData.Key;
-                int playerId = int.Parse(playerIdStr);
+                string campIdStr = playerData.Key;
+                int campId = int.Parse(campIdStr);
                 
                 var playerObj = (JObject)playerData.Value;
                 
@@ -258,7 +258,7 @@ namespace Game.Examples
                         }
 
                         // 根据类型创建建筑实体
-                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, playerId, buildingType,
+                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
                         width: width, height: height, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
@@ -281,7 +281,7 @@ namespace Game.Examples
                         
                         // 使用EntityCreationManager创建单位
                         int prefabId = 6; // 默认预制体ID
-                        var unitEvent = EntityCreationManager.CreateUnitEntity(World, playerId, UnitType.Tank, 
+                        var unitEvent = EntityCreationManager.CreateUnitEntity(World, campId, UnitType.Tank, 
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y), prefabId);
                         if (unitEvent.HasValue)
                         {
@@ -294,7 +294,7 @@ namespace Game.Examples
                 var money = playerObj["money"]?.ToObject<int>() ?? 2200; // 默认2200资金
                 var economyEntity = World.EntityManager.CreateEntity();
                 World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, 10));
-                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(playerId));
+                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(campId));
             }
             
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件

@@ -43,8 +43,8 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public zfloat MaxSpeed { get; set; }
 
-        public CreateTankCommand(int playerId, int unitType, zVector3 position, int prefabId, zfloat radius, zfloat maxSpeed)
-            : base(playerId)
+        public CreateTankCommand(int campId, int unitType, zVector3 position, int prefabId, zfloat radius, zfloat maxSpeed)
+            : base(campId)
         {
             UnitType = unitType;
             Position = position;
@@ -67,14 +67,14 @@ namespace ZLockstep.Sync.Command.Commands
             });
 
             // 3. 添加阵营组件
-            var camp = CampComponent.Create(PlayerId);
+            var camp = CampComponent.Create(CampId);
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加单位组件
             var unit = new UnitComponent
             {
                 UnitType = UnitType,
-                PlayerId = PlayerId,
+                PlayerId = CampId,
                 PrefabId = PrefabId,
                 MoveSpeed = MaxSpeed
             };
@@ -141,7 +141,7 @@ namespace ZLockstep.Sync.Command.Commands
             if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
             {
                 var globalInfoComponent = world.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-                if (globalInfoComponent.LocalPlayerCampId == PlayerId)
+                if (globalInfoComponent.LocalPlayerCampId == CampId)
                 {
                     world.ComponentManager.AddComponent(entity, new LocalPlayerComponent());
                 }
@@ -153,19 +153,19 @@ namespace ZLockstep.Sync.Command.Commands
                 EntityId = entity.Id,
                 UnitType = UnitType,
                 Position = Position,
-                PlayerId = PlayerId,
+                PlayerId = CampId,
                 PrefabId = PrefabId
             };
 
             world.EventManager.Publish(unitCreatedEvent);
 
-            UnityEngine.Debug.Log($"[CreateTankCommand] 玩家{PlayerId} 阵营{PlayerId} 创建了坦克在位置{Position}");
+            UnityEngine.Debug.Log($"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position}");
         }
 
         // tostring
         public override string ToString()
         {
-            return $"[CreateTankCommand] 玩家{PlayerId} 阵营{PlayerId} 创建了坦克在位置{Position} PrefabId: {PrefabId}";
+            return $"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position} PrefabId: {PrefabId}";
         }
     }
 }

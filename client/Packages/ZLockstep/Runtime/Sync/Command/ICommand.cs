@@ -28,7 +28,7 @@ namespace ZLockstep.Sync.Command
         /// <summary>
         /// 发出命令的玩家ID
         /// </summary>
-        int PlayerId { get; set; }
+        int CampId { get; set; }
 
         /// <summary>
         /// 命令来源

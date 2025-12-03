@@ -116,6 +116,50 @@ namespace ZLockstep.Simulation.ECS
             RemoveComponent<T>(_entityManager.GlobalEntity);
         }
 
+        /// <summary>
+        /// 获取满足指定条件的组件及其实体
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <param name="condition">筛选条件的函数</param>
+        /// <returns>满足条件的(组件, 实体)元组集合</returns>
+        public IEnumerable<(T, Entity)> GetComponentsWithCondition<T>(Func<Entity, bool> condition) where T : IComponent
+        {
+            var entities = GetAllEntityIdsWith<T>();
+            
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                if (condition(entity))
+                {
+                    var component = GetComponent<T>(entity);
+                    yield return (component, entity);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取满足指定条件的第一个组件及其实体
+        /// </summary>
+        /// <typeparam name="T">组件类型</typeparam>
+        /// <param name="condition">筛选条件的函数</param>
+        /// <returns>满足条件的第一个(组件, 实体)元组，如果未找到则返回默认值</returns>
+        public (T Component, Entity Entity) GetComponentWithCondition<T>(Func<Entity, bool> condition) where T : IComponent
+        {
+            var entities = GetAllEntityIdsWith<T>();
+            
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                if (condition(entity))
+                {
+                    var component = GetComponent<T>(entity);
+                    return (component, entity);
+                }
+            }
+            
+            return (default(T), new Entity(-1));
+        }
+
         public void EntityDestroyed(Entity entity)
         {
             // 当一个实体被销毁时，移除其所有组件

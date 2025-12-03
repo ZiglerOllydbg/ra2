@@ -28,8 +28,8 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public int ChangeValue { get; set; }
 
-        public ProduceCommand(int playerId, int entityId, UnitType unitType, int changeValue)
-            : base(playerId)
+        public ProduceCommand(int campId, int entityId, UnitType unitType, int changeValue)
+            : base(campId)
         {
             EntityId = entityId;
             UnitType = unitType;
@@ -48,9 +48,9 @@ namespace ZLockstep.Sync.Command.Commands
             }
 
             var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
-            if (campComponent.CampId != PlayerId)
+            if (campComponent.CampId != CampId)
             {
-                UnityEngine.Debug.LogWarning($"[ProduceCommand] 玩家 {PlayerId} 尝试控制不属于自己的建筑 {EntityId}");
+                UnityEngine.Debug.LogWarning($"[ProduceCommand] 玩家 {CampId} 尝试控制不属于自己的建筑 {EntityId}");
                 return;
             }
 
@@ -130,7 +130,11 @@ namespace ZLockstep.Sync.Command.Commands
         private bool CheckAndDeductProductionCost(zWorld world, int campId)
         {
             // 获取玩家的经济组件
-            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, campId, out var economyComponent, out var economyEntity))
+            var (economyComponent, economyEntity) = world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+                e => world.ComponentManager.HasComponent<CampComponent>(e) && 
+                world.ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
+            
+            if (economyEntity.Id == -1)
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 未找到阵营 {campId} 的经济组件");
                 return false;
@@ -180,7 +184,11 @@ namespace ZLockstep.Sync.Command.Commands
         private void RefundProductionCost(zWorld world, int campId)
         {
             // 获取玩家的经济组件
-            if (!EconomyUtils.TryGetEconomyComponentForCamp(world.ComponentManager, campId, out var economyComponent, out var economyEntity))
+            var (economyComponent, economyEntity) = world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+                e => world.ComponentManager.HasComponent<CampComponent>(e) && 
+                world.ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
+            
+            if (economyEntity.Id == -1)
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 未找到阵营 {campId} 的经济组件");
                 return;
@@ -217,7 +225,7 @@ namespace ZLockstep.Sync.Command.Commands
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append($"[ProduceCommand] 玩家{PlayerId} 修改实体{EntityId}的单位类型{UnitType}生产数量，变化值{ChangeValue}");
+            sb.Append($"[ProduceCommand] 玩家{CampId} 修改实体{EntityId}的单位类型{UnitType}生产数量，变化值{ChangeValue}");
             return sb.ToString();
         }
     }

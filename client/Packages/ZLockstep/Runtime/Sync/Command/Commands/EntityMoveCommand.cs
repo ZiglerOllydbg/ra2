@@ -25,8 +25,8 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public zVector2 TargetPosition { get; set; }
 
-        public EntityMoveCommand(int playerId, int[] entityIds, zVector2 targetPosition)
-            : base(playerId)
+        public EntityMoveCommand(int campId, int[] entityIds, zVector2 targetPosition)
+            : base(campId)
         {
             EntityIds = entityIds;
             TargetPosition = targetPosition;
@@ -74,7 +74,7 @@ namespace ZLockstep.Sync.Command.Commands
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append($"[EntityMoveCommand] 玩家{PlayerId} 命令{EntityIds.Length}个单位移动到 {TargetPosition}");
+            sb.Append($"[EntityMoveCommand] 玩家{CampId} 命令{EntityIds.Length}个单位移动到 {TargetPosition}");
             return sb.ToString();
         }
     }
