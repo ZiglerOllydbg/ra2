@@ -13,6 +13,7 @@ using ZLockstep.Sync;
 using ZLockstep.View.Systems;
 using ZLockstep.Simulation.ECS.Systems;
 using ZLockstep.Flow;
+using ZFrame;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -209,9 +210,15 @@ public class Ra2Demo : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    private Frame frame;
+    
     void Start()
     {
+        frame = new Frame();
 
+        DiscoverTools.Discover(typeof(Main).Assembly);
+
+        Frame.DispatchEvent(new Ra2StartUpEvent());
     }
 
 
