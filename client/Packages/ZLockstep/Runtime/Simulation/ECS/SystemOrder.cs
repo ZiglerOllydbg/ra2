@@ -7,6 +7,11 @@ namespace ZLockstep.Simulation.ECS
     public enum SystemOrder 
     {
         /// <summary>
+        /// 建筑建造系统
+        /// </summary>
+        BuildingConstruction = -1,
+        
+        /// <summary>
         /// 普通系统（默认）
         /// </summary>
         Normal = 0,

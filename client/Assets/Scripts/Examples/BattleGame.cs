@@ -175,6 +175,8 @@ namespace Game.Examples
                 World.SystemManager.RegisterSystem(new SettlementSystem());
             }
 
+            World.SystemManager.RegisterSystem(new BuildingConstructionSystem());
+
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
 

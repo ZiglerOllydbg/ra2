@@ -38,6 +38,13 @@ namespace ZLockstep.Simulation.ECS.Systems
                 if (!miningComponent.IsMining)
                     continue;
                 
+                // 检查建筑是否已完成建造
+                if (ComponentManager.HasComponent<BuildingConstructionComponent>(miningEntity))
+                {
+                    // 建造未完成，不能采矿
+                    continue;
+                }
+                
                 // 增加采矿计时器
                 miningComponent.MiningTimer++;
                 

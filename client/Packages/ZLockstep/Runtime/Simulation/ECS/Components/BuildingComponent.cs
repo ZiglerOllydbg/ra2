@@ -27,11 +27,6 @@ namespace ZLockstep.Simulation.ECS.Components
         public int Height;
 
         /// <summary>
-        /// 是否已建造完成
-        /// </summary>
-        public bool IsConstructed;
-
-        /// <summary>
         /// 创建建筑组件
         /// </summary>
         public static BuildingComponent Create(int buildingType, int gridX, int gridY, int width, int height)
@@ -42,8 +37,7 @@ namespace ZLockstep.Simulation.ECS.Components
                 GridX = gridX,
                 GridY = gridY,
                 Width = width,
-                Height = height,
-                IsConstructed = true
+                Height = height
             };
         }
     }

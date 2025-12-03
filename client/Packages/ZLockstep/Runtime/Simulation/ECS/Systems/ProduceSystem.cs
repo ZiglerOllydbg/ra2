@@ -23,6 +23,14 @@ namespace ZLockstep.Simulation.ECS.Systems
             foreach (var entityId in entities)
             {
                 var entity = new Entity(entityId);
+                
+                // 检查建筑是否已完成建造
+                if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
+                {
+                    // 建造未完成，不能生产
+                    continue;
+                }
+                
                 var produceComponent = ComponentManager.GetComponent<ProduceComponent>(entity);
                 var transformComponent = ComponentManager.GetComponent<TransformComponent>(entity);
                 

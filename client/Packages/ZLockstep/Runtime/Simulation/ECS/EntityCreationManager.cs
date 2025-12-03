@@ -152,6 +152,14 @@ namespace ZLockstep.Simulation.ECS
                 }
             }
 
+            // 13. 添加建造组件（所有建筑都需要建造时间）
+            var constructionTime = GetConstructionTime(buildingType);
+            if (constructionTime > zfloat.Zero)
+            {
+                var buildingConstructionComponent = BuildingConstructionComponent.Create(constructionTime);
+                world.ComponentManager.AddComponent(entity, buildingConstructionComponent);
+            }
+
             // 13. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
@@ -459,6 +467,30 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(smelterEntity, miningComponent);
             
             UnityEngine.Debug.Log($"[EntityCreationManager] 为采矿场实体 {smelterEntity.Id} 分配了矿源实体 {mineEntityId}");
+        }
+        
+        #endregion
+
+        #region 建造辅助方法
+        
+        /// <summary>
+        /// 获取建筑的建造时间
+        /// </summary>
+        /// <param name="buildingType">建筑类型</param>
+        /// <returns>建造时间（秒）</returns>
+        private static zfloat GetConstructionTime(BuildingType buildingType)
+        {
+            switch (buildingType)
+            {
+                case BuildingType.Smelter: // 采矿场
+                    return new zfloat(8); // 8秒
+                case BuildingType.PowerPlant: // 电厂
+                    return new zfloat(5); // 5秒
+                case BuildingType.Factory: // 坦克工厂
+                    return new zfloat(10); // 10秒
+                default:
+                    return zfloat.Zero; // 瞬间建造
+            }
         }
         
         #endregion
