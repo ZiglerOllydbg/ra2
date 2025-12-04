@@ -53,6 +53,15 @@ namespace ZLockstep.Sync.Command.Commands
                     return;
                 }
             }
+            // 如果是采矿场，需要判断是否在矿源附近
+            else
+            {
+                if (!CheckMineProximity(world, Position))
+                {
+                    UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造采矿场 在位置{Position} 失败：不在矿源附近");
+                    return;
+                }
+            }
             
             // 阻挡判断
             var mapManager = world.GameInstance.GetMapManager();
@@ -88,6 +97,43 @@ namespace ZLockstep.Sync.Command.Commands
 
             UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造了建筑类型{BuildingType} " +
                 $"在位置{Position}");
+        }
+
+        /// <summary>
+        /// 检查采矿场是否在矿源附近（10格范围内）
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="position">采矿场位置</param>
+        /// <returns>是否在矿源附近</returns>
+        private bool CheckMineProximity(zWorld world, zVector3 position)
+        {
+            // 获取所有矿源实体
+            var mineEntities = world.ComponentManager.GetAllEntityIdsWith<MineComponent>();
+            
+            foreach (var entityId in mineEntities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 检查实体是否具有Transform组件
+                if (world.ComponentManager.HasComponent<TransformComponent>(entity))
+                {
+                    var transformComponent = world.ComponentManager.GetComponent<TransformComponent>(entity);
+                    zVector3 minePosition = transformComponent.Position;
+                    
+                    // 计算与矿源的距离
+                    zVector3 delta = position - minePosition;
+                    zfloat distanceSquared = delta.x * delta.x + delta.z * delta.z; // 只考虑水平距离
+                    
+                    // 检查是否在10格范围内（距离小于等于10）
+                    zfloat maxDistance = zfloat.CreateFloat(10 * zfloat.SCALE_10000);
+                    if (distanceSquared <= maxDistance * maxDistance)
+                    {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
         }
 
         /// <summary>

@@ -21,6 +21,8 @@ public class BuildingPreviewRenderer : MonoBehaviour
     private bool showBuildableArea = false;
     private int buildableMinGridX, buildableMinGridY, buildableMaxGridX, buildableMaxGridY;
     private Material lineMaterial;
+    // 添加矿源位置列表，用于显示采矿场可建造区域
+    private System.Collections.Generic.List<Vector2> minePositions = new System.Collections.Generic.List<Vector2>();
 
     private bool isReady = false;
 
@@ -66,47 +68,113 @@ public class BuildingPreviewRenderer : MonoBehaviour
             // 开始绘制线条
             GL.PushMatrix();
             GL.Begin(GL.LINES);
-            GL.Color(Color.green);
-
-            // 获取网格大小
-            float gridSize = (float)_ra2Demo.GetBattleGame().MapManager.GetGridSize();
-
-            // 绘制可建造区域边界（只绘制边缘，而不是整个区域）
-            // 绘制水平线
-            for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
+            
+            // 如果是采矿场，使用蓝色绘制矿源周围可建造区域；否则使用绿色绘制主城周围可建造区域
+            if (buildingToBuild == BuildingType.Smelter)
             {
-                Vector3 left = new Vector3(buildableMinGridX * gridSize, 0.1f, y * gridSize);
-                Vector3 right = new Vector3(buildableMaxGridX * gridSize, 0.1f, y * gridSize);
-                GL.Vertex(left);
-                GL.Vertex(right);
-            }
-
-            // 绘制垂直线
-            for (int x = buildableMinGridX; x <= buildableMaxGridX; x++)
-            {
-                Vector3 bottom = new Vector3(x * gridSize, 0.1f, buildableMinGridY * gridSize);
-                Vector3 top = new Vector3(x * gridSize, 0.1f, buildableMaxGridY * gridSize);
-                GL.Vertex(bottom);
-                GL.Vertex(top);
-            }
-
-            // 绘制网格内的斜线
-            for (int x = buildableMinGridX; x < buildableMaxGridX; x++)
-            {
-                for (int y = buildableMinGridY; y < buildableMaxGridY; y++)
+                GL.Color(Color.blue);
+                
+                // 绘制每个矿源周围的可建造区域
+                float gridSize = (float)_ra2Demo.GetBattleGame().MapManager.GetGridSize();
+                int mineBuildRange = 10; // 采矿场可在矿源周围10格内建造
+                
+                foreach (Vector2 minePos in minePositions)
                 {
-                    // 绘制每个网格的对角线（斜线效果）
-                    Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
-                    Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
-                    Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
-                    Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
+                    // 计算矿源周围的可建造区域边界
+                    int mineGridX, mineGridY;
+                    _ra2Demo.GetBattleGame().MapManager.WorldToGrid(
+                        new zVector2(
+                            zfloat.CreateFloat((long)(minePos.x * zfloat.SCALE_10000)),
+                            zfloat.CreateFloat((long)(minePos.y * zfloat.SCALE_10000))
+                        ),
+                        out mineGridX, out mineGridY
+                    );
+                    
+                    int minX = Mathf.Max(0, mineGridX - mineBuildRange);
+                    int minY = Mathf.Max(0, mineGridY - mineBuildRange);
+                    int maxX = Mathf.Min(_ra2Demo.GetBattleGame().MapManager.GetWidth() - 1, mineGridX + mineBuildRange);
+                    int maxY = Mathf.Min(_ra2Demo.GetBattleGame().MapManager.GetHeight() - 1, mineGridY + mineBuildRange);
+                    
+                    // 绘制区域边界
+                    for (int y = minY; y <= maxY; y++)
+                    {
+                        Vector3 left = new Vector3(minX * gridSize, 0.1f, y * gridSize);
+                        Vector3 right = new Vector3(maxX * gridSize, 0.1f, y * gridSize);
+                        GL.Vertex(left);
+                        GL.Vertex(right);
+                    }
 
-                    // 绘制交叉线形成网格
-                    GL.Vertex(bottomLeft);
-                    GL.Vertex(topRight);
+                    for (int x = minX; x <= maxX; x++)
+                    {
+                        Vector3 bottom = new Vector3(x * gridSize, 0.1f, minY * gridSize);
+                        Vector3 top = new Vector3(x * gridSize, 0.1f, maxY * gridSize);
+                        GL.Vertex(bottom);
+                        GL.Vertex(top);
+                    }
+                    
+                    // 绘制网格内的斜线
+                    for (int x = minX; x < maxX; x++)
+                    {
+                        for (int y = minY; y < maxY; y++)
+                        {
+                            // 绘制每个网格的对角线（斜线效果）
+                            Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
+                            Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
+                            Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
+                            Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
 
-                    GL.Vertex(topLeft);
-                    GL.Vertex(bottomRight);
+                            // 绘制交叉线形成网格
+                            GL.Vertex(bottomLeft);
+                            GL.Vertex(topRight);
+
+                            GL.Vertex(topLeft);
+                            GL.Vertex(bottomRight);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                GL.Color(Color.green);
+                
+                // 绘制可建造区域边界（只绘制边缘，而不是整个区域）
+                // 绘制水平线
+                float gridSize = (float)_ra2Demo.GetBattleGame().MapManager.GetGridSize();
+                for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
+                {
+                    Vector3 left = new Vector3(buildableMinGridX * gridSize, 0.1f, y * gridSize);
+                    Vector3 right = new Vector3(buildableMaxGridX * gridSize, 0.1f, y * gridSize);
+                    GL.Vertex(left);
+                    GL.Vertex(right);
+                }
+
+                // 绘制垂直线
+                for (int x = buildableMinGridX; x <= buildableMaxGridX; x++)
+                {
+                    Vector3 bottom = new Vector3(x * gridSize, 0.1f, buildableMinGridY * gridSize);
+                    Vector3 top = new Vector3(x * gridSize, 0.1f, buildableMaxGridY * gridSize);
+                    GL.Vertex(bottom);
+                    GL.Vertex(top);
+                }
+
+                // 绘制网格内的斜线
+                for (int x = buildableMinGridX; x < buildableMaxGridX; x++)
+                {
+                    for (int y = buildableMinGridY; y < buildableMaxGridY; y++)
+                    {
+                        // 绘制每个网格的对角线（斜线效果）
+                        Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
+                        Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
+                        Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
+                        Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
+
+                        // 绘制交叉线形成网格
+                        GL.Vertex(bottomLeft);
+                        GL.Vertex(topRight);
+
+                        GL.Vertex(topLeft);
+                        GL.Vertex(bottomRight);
+                    }
                 }
             }
 
@@ -214,12 +282,18 @@ public class BuildingPreviewRenderer : MonoBehaviour
                     buildingToBuild, logicPosition, _ra2Demo.GetBattleGame().MapManager);
 
                 // 如果是非采矿场，需要判断在主城的限制区域内
-                if (canPlace)
+                if (canPlace && buildingToBuild != BuildingType.Smelter)
                 {
                     // 获取本地玩家阵营ID
                     int localPlayerCampId = _ra2Demo.GetBattleGame().World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
 
                     canPlace = BuildingPlacementUtils.CheckBuildableArea(_ra2Demo.GetBattleGame().World, logicPosition, buildingToBuild, localPlayerCampId);
+                }
+                
+                // 如果是采矿场，需要判断是否在矿源附近
+                if (canPlace && buildingToBuild == BuildingType.Smelter)
+                {
+                    canPlace = CheckMineProximity(logicPosition);
                 }
 
                 // 根据是否可以放置来改变预览建筑的颜色
@@ -237,6 +311,31 @@ public class BuildingPreviewRenderer : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 检查采矿场是否在矿源附近（10格范围内）
+    /// </summary>
+    /// <param name="position">采矿场位置</param>
+    /// <returns>是否在矿源附近</returns>
+    private bool CheckMineProximity(zVector3 position)
+    {
+        foreach (Vector2 minePos in minePositions)
+        {
+            // 计算与矿源的距离
+            Vector3 mineWorldPos = new Vector3(minePos.x, 0, minePos.y);
+            Vector3 smelterPos = new Vector3((float)position.x, 0, (float)position.z);
+            
+            float distance = Vector3.Distance(mineWorldPos, smelterPos);
+            
+            // 检查是否在10格范围内
+            if (distance <= 10.0f)
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /// <summary>
@@ -312,55 +411,83 @@ public class BuildingPreviewRenderer : MonoBehaviour
     /// </summary>
     private void ShowBuildableArea()
     {
-        // 查找主基地位置
-        zVector2 mainBasePos = zVector2.zero;
-        bool foundMainBase = false;
-
-        BattleGame game = _ra2Demo.GetBattleGame();
-        if (game != null && game.World != null)
+        // 清空之前的矿源位置
+        minePositions.Clear();
+        
+        // 如果是采矿场，收集所有矿源位置
+        if (buildingToBuild == BuildingType.Smelter)
         {
-            var entities = game.World.ComponentManager.GetAllEntityIdsWith<ZLockstep.Simulation.ECS.Components.BuildingComponent>();
-            foreach (var entityId in entities)
+            BattleGame game = _ra2Demo.GetBattleGame();
+            if (game != null && game.World != null)
             {
-                var entity = new Entity(entityId);
-                var building = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.BuildingComponent>(entity);
-
-                // 查找本地玩家的基地（BuildingType=1）
-                if (building.BuildingType == 1 && game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(entity))
+                var entities = game.World.ComponentManager.GetAllEntityIdsWith<MineComponent>();
+                foreach (var entityId in entities)
                 {
-                    var transform = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
-                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
-                    foundMainBase = true;
-                    break;
+                    var entity = new Entity(entityId);
+                    if (game.World.ComponentManager.HasComponent<TransformComponent>(entity))
+                    {
+                        var transform = game.World.ComponentManager.GetComponent<TransformComponent>(entity);
+                        Vector2 minePos = new Vector2((float)transform.Position.x, (float)transform.Position.z);
+                        minePositions.Add(minePos);
+                    }
                 }
             }
-        }
-
-        // 如果找到了主基地，计算可建造区域
-        if (foundMainBase)
-        {
-            // 计算可建造区域的边界（主建筑x,y+-20范围）
-            int range = 20;
-            zVector2 minPos = new zVector2(mainBasePos.x - range, mainBasePos.y - range);
-            zVector2 maxPos = new zVector2(mainBasePos.x + range, mainBasePos.y + range);
-
-            // 将世界坐标转换为网格坐标
-            game.MapManager.WorldToGrid(minPos, out int minGridX, out int minGridY);
-            game.MapManager.WorldToGrid(maxPos, out int maxGridX, out int maxGridY);
-
-            // 确保网格坐标在地图范围内
-            buildableMinGridX = Mathf.Max(0, minGridX);
-            buildableMinGridY = Mathf.Max(0, minGridY);
-            buildableMaxGridX = Mathf.Min(game.MapManager.GetWidth() - 1, maxGridX);
-            buildableMaxGridY = Mathf.Min(game.MapManager.GetHeight() - 1, maxGridY);
-
+            
             // 启用可建造区域显示
             showBuildableArea = true;
         }
         else
         {
-            // 没有找到主基地，禁用可建造区域显示
-            showBuildableArea = false;
+            // 查找主基地位置
+            zVector2 mainBasePos = zVector2.zero;
+            bool foundMainBase = false;
+
+            BattleGame game = _ra2Demo.GetBattleGame();
+            if (game != null && game.World != null)
+            {
+                var entities = game.World.ComponentManager.GetAllEntityIdsWith<ZLockstep.Simulation.ECS.Components.BuildingComponent>();
+                foreach (var entityId in entities)
+                {
+                    var entity = new Entity(entityId);
+                    var building = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.BuildingComponent>(entity);
+
+                    // 查找本地玩家的基地（BuildingType=1）
+                    if (building.BuildingType == 1 && game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(entity))
+                    {
+                        var transform = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
+                        mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
+                        foundMainBase = true;
+                        break;
+                    }
+                }
+            }
+
+            // 如果找到了主基地，计算可建造区域
+            if (foundMainBase)
+            {
+                // 计算可建造区域的边界（主建筑x,y+-20范围）
+                int range = 20;
+                zVector2 minPos = new zVector2(mainBasePos.x - range, mainBasePos.y - range);
+                zVector2 maxPos = new zVector2(mainBasePos.x + range, mainBasePos.y + range);
+
+                // 将世界坐标转换为网格坐标
+                game.MapManager.WorldToGrid(minPos, out int minGridX, out int minGridY);
+                game.MapManager.WorldToGrid(maxPos, out int maxGridX, out int maxGridY);
+
+                // 确保网格坐标在地图范围内
+                buildableMinGridX = Mathf.Max(0, minGridX);
+                buildableMinGridY = Mathf.Max(0, minGridY);
+                buildableMaxGridX = Mathf.Min(game.MapManager.GetWidth() - 1, maxGridX);
+                buildableMaxGridY = Mathf.Min(game.MapManager.GetHeight() - 1, maxGridY);
+
+                // 启用可建造区域显示
+                showBuildableArea = true;
+            }
+            else
+            {
+                // 没有找到主基地，禁用可建造区域显示
+                showBuildableArea = false;
+            }
         }
     }
 
@@ -418,6 +545,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
         }
         buildingToBuild = BuildingType.None;
         showBuildableArea = false; // 隐藏可建造区域
+        minePositions.Clear(); // 清空矿源位置
     }
 
     /// <summary>
