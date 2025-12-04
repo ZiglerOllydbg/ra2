@@ -56,7 +56,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
                 }
 
-                // 2. 如果有目标，检查是否在范围内
+                // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标
                 if (attack.TargetEntityId >= 0)
                 {
                     Entity target = new Entity(attack.TargetEntityId);
@@ -75,6 +75,18 @@ namespace ZLockstep.Simulation.ECS.Systems
                         }
                         
                         continue;
+                    }
+
+                    // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
+                    if (ComponentManager.HasComponent<BuildingComponent>(target))
+                    {
+                        int priorityTargetId = FindNearestNonBuildingEnemy(entity, camp, transform.Position, attack.Range);
+                        if (priorityTargetId >= 0)
+                        {
+                            // 存在可优先攻击的非建筑目标，切换目标
+                            attack.TargetEntityId = priorityTargetId;
+                            target = new Entity(attack.TargetEntityId);
+                        }
                     }
 
                     var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
@@ -218,6 +230,57 @@ namespace ZLockstep.Simulation.ECS.Systems
                 {
                     distSqr = (otherTransform.Position - position).sqrMagnitude;
                 }
+
+                // 找到最近的敌人
+                if (distSqr < minDistSqr)
+                {
+                    minDistSqr = distSqr;
+                    nearestEnemyId = entityId;
+                }
+            }
+
+            return nearestEnemyId;
+        }
+
+        /// <summary>
+        /// 搜索最近的非建筑敌方单位
+        /// </summary>
+        private int FindNearestNonBuildingEnemy(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
+        {
+            int nearestEnemyId = -1;
+            zfloat minDistSqr = range * range;
+
+            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+
+            foreach (var entityId in allEntities)
+            {
+                Entity otherEntity = new Entity(entityId);
+
+                // 跳过自己
+                if (otherEntity.Id == self.Id)
+                    continue;
+
+                // 检查是否为敌人
+                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
+                if (!selfCamp.IsEnemy(otherCamp))
+                    continue;
+
+                // 必须有Transform和Health组件
+                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
+                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
+                    continue;
+
+                // 检查是否还活着（只检查DeathComponent）
+                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                    continue;
+
+                // 优先攻击非建筑目标，跳过建筑目标
+                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
+                    continue;
+
+                // 计算距离
+                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
+                zfloat distSqr = (otherTransform.Position - position).sqrMagnitude;
 
                 // 找到最近的敌人
                 if (distSqr < minDistSqr)
