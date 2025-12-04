@@ -72,8 +72,6 @@ public class BuildingPreviewRenderer : MonoBehaviour
             // 如果是采矿场，使用蓝色绘制矿源周围可建造区域；否则使用绿色绘制主城周围可建造区域
             if (buildingToBuild == BuildingType.Smelter)
             {
-                GL.Color(Color.blue);
-                
                 // 绘制每个矿源周围的可建造区域
                 float gridSize = (float)_ra2Demo.GetBattleGame().MapManager.GetGridSize();
                 int mineBuildRange = 10; // 采矿场可在矿源周围10格内建造
@@ -95,38 +93,44 @@ public class BuildingPreviewRenderer : MonoBehaviour
                     int maxX = Mathf.Min(_ra2Demo.GetBattleGame().MapManager.GetWidth() - 1, mineGridX + mineBuildRange);
                     int maxY = Mathf.Min(_ra2Demo.GetBattleGame().MapManager.GetHeight() - 1, mineGridY + mineBuildRange);
                     
-                    // 绘制区域边界
-                    for (int y = minY; y <= maxY; y++)
-                    {
-                        Vector3 left = new Vector3(minX * gridSize, 0.1f, y * gridSize);
-                        Vector3 right = new Vector3(maxX * gridSize, 0.1f, y * gridSize);
-                        GL.Vertex(left);
-                        GL.Vertex(right);
-                    }
-
+                    // 绘制区域内的每个格子
                     for (int x = minX; x <= maxX; x++)
                     {
-                        Vector3 bottom = new Vector3(x * gridSize, 0.1f, minY * gridSize);
-                        Vector3 top = new Vector3(x * gridSize, 0.1f, maxY * gridSize);
-                        GL.Vertex(bottom);
-                        GL.Vertex(top);
-                    }
-                    
-                    // 绘制网格内的斜线
-                    for (int x = minX; x < maxX; x++)
-                    {
-                        for (int y = minY; y < maxY; y++)
+                        for (int y = minY; y <= maxY; y++)
                         {
-                            // 绘制每个网格的对角线（斜线效果）
+                            // 检查格子是否可行走，不可行走则显示红色
+                            if (_ra2Demo.GetBattleGame().MapManager.IsWalkable(x, y))
+                            {
+                                GL.Color(Color.yellow);
+                            }
+                            else
+                            {
+                                GL.Color(Color.red);
+                            }
+                            
+                            // 绘制格子边界
                             Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
+                            Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
                             Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
                             Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
-                            Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
-
-                            // 绘制交叉线形成网格
+                            
+                            // 绘制四条边
+                            GL.Vertex(bottomLeft);
+                            GL.Vertex(topLeft);
+                            
+                            GL.Vertex(topLeft);
+                            GL.Vertex(topRight);
+                            
+                            GL.Vertex(topRight);
+                            GL.Vertex(bottomRight);
+                            
+                            GL.Vertex(bottomRight);
+                            GL.Vertex(bottomLeft);
+                            
+                            // 绘制对角线
                             GL.Vertex(bottomLeft);
                             GL.Vertex(topRight);
-
+                            
                             GL.Vertex(topLeft);
                             GL.Vertex(bottomRight);
                         }
@@ -135,43 +139,45 @@ public class BuildingPreviewRenderer : MonoBehaviour
             }
             else
             {
-                GL.Color(Color.green);
-                
-                // 绘制可建造区域边界（只绘制边缘，而不是整个区域）
-                // 绘制水平线
+                // 绘制可建造区域内的每个格子
                 float gridSize = (float)_ra2Demo.GetBattleGame().MapManager.GetGridSize();
-                for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
-                {
-                    Vector3 left = new Vector3(buildableMinGridX * gridSize, 0.1f, y * gridSize);
-                    Vector3 right = new Vector3(buildableMaxGridX * gridSize, 0.1f, y * gridSize);
-                    GL.Vertex(left);
-                    GL.Vertex(right);
-                }
-
-                // 绘制垂直线
                 for (int x = buildableMinGridX; x <= buildableMaxGridX; x++)
                 {
-                    Vector3 bottom = new Vector3(x * gridSize, 0.1f, buildableMinGridY * gridSize);
-                    Vector3 top = new Vector3(x * gridSize, 0.1f, buildableMaxGridY * gridSize);
-                    GL.Vertex(bottom);
-                    GL.Vertex(top);
-                }
-
-                // 绘制网格内的斜线
-                for (int x = buildableMinGridX; x < buildableMaxGridX; x++)
-                {
-                    for (int y = buildableMinGridY; y < buildableMaxGridY; y++)
+                    for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
                     {
-                        // 绘制每个网格的对角线（斜线效果）
+                        // 检查格子是否可行走，不可行走则显示红色
+                        if (_ra2Demo.GetBattleGame().MapManager.IsWalkable(x, y))
+                        {
+                            GL.Color(Color.green);
+                        }
+                        else
+                        {
+                            GL.Color(Color.red);
+                        }
+                        
+                        // 绘制格子边界
                         Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
+                        Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
                         Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
                         Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
-                        Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
-
-                        // 绘制交叉线形成网格
+                        
+                        // 绘制四条边
+                        GL.Vertex(bottomLeft);
+                        GL.Vertex(topLeft);
+                        
+                        GL.Vertex(topLeft);
+                        GL.Vertex(topRight);
+                        
+                        GL.Vertex(topRight);
+                        GL.Vertex(bottomRight);
+                        
+                        GL.Vertex(bottomRight);
+                        GL.Vertex(bottomLeft);
+                        
+                        // 绘制对角线
                         GL.Vertex(bottomLeft);
                         GL.Vertex(topRight);
-
+                        
                         GL.Vertex(topLeft);
                         GL.Vertex(bottomRight);
                     }
@@ -266,7 +272,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
                 // 设置预览建筑的位置
                 previewBuilding.transform.position = new Vector3(
                     (float)alignedWorldPos.x,
-                    0, // 保持原来的Y轴位置
+                    0.1f, // 保持原来的Y轴位置
                     (float)alignedWorldPos.y
                 );
 

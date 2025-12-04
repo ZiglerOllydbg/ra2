@@ -27,15 +27,15 @@ namespace ZLockstep.Simulation.ECS.Utils
                     height = 10;
                     break;
                 case BuildingType.Mine: // 矿
-                    width = 5;
-                    height = 5;
+                    width = 0;
+                    height = 0;
                     break;
                 case BuildingType.Smelter: // 冶金厂
                     width = 4;
                     height = 4;
                     break;
                 case BuildingType.PowerPlant: // 电厂
-                    width = 6;
+                    width = 8;
                     height = 4;
                     break;
                 case BuildingType.Factory: // 坦克工厂
