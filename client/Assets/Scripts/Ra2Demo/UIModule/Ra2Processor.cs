@@ -40,7 +40,7 @@ public class Ra2Processor : BaseProcessor
         {
             case Ra2StartUpEvent e:
                 {
-                    MatchPanel.Open();
+                    // MatchPanel.Open();
                 }
                 break;
         }

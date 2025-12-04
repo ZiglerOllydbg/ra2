@@ -244,7 +244,7 @@ namespace ZLockstep.Simulation.ECS
             // 6. 如果单位有攻击能力，添加Attack组件
             if (CanUnitAttack((int)unitType))
             {
-                var attackComponent = CreateUnitAttackComponent((int)unitType);
+                var attackComponent = CreateUnitAttackComponent(unitType);
                 world.ComponentManager.AddComponent(entity, attackComponent);
             }
 
@@ -381,11 +381,11 @@ namespace ZLockstep.Simulation.ECS
             }
         }
 
-        private static AttackComponent CreateUnitAttackComponent(int unitType)
+        private static AttackComponent CreateUnitAttackComponent(UnitType unitType)
         {
             switch (unitType)
             {
-                case 1: // 动员兵
+                case UnitType.Infantry: // 动员兵
                     return new AttackComponent
                     {
                         Damage = (zfloat)10.0f,
@@ -394,12 +394,12 @@ namespace ZLockstep.Simulation.ECS
                         TimeSinceLastAttack = zfloat.Zero,
                         TargetEntityId = -1
                     };
-                case 2: // 犀牛坦克
+                case UnitType.Tank: // 犀牛坦克
                     return new AttackComponent
                     {
                         Damage = (zfloat)30.0f,
                         Range = (zfloat)10.0f,
-                        AttackInterval = (zfloat)2.0f,
+                        AttackInterval = (zfloat)1.0f,
                         TimeSinceLastAttack = zfloat.Zero,
                         TargetEntityId = -1
                     };
