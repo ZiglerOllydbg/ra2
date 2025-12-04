@@ -299,6 +299,24 @@ namespace Game.Examples
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(campId));
             }
             
+            // TODO 调试用
+            if (initialState.Count == 2)
+            {
+                // 添加一个camp2的主基地，在64,64位置
+                var entityEvent = EntityCreationManager.CreateBuildingEntity(World, 2, BuildingType.Base,
+                    new zVector3((zfloat)64, zfloat.Zero, (zfloat)64),
+                    width: 10, height: 10, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                if (entityEvent.HasValue)
+                {
+                    createdEntities.Add(entityEvent.Value);
+                }
+
+                // 添加阵营2的经济组件
+                var economyEntity = World.EntityManager.CreateEntity();
+                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(2200, 10));
+                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(2));
+            }
+
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
             _genesisEntities = createdEntities;
             
