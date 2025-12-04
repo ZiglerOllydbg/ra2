@@ -232,20 +232,20 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加Unit组件（根据类型）
-            var unitComponent = CreateUnitComponent((int)unitType, campId);
+            var unitComponent = CreateUnitComponent(unitType, campId);
             unitComponent.PrefabId = prefabId;
             unitComponent.MoveSpeed = maxSpeed;
             world.ComponentManager.AddComponent(entity, unitComponent);
 
             // 5. 添加Health组件
-            var healthComponent = CreateUnitHealthComponent((int)unitType);
+            var healthComponent = CreateUnitHealthComponent(unitType);
             world.ComponentManager.AddComponent(entity, healthComponent);
 
             // 6. 如果单位有攻击能力，添加Attack组件
-            if (CanUnitAttack((int)unitType))
+            var attackComponent = CreateUnitAttackComponent(unitType);
+            if (attackComponent.HasValue)
             {
-                var attackComponent = CreateUnitAttackComponent(unitType);
-                world.ComponentManager.AddComponent(entity, attackComponent);
+                world.ComponentManager.AddComponent(entity, attackComponent.Value);
             }
 
             // 7. 添加速度组件
@@ -351,37 +351,37 @@ namespace ZLockstep.Simulation.ECS
 
         #region 单位辅助方法
 
-        private static UnitComponent CreateUnitComponent(int unitType, int playerId)
+        private static UnitComponent CreateUnitComponent(UnitType unitType, int campId)
         {
             switch (unitType)
             {
-                case 1: // 动员兵
-                    return UnitComponent.CreateInfantry(playerId);
-                case 2: // 犀牛坦克
-                    return UnitComponent.CreateTank(playerId);
-                case 3: // 矿车
-                    return UnitComponent.CreateHarvester(playerId);
+                case UnitType.Infantry: // 动员兵
+                    return UnitComponent.CreateInfantry(campId);
+                case UnitType.Tank: // 犀牛坦克
+                    return UnitComponent.CreateTank(campId);
+                case UnitType.Harvester: // 矿车
+                    return UnitComponent.CreateHarvester(campId);
                 default:
-                    return UnitComponent.CreateInfantry(playerId);
+                    return UnitComponent.CreateInfantry(campId);
             }
         }
 
-        private static HealthComponent CreateUnitHealthComponent(int unitType)
+        private static HealthComponent CreateUnitHealthComponent(UnitType unitType)
         {
             switch (unitType)
             {
-                case 1: // 动员兵
+                case UnitType.Infantry: // 动员兵
                     return new HealthComponent((zfloat)50.0f);
-                case 2: // 犀牛坦克
+                case UnitType.Tank: // 犀牛坦克
                     return new HealthComponent((zfloat)200.0f);
-                case 3: // 矿车
+                case UnitType.Harvester: // 矿车
                     return new HealthComponent((zfloat)150.0f);
                 default:
                     return new HealthComponent((zfloat)100.0f);
             }
         }
 
-        private static AttackComponent CreateUnitAttackComponent(UnitType unitType)
+        private static AttackComponent? CreateUnitAttackComponent(UnitType unitType)
         {
             switch (unitType)
             {
@@ -404,14 +404,8 @@ namespace ZLockstep.Simulation.ECS
                         TargetEntityId = -1
                     };
                 default:
-                    return AttackComponent.CreateDefault();
+                    return null;
             }
-        }
-
-        private static bool CanUnitAttack(int unitType)
-        {
-            // 动员兵和坦克有攻击能力
-            return unitType == 1 || unitType == 2;
         }
 
         #endregion

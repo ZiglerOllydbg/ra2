@@ -315,6 +315,16 @@ namespace Game.Examples
                 var economyEntity = World.EntityManager.CreateEntity();
                 World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(2200, 10));
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(2));
+
+                // 增加1辆坦克
+                // 使用EntityCreationManager创建单位
+                int prefabId = 6; // 默认预制体ID
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.Tank, 
+                    new zVector3((zfloat)50, zfloat.Zero, (zfloat)64), prefabId);
+                if (unitEvent.HasValue)
+                {
+                    createdEntities.Add(unitEvent.Value);
+                }
             }
 
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件

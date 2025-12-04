@@ -286,7 +286,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 添加UnitComponent（提供视图标识信息）
             ComponentManager.AddComponent(projectile, new UnitComponent
             {
-                UnitType = 100, // 100=弹道类型
+                UnitType = UnitType.Projectile, // 100=弹道类型
                 PrefabId = 9,   // 弹道预制体ID
                 PlayerId = sourceCampId,
                 MoveSpeed = projComponent.Speed
