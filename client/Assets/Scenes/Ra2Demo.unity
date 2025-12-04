@@ -501,7 +501,7 @@ MonoBehaviour:
   - {fileID: 4346800480097175460, guid: ebedda77d76648c4284d6770520b7d94, type: 3}
   - {fileID: 8690058942472112195}
   - {fileID: 0}
-  EnableSettlementSystem: 0
+  EnableSettlementSystem: 1
 --- !u!114 &812412505
 MonoBehaviour:
   m_ObjectHideFlags: 0
