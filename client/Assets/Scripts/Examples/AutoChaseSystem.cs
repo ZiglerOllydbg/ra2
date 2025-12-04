@@ -1,6 +1,7 @@
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.ECS.Systems;
+using ZLockstep.Simulation.ECS.Utils;
 using ZLockstep.Flow;
 using zUnity;
 
@@ -88,19 +89,26 @@ namespace Game.Examples
                 var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
 
                 // 1. 检查当前攻击目标是否有效且在侦测范围内
-                if (attack.TargetEntityId >= 0 && IsValidChaseTarget(attack.TargetEntityId, camp, transform.Position))
+                if (attack.TargetEntityId >= 0 && IsValidChaseTarget(attack.TargetEntityId, camp, transform.Position, attack.Range))
                 {
                     // 目标有效，继续追击
-                    Entity target = new Entity(attack.TargetEntityId);
+                    Entity target = new(attack.TargetEntityId);
                     if (ComponentManager.HasComponent<TransformComponent>(target))
                     {
-                        var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-                        zVector2 targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
-                        
-                        // 只有在没有移动目标或已到达目标时才设置新目标
-                        if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                        // 检查目标是否为建筑，如果是则计算边界点
+                        zVector2 targetPos;
+                        if (!ComponentManager.HasComponent<BuildingComponent>(target))
                         {
-                            _navSystem.SetMoveTarget(entity, targetPos);
+                            var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
+                            targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
+                            zUDebug.Log("[AutoChaseSystem] 追击目标1：" + targetPos);
+
+                            // 只有在没有移动目标或已到达目标时才设置新目标
+                            if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                            {
+                                _navSystem.SetMoveTarget(entity, targetPos);
+                                zUDebug.Log("[AutoChaseSystem] 追击目标2：" + targetPos);
+                            }
                         }
                     }
                     continue;
@@ -115,8 +123,18 @@ namespace Game.Examples
                     Entity target = new Entity(nearestEnemyId);
                     if (ComponentManager.HasComponent<TransformComponent>(target))
                     {
-                        var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-                        zVector2 targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
+                        // 检查目标是否为建筑，如果是则计算边界点
+                        zVector2 targetPos;
+                        if (ComponentManager.HasComponent<BuildingComponent>(target))
+                        {
+                            var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                            targetPos = CalculateOptimizedBuildingTargetPoint(transform.Position, building, attack.Range);
+                        }
+                        else
+                        {
+                            var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
+                            targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
+                        }
                         
                         // 只有在没有移动目标或已到达目标时才设置新目标
                         if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
@@ -126,6 +144,30 @@ namespace Game.Examples
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 计算优化后的建筑目标点（使用攻击范围 - 0.5米作为安全距离）
+        /// </summary>
+        /// <param name="chaserPosition">追击者位置</param>
+        /// <param name="building">建筑组件</param>
+        /// <param name="attackRange">攻击范围</param>
+        /// <returns>优化后的目标点</returns>
+        private zVector2 CalculateOptimizedBuildingTargetPoint(zVector3 chaserPosition, BuildingComponent building, zfloat attackRange)
+        {
+            // 获取建筑边界点
+            zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(chaserPosition, building, World);
+            
+            // 计算从追击者到边界点的方向
+            zVector2 toBoundary = boundaryPoint - new zVector2(chaserPosition.x, chaserPosition.z);
+            zfloat distanceToBoundary = toBoundary.magnitude;
+            
+            // 安全距离（攻击范围 - 0.5米）
+            zfloat safeDistance = attackRange - new zfloat(2, 0000);
+            
+            // 计算距离边界点安全距离远的位置
+            zVector2 direction = toBoundary.normalized;
+            return boundaryPoint - direction * safeDistance;
         }
 
         /// <summary>
@@ -162,8 +204,21 @@ namespace Game.Examples
                     continue;
 
                 // 计算距离
-                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
-                zfloat distSqr = (otherTransform.Position - position).sqrMagnitude;
+                zfloat distSqr;
+                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
+                {
+                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
+                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
+                        continue; // 建筑不在范围内
+                        
+                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
+                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
+                }
+                else
+                {
+                    var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
+                    distSqr = (otherTransform.Position - position).sqrMagnitude;
+                }
 
                 // 找到最近的敌人
                 if (distSqr < minDistSqr)
@@ -179,7 +234,7 @@ namespace Game.Examples
         /// <summary>
         /// 检查追击目标是否有效
         /// </summary>
-        private bool IsValidChaseTarget(int targetEntityId, CampComponent selfCamp, zVector3 position)
+        private bool IsValidChaseTarget(int targetEntityId, CampComponent selfCamp, zVector3 position, zfloat range)
         {
             Entity target = new Entity(targetEntityId);
 
@@ -208,12 +263,18 @@ namespace Game.Examples
             }
 
             // 检查是否在侦测范围内
-            var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-            zfloat distSqr = (targetTransform.Position - position).sqrMagnitude;
-            zfloat rangeSqr = _detectionRange * _detectionRange;
-
-            return distSqr <= rangeSqr;
+            if (ComponentManager.HasComponent<BuildingComponent>(target))
+            {
+                var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                return BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World);
+            }
+            else
+            {
+                var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
+                zfloat distSqr = (targetTransform.Position - position).sqrMagnitude;
+                zfloat rangeSqr = _detectionRange * _detectionRange;
+                return distSqr <= rangeSqr;
+            }
         }
     }
 }
-

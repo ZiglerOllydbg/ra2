@@ -10,7 +10,7 @@ namespace ZLockstep.Simulation.ECS.Components
         /// 单位类型ID（用于区分不同单位）
         /// 例如：1=动员兵, 2=犀牛坦克, 3=矿车
         /// </summary>
-        public int UnitType;
+        public UnitType UnitType;
 
         /// <summary>
         /// 移动速度（单位/秒）
@@ -43,7 +43,7 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             return new UnitComponent
             {
-                UnitType = 1,
+                UnitType = UnitType.Infantry,
                 MoveSpeed = (zfloat)3.0f,
                 RotateSpeed = (zfloat)180.0f,
                 PlayerId = playerId,
@@ -56,7 +56,7 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             return new UnitComponent
             {
-                UnitType = 2,
+                UnitType = UnitType.Tank,
                 MoveSpeed = (zfloat)5.0f,
                 RotateSpeed = (zfloat)120.0f,
                 PlayerId = playerId,
@@ -69,7 +69,7 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             return new UnitComponent
             {
-                UnitType = 3,
+                UnitType = UnitType.Harvester,
                 MoveSpeed = (zfloat)4.0f,
                 RotateSpeed = (zfloat)90.0f,
                 PlayerId = playerId,

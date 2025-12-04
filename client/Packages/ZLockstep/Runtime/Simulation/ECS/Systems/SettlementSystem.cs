@@ -56,63 +56,46 @@ namespace ZLockstep.Simulation.ECS.Systems
                 return;
             }
 
-            // 统计每个阵营的存活坦克数量
-            var tankCounts = CountAliveTanksByCamp();
-            
             // 获取本地玩家阵营ID
             int localPlayerCampId = ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
             
-            // 检查所有阵营是否都没有存活坦克（平局）
-            bool allCampsDead = true;
-            foreach (var kvp in tankCounts)
+            // 获取所有参与游戏的阵营
+            var campIds = GetAllCampIds();
+            
+            // 查找各阵营的主建筑状态
+            var baseStatus = new Dictionary<int, bool>(); // true表示主建筑存活，false表示被摧毁
+            foreach (var campId in campIds)
             {
-                if (kvp.Value > 0)
-                {
-                    allCampsDead = false;
-                    break;
-                }
+                bool isBaseAlive = IsCampBaseAlive(campId);
+                baseStatus[campId] = isBaseAlive;
             }
             
-            // 如果所有阵营都没有存活坦克，则为平局
-            if (allCampsDead || tankCounts.Count == 0)
-            {
-                // 平局情况
-                var gameOverEvent = new GameOverEvent
-                {
-                    IsVictory = false, // 平局算作失败
-                    WinningCampId = -1 // -1表示平局
-                };
-                EventManager.Publish(gameOverEvent);
-                _gameOver = true;
-                return;
-            }
-            
-            // 检查本地玩家是否失败（自己的所有坦克都死亡）
-            if (!tankCounts.ContainsKey(localPlayerCampId))
+            // 检查本地玩家是否失败（自己的主建筑被摧毁）
+            if (!baseStatus.ContainsKey(localPlayerCampId) || !baseStatus[localPlayerCampId])
             {
                 // 本地玩家失败
                 var gameOverEvent = new GameOverEvent
                 {
                     IsVictory = false,
-                    WinningCampId = GetWinningCampId(tankCounts, localPlayerCampId)
+                    WinningCampId = GetFirstAliveEnemyCamp(baseStatus, localPlayerCampId)
                 };
                 EventManager.Publish(gameOverEvent);
                 _gameOver = true;
                 return;
             }
             
-            // 检查本地玩家是否胜利（其他所有玩家的坦克都死亡）
+            // 检查本地玩家是否胜利（所有敌方主建筑都被摧毁）
             bool allEnemiesDefeated = true;
-            foreach (var kvp in tankCounts)
+            foreach (var kvp in baseStatus)
             {
-                if (kvp.Key != localPlayerCampId && kvp.Value > 0)
+                if (kvp.Key != localPlayerCampId && kvp.Value)
                 {
                     allEnemiesDefeated = false;
                     break;
                 }
             }
             
-            if (allEnemiesDefeated && tankCounts.ContainsKey(localPlayerCampId) && tankCounts[localPlayerCampId] > 0)
+            if (allEnemiesDefeated)
             {
                 // 本地玩家胜利
                 var gameOverEvent = new GameOverEvent
@@ -126,70 +109,75 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
         
         /// <summary>
-        /// 统计每个阵营的存活坦克数量
+        /// 获取所有参与游戏的阵营ID
         /// </summary>
-        /// <returns>阵营ID到存活坦克数量的映射</returns>
-        private Dictionary<int, int> CountAliveTanksByCamp()
+        /// <returns>阵营ID列表</returns>
+        private List<int> GetAllCampIds()
         {
-            var tankCounts = new Dictionary<int, int>();
+            var campIds = new List<int>();
+            var economyEntities = ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
             
-            var unitEntities = ComponentManager.GetAllEntityIdsWith<UnitComponent>();
-            
-            foreach (var entityId in unitEntities)
+            foreach (var entityId in economyEntities)
             {
                 var entity = new Entity(entityId);
-                
-                // 检查是否为坦克单位（UnitType == 2）
-                var unit = ComponentManager.GetComponent<UnitComponent>(entity);
-                if (unit.UnitType != 2) // 只统计坦克
-                    continue;
-                    
-                // 检查是否有阵营组件
-                if (!ComponentManager.HasComponent<CampComponent>(entity))
-                    continue;
-                    
-                // 检查是否存活
-                if (ComponentManager.HasComponent<DeathComponent>(entity))
-                    continue; // 已经死亡
-                    
-                if (ComponentManager.HasComponent<HealthComponent>(entity))
+                if (ComponentManager.HasComponent<CampComponent>(entity))
                 {
-                    var health = ComponentManager.GetComponent<HealthComponent>(entity);
-                    if (health.CurrentHealth <= zfloat.Zero)
-                        continue; // 生命值为0，视为死亡
-                }
-                
-                // 统计存活坦克
-                var camp = ComponentManager.GetComponent<CampComponent>(entity);
-                if (tankCounts.ContainsKey(camp.CampId))
-                {
-                    tankCounts[camp.CampId]++;
-                }
-                else
-                {
-                    tankCounts[camp.CampId] = 1;
+                    var camp = ComponentManager.GetComponent<CampComponent>(entity);
+                    campIds.Add(camp.CampId);
                 }
             }
             
-            return tankCounts;
+            return campIds;
         }
         
         /// <summary>
-        /// 获取胜利阵营ID
+        /// 检查指定阵营的主建筑是否存活
         /// </summary>
-        /// <param name="tankCounts">各阵营坦克数量</param>
-        /// <param name="localPlayerCampId">本地玩家阵营ID</param>
-        /// <returns>胜利阵营ID</returns>
-        private int GetWinningCampId(Dictionary<int, int> tankCounts, int localPlayerCampId)
+        /// <param name="campId">阵营ID</param>
+        /// <returns>true表示主建筑存活，false表示被摧毁</returns>
+        private bool IsCampBaseAlive(int campId)
         {
-            foreach (var kvp in tankCounts)
+            // 查找该阵营的主建筑
+            var (buildingComponent, buildingEntity) = ComponentManager.GetComponentWithCondition<BuildingComponent>(
+                e => ComponentManager.HasComponent<CampComponent>(e) && 
+                     ComponentManager.GetComponent<CampComponent>(e).CampId == campId &&
+                     ComponentManager.GetComponent<BuildingComponent>(e).BuildingType == (int)BuildingType.Base);
+            
+            // 如果找不到主建筑，认为已被摧毁
+            if (buildingEntity.Id == -1)
+                return false;
+                
+            // 检查主建筑是否被标记为死亡
+            if (ComponentManager.HasComponent<DeathComponent>(buildingEntity))
+                return false;
+                
+            // 检查主建筑血量
+            if (ComponentManager.HasComponent<HealthComponent>(buildingEntity))
             {
-                if (kvp.Key != localPlayerCampId && kvp.Value > 0)
+                var health = ComponentManager.GetComponent<HealthComponent>(buildingEntity);
+                if (health.CurrentHealth <= zfloat.Zero)
+                    return false;
+            }
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// 获取第一个存活的敌方阵营ID
+        /// </summary>
+        /// <param name="baseStatus">各阵营主建筑状态</param>
+        /// <param name="localPlayerCampId">本地玩家阵营ID</param>
+        /// <returns>第一个存活的敌方阵营ID，如果没有则返回-1</returns>
+        private int GetFirstAliveEnemyCamp(Dictionary<int, bool> baseStatus, int localPlayerCampId)
+        {
+            foreach (var kvp in baseStatus)
+            {
+                if (kvp.Key != localPlayerCampId && kvp.Value)
                 {
                     return kvp.Key;
                 }
             }
-            return -1; // 没有明确的胜利方
+            return -1;
         }
     }
 }

@@ -4,6 +4,7 @@ using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Simulation.ECS.Utils;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -27,30 +28,30 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public zVector3 Position { get; set; }
 
-        /// <summary>
-        /// 建筑占据的格子数（宽度和高度）
-        /// </summary>
-        public int Width { get; set; }
-        public int Height { get; set; }
 
         /// <summary>
         /// 预制体ID（用于表现层）
         /// </summary>
         public int PrefabId { get; set; }
 
-        public CreateBuildingCommand(int campId, BuildingType buildingType, zVector3 position, 
-            int width, int height, int prefabId)
+        public CreateBuildingCommand(int campId, BuildingType buildingType, zVector3 position, int prefabId)
             : base(campId)
         {
             BuildingType = buildingType;
             Position = position;
-            Width = width;
-            Height = height;
             PrefabId = prefabId;
         }
 
         public override void Execute(zWorld world)
         {
+            // 阻挡判断
+            var mapManager = world.GameInstance.GetMapManager();
+            if (!BuildingPlacementUtils.CheckBuildingPlacement(BuildingType, Position, mapManager))
+            {
+                UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
+                return;
+            }
+
             // 检查并扣除资源
             if (!CheckAndDeductResources(world))
             {
@@ -64,8 +65,6 @@ namespace ZLockstep.Sync.Command.Commands
                 CampId, 
                 BuildingType, 
                 Position, 
-                Width, 
-                Height, 
                 PrefabId,
                 world.GameInstance.GetMapManager(),
                 world.GameInstance.GetFlowFieldManager()
@@ -78,7 +77,7 @@ namespace ZLockstep.Sync.Command.Commands
             }
 
             UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造了建筑类型{BuildingType} " +
-                $"在位置{Position}，尺寸{Width}x{Height}");
+                $"在位置{Position}");
         }
 
         /// <summary>
@@ -153,7 +152,7 @@ namespace ZLockstep.Sync.Command.Commands
         public override string ToString()
         {
             return $"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} " +
-                $"在位置{Position}（格子坐标），尺寸{Width}x{Height}";
+                $"在位置{Position}（格子坐标）";
         }
     }
 }

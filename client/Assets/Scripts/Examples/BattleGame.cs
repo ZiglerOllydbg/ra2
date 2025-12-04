@@ -219,7 +219,7 @@ namespace Game.Examples
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
                             var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, BuildingType.Mine,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                            width:4, height:4, prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                            prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
                             {
                                 createdEntities.Add(entityEvent.Value);
@@ -247,22 +247,18 @@ namespace Game.Examples
 
                         // 根据类型确定建筑参数
                         BuildingType buildingType = BuildingType.None; // 默认基地
-                        int width = 10;
-                        int height = 10;
 
                         switch (type)
                         {
                             case "base":
                                 buildingType = BuildingType.Base; // 基地
-                                width = 10;
-                                height = 10;
                                 break;
                         }
 
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        width: width, height: height, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
@@ -299,6 +295,34 @@ namespace Game.Examples
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(campId));
             }
             
+            // TODO 调试用
+            if (initialState.Count == 2)
+            {
+                // 添加一个camp2的主基地，在64,64位置
+                var entityEvent = EntityCreationManager.CreateBuildingEntity(World, 2, BuildingType.Base,
+                    new zVector3((zfloat)64, zfloat.Zero, (zfloat)64),
+                    prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                if (entityEvent.HasValue)
+                {
+                    createdEntities.Add(entityEvent.Value);
+                }
+
+                // 添加阵营2的经济组件
+                var economyEntity = World.EntityManager.CreateEntity();
+                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(2200, 10));
+                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(2));
+
+                // 增加1辆坦克
+                // 使用EntityCreationManager创建单位
+                int prefabId = 6; // 默认预制体ID
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.Tank, 
+                    new zVector3((zfloat)50, zfloat.Zero, (zfloat)64), prefabId);
+                if (unitEvent.HasValue)
+                {
+                    createdEntities.Add(unitEvent.Value);
+                }
+            }
+
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
             _genesisEntities = createdEntities;
             

@@ -116,8 +116,7 @@ public class Room {
             int frame = data.get("frame").asInt();
 
             if (frame < currentFrame) {
-                logger.warn("[{}] 收到过期的帧：{}, 当前帧={}, 数据：{}", channelId, frame, currentFrame, data.toString());
-                return;
+                frame = currentFrame;
             }
 
             logger.info("[{}] 收到帧输入帧: {}, 当前帧：{}, 数据: {}", channelId, frame, currentFrame, data.toString());

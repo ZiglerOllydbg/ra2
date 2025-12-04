@@ -1,5 +1,6 @@
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
+using ZLockstep.Simulation.ECS.Utils;
 using zUnity;
 
 namespace ZLockstep.Simulation.ECS.Systems
@@ -55,7 +56,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
                 }
 
-                // 2. 如果有目标，检查是否在范围内
+                // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标
                 if (attack.TargetEntityId >= 0)
                 {
                     Entity target = new Entity(attack.TargetEntityId);
@@ -76,8 +77,32 @@ namespace ZLockstep.Simulation.ECS.Systems
                         continue;
                     }
 
+                    // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
+                    if (ComponentManager.HasComponent<BuildingComponent>(target))
+                    {
+                        int priorityTargetId = FindNearestNonBuildingEnemy(entity, camp, transform.Position, attack.Range);
+                        if (priorityTargetId >= 0)
+                        {
+                            // 存在可优先攻击的非建筑目标，切换目标
+                            attack.TargetEntityId = priorityTargetId;
+                            target = new Entity(attack.TargetEntityId);
+                        }
+                    }
+
                     var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-                    zfloat distanceSqr = (targetTransform.Position - transform.Position).sqrMagnitude;
+                    // 如果目标是建筑，计算到建筑边界的距离
+                    zfloat distanceSqr;
+                    if (ComponentManager.HasComponent<BuildingComponent>(target))
+                    {
+                        var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                        zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                        distanceSqr = (new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position).sqrMagnitude;
+                    }
+                    else
+                    {
+                        distanceSqr = (targetTransform.Position - transform.Position).sqrMagnitude;
+                    }
+                    
                     zfloat rangeSqr = attack.Range * attack.Range;
 
                     // 如果超出范围，清空目标
@@ -103,7 +128,20 @@ namespace ZLockstep.Simulation.ECS.Systems
                             turret.HasTarget = true;
                             
                             // 计算朝向目标的方向（2D）
-                            zVector3 toTarget = targetTransform.Position - transform.Position;
+                            zVector3 toTarget;
+                            if (ComponentManager.HasComponent<BuildingComponent>(target))
+                            {
+                                // 如果目标是建筑，朝向建筑边界点
+                                var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                                toTarget = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position;
+                            }
+                            else
+                            {
+                                // 普通目标
+                                toTarget = targetTransform.Position - transform.Position;
+                            }
+                            
                             zVector2 toTarget2D = new zVector2(toTarget.x, toTarget.z);
                             if (toTarget2D.magnitude > zfloat.Epsilon)
                             {
@@ -116,7 +154,22 @@ namespace ZLockstep.Simulation.ECS.Systems
                         // 如果冷却完成，发射攻击
                         if (attack.CanAttack)
                         {
-                            FireProjectile(entity, target, attack.Damage, transform.Position, targetTransform.Position, camp.CampId);
+                            // 确定攻击目标点
+                            zVector3 targetPos;
+                            if (ComponentManager.HasComponent<BuildingComponent>(target))
+                            {
+                                // 如果目标是建筑，攻击建筑边界点
+                                var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                                targetPos = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y);
+                            }
+                            else
+                            {
+                                // 普通目标
+                                targetPos = targetTransform.Position;
+                            }
+                            
+                            FireProjectile(entity, target, attack.Damage, transform.Position, targetPos, camp.CampId);
                             attack.TimeSinceLastAttack = zfloat.Zero;
                         }
                     }
@@ -157,6 +210,72 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                 // 检查是否还活着（只检查DeathComponent）
                 if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                    continue;
+
+                // 计算距离
+                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
+                zfloat distSqr;
+                
+                // 如果目标是建筑，计算到建筑边界的距离
+                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
+                {
+                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
+                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
+                        continue; // 建筑不在范围内
+                    
+                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
+                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
+                }
+                else
+                {
+                    distSqr = (otherTransform.Position - position).sqrMagnitude;
+                }
+
+                // 找到最近的敌人
+                if (distSqr < minDistSqr)
+                {
+                    minDistSqr = distSqr;
+                    nearestEnemyId = entityId;
+                }
+            }
+
+            return nearestEnemyId;
+        }
+
+        /// <summary>
+        /// 搜索最近的非建筑敌方单位
+        /// </summary>
+        private int FindNearestNonBuildingEnemy(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
+        {
+            int nearestEnemyId = -1;
+            zfloat minDistSqr = range * range;
+
+            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+
+            foreach (var entityId in allEntities)
+            {
+                Entity otherEntity = new Entity(entityId);
+
+                // 跳过自己
+                if (otherEntity.Id == self.Id)
+                    continue;
+
+                // 检查是否为敌人
+                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
+                if (!selfCamp.IsEnemy(otherCamp))
+                    continue;
+
+                // 必须有Transform和Health组件
+                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
+                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
+                    continue;
+
+                // 检查是否还活着（只检查DeathComponent）
+                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                    continue;
+
+                // 优先攻击非建筑目标，跳过建筑目标
+                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
                     continue;
 
                 // 计算距离
@@ -218,7 +337,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 damage: damage,
                 speed: new zfloat(10), // 弹道速度10米/秒（调慢以便观察）
                 targetPosition: targetPos,
-                isHoming: true, // 追踪型导弹
+                isHoming: false, // 追踪型导弹
                 sourceCampId: sourceCampId
             );
             ComponentManager.AddComponent(projectile, projComponent);
@@ -230,7 +349,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 添加UnitComponent（提供视图标识信息）
             ComponentManager.AddComponent(projectile, new UnitComponent
             {
-                UnitType = 100, // 100=弹道类型
+                UnitType = UnitType.Projectile, // 100=弹道类型
                 PrefabId = 9,   // 弹道预制体ID
                 PlayerId = sourceCampId,
                 MoveSpeed = projComponent.Speed
@@ -246,7 +365,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 UnitType = (int)UnitType.Projectile, // 100表示弹道类型
                 Position = sourcePos,
                 PlayerId = sourceCampId,
-                PrefabId = 7 // 弹道预制体ID
+                PrefabId = -1 // 弹道预制体ID
             });
 
             zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}, 伤害{damage}");
