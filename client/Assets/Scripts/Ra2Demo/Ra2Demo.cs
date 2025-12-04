@@ -27,39 +27,30 @@ public class Ra2Demo : MonoBehaviour
 
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
-    [SerializeField] private int unitType = 1; // 单位类型：1=动员兵, 2=坦克, 3=矿车
-    [SerializeField] private int prefabId = 1; // 预制体ID（对应unitPrefabs数组索引）
 
-    [Header("小地图设置")]
-    private MiniMapController miniMapController; // 小地图控制器
-    private Rect miniMapRect = new Rect(-1, 0, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从右侧/底部计算）
-    private int miniMapMargin = 10; // 小地图边距
-
-    private RTSControl _controls;
-    public Camera _mainCamera;
-    private RenderTexture _miniMapTexture;
 
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
     [SerializeField] public GameObject[] unitPrefabs = new GameObject[10];
     private PresentationSystem _presentationSystem;
 
-    private WebSocketNetworkAdaptor NetAdaptor; // 保存网络适配器引用
-    
-    
-    // 添加房间类型选择
-    public RoomType selectedRoomType = RoomType.DUO;
+    // 保存网络适配器引用
+    private WebSocketNetworkAdaptor NetAdaptor;
 
-    // 添加用于下拉列表显示的变量
-    private bool showRoomTypeDropdown = false;
-    private string[] roomTypeOptions = { "单人(SOLO)", "双人(DUO)", "三人(TRIO)", "四人(QUAD)", "八人(OCTO)" };
+    // 添加建筑预览渲染器引用
+    private BuildingPreviewRenderer buildingPreviewRenderer;
     
-    // 添加对RtsCameraController的引用
-    private RtsCameraController _rtsCameraController;
+
+    [Header("小地图设置")]
+    private MiniMapController miniMapController; // 小地图控制器
+    private Rect miniMapRect = new Rect(-1, 0, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从右侧/底部计算）
+    private int miniMapMargin = 10; // 小地图边距
+    private RenderTexture _miniMapTexture;
     
-    // 添加选中单位相关字段
-    private int selectedEntityId = -1; // 选中的单位实体ID，-1表示未选中任何单位
-    
+
+
+    private RTSControl _controls;
+    public Camera _mainCamera;
     // 添加多选支持相关字段
     private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
     private bool isSelecting = false; // 是否正在框选
@@ -67,6 +58,19 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
+
+    /**************************************
+     * UI部分
+     *************************************/
+
+    // 添加房间类型选择
+    public RoomType selectedRoomType = RoomType.DUO;
+
+    // 添加用于下拉列表显示的变量
+    private bool showRoomTypeDropdown = false;
+    private string[] roomTypeOptions = { "单人(SOLO)", "双人(DUO)", "三人(TRIO)", "四人(QUAD)", "八人(OCTO)" };
+
+
     
     // 添加工厂生产相关字段
     private int selectedFactoryEntityId = -1; // 选中的工厂实体ID
@@ -76,12 +80,6 @@ public class Ra2Demo : MonoBehaviour
     // 添加建造功能相关字段
     private bool showBuildUI = false; // 是否显示建造UI
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
-
-    // 添加建筑预览渲染器引用
-    private BuildingPreviewRenderer buildingPreviewRenderer;
-
-
-    
 
     // GM相关
     private bool _isConsoleVisible = false;
@@ -425,8 +423,6 @@ public class Ra2Demo : MonoBehaviour
                 }
             }
 
-            // 兼容旧的单选变量
-            selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
         }
 
         // 为所有新选中的单位启用OutlineComponent
@@ -650,9 +646,6 @@ public class Ra2Demo : MonoBehaviour
         
         // 更新选中单位列表，移除无效单位
         selectedEntityIds = new List<int>(validEntityIds);
-        
-        // 兼容旧的单选变量
-        selectedEntityId = selectedEntityIds.Count > 0 ? selectedEntityIds[0] : -1;
 
         if (validEntityIds.Count == 0)
         {
@@ -1188,7 +1181,6 @@ public class Ra2Demo : MonoBehaviour
         
         // 清空选中单位列表
         ClearAllOutlines(); // 清除所有单位的描边
-        selectedEntityId = -1;
         
         // 销毁所有视图对象
         if (_presentationSystem != null)
