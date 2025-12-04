@@ -34,7 +34,7 @@ namespace ZLockstep.Simulation.ECS.Utils
                     break;
                 case BuildingType.PowerPlant: // 电厂
                     width = 6;
-                    height = 3;
+                    height = 4;
                     break;
                 case BuildingType.Factory: // 坦克工厂
                     width = 12;

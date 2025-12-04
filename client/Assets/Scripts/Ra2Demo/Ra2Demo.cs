@@ -22,7 +22,8 @@ public class Ra2Demo : MonoBehaviour
 {
     [Header("游戏世界")]
     [SerializeField] private BattleGame _game;
-    [SerializeField] private GameMode Mode;
+    [SerializeField] public GameMode Mode;
+
 
     [Header("创建设置")]
     [SerializeField] private LayerMask groundLayer = -1; // 地面层
@@ -35,26 +36,19 @@ public class Ra2Demo : MonoBehaviour
     private int miniMapMargin = 10; // 小地图边距
 
     private RTSControl _controls;
-    private Camera _mainCamera;
+    public Camera _mainCamera;
     private RenderTexture _miniMapTexture;
-    
-    // 添加本地测试选项
-    private bool useLocalServer = false;
-    public string LocalServerUrl = "ws://127.0.0.1:8080/ws";
-    // ws://101.126.136.178:8080/ws | ws://www.zhegepai.cn:8080/ws
-    public string RemoteServerUrl = "wss://www.zhegepai.cn/ws";
 
-    private WebSocketNetworkAdaptor _networkAdaptor; // 保存网络适配器引用
-    private WebSocketClient _client; // 添加WebSocket客户端引用
+    [Header("Unity资源")]
+    [SerializeField] private Transform viewRoot;
+    [SerializeField] public GameObject[] unitPrefabs = new GameObject[10];
+    private PresentationSystem _presentationSystem;
+
+    private WebSocketNetworkAdaptor NetAdaptor; // 保存网络适配器引用
     
-    // 添加状态标志
-    private bool isConnected = false;
-    private bool isMatched = false;
-    private bool isReady = false;
-    private bool isPaused = false;
     
     // 添加房间类型选择
-    private RoomType selectedRoomType = RoomType.DUO;
+    public RoomType selectedRoomType = RoomType.DUO;
 
     // 添加用于下拉列表显示的变量
     private bool showRoomTypeDropdown = false;
@@ -82,28 +76,20 @@ public class Ra2Demo : MonoBehaviour
     // 添加建造功能相关字段
     private bool showBuildUI = false; // 是否显示建造UI
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
-    private GameObject previewBuilding; // 预览建筑模型
 
-    // 添加可建造区域相关字段
-    private bool showBuildableArea = false;
-    private int buildableMinGridX, buildableMinGridY, buildableMaxGridX, buildableMaxGridY;
-    private Material lineMaterial;
+    // 添加建筑预览渲染器引用
+    private BuildingPreviewRenderer buildingPreviewRenderer;
 
-    [Header("Unity资源")]
-    [SerializeField] private Transform viewRoot;
-    [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
-    private PresentationSystem _presentationSystem;
+
+    
 
     // GM相关
     private bool _isConsoleVisible = false;
     private string _inputFieldGM = "";
     private Vector2 _scrollPosition;
     
-    // Ping相关
-    private long currentPing = -1; // 当前ping值（毫秒）
 
-    // settlement系统
-    public bool EnableSettlementSystem = true;
+
     private void Awake()
     {
         _mainCamera = Camera.main;
@@ -114,16 +100,15 @@ public class Ra2Demo : MonoBehaviour
 
         // 加载保存的房间类型选择和本地服务器选项
         LoadRoomTypeSelection();
-        LoadLocalServerOption();
 
-        // 注意：不再在Awake中初始化游戏，而是在匹配成功后初始化
-        // InitializeUnityView();
+        NetAdaptor = new WebSocketNetworkAdaptor(this);
+        NetAdaptor.LoadLocalServerOption();
     }
     
     /// <summary>
     /// 初始化Unity视图层
     /// </summary>
-    private void InitializeUnityView()
+    public void InitializeUnityView()
     {
         if (viewRoot == null)
             viewRoot = transform;
@@ -197,22 +182,7 @@ public class Ra2Demo : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    /// <summary>
-    /// 加载本地服务器选项
-    /// </summary>
-    private void LoadLocalServerOption()
-    {
-        useLocalServer = PlayerPrefs.GetInt("UseLocalServer", 0) == 1;
-    }
-    
-    /// <summary>
-    /// 保存本地服务器选项
-    /// </summary>
-    private void SaveLocalServerOption()
-    {
-        PlayerPrefs.SetInt("UseLocalServer", useLocalServer ? 1 : 0);
-        PlayerPrefs.Save();
-    }
+
 
     private Frame frame;
     
@@ -224,91 +194,17 @@ public class Ra2Demo : MonoBehaviour
 
         Frame.DispatchEvent(new Ra2StartUpEvent());
         
-        // 创建用于绘制线条的材质
-        CreateLineMaterial();
+        // 初始化建筑预览渲染器
+        InitializeBuildingPreviewRenderer();
     }
     
     /// <summary>
-    /// 创建用于绘制线条的材质
+    /// 初始化建筑预览渲染器
     /// </summary>
-    private void CreateLineMaterial()
+    private void InitializeBuildingPreviewRenderer()
     {
-        // 创建一个简单的材质用于绘制线条
-        Shader shader = Shader.Find("Hidden/Internal-Colored");
-        if (shader == null) return;
-        
-        lineMaterial = new Material(shader);
-        lineMaterial.hideFlags = HideFlags.HideAndDontSave;
-        
-        // 关闭背面裁剪，开启混合
-        lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-        lineMaterial.SetInt("_ZWrite", 0);
-        lineMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
-    }
-
-    /// <summary>
-    /// 在OnRenderObject中绘制可建造区域
-    /// </summary>
-    private void OnRenderObject()
-    {
-        // 只在游戏运行时绘制
-        if (!Application.isPlaying) return;
-        
-        if (showBuildableArea && lineMaterial != null && buildingToBuild != BuildingType.None && _game?.MapManager != null)
-        {
-            // 设置材质
-            lineMaterial.SetPass(0);
-            
-            // 开始绘制线条
-            GL.PushMatrix();
-            GL.Begin(GL.LINES);
-            GL.Color(Color.green);
-            
-            // 获取网格大小
-            float gridSize = (float)_game.MapManager.GetGridSize();
-            
-            // 绘制可建造区域边界（只绘制边缘，而不是整个区域）
-            // 绘制水平线
-            for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
-            {
-                Vector3 left = new Vector3(buildableMinGridX * gridSize, 0.1f, y * gridSize);
-                Vector3 right = new Vector3(buildableMaxGridX * gridSize, 0.1f, y * gridSize);
-                GL.Vertex(left);
-                GL.Vertex(right);
-            }
-            
-            // 绘制垂直线
-            for (int x = buildableMinGridX; x <= buildableMaxGridX; x++)
-            {
-                Vector3 bottom = new Vector3(x * gridSize, 0.1f, buildableMinGridY * gridSize);
-                Vector3 top = new Vector3(x * gridSize, 0.1f, buildableMaxGridY * gridSize);
-                GL.Vertex(bottom);
-                GL.Vertex(top);
-            }
-            
-            // 绘制网格内的斜线
-            for (int x = buildableMinGridX; x < buildableMaxGridX; x++)
-            {
-                for (int y = buildableMinGridY; y < buildableMaxGridY; y++)
-                {
-                    // 绘制每个网格的对角线（斜线效果）
-                    Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
-                    Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
-                    Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
-                    Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
-                    
-                    // 绘制交叉线形成网格
-                    GL.Vertex(bottomLeft);
-                    GL.Vertex(topRight);
-                    
-                    GL.Vertex(topLeft);
-                    GL.Vertex(bottomRight);
-                }
-            }
-            
-            GL.End();
-            GL.PopMatrix();
-        }
+        buildingPreviewRenderer = gameObject.AddComponent<BuildingPreviewRenderer>();
+        buildingPreviewRenderer.Initialize(this);
     }
 
     public BattleGame GetBattleGame()
@@ -560,168 +456,13 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void UpdateBuildingPreview()
     {
-        // 如果没有要建造的建筑或游戏未准备好，则不显示预览
-        if (buildingToBuild == BuildingType.None || !isReady || _game == null || _game.MapManager == null)
-            return;
-
-        // 显示可建造区域，主建筑x,y+-16范围
-        ShowBuildableArea();
-
-        // 如果还没有创建预览对象，则创建它
-        if (previewBuilding == null)
+        // 委托给建筑预览渲染器处理
+        if (buildingPreviewRenderer != null)
         {
-            int prefabId = BuildingTypeToPrefabId(buildingToBuild);
-
-            // 使用对应的预制体创建预览建筑
-            GameObject prefab = unitPrefabs[prefabId];
-            if (prefab != null)
-            {
-                previewBuilding = Instantiate(prefab);
-                
-                // 设置为半透明
-                Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
-                foreach (Renderer renderer in renderers)
-                {
-                    Material[] materials = renderer.materials;
-                    for (int i = 0; i < materials.Length; i++)
-                    {
-                        // 创建新材质以避免修改原始材质
-                        Material transparentMaterial = new Material(materials[i]);
-                        transparentMaterial.color = new Color(
-                            transparentMaterial.color.r,
-                            transparentMaterial.color.g,
-                            transparentMaterial.color.b,
-                            0.5f // 50% 透明度
-                        );
-                        
-                        // 确保材质支持透明渲染
-                        if (transparentMaterial.HasProperty("_Mode"))
-                        {
-                            transparentMaterial.SetFloat("_Mode", 3); // Transparent mode
-                            transparentMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                            transparentMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                            transparentMaterial.SetInt("_ZWrite", 0);
-                            transparentMaterial.DisableKeyword("_ALPHATEST_ON");
-                            transparentMaterial.DisableKeyword("_ALPHABLEND_ON");
-                            transparentMaterial.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                            transparentMaterial.renderQueue = 3000;
-                        }
-                        
-                        materials[i] = transparentMaterial;
-                    }
-                    renderer.materials = materials;
-                }
-            }
-        }
-
-        // 更新预览建筑的位置
-        if (previewBuilding != null && Mouse.current != null)
-        {
-            Vector2 mousePosition = Mouse.current.position.ReadValue();
-            if (TryGetGroundPosition(mousePosition, out Vector3 worldPosition))
-            {
-                // 对齐到网格中心
-                zVector2 zWorldPos = new zVector2(
-                    zfloat.CreateFloat((long)(worldPosition.x * zfloat.SCALE_10000)),
-                    zfloat.CreateFloat((long)(worldPosition.z * zfloat.SCALE_10000))
-                );
-                
-                // 使用WorldToGrid将世界坐标转换为网格坐标
-                _game.MapManager.WorldToGrid(zWorldPos, out int gridX, out int gridY);
-                
-                // 使用GridToWorld将网格坐标转换回世界坐标（确保对齐到网格中心）
-                zVector2 alignedWorldPos = _game.MapManager.GridToWorld(gridX, gridY);
-                
-                // 设置预览建筑的位置
-                previewBuilding.transform.position = new Vector3(
-                    (float)alignedWorldPos.x,
-                    0, // 保持原来的Y轴位置
-                    (float)alignedWorldPos.y
-                );
-                
-                // 检查建筑是否可以放置在此位置
-                zVector3 logicPosition = new zVector3(
-                    zfloat.CreateFloat((long)(alignedWorldPos.x * zfloat.SCALE_10000)),
-                    zfloat.Zero,
-                    zfloat.CreateFloat((long)(alignedWorldPos.y * zfloat.SCALE_10000))
-                );
-                
-                bool canPlace = ZLockstep.Simulation.ECS.Utils.BuildingPlacementUtils.CheckBuildingPlacement(
-                    buildingToBuild, logicPosition, _game.MapManager);
-                
-                // 根据是否可以放置来改变预览建筑的颜色
-                Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
-                Color color = canPlace ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f); // 绿色或红色
-                
-                foreach (Renderer renderer in renderers)
-                {
-                    Material[] materials = renderer.materials;
-                    for (int i = 0; i < materials.Length; i++)
-                    {
-                        materials[i].color = color;
-                    }
-                    renderer.materials = materials;
-                }
-            }
+            buildingPreviewRenderer.UpdateBuildingPreview(buildingToBuild, NetAdaptor.IsReady);
         }
     }
-    
-    /// <summary>
-    /// 显示可建造区域（主建筑x,y+-16范围）
-    /// </summary>
-    private void ShowBuildableArea()
-    {
-        // 查找主基地位置
-        zVector2 mainBasePos = zVector2.zero;
-        bool foundMainBase = false;
-        
-        if (_game != null && _game.World != null)
-        {
-            var entities = _game.World.ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
-            foreach (var entityId in entities)
-            {
-                var entity = new Entity(entityId);
-                var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
-                
-                // 查找本地玩家的基地（BuildingType=1）
-                if (building.BuildingType == 1 && _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
-                {
-                    var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
-                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
-                    foundMainBase = true;
-                    break;
-                }
-            }
-        }
-        
-        // 如果找到了主基地，计算可建造区域
-        if (foundMainBase)
-        {
-            // 计算可建造区域的边界（主建筑x,y+-20范围）
-            int range = 20;
-            zVector2 minPos = new zVector2(mainBasePos.x - range, mainBasePos.y - range);
-            zVector2 maxPos = new zVector2(mainBasePos.x + range, mainBasePos.y + range);
-            
-            // 将世界坐标转换为网格坐标
-            _game.MapManager.WorldToGrid(minPos, out int minGridX, out int minGridY);
-            _game.MapManager.WorldToGrid(maxPos, out int maxGridX, out int maxGridY);
-            
-            // 确保网格坐标在地图范围内
-            buildableMinGridX = Mathf.Max(0, minGridX);
-            buildableMinGridY = Mathf.Max(0, minGridY);
-            buildableMaxGridX = Mathf.Min(_game.MapManager.GetWidth() - 1, maxGridX);
-            buildableMaxGridY = Mathf.Min(_game.MapManager.GetHeight() - 1, maxGridY);
-            
-            // 启用可建造区域显示
-            showBuildableArea = true;
-        }
-        else
-        {
-            // 没有找到主基地，禁用可建造区域显示
-            showBuildableArea = false;
-        }
-    }
-    
+
     /// <summary>
     /// 在网格上绘制可建造区域
     /// </summary>
@@ -747,45 +488,37 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 放置建筑
     /// </summary>
+    /// <summary>
+    /// 放置建筑
+    /// </summary>
     private void PlaceBuilding()
     {
-        if (buildingToBuild == BuildingType.None || previewBuilding == null || _game == null)
-            return;
-
-        Vector3 placementPosition = previewBuilding.transform.position;
-        
-        // 转换为逻辑层坐标
-        zVector3 logicPosition = placementPosition.ToZVector3();
-
-        int prefabId = BuildingTypeToPrefabId(buildingToBuild);
-
-        // 创建建筑命令（使用CreateBuildingCommand）
-        var createBuildingCommand = new CreateBuildingCommand(
-            campId: 0,
-            buildingType: buildingToBuild,
-            position: logicPosition,
-            prefabId: prefabId
-        )
+        if (buildingPreviewRenderer != null)
         {
-            Source = CommandSource.Local,
-        };
-
-        // 提交命令到游戏世界
-        _game.SubmitCommand(createBuildingCommand);
-
-        Debug.Log($"[Test] 提交创建建筑命令: 类型={buildingToBuild}, 位置={placementPosition}");
-
-        // 清理预览对象
-        Destroy(previewBuilding);
-        previewBuilding = null;
-        buildingToBuild = BuildingType.None;
-        showBuildableArea = false; // 隐藏可建造区域
+            buildingPreviewRenderer.PlaceBuilding(out bool wasPlaced);
+            if (wasPlaced)
+            {
+                buildingToBuild = BuildingType.None;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 取消建筑建造
+    /// </summary>
+    private void CancelBuilding()
+    {
+        if (buildingPreviewRenderer != null)
+        {
+            buildingPreviewRenderer.CancelBuilding();
+            buildingToBuild = BuildingType.None;
+        }
     }
     
     private void FixedUpdate()
     {
         // 每帧开始先处理网络消息
-        _client?.DispatchMessageQueue();
+        NetAdaptor.Client?.DispatchMessageQueue();
 
         if (_game != null)
         {
@@ -870,19 +603,6 @@ public class Ra2Demo : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 取消建筑建造
-    /// </summary>
-    private void CancelBuilding()
-    {
-        if (previewBuilding != null)
-        {
-            Destroy(previewBuilding);
-            previewBuilding = null;
-        }
-        buildingToBuild = BuildingType.None;
-        showBuildableArea = false; // 隐藏可建造区域
-    }
     
     /// <summary>
     /// 发送移动命令给选中的单位
@@ -965,7 +685,7 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedWidth = 200;
 
         // 绘制中央的匹配/准备按钮
-        if (!isConnected || (isConnected && !isMatched) || (isMatched && !isReady))
+        if (!NetAdaptor.IsConnected || (NetAdaptor.IsConnected && !NetAdaptor.IsMatched) || (NetAdaptor.IsMatched && !NetAdaptor.IsReady))
         {
             // 将匹配和准备按钮定位在屏幕中央
             float screenWidth = Screen.width;
@@ -982,19 +702,19 @@ public class Ra2Demo : MonoBehaviour
 
             GUILayout.BeginArea(buttonRect);
             
-            if (!isConnected)
+            if (!NetAdaptor.IsConnected)
             {
                 GUILayout.Space(10);
                 if (GUILayout.Button("匹配", buttonStyle))
                 {
-                    ConnectToServer();
+                    NetAdaptor.ConnectToServer();
                 }
             }
-            else if (isConnected && !isMatched)
+            else if (NetAdaptor.IsConnected && !NetAdaptor.IsMatched)
             {
                 GUILayout.Label("匹配中...", buttonStyle);
             }
-            else if (isMatched && !isReady)
+            else if (NetAdaptor.IsConnected && !NetAdaptor.IsReady)
             {
                 GUILayout.Label("等待中", buttonStyle);
             }
@@ -1003,7 +723,7 @@ public class Ra2Demo : MonoBehaviour
         }
         
         // 绘制生产按钮（左下角）
-        if (isReady)
+        if (NetAdaptor.IsReady)
         {
             GUIStyle produceButtonStyle = new GUIStyle(GUI.skin.button);
             produceButtonStyle.fontSize = 24;
@@ -1051,17 +771,17 @@ public class Ra2Demo : MonoBehaviour
         DrawMiniMap();
 
         // 绘制左上角的房间类型选择和本地测试选项
-        if (!isConnected) 
+        if (!NetAdaptor.IsConnected) 
         {
             Rect roomTypeRect = new Rect(20, 20, 250, 800);
             GUILayout.BeginArea(roomTypeRect);
             // 添加本地测试选项
-            bool previousValue = useLocalServer;
-            useLocalServer = GUILayout.Toggle(useLocalServer, "使用本地服务器");
+            bool previousValue = NetAdaptor.useLocalServer;
+            NetAdaptor.useLocalServer = GUILayout.Toggle(NetAdaptor.useLocalServer, "使用本地服务器");
             // 如果值发生变化，保存设置
-            if (useLocalServer != previousValue)
+            if (NetAdaptor.useLocalServer != previousValue)
             {
-                SaveLocalServerOption();
+                NetAdaptor.SaveLocalServerOption();
             }
             
             GUILayout.Space(10);
@@ -1105,7 +825,7 @@ public class Ra2Demo : MonoBehaviour
             pingStyle.fontSize = 20;
             pingStyle.normal.textColor = Color.white;
             
-            string pingText = currentPing >= 0 ? $"Ping: {currentPing}ms" : "Ping: --";
+            string pingText = NetAdaptor.CurrentPing >= 0 ? $"Ping: {NetAdaptor.CurrentPing}ms" : "Ping: --";
             GUI.Label(new Rect(20, 90, 200, 30), pingText, pingStyle);
             
             // 绘制经济信息（资金和电力）
@@ -1113,7 +833,7 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 显示选中的单位信息
-        if (isReady && selectedEntityIds.Count > 0)
+        if (NetAdaptor.IsReady && selectedEntityIds.Count > 0)
         {
             Rect infoRect = new Rect(Screen.width / 2 - 100, 20, 300, 60);
             GUILayout.BeginArea(infoRect, GUI.skin.box);
@@ -1464,10 +1184,7 @@ public class Ra2Demo : MonoBehaviour
     private void RestartGame()
     {
         // 重置游戏状态
-        isConnected = false;
-        isMatched = false;
-        isReady = false;
-        isPaused = false;
+        NetAdaptor.ReStartGame();
         
         // 清空选中单位列表
         ClearAllOutlines(); // 清除所有单位的描边
@@ -1485,11 +1202,6 @@ public class Ra2Demo : MonoBehaviour
             // 注意：C#中没有显式的销毁方法，我们只需要解除引用
             _game = null;
         }
-
-        _client?.Disconnect();
-        
-        // 重置网络适配器
-        _networkAdaptor = null;
         
         zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
@@ -1585,7 +1297,7 @@ public class Ra2Demo : MonoBehaviour
     private void HandleMiniMapClick(Rect miniMapRect)
     {
         // 只有在游戏开始后才响应点击
-        if (!isReady || _mainCamera == null || miniMapController == null)
+        if (!NetAdaptor.IsReady || _mainCamera == null || miniMapController == null)
             return;
             
         // 检查鼠标是否点击在小地图区域
@@ -1681,110 +1393,7 @@ public class Ra2Demo : MonoBehaviour
         
         GUI.color = oldColor;
     }
-    
-    /// <summary>
-    /// 连接到服务器
-    /// </summary>
-    private void ConnectToServer()
-    {
-        // 根据选项决定使用哪个服务器地址
-        string serverUrl = useLocalServer ? LocalServerUrl : RemoteServerUrl;
-        _client = new WebSocketClient(serverUrl, "Player1");
-        
-        // 注册事件处理
-        _client.OnConnected += OnConnected;
-        _client.OnMatchSuccess += OnMatchSuccess;
-        _client.OnGameStart += OnGameStart;
-        _client.OnPingUpdated += OnPingUpdated; // 订阅ping更新事件
 
-        // 连接网络适配器和客户端 (注意：此时_game还未创建)
-        // _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
-        
-        // 连接服务器
-        zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
-        _client.Connect();
-        isConnected = true;
-    }
-    
-    /// <summary>
-    /// 连接成功事件处理
-    /// </summary>
-    private void OnConnected(string message)
-    {
-        zUDebug.Log("[Ra2Demo] 连接成功: " + message);
-        // 使用选定的房间类型发送匹配请求
-        _client.SendMatchRequest(selectedRoomType);
-    }
-    
-    /// <summary>
-    /// 匹配成功事件处理
-    /// </summary>
-    private void OnMatchSuccess(MatchSuccessData data)
-    {
-        isMatched = true;
-        
-        // 创建BattleGame实例
-        _game = new BattleGame(Mode, 20, 0);
-        _game.EnableSettlementSystem = EnableSettlementSystem;
-        _game.Init();
-        
-        // 初始化Unity视图层
-        InitializeUnityView();
-        
-        // 连接网络适配器和客户端 (现在_game已经创建)
-        _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
-        
-        // data.Data为输入数据列表
-        zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, InitialState={data.InitialState}");
-
-        GlobalInfoComponent globalInfoComponent = new GlobalInfoComponent(data.CampId);
-        _game.World.ComponentManager.AddGlobalComponent(globalInfoComponent);
-        
-        // 处理创世阶段 - 初始化游戏世界
-        if (data.InitialState != null)
-        {
-            _game.InitializeWorldFromMatchData(data.InitialState);
-        }
-
-        // 发送准备就绪消息
-        _client.SendReady();
-
-        
-    }
-    
-    /// <summary>
-    /// 游戏开始事件处理
-    /// </summary>
-    private void OnGameStart()
-    {
-        isReady = true;
-        
-        // 在游戏正式启动时，发送一个初始帧确认（帧0）
-        // 这样可以启动帧同步逻辑
-        if (_game != null && _game.FrameSyncManager != null)
-        {
-            // 确认第0帧（空帧），启动帧同步逻辑
-            _game.FrameSyncManager.ConfirmFrame(0, new List<ICommand>());
-        }
-
-        zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
-        
-        // 获取我方战车工厂位置，相机移动到此位置
-        MoveCameraToOurFactory();
-        
-        // 调整相机位置
-        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
-        RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
-
-    }
-    
-    /// <summary>
-    /// Ping值更新事件处理
-    /// </summary>
-    private void OnPingUpdated(long ping)
-    {
-        currentPing = ping;
-    }
     
     /// <summary>
     /// 绘制GM控制台
@@ -1839,7 +1448,7 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 移动相机到我方工厂位置
     /// </summary>
-    private void MoveCameraToOurFactory()
+    public void MoveCameraToOurFactory()
     {
         if (_game == null || _game.World == null)
             return;
@@ -2102,4 +1711,11 @@ public class Ra2Demo : MonoBehaviour
         string econText = $"资金: {economyComponent.Money} 电力: {economyComponent.Power}";
         GUI.Label(new Rect(Screen.width / 2 - 150, 10, 300, 30), econText, econStyle);
     }
+
+    public void SetBattleGame(BattleGame game)
+    {
+        _game = game;
+    }
+
+
 }
