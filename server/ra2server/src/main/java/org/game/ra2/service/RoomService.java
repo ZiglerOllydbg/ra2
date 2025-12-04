@@ -429,78 +429,42 @@ public class RoomService {
             // 创建建筑物数组
             ArrayNode buildings = objectMapper.createArrayNode();
             
-            // 添加坦克工厂
-            ObjectNode factory = objectMapper.createObjectNode();
-            factory.put("id", "factory_" + campId);
-            factory.put("type", "tankFactory");
+            // 添加主要基地 (没有坦克工厂)
+            ObjectNode base = objectMapper.createObjectNode();
+            base.put("id", "base_" + campId);
+            base.put("type", "base");
             
             // 根据阵营设置不同的初始位置 (在256*256场景中)
             if (camp == Camp.Red) { // 红色阵营 - 左上角
-                factory.put("x", 32);
-                factory.put("y", 32);
+                base.put("x", 32);
+                base.put("y", 32);
             } else if (camp == Camp.Blue) { // 蓝色阵营 - 右下角
-                factory.put("x", 224);
-                factory.put("y", 224);
+                base.put("x", 224);
+                base.put("y", 224);
             } else if (camp == Camp.Green) { // 绿色阵营 - 左下角
-                factory.put("x", 32);
-                factory.put("y", 224);
+                base.put("x", 32);
+                base.put("y", 224);
             } else if (camp == Camp.Yellow) { // 黄色阵营 - 右上角
-                factory.put("x", 224);
-                factory.put("y", 32);
+                base.put("x", 224);
+                base.put("y", 32);
             } else if (camp == Camp.Orange) { // 橙色阵营 - 上方中间
-                factory.put("x", 128);
-                factory.put("y", 32);
+                base.put("x", 128);
+                base.put("y", 32);
             } else if (camp == Camp.Purple) { // 紫色阵营 - 下方中间
-                factory.put("x", 128);
-                factory.put("y", 224);
+                base.put("x", 128);
+                base.put("y", 224);
             } else if (camp == Camp.Pink) { // 粉色阵营 - 左侧中间
-                factory.put("x", 32);
-                factory.put("y", 128);
+                base.put("x", 32);
+                base.put("y", 128);
             } else if (camp == Camp.Brown) { // 棕色阵营 - 右侧中间
-                factory.put("x", 224);
-                factory.put("y", 128);
+                base.put("x", 224);
+                base.put("y", 128);
             } else { // 其他阵营默认位置
-                factory.put("x", 128);
-                factory.put("y", 128);
+                base.put("x", 128);
+                base.put("y", 128);
             }
             
-            buildings.add(factory);
-            
-            // 为每个阵营添加资源点
-            ObjectNode resourcePoint = objectMapper.createObjectNode();
-            resourcePoint.put("id", "resource_point_" + campId);
-            resourcePoint.put("type", "resource_point");
-            resourcePoint.put("amount", 3000);
-            
-            // 根据阵营设置不同的资源点位置 (在256*256场景中)
-            if (camp == Camp.Red) { // 红色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Blue) { // 蓝色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Green) { // 绿色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Yellow) { // 黄色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Orange) { // 橙色阵营资源点
-                resourcePoint.put("x", 145);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Purple) { // 紫色阵营资源点
-                resourcePoint.put("x", 145);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Pink) { // 粉色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 145);
-            } else if (camp == Camp.Brown) { // 棕色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 145);
-            } else { // 其他阵营默认位置
-                resourcePoint.put("x", 128);
-                resourcePoint.put("y", 128);
-            }
+            buildings.add(base);
             
             campState.set("buildings", buildings);
             
@@ -513,38 +477,201 @@ public class RoomService {
                 tank.put("id", "tank_" + campId + "_" + i);
                 tank.put("type", "tank");
                 
-                // 设置坦克位置，围绕工厂分布 (在256*256场景中)
+                // 设置坦克位置，围绕基地分布 (在256*256场景中)
                 if (camp == Camp.Red) { // 红色阵营
-                    tank.put("x", 20 + i * 8);
-                    tank.put("y", 20);
+                    switch (i) {
+                        case 1: 
+                            tank.put("x", 20);
+                            tank.put("y", 32);
+                            break;
+                        case 2:
+                            tank.put("x", 32);
+                            tank.put("y", 20);
+                            break;
+                        case 3:
+                            tank.put("x", 44);
+                            tank.put("y", 32);
+                            break;
+                        case 4:
+                            tank.put("x", 32);
+                            tank.put("y", 44);
+                            break;
+                        case 5:
+                            tank.put("x", 25);
+                            tank.put("y", 25);
+                            break;
+                    }
                 } else if (camp == Camp.Blue) { // 蓝色阵营
-                    tank.put("x", 212 + i * 8);
-                    tank.put("y", 236);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 212);
+                            tank.put("y", 224);
+                            break;
+                        case 2:
+                            tank.put("x", 224);
+                            tank.put("y", 236);
+                            break;
+                        case 3:
+                            tank.put("x", 236);
+                            tank.put("y", 224);
+                            break;
+                        case 4:
+                            tank.put("x", 224);
+                            tank.put("y", 212);
+                            break;
+                        case 5:
+                            tank.put("x", 231);
+                            tank.put("y", 231);
+                            break;
+                    }
                 } else if (camp == Camp.Green) { // 绿色阵营
-                    tank.put("x", 20 + i * 8);
-                    tank.put("y", 236);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 20);
+                            tank.put("y", 224);
+                            break;
+                        case 2:
+                            tank.put("x", 32);
+                            tank.put("y", 236);
+                            break;
+                        case 3:
+                            tank.put("x", 44);
+                            tank.put("y", 224);
+                            break;
+                        case 4:
+                            tank.put("x", 32);
+                            tank.put("y", 212);
+                            break;
+                        case 5:
+                            tank.put("x", 25);
+                            tank.put("y", 231);
+                            break;
+                    }
                 } else if (camp == Camp.Yellow) { // 黄色阵营
-                    tank.put("x", 212 - i * 8);
-                    tank.put("y", 20);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 212);
+                            tank.put("y", 32);
+                            break;
+                        case 2:
+                            tank.put("x", 224);
+                            tank.put("y", 44);
+                            break;
+                        case 3:
+                            tank.put("x", 236);
+                            tank.put("y", 32);
+                            break;
+                        case 4:
+                            tank.put("x", 224);
+                            tank.put("y", 20);
+                            break;
+                        case 5:
+                            tank.put("x", 231);
+                            tank.put("y", 25);
+                            break;
+                    }
                 } else if (camp == Camp.Orange) { // 橙色阵营
-                    tank.put("x", 116 + i * 8);
-                    tank.put("y", 20);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 116);
+                            tank.put("y", 32);
+                            break;
+                        case 2:
+                            tank.put("x", 128);
+                            tank.put("y", 20);
+                            break;
+                        case 3:
+                            tank.put("x", 140);
+                            tank.put("y", 32);
+                            break;
+                        case 4:
+                            tank.put("x", 128);
+                            tank.put("y", 44);
+                            break;
+                        case 5:
+                            tank.put("x", 121);
+                            tank.put("y", 25);
+                            break;
+                    }
                 } else if (camp == Camp.Purple) { // 紫色阵营
-                    tank.put("x", 116 + i * 8);
-                    tank.put("y", 236);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 116);
+                            tank.put("y", 224);
+                            break;
+                        case 2:
+                            tank.put("x", 128);
+                            tank.put("y", 236);
+                            break;
+                        case 3:
+                            tank.put("x", 140);
+                            tank.put("y", 224);
+                            break;
+                        case 4:
+                            tank.put("x", 128);
+                            tank.put("y", 212);
+                            break;
+                        case 5:
+                            tank.put("x", 135);
+                            tank.put("y", 231);
+                            break;
+                    }
                 } else if (camp == Camp.Pink) { // 粉色阵营
-                    tank.put("x", 20);
-                    tank.put("y", 116 + i * 4);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 32);
+                            tank.put("y", 116);
+                            break;
+                        case 2:
+                            tank.put("x", 20);
+                            tank.put("y", 128);
+                            break;
+                        case 3:
+                            tank.put("x", 32);
+                            tank.put("y", 140);
+                            break;
+                        case 4:
+                            tank.put("x", 44);
+                            tank.put("y", 128);
+                            break;
+                        case 5:
+                            tank.put("x", 25);
+                            tank.put("y", 135);
+                            break;
+                    }
                 } else if (camp == Camp.Brown) { // 棕色阵营
-                    tank.put("x", 236);
-                    tank.put("y", 116 + i * 4);
+                    switch (i) {
+                        case 1:
+                            tank.put("x", 224);
+                            tank.put("y", 116);
+                            break;
+                        case 2:
+                            tank.put("x", 236);
+                            tank.put("y", 128);
+                            break;
+                        case 3:
+                            tank.put("x", 224);
+                            tank.put("y", 140);
+                            break;
+                        case 4:
+                            tank.put("x", 212);
+                            tank.put("y", 128);
+                            break;
+                        case 5:
+                            tank.put("x", 231);
+                            tank.put("y", 121);
+                            break;
+                    }
                 } else { // 其他阵营
-                    tank.put("x", 116 + i * 8);
+                    tank.put("x", 120 + i * 2);
                     tank.put("y", 128);
                 }
                 
                 units.add(tank);
             }
+            
+            // 添加初始资金2200
+            campState.put("money", 2200);
             
             campState.set("units", units);
             initialState.set(String.valueOf(campId), campState);
@@ -553,50 +680,6 @@ public class RoomService {
         // 添加中央中立资源点
         ObjectNode neutralResources = objectMapper.createObjectNode();
         ArrayNode neutralBuildings = objectMapper.createArrayNode();
-        
-        // 添加各阵营的起始资源点到中立资源中
-        for (Player player : room.getPlayers()) {
-            int campId = player.getCamp().getId();
-            Camp camp = player.getCamp();
-            
-            // 为每个阵营添加资源点
-            ObjectNode resourcePoint = objectMapper.createObjectNode();
-            resourcePoint.put("id", "resource_point_" + campId);
-            resourcePoint.put("type", "resource_point");
-            resourcePoint.put("amount", 3000);
-            
-            // 根据阵营设置不同的资源点位置 (在256*256场景中)
-            if (camp == Camp.Red) { // 红色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Blue) { // 蓝色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Green) { // 绿色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Yellow) { // 黄色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Orange) { // 橙色阵营资源点
-                resourcePoint.put("x", 145);
-                resourcePoint.put("y", 55);
-            } else if (camp == Camp.Purple) { // 紫色阵营资源点
-                resourcePoint.put("x", 145);
-                resourcePoint.put("y", 200);
-            } else if (camp == Camp.Pink) { // 粉色阵营资源点
-                resourcePoint.put("x", 45);
-                resourcePoint.put("y", 145);
-            } else if (camp == Camp.Brown) { // 棕色阵营资源点
-                resourcePoint.put("x", 205);
-                resourcePoint.put("y", 145);
-            } else { // 其他阵营默认位置
-                resourcePoint.put("x", 128);
-                resourcePoint.put("y", 128);
-            }
-            
-            neutralBuildings.add(resourcePoint);
-        }
         
         // 中立资源点1
         ObjectNode neutralResource1 = objectMapper.createObjectNode();
