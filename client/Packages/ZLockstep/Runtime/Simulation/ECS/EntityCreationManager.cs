@@ -352,7 +352,7 @@ namespace ZLockstep.Simulation.ECS
         /// <param name="buildingType">建筑类型</param>
         /// <param name="width">输出宽度</param>
         /// <param name="height">输出高度</param>
-        private static void GetBuildingDimensions(BuildingType buildingType, out int width, out int height)
+        public static void GetBuildingDimensions(BuildingType buildingType, out int width, out int height)
         {
             switch (buildingType)
             {
@@ -361,8 +361,8 @@ namespace ZLockstep.Simulation.ECS
                     height = 10;
                     break;
                 case BuildingType.Mine: // 矿
-                    width = 4;
-                    height = 4;
+                    width = 0;
+                    height = 0;
                     break;
                 case BuildingType.Smelter: // 冶金厂
                     width = 4;

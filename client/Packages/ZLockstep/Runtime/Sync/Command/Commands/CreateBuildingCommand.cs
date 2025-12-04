@@ -43,6 +43,13 @@ namespace ZLockstep.Sync.Command.Commands
 
         public override void Execute(zWorld world)
         {
+            // 阻挡判断
+            if (!CheckBuildingPlacement(world))
+            {
+                UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
+                return;
+            }
+
             // 检查并扣除资源
             if (!CheckAndDeductResources(world))
             {
@@ -69,6 +76,59 @@ namespace ZLockstep.Sync.Command.Commands
 
             UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造了建筑类型{BuildingType} " +
                 $"在位置{Position}");
+        }
+
+        /// <summary>
+        /// 检查建筑放置位置是否有效（无阻挡且在地图范围内）
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <returns>是否可以放置建筑</returns>
+        private bool CheckBuildingPlacement(zWorld world)
+        {
+            var mapManager = world.GameInstance.GetMapManager();
+            if (mapManager == null)
+            {
+                UnityEngine.Debug.LogWarning("[CreateBuildingCommand] 无法获取地图管理器");
+                return false;
+            }
+
+            // 获取建筑尺寸
+            EntityCreationManager.GetBuildingDimensions(BuildingType, out int width, out int height);
+            
+            // 计算建筑占据的矩形区域（以建筑中心为基准）
+            int halfWidth = width / 2;
+            int halfHeight = height / 2;
+            
+            // 将世界坐标转换为格子坐标
+            mapManager.WorldToGrid(new zVector2(Position.x, Position.z), out int gridX, out int gridY);
+            
+            // 计算建筑占据的格子范围
+            int minX = gridX - halfWidth;
+            int minY = gridY - halfHeight;
+            int maxX = gridX + halfWidth;
+            int maxY = gridY + halfHeight;
+            
+            // 检查建筑是否在地图边界内
+            if (minX < 0 || minY < 0 || maxX >= mapManager.GetWidth() || maxY >= mapManager.GetHeight())
+            {
+                UnityEngine.Debug.Log($"[CreateBuildingCommand] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
+                return false;
+            }
+            
+            // 检查建筑占据的所有格子是否都可以行走（无阻挡）
+            for (int y = minY; y < maxY; y++)
+            {
+                for (int x = minX; x < maxX; x++)
+                {
+                    if (!mapManager.IsWalkable(x, y))
+                    {
+                        UnityEngine.Debug.Log($"[CreateBuildingCommand] 建筑位置存在阻挡。阻挡格子:({x},{y})");
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
         }
 
         /// <summary>
