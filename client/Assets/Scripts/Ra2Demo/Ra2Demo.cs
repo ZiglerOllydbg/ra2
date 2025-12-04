@@ -570,8 +570,6 @@ public class Ra2Demo : MonoBehaviour
             campId: 0,
             buildingType: buildingToBuild,
             position: logicPosition,
-            width: 2,
-            height: 2,
             prefabId: prefabId
         )
         {

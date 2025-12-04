@@ -49,8 +49,6 @@ namespace ZLockstep.Simulation.ECS
         /// <param name="campId">玩家ID</param>
         /// <param name="buildingType">建筑类型</param>
         /// <param name="position">位置</param>
-        /// <param name="width">建筑宽度</param>
-        /// <param name="height">建筑高度</param>
         /// <param name="prefabId">预制体ID</param>
         /// <param name="mapManager">地图管理器（可选）</param>
         /// <param name="flowFieldManager">流场管理器（可选）</param>
@@ -60,12 +58,13 @@ namespace ZLockstep.Simulation.ECS
             int campId, 
             BuildingType buildingType, 
             zVector3 position, 
-            int width, 
-            int height, 
             int prefabId,
             IFlowFieldMap mapManager = null,
             FlowFieldManager flowFieldManager = null)
         {
+            // 根据建筑类型设置宽度和高度
+            GetBuildingDimensions(buildingType, out int width, out int height);
+
             // 1. 创建建筑实体
             var entity = world.EntityManager.CreateEntity();
 
@@ -344,6 +343,43 @@ namespace ZLockstep.Simulation.ECS
                     };
                 default:
                     return null;
+            }
+        }
+
+        /// <summary>
+        /// 根据建筑类型获取建筑的宽度和高度
+        /// </summary>
+        /// <param name="buildingType">建筑类型</param>
+        /// <param name="width">输出宽度</param>
+        /// <param name="height">输出高度</param>
+        private static void GetBuildingDimensions(BuildingType buildingType, out int width, out int height)
+        {
+            switch (buildingType)
+            {
+                case BuildingType.Base: // 基地
+                    width = 10;
+                    height = 10;
+                    break;
+                case BuildingType.Mine: // 矿
+                    width = 4;
+                    height = 4;
+                    break;
+                case BuildingType.Smelter: // 冶金厂
+                    width = 4;
+                    height = 4;
+                    break;
+                case BuildingType.PowerPlant: // 电厂
+                    width = 6;
+                    height = 4;
+                    break;
+                case BuildingType.Factory: // 坦克工厂
+                    width = 12;
+                    height = 8;
+                    break;
+                default:
+                    width = 4;
+                    height = 4;
+                    break;
             }
         }
 

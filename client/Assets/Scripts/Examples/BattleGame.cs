@@ -219,7 +219,7 @@ namespace Game.Examples
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
                             var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, BuildingType.Mine,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                            width:4, height:4, prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                            prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
                             {
                                 createdEntities.Add(entityEvent.Value);
@@ -247,22 +247,18 @@ namespace Game.Examples
 
                         // 根据类型确定建筑参数
                         BuildingType buildingType = BuildingType.None; // 默认基地
-                        int width = 10;
-                        int height = 10;
 
                         switch (type)
                         {
                             case "base":
                                 buildingType = BuildingType.Base; // 基地
-                                width = 10;
-                                height = 10;
                                 break;
                         }
 
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        width: width, height: height, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);
@@ -305,7 +301,7 @@ namespace Game.Examples
                 // 添加一个camp2的主基地，在64,64位置
                 var entityEvent = EntityCreationManager.CreateBuildingEntity(World, 2, BuildingType.Base,
                     new zVector3((zfloat)64, zfloat.Zero, (zfloat)64),
-                    width: 10, height: 10, prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                    prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                 if (entityEvent.HasValue)
                 {
                     createdEntities.Add(entityEvent.Value);
