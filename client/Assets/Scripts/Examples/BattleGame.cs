@@ -45,8 +45,6 @@ namespace Game.Examples
         /// </summary>
         public SimpleAISystem AISystem { get; private set; }
 
-        public bool EnableSettlementSystem { get; set; }
-
         public BattleGame(GameMode mode = GameMode.Standalone, int frameRate = 30, int localPlayerId = 0)
             : base(mode, frameRate, localPlayerId)
         {
@@ -169,11 +167,7 @@ namespace Game.Examples
             // 注册经济系统
             World.SystemManager.RegisterSystem(new EconomySystem());
 
-            // 注册结算系统
-            if (EnableSettlementSystem)
-            {
-                World.SystemManager.RegisterSystem(new SettlementSystem());
-            }
+            World.SystemManager.RegisterSystem(new SettlementSystem());
 
             World.SystemManager.RegisterSystem(new BuildingConstructionSystem());
 

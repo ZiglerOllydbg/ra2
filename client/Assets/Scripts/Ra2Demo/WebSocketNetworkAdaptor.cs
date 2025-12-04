@@ -68,9 +68,6 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
         Client.OnMatchSuccess += OnMatchSuccess;
         Client.OnGameStart += OnGameStart;
         Client.OnPingUpdated += OnPingUpdated; // 订阅ping更新事件
-
-        // 连接网络适配器和客户端 (注意：此时_game还未创建)
-        // _networkAdaptor = new WebSocketNetworkAdaptor(_game, _client);
         
         // 连接服务器
         zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
