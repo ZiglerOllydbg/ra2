@@ -930,11 +930,11 @@ public class Ra2Demo : MonoBehaviour
             
             if (selectedEntityIds.Count == 1)
             {
-                GUILayout.Label($"选中单位: {selectedEntityIds[0]}", centeredLabelStyle);
+                GUILayout.Label($"选中单位ID: {selectedEntityIds[0]}", centeredLabelStyle);
             }
             else
             {
-                GUILayout.Label($"选中单位: {selectedEntityIds.Count}个", centeredLabelStyle);
+                GUILayout.Label($"选中单位数量: {selectedEntityIds.Count}个", centeredLabelStyle);
             }
             
             GUILayout.EndArea();
