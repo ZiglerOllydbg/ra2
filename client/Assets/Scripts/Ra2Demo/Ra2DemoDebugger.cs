@@ -320,6 +320,10 @@ public class Ra2DemoDebugger : MonoBehaviour
 
     private void OnGUI()
     {
+        // 仅在编辑器状态下显示调试UI
+        if (!Application.isEditor)
+            return;
+            
         // 如果Ra2Demo不存在或游戏尚未准备好，则不显示调试UI
         if (_demo == null)
             return;
