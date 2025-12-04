@@ -485,10 +485,6 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 4294967295
-  unitType: 1
-  prefabId: 1
-  LocalServerUrl: ws://127.0.0.1:8080/ws
-  RemoteServerUrl: wss://www.zhegepai.cn/ws
   viewRoot: {fileID: 0}
   unitPrefabs:
   - {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
@@ -501,7 +497,8 @@ MonoBehaviour:
   - {fileID: 4346800480097175460, guid: ebedda77d76648c4284d6770520b7d94, type: 3}
   - {fileID: 8690058942472112195}
   - {fileID: 0}
-  EnableSettlementSystem: 1
+  _mainCamera: {fileID: 0}
+  selectedRoomType: 2
 --- !u!114 &812412505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -666,7 +663,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d1ecb630baec84742afc37289213c1b2, type: 2}
+  - {fileID: 2100000, guid: a6efee38b341db44792dcd03c26f5dae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
