@@ -546,6 +546,30 @@ public class Ra2Demo : MonoBehaviour
                     0, // 保持原来的Y轴位置
                     (float)alignedWorldPos.y
                 );
+                
+                // 检查建筑是否可以放置在此位置
+                zVector3 logicPosition = new zVector3(
+                    zfloat.CreateFloat((long)(alignedWorldPos.x * zfloat.SCALE_10000)),
+                    zfloat.Zero,
+                    zfloat.CreateFloat((long)(alignedWorldPos.y * zfloat.SCALE_10000))
+                );
+                
+                bool canPlace = ZLockstep.Simulation.ECS.Utils.BuildingPlacementUtils.CheckBuildingPlacement(
+                    buildingToBuild, logicPosition, _game.MapManager);
+                
+                // 根据是否可以放置来改变预览建筑的颜色
+                Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
+                Color color = canPlace ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f); // 绿色或红色
+                
+                foreach (Renderer renderer in renderers)
+                {
+                    Material[] materials = renderer.materials;
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        materials[i].color = color;
+                    }
+                    renderer.materials = materials;
+                }
             }
         }
     }
