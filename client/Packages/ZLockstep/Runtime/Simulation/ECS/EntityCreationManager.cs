@@ -3,6 +3,7 @@ using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
 using System.Collections.Generic;
+using ZLockstep.Simulation.ECS.Utils;
 
 namespace ZLockstep.Simulation.ECS
 {
@@ -63,7 +64,8 @@ namespace ZLockstep.Simulation.ECS
             FlowFieldManager flowFieldManager = null)
         {
             // 根据建筑类型设置宽度和高度
-            GetBuildingDimensions(buildingType, out int width, out int height);
+            // 使用工具类中的方法
+            BuildingPlacementUtils.GetBuildingDimensions(buildingType, out int width, out int height);
 
             // 1. 创建建筑实体
             var entity = world.EntityManager.CreateEntity();
@@ -343,43 +345,6 @@ namespace ZLockstep.Simulation.ECS
                     };
                 default:
                     return null;
-            }
-        }
-
-        /// <summary>
-        /// 根据建筑类型获取建筑的宽度和高度
-        /// </summary>
-        /// <param name="buildingType">建筑类型</param>
-        /// <param name="width">输出宽度</param>
-        /// <param name="height">输出高度</param>
-        public static void GetBuildingDimensions(BuildingType buildingType, out int width, out int height)
-        {
-            switch (buildingType)
-            {
-                case BuildingType.Base: // 基地
-                    width = 10;
-                    height = 10;
-                    break;
-                case BuildingType.Mine: // 矿
-                    width = 0;
-                    height = 0;
-                    break;
-                case BuildingType.Smelter: // 冶金厂
-                    width = 4;
-                    height = 4;
-                    break;
-                case BuildingType.PowerPlant: // 电厂
-                    width = 6;
-                    height = 4;
-                    break;
-                case BuildingType.Factory: // 坦克工厂
-                    width = 12;
-                    height = 8;
-                    break;
-                default:
-                    width = 4;
-                    height = 4;
-                    break;
             }
         }
 
