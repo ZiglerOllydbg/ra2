@@ -34,15 +34,31 @@ public class PanelManager : Singleton<PanelManager>
         {
             if (_uiRoot == null)
             {
-                _uiRoot = GameObject.Find("UIRoot").transform;
-
-                if (_uiRoot == null)
+                var uiRootObj = GameObject.Find("UIRoot");
+                
+                if (uiRootObj != null)
                 {
-                    var uiGo = new GameObject();
-
-                    uiGo.AddComponent<Canvas>();
-                    uiGo.AddComponent<CanvasScaler>();
+                    _uiRoot = uiRootObj.transform;
+                }
+                else
+                {
+                    // 创建 UIRoot
+                    var uiGo = new GameObject("UIRoot");
+                    
+                    // 配置 Canvas
+                    var canvas = uiGo.AddComponent<Canvas>();
+                    canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                    
+                    // 配置 CanvasScaler
+                    var scaler = uiGo.AddComponent<CanvasScaler>();
+                    scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                    scaler.referenceResolution = new Vector2(1920, 1080);
+                    scaler.matchWidthOrHeight = 0.5f;
+                    
                     uiGo.AddComponent<GraphicRaycaster>();
+                    
+                    // 不销毁
+                    GameObject.DontDestroyOnLoad(uiGo);
 
                     _uiRoot = uiGo.transform;
                 }
@@ -59,13 +75,20 @@ public class PanelManager : Singleton<PanelManager>
         {
             if (_hideRoot == null)
             {
-                _hideRoot = GameObject.Find("UIHideRoot").transform;
-
-                if (_hideRoot == null)
+                var hideRootObj = GameObject.Find("UIHideRoot");
+                
+                if (hideRootObj != null)
                 {
-                    var hideGo = new GameObject();
-
+                    _hideRoot = hideRootObj.transform;
+                }
+                else
+                {
+                    // 创建 UIHideRoot
+                    var hideGo = new GameObject("UIHideRoot");
                     hideGo.SetActive(false);
+                    
+                    // 不销毁
+                    GameObject.DontDestroyOnLoad(hideGo);
 
                     _hideRoot = hideGo.transform;
                 }
