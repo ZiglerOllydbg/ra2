@@ -1,6 +1,8 @@
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Flow;
 using zUnity;
+using ZLockstep.Simulation.ECS;
+using zUnityEngine = UnityEngine;
 
 namespace ZLockstep.Simulation.ECS.Utils
 {
@@ -58,7 +60,7 @@ namespace ZLockstep.Simulation.ECS.Utils
         {
             if (mapManager == null)
             {
-                UnityEngine.Debug.LogWarning("[BuildingPlacementUtils] 无法获取地图管理器");
+                zUnityEngine.Debug.LogWarning("[BuildingPlacementUtils] 无法获取地图管理器");
                 return false;
             }
 
@@ -81,7 +83,7 @@ namespace ZLockstep.Simulation.ECS.Utils
             // 检查建筑是否在地图边界内
             if (minX < 0 || minY < 0 || maxX >= mapManager.GetWidth() || maxY >= mapManager.GetHeight())
             {
-                UnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
+                zUnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
                 return false;
             }
             
@@ -92,13 +94,59 @@ namespace ZLockstep.Simulation.ECS.Utils
                 {
                     if (!mapManager.IsWalkable(x, y))
                     {
-                        UnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置存在阻挡。阻挡格子:({x},{y})");
+                        zUnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置存在阻挡。阻挡格子:({x},{y})");
                         return false;
                     }
                 }
             }
             
             return true;
+        }
+
+        /// <summary>
+        /// 检查建筑是否在主城限制区域内（主城+-20范围）
+        /// </summary>
+        /// <param name="world">游戏世界实例</param>
+        /// <param name="position">建筑位置</param>
+        /// <param name="buildingType">建筑类型</param>
+        /// <param name="campId">阵营ID</param>
+        /// <returns>是否在限制区域内</returns>
+        public static bool CheckBuildableArea(zWorld world, zVector3 position, BuildingType buildingType, int campId)
+        {
+            // 查找指定阵营的基地
+            zVector2 mainBasePos = zVector2.zero;
+            bool foundMainBase = false;
+
+            var entities = world.ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                var building = world.ComponentManager.GetComponent<BuildingComponent>(entity);
+                var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
+
+                // 查找指定阵营的基地（BuildingType=1，即Base）
+                if (building.BuildingType == (int)BuildingType.Base && campComponent.CampId == campId)
+                {
+                    var transform = world.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
+                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
+                    foundMainBase = true;
+                    break;
+                }
+            }
+
+            // 如果没有找到主基地，不允许建造
+            if (!foundMainBase)
+                return false;
+
+            // 计算距离
+            zfloat dx = zMathf.Abs(position.x - mainBasePos.x);
+            zfloat dy = zMathf.Abs(position.z - mainBasePos.y);
+            
+            // 主城+-20范围
+            int range = 20;
+            zfloat rangeZ = zfloat.CreateFloat(range * zfloat.SCALE_10000);
+            
+            return dx <= rangeZ && dy <= rangeZ;
         }
     }
 }

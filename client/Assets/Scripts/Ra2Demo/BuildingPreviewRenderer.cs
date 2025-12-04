@@ -1,6 +1,7 @@
 using Game.Examples;
 using UnityEngine;
 using ZLockstep.Simulation.ECS;
+using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.ECS.Utils;
 using ZLockstep.View;
 using zUnity;
@@ -126,7 +127,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
         if (buildingToBuild == BuildingType.None || !isReady || _ra2Demo.GetBattleGame() == null || _ra2Demo.GetBattleGame().MapManager == null)
             return;
 
-        // 显示可建造区域，主建筑x,y+-16范围
+        // 显示可建造区域
         ShowBuildableArea();
 
         // 如果还没有创建预览对象，则创建它
@@ -208,8 +209,18 @@ public class BuildingPreviewRenderer : MonoBehaviour
                     zfloat.CreateFloat((long)(alignedWorldPos.y * zfloat.SCALE_10000))
                 );
 
+                // 检查建筑是否可以放置在此位置
                 bool canPlace = BuildingPlacementUtils.CheckBuildingPlacement(
                     buildingToBuild, logicPosition, _ra2Demo.GetBattleGame().MapManager);
+
+                // 如果是非采矿场，需要判断在主城的限制区域内
+                if (canPlace)
+                {
+                    // 获取本地玩家阵营ID
+                    int localPlayerCampId = _ra2Demo.GetBattleGame().World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
+
+                    canPlace = BuildingPlacementUtils.CheckBuildableArea(_ra2Demo.GetBattleGame().World, logicPosition, buildingToBuild, localPlayerCampId);
+                }
 
                 // 根据是否可以放置来改变预览建筑的颜色
                 Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
@@ -294,6 +305,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
                 return -1;
         }
     }
+
 
     /// <summary>
     /// 显示可建造区域（主建筑x,y+-16范围）
@@ -411,6 +423,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
     /// <summary>
     /// 获取当前正在预览的建筑类型
     /// </summary>
+    /// <returns>当前正在预览的建筑类型</returns>
     public BuildingType GetCurrentBuildingToBuild()
     {
         return buildingToBuild;

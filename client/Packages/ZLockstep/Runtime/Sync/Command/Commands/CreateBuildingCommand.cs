@@ -44,6 +44,16 @@ namespace ZLockstep.Sync.Command.Commands
 
         public override void Execute(zWorld world)
         {
+            // 如果是非采矿场建筑，需要判断在主城的限制区域内
+            if (BuildingType != BuildingType.Smelter)
+            {
+                if (!BuildingPlacementUtils.CheckBuildableArea(world, Position, BuildingType, CampId))
+                {
+                    UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：超出主城建造范围");
+                    return;
+                }
+            }
+            
             // 阻挡判断
             var mapManager = world.GameInstance.GetMapManager();
             if (!BuildingPlacementUtils.CheckBuildingPlacement(BuildingType, Position, mapManager))
