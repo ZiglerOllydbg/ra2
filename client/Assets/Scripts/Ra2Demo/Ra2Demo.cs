@@ -84,6 +84,11 @@ public class Ra2Demo : MonoBehaviour
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
     private GameObject previewBuilding; // 预览建筑模型
 
+    // 添加可建造区域相关字段
+    private bool showBuildableArea = false;
+    private int buildableMinGridX, buildableMinGridY, buildableMaxGridX, buildableMaxGridY;
+    private Material lineMaterial;
+
     [Header("Unity资源")]
     [SerializeField] private Transform viewRoot;
     [SerializeField] private GameObject[] unitPrefabs = new GameObject[10];
@@ -99,7 +104,6 @@ public class Ra2Demo : MonoBehaviour
 
     // settlement系统
     public bool EnableSettlementSystem = true;
-
     private void Awake()
     {
         _mainCamera = Camera.main;
@@ -212,15 +216,100 @@ public class Ra2Demo : MonoBehaviour
 
     private Frame frame;
     
-    void Start()
+    private void Start()
     {
         frame = new Frame();
 
         DiscoverTools.Discover(typeof(Main).Assembly);
 
         Frame.DispatchEvent(new Ra2StartUpEvent());
+        
+        // 创建用于绘制线条的材质
+        CreateLineMaterial();
+    }
+    
+    /// <summary>
+    /// 创建用于绘制线条的材质
+    /// </summary>
+    private void CreateLineMaterial()
+    {
+        // 创建一个简单的材质用于绘制线条
+        Shader shader = Shader.Find("Hidden/Internal-Colored");
+        if (shader == null) return;
+        
+        lineMaterial = new Material(shader);
+        lineMaterial.hideFlags = HideFlags.HideAndDontSave;
+        
+        // 关闭背面裁剪，开启混合
+        lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+        lineMaterial.SetInt("_ZWrite", 0);
+        lineMaterial.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
     }
 
+    /// <summary>
+    /// 在OnRenderObject中绘制可建造区域
+    /// </summary>
+    private void OnRenderObject()
+    {
+        // 只在游戏运行时绘制
+        if (!Application.isPlaying) return;
+        
+        if (showBuildableArea && lineMaterial != null && buildingToBuild != BuildingType.None && _game?.MapManager != null)
+        {
+            // 设置材质
+            lineMaterial.SetPass(0);
+            
+            // 开始绘制线条
+            GL.PushMatrix();
+            GL.Begin(GL.LINES);
+            GL.Color(Color.green);
+            
+            // 获取网格大小
+            float gridSize = (float)_game.MapManager.GetGridSize();
+            
+            // 绘制可建造区域边界（只绘制边缘，而不是整个区域）
+            // 绘制水平线
+            for (int y = buildableMinGridY; y <= buildableMaxGridY; y++)
+            {
+                Vector3 left = new Vector3(buildableMinGridX * gridSize, 0.1f, y * gridSize);
+                Vector3 right = new Vector3(buildableMaxGridX * gridSize, 0.1f, y * gridSize);
+                GL.Vertex(left);
+                GL.Vertex(right);
+            }
+            
+            // 绘制垂直线
+            for (int x = buildableMinGridX; x <= buildableMaxGridX; x++)
+            {
+                Vector3 bottom = new Vector3(x * gridSize, 0.1f, buildableMinGridY * gridSize);
+                Vector3 top = new Vector3(x * gridSize, 0.1f, buildableMaxGridY * gridSize);
+                GL.Vertex(bottom);
+                GL.Vertex(top);
+            }
+            
+            // 绘制网格内的斜线
+            for (int x = buildableMinGridX; x < buildableMaxGridX; x++)
+            {
+                for (int y = buildableMinGridY; y < buildableMaxGridY; y++)
+                {
+                    // 绘制每个网格的对角线（斜线效果）
+                    Vector3 bottomLeft = new Vector3(x * gridSize, 0.1f, y * gridSize);
+                    Vector3 topRight = new Vector3((x + 1) * gridSize, 0.1f, (y + 1) * gridSize);
+                    Vector3 bottomRight = new Vector3((x + 1) * gridSize, 0.1f, y * gridSize);
+                    Vector3 topLeft = new Vector3(x * gridSize, 0.1f, (y + 1) * gridSize);
+                    
+                    // 绘制交叉线形成网格
+                    GL.Vertex(bottomLeft);
+                    GL.Vertex(topRight);
+                    
+                    GL.Vertex(topLeft);
+                    GL.Vertex(bottomRight);
+                }
+            }
+            
+            GL.End();
+            GL.PopMatrix();
+        }
+    }
 
     public BattleGame GetBattleGame()
     {
@@ -475,6 +564,9 @@ public class Ra2Demo : MonoBehaviour
         if (buildingToBuild == BuildingType.None || !isReady || _game == null || _game.MapManager == null)
             return;
 
+        // 显示可建造区域，主建筑x,y+-16范围
+        ShowBuildableArea();
+
         // 如果还没有创建预览对象，则创建它
         if (previewBuilding == null)
         {
@@ -575,6 +667,84 @@ public class Ra2Demo : MonoBehaviour
     }
     
     /// <summary>
+    /// 显示可建造区域（主建筑x,y+-16范围）
+    /// </summary>
+    private void ShowBuildableArea()
+    {
+        // 查找主基地位置
+        zVector2 mainBasePos = zVector2.zero;
+        bool foundMainBase = false;
+        
+        if (_game != null && _game.World != null)
+        {
+            var entities = _game.World.ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
+                
+                // 查找本地玩家的基地（BuildingType=1）
+                if (building.BuildingType == 1 && _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                {
+                    var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
+                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
+                    foundMainBase = true;
+                    break;
+                }
+            }
+        }
+        
+        // 如果找到了主基地，计算可建造区域
+        if (foundMainBase)
+        {
+            // 计算可建造区域的边界（主建筑x,y+-20范围）
+            int range = 20;
+            zVector2 minPos = new zVector2(mainBasePos.x - range, mainBasePos.y - range);
+            zVector2 maxPos = new zVector2(mainBasePos.x + range, mainBasePos.y + range);
+            
+            // 将世界坐标转换为网格坐标
+            _game.MapManager.WorldToGrid(minPos, out int minGridX, out int minGridY);
+            _game.MapManager.WorldToGrid(maxPos, out int maxGridX, out int maxGridY);
+            
+            // 确保网格坐标在地图范围内
+            buildableMinGridX = Mathf.Max(0, minGridX);
+            buildableMinGridY = Mathf.Max(0, minGridY);
+            buildableMaxGridX = Mathf.Min(_game.MapManager.GetWidth() - 1, maxGridX);
+            buildableMaxGridY = Mathf.Min(_game.MapManager.GetHeight() - 1, maxGridY);
+            
+            // 启用可建造区域显示
+            showBuildableArea = true;
+        }
+        else
+        {
+            // 没有找到主基地，禁用可建造区域显示
+            showBuildableArea = false;
+        }
+    }
+    
+    /// <summary>
+    /// 在网格上绘制可建造区域
+    /// </summary>
+    /// <param name="minGridX">最小网格X坐标</param>
+    /// <param name="minGridY">最小网格Y坐标</param>
+    /// <param name="maxGridX">最大网格X坐标</param>
+    /// <param name="maxGridY">最大网格Y坐标</param>
+    private void DrawBuildableAreaOnGrid(int minGridX, int minGridY, int maxGridX, int maxGridY)
+    {
+        // 获取网格大小
+        float gridSize = (float)_game.MapManager.GetGridSize();
+        
+        // 绘制绿色斜线表示可建造区域
+        GL.PushMatrix();
+        GL.LoadOrtho();
+        
+        // TODO: 实际实现中需要创建一个材质来绘制线条
+        // 这里暂时留空，因为需要在OnPostRender或OnRenderObject中实现
+        
+        GL.PopMatrix();
+    }
+    
+    /// <summary>
     /// 放置建筑
     /// </summary>
     private void PlaceBuilding()
@@ -609,6 +779,7 @@ public class Ra2Demo : MonoBehaviour
         Destroy(previewBuilding);
         previewBuilding = null;
         buildingToBuild = BuildingType.None;
+        showBuildableArea = false; // 隐藏可建造区域
     }
     
     private void FixedUpdate()
@@ -621,7 +792,7 @@ public class Ra2Demo : MonoBehaviour
             _game.Update();
         }
     }
-    
+
     /// <summary>
     /// 测试：右键点击地面让选中的单位移动（可选）
     /// </summary>
@@ -710,8 +881,9 @@ public class Ra2Demo : MonoBehaviour
             previewBuilding = null;
         }
         buildingToBuild = BuildingType.None;
+        showBuildableArea = false; // 隐藏可建造区域
     }
-
+    
     /// <summary>
     /// 发送移动命令给选中的单位
     /// </summary>
