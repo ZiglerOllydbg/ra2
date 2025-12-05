@@ -1461,7 +1461,7 @@ public class Ra2Demo : MonoBehaviour
                 
                 // 查找我方阵营ID为1的建筑（工厂）
                 // 根据代码分析，建筑类型1代表工厂（tankFactory）
-                if (building.BuildingType == 1 && _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                if (building.BuildingType == (int)BuildingType.Base && _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
                 {
                     // 确保实体有位置组件
                     if (_game.World.ComponentManager.HasComponent<TransformComponent>(entity))

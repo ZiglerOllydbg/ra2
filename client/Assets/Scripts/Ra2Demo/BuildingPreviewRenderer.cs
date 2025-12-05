@@ -457,8 +457,8 @@ public class BuildingPreviewRenderer : MonoBehaviour
                     var entity = new Entity(entityId);
                     var building = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.BuildingComponent>(entity);
 
-                    // 查找本地玩家的基地（BuildingType=1）
-                    if (building.BuildingType == 1 && game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(entity))
+                    // 查找本地玩家的基地
+                    if (building.BuildingType == (int)BuildingType.Base && game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(entity))
                     {
                         var transform = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
                         mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
