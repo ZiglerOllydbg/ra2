@@ -117,21 +117,20 @@ namespace ZLockstep.Simulation.ECS.Utils
             zVector2 mainBasePos = zVector2.zero;
             bool foundMainBase = false;
 
-            var entities = world.ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
-            foreach (var entityId in entities)
+            // 使用GetComponentWithCondition优化查找指定阵营的主基地
+            var (mainBaseComponent, entity) = world.ComponentManager.GetComponentWithCondition<MainBaseComponent>(
+                e => {
+                    if (!world.ComponentManager.HasComponent<CampComponent>(e)) 
+                        return false;
+                    var campComponent = world.ComponentManager.GetComponent<CampComponent>(e);
+                    return campComponent.CampId == campId;
+                });
+            
+            if (entity.Id != -1)
             {
-                var entity = new Entity(entityId);
-                var building = world.ComponentManager.GetComponent<BuildingComponent>(entity);
-                var campComponent = world.ComponentManager.GetComponent<CampComponent>(entity);
-
-                // 查找指定阵营的基地（BuildingType=1，即Base）
-                if (building.BuildingType == (int)BuildingType.Base && campComponent.CampId == campId)
-                {
-                    var transform = world.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
-                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
-                    foundMainBase = true;
-                    break;
-                }
+                var transform = world.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
+                mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
+                foundMainBase = true;
             }
 
             // 如果没有找到主基地，不允许建造

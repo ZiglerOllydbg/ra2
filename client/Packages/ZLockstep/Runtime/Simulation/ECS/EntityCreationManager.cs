@@ -129,7 +129,13 @@ namespace ZLockstep.Simulation.ECS
                 }
             }
 
-            // 10. 如果是工厂建筑，添加生产组件
+            // 10. 如果是基地建筑，添加主基地组件
+            if (buildingType == BuildingType.Base) // 基地建筑
+            {
+                world.ComponentManager.AddComponent(entity, new MainBaseComponent());
+            }
+
+            // 11. 如果是工厂建筑，添加生产组件
             if (buildingType == BuildingType.Factory) // 工厂建筑
             {
                 // 支持生产动员兵和坦克
@@ -137,14 +143,14 @@ namespace ZLockstep.Simulation.ECS
                 var produceComponent = ProduceComponent.Create(supportedUnitTypes);
                 world.ComponentManager.AddComponent(entity, produceComponent);
             }
-            // 11. 如果是矿源，添加矿源组件
+            // 12. 如果是矿源，添加矿源组件
             else if (buildingType == BuildingType.Mine) // 矿源
             {
                 // 添加矿源组件，初始资源5000
                 var mineComponent = MineComponent.CreateDefault();
                 world.ComponentManager.AddComponent(entity, mineComponent);
             }
-            // 12. 如果是采矿场，添加采矿组件
+            // 13. 如果是采矿场，添加采矿组件
             else if (buildingType == BuildingType.Smelter) // 采矿场
             {
                 // 查找最近的矿源并关联
@@ -161,7 +167,7 @@ namespace ZLockstep.Simulation.ECS
                 }
             }
 
-            // 13. 添加建造组件（所有建筑都需要建造时间）
+            // 14. 添加建造组件（所有建筑都需要建造时间）
             var constructionTime = GetConstructionTime(buildingType);
             if (constructionTime > zfloat.Zero)
             {
@@ -169,7 +175,7 @@ namespace ZLockstep.Simulation.ECS
                 world.ComponentManager.AddComponent(entity, buildingConstructionComponent);
             }
 
-            // 13. 创建事件对象并返回
+            // 15. 创建事件对象并返回
             var unitCreatedEvent = new UnitCreatedEvent
             {
                 EntityId = entity.Id,

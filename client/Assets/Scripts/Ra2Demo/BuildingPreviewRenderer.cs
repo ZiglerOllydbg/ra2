@@ -451,20 +451,15 @@ public class BuildingPreviewRenderer : MonoBehaviour
             BattleGame game = _ra2Demo.GetBattleGame();
             if (game != null && game.World != null)
             {
-                var entities = game.World.ComponentManager.GetAllEntityIdsWith<ZLockstep.Simulation.ECS.Components.BuildingComponent>();
-                foreach (var entityId in entities)
+                // 使用GetComponentWithCondition优化查找本地玩家的主基地
+                var (mainBaseComponent, entity) = game.World.ComponentManager.GetComponentWithCondition<ZLockstep.Simulation.ECS.Components.MainBaseComponent>(
+                    e => game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(e));
+                
+                if (entity.Id != -1)
                 {
-                    var entity = new Entity(entityId);
-                    var building = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.BuildingComponent>(entity);
-
-                    // 查找本地玩家的基地
-                    if (building.BuildingType == (int)BuildingType.Base && game.World.ComponentManager.HasComponent<ZLockstep.Simulation.ECS.Components.LocalPlayerComponent>(entity))
-                    {
-                        var transform = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
-                        mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
-                        foundMainBase = true;
-                        break;
-                    }
+                    var transform = game.World.ComponentManager.GetComponent<ZLockstep.Simulation.ECS.Components.TransformComponent>(entity);
+                    mainBasePos = new zVector2(transform.Position.x, transform.Position.z);
+                    foundMainBase = true;
                 }
             }
 

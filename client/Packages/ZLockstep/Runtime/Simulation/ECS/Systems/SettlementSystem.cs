@@ -137,11 +137,10 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <returns>true表示主建筑存活，false表示被摧毁</returns>
         private bool IsCampBaseAlive(int campId)
         {
-            // 查找该阵营的主建筑
-            var (buildingComponent, buildingEntity) = ComponentManager.GetComponentWithCondition<BuildingComponent>(
+            // 查找该阵营的主建筑（使用MainBase组件优化查找）
+            var (mainBaseComponent, buildingEntity) = ComponentManager.GetComponentWithCondition<MainBaseComponent>(
                 e => ComponentManager.HasComponent<CampComponent>(e) && 
-                     ComponentManager.GetComponent<CampComponent>(e).CampId == campId &&
-                     ComponentManager.GetComponent<BuildingComponent>(e).BuildingType == (int)BuildingType.Base);
+                     ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
             
             // 如果找不到主建筑，认为已被摧毁
             if (buildingEntity.Id == -1)

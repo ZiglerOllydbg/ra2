@@ -1445,39 +1445,26 @@ public class Ra2Demo : MonoBehaviour
         if (_game == null || _game.World == null)
             return;
 
-        // 获取所有建筑实体
-        var buildingEntities = _game.World.ComponentManager
-            .GetAllEntityIdsWith<BuildingComponent>();
-
-        foreach (var entityId in buildingEntities)
+        // 直接查找本地玩家的主基地
+        var (mainBaseComponent, entity) = _game.World.ComponentManager.GetComponentWithCondition<MainBaseComponent>(
+            e => _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(e));
+        
+        // 如果找到了本地玩家的主基地
+        if (entity.Id != -1)
         {
-            var entity = new Entity(entityId);
-            
-            // 检查实体是否同时拥有阵营组件和建筑组件
-            if (_game.World.ComponentManager.HasComponent<CampComponent>(entity) &&
-                _game.World.ComponentManager.HasComponent<BuildingComponent>(entity))
+            // 确保实体有位置组件
+            if (_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
             {
-                var building = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
+                var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
+                Vector3 factoryPosition = transform.Position.ToVector3();
                 
-                // 查找我方阵营ID为1的建筑（工厂）
-                // 根据代码分析，建筑类型1代表工厂（tankFactory）
-                if (building.BuildingType == (int)BuildingType.Base && _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                // 将相机移动到工厂位置
+                if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
                 {
-                    // 确保实体有位置组件
-                    if (_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
-                    {
-                        var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
-                        Vector3 factoryPosition = transform.Position.ToVector3();
-                        
-                        // 将相机移动到工厂位置
-                        if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
-                        {
-                            RTSCameraTargetController.Instance.CameraTarget.position = factoryPosition;
-                            zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
-                        }
-                        return;
-                    }
+                    RTSCameraTargetController.Instance.CameraTarget.position = factoryPosition;
+                    zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
                 }
+                return;
             }
         }
         
