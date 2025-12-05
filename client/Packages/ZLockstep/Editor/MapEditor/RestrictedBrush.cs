@@ -26,12 +26,13 @@ public class RestrictedBrush : GridBrush
         // 只有坐标在范围内才允许画
         if (IsPositionValid(position))
         {
+            // Debug.LogWarning($"坐标 {position} 在限制范围内，可以绘制！");
             base.Paint(grid, brushTarget, position);
         }
         else
         {
             // 你可以在这里加个Debug，或者仅仅静默失败
-            // Debug.LogWarning($"坐标 {position} 超出限制，无法绘制！");
+            Debug.LogWarning($"坐标 {position} 超出限制，无法绘制！");
         }
     }
 

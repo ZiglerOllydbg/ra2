@@ -9,7 +9,7 @@ public class MapExporter : MonoBehaviour
     public Tilemap targetTilemap;
     public string savePath = "Assets/Resources/Maps/level01.bytes";
 
-    [ContextMenu("Export Map to Binary")]
+    [ContextMenu("To/Export Map to Binary")]
     public void ExportMap()
     {
         targetTilemap.CompressBounds(); // 压缩边界，去除空白
@@ -17,6 +17,13 @@ public class MapExporter : MonoBehaviour
         
         // 获取所有 Tile
         TileBase[] allTiles = targetTilemap.GetTilesBlock(bounds);
+
+        // 确保目录存在
+        string directory = Path.GetDirectoryName(savePath);
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
 
         using (FileStream fs = new FileStream(savePath, FileMode.Create))
         using (BinaryWriter writer = new BinaryWriter(fs))
@@ -44,7 +51,6 @@ public class MapExporter : MonoBehaviour
                         tType = gameTile.terrainType;
                         colFlag = gameTile.isWalkable ? (byte)0 : (byte)1;
                         resType = gameTile.resourceType;
-                        // ... 其他属性
                     }
 
                     // 写入单个格子的数据

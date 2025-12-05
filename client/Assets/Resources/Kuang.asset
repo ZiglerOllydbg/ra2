@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f95ba2728be5bab45afee9f8e41f46f1, type: 3}
-  m_Name: New Game Tile
+  m_Name: Kuang
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 21300000, guid: 8e043ea7461509f4080942a00efcccd4, type: 3}
   m_Color: {r: 1, g: 0, b: 0, a: 1}
