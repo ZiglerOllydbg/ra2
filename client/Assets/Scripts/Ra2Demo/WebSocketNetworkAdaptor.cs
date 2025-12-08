@@ -15,72 +15,17 @@ using ZLockstep.Simulation.ECS.Components;
 
 public class WebSocketNetworkAdaptor : INetworkAdapter
 {
-    // 添加本地测试选项
-    public bool useLocalServer = false;
-    public string LocalServerUrl = "ws://127.0.0.1:8080/ws";
-    // ws://101.126.136.178:8080/ws | ws://www.zhegepai.cn:8080/ws
-    public string RemoteServerUrl = "wss://www.zhegepai.cn/ws";
-    public WebSocketClient Client;
-
-    // 添加状态标志
-    public bool IsConnected = false;
-    public bool IsMatched = false;
-    public bool IsReady = false;
-
-    // Ping相关
-    public long CurrentPing = -1; // 当前ping值（毫秒）
+    private WebSocketClient _client;
 
     private Ra2Demo _ra2Demo;
 
-    public WebSocketNetworkAdaptor(Ra2Demo ra2Demo)
+    public WebSocketNetworkAdaptor(Ra2Demo ra2Demo, WebSocketClient client)
     {
         _ra2Demo = ra2Demo; // 保存引用
-    }
+        _client = client;
 
-        /// <summary>
-    /// 加载本地服务器选项
-    /// </summary>
-    public void LoadLocalServerOption()
-    {
-        useLocalServer = PlayerPrefs.GetInt("UseLocalServer", 0) == 1;
-    }
-    
-    /// <summary>
-    /// 保存本地服务器选项
-    /// </summary>
-    public void SaveLocalServerOption()
-    {
-        PlayerPrefs.SetInt("UseLocalServer", useLocalServer ? 1 : 0);
-        PlayerPrefs.Save();
-    }
-
-    /// <summary>
-    /// 连接到服务器
-    /// </summary>
-    public void ConnectToServer()
-    {
-        // 根据选项决定使用哪个服务器地址
-        string serverUrl = useLocalServer ? LocalServerUrl : RemoteServerUrl;
-        Client = new WebSocketClient(serverUrl, "Player1");
-        
-        // 注册事件处理
-        Client.OnConnected += OnConnected;
-        Client.OnMatchSuccess += OnMatchSuccess;
-        Client.OnGameStart += OnGameStart;
-        Client.OnPingUpdated += OnPingUpdated; // 订阅ping更新事件
-        
-        // 连接服务器
-        zUDebug.Log($"[WebSocketNetworkAdaptor] 正在连接服务器: {serverUrl}");
-        Client.Connect();
-        IsConnected = true;
-    }
-
-        /// <summary>
-    /// Ping值更新事件处理
-    /// </summary>
-    private void OnPingUpdated(long ping)
-    {
-        CurrentPing = ping;
+        // 绑定网络适配器
+        _ra2Demo.GetBattleGame().FrameSyncManager.NetworkAdapter = this;
     }
 
     /// <summary>
@@ -88,8 +33,6 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
     /// </summary>
     private void OnGameStart()
     {
-        IsReady = true;
-        
         // 在游戏正式启动时，发送一个初始帧确认（帧0）
         // 这样可以启动帧同步逻辑
         if (_ra2Demo.GetBattleGame() != null && _ra2Demo.GetBattleGame().FrameSyncManager != null)
@@ -109,56 +52,9 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
     }
 
-    /// <summary>
-    /// 连接成功事件处理
-    /// </summary>
-    private void OnConnected(string message)
-    {
-        zUDebug.Log("[Ra2Demo] 连接成功: " + message);
-        // 使用选定的房间类型发送匹配请求
-        Client.SendMatchRequest(_ra2Demo.selectedRoomType);
-    }
-
-    /// <summary>
-    /// 匹配成功事件处理
-    /// </summary>
-    private void OnMatchSuccess(MatchSuccessData data)
-    {
-        IsMatched = true;
-        
-        // 创建BattleGame实例
-        _ra2Demo.SetBattleGame(new BattleGame(_ra2Demo.Mode, 20, 0));
-        _ra2Demo.GetBattleGame().Init();
-        
-        // 初始化Unity视图层
-        _ra2Demo.InitializeUnityView();
-        
-        // OnFrameSync
-        Client.OnFrameSync += OnFrameSync(_ra2Demo.GetBattleGame());
-
-        // 绑定网络适配器
-        _ra2Demo.GetBattleGame().FrameSyncManager.NetworkAdapter = this;
-
-        
-        // data.Data为输入数据列表
-        zUDebug.Log($"[Ra2Demo] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}, InitialState={data.InitialState}");
-
-        GlobalInfoComponent globalInfoComponent = new(data.CampId);
-        _ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
-        
-        // 处理创世阶段 - 初始化游戏世界
-        if (data.InitialState != null)
-        {
-            _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
-        }
-
-        // 发送准备就绪消息
-        Client.SendReady();
-    }
-
     public void SendCommandToServer(ICommand command)
     {
-        Client.SendFrameInput(command.ExecuteFrame, command);
+        _client.SendFrameInput(command.ExecuteFrame, command);
     }
 
     private static System.Action<FrameSyncData> OnFrameSync(ZLockstep.Sync.Game game)
@@ -227,12 +123,6 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
     public void ReStartGame()
     {
-        // 重置游戏状态
-        IsConnected = false;
-        IsMatched = false;
-        IsReady = false;
-
-        Client?.Disconnect();
-        Client = null;
+        
     }
 }

@@ -4,6 +4,8 @@ using ZFrame;
 
 public class Ra2Processor : BaseProcessor
 {
+    private Ra2Demo _ra2Demo;
+
     private MatchPanel _matchPanel;
     public MatchPanel MatchPanel
     {
@@ -54,7 +56,8 @@ public class Ra2Processor : BaseProcessor
         {
             case Ra2StartUpEvent e:
                 {
-                    MainPanel.Open();
+                    _ra2Demo = e.Ra2Demo;
+                    // MainPanel.Open();
                     MatchPanel.Open();
                 }
                 break;

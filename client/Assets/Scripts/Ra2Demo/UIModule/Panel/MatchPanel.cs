@@ -1,3 +1,4 @@
+using Game.RA2.Client;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
@@ -104,25 +105,28 @@ public class MatchPanel : BasePanel
     // 5. 按钮点击处理方法
     private void OnSoloButtonClick()
     {
-        bool isLocalNet = _useLocalNetToggle?.isOn ?? false;
-        Debug.Log($"单匹按钮被点击了！UseLocalNet状态: {isLocalNet}");
-        SaveUseLocalNetOption(isLocalNet);
+        bool isLocalNet = GetIsLocalNet();
+        NetworkManager.Instance.ConnectToServer(RoomType.SOLO, isLocalNet);
+
         HideButtons();
+    }
+
+    private bool GetIsLocalNet()
+    {
+        return _useLocalNetToggle?.isOn ?? false;
     }
 
     private void OnDuoButtonClick()
     {
-        bool isLocalNet = _useLocalNetToggle?.isOn ?? false;
-        Debug.Log($"双匹按钮被点击了！UseLocalNet状态: {isLocalNet}");
-        SaveUseLocalNetOption(isLocalNet);
+        bool isLocalNet = GetIsLocalNet();
+        NetworkManager.Instance.ConnectToServer(RoomType.DUO, isLocalNet);
         HideButtons();
     }
 
     private void OnQuadButtonClick()
     {
-        bool isLocalNet = _useLocalNetToggle?.isOn ?? false;
-        Debug.Log($"四匹按钮被点击了！UseLocalNet状态: {isLocalNet}");
-        SaveUseLocalNetOption(isLocalNet);
+        bool isLocalNet = GetIsLocalNet();
+        NetworkManager.Instance.ConnectToServer(RoomType.QUAD, isLocalNet);
         HideButtons();
     }
 

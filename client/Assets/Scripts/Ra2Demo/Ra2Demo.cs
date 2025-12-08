@@ -7,12 +7,9 @@ using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Sync.Command;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
-using Game.RA2.Client;
 using Game.Examples;
 using ZLockstep.Sync;
 using ZLockstep.View.Systems;
-using ZLockstep.Simulation.ECS.Systems;
-using ZLockstep.Flow;
 using ZFrame;
 
 /// <summary>
@@ -34,19 +31,16 @@ public class Ra2Demo : MonoBehaviour
     [SerializeField] public GameObject[] unitPrefabs = new GameObject[10];
     private PresentationSystem _presentationSystem;
 
-    // 保存网络适配器引用
-    private WebSocketNetworkAdaptor NetAdaptor;
-
     // 添加建筑预览渲染器引用
     private BuildingPreviewRenderer buildingPreviewRenderer;
-    
+
 
     [Header("小地图设置")]
     private MiniMapController miniMapController; // 小地图控制器
     private Rect miniMapRect = new Rect(-1, 0, 200, 200); // 小地图在屏幕上的位置和大小（使用-1作为特殊值表示从右侧/底部计算）
     private int miniMapMargin = 10; // 小地图边距
     private RenderTexture _miniMapTexture;
-    
+
 
 
     private RTSControl _controls;
@@ -63,15 +57,6 @@ public class Ra2Demo : MonoBehaviour
      * UI部分
      *************************************/
 
-    // 添加房间类型选择
-    public RoomType selectedRoomType = RoomType.DUO;
-
-    // 添加用于下拉列表显示的变量
-    private bool showRoomTypeDropdown = false;
-    private string[] roomTypeOptions = { "单人(SOLO)", "双人(DUO)", "三人(TRIO)", "四人(QUAD)", "八人(OCTO)" };
-
-
-    
     // 添加工厂生产相关字段
     private int selectedFactoryEntityId = -1; // 选中的工厂实体ID
     private bool showFactoryUI = false; // 是否显示工厂UI
@@ -85,7 +70,6 @@ public class Ra2Demo : MonoBehaviour
     private bool _isConsoleVisible = false;
     private string _inputFieldGM = "";
     private Vector2 _scrollPosition;
-    
 
 
     private void Awake()
@@ -93,16 +77,12 @@ public class Ra2Demo : MonoBehaviour
         _mainCamera = Camera.main;
         _controls = new RTSControl();
 
+        NetworkManager.Instance.SetRa2Demo(this);
+
         // 初始化小地图系统
         InitializeMiniMap();
-
-        // 加载保存的房间类型选择和本地服务器选项
-        LoadRoomTypeSelection();
-
-        NetAdaptor = new WebSocketNetworkAdaptor(this);
-        NetAdaptor.LoadLocalServerOption();
     }
-    
+
     /// <summary>
     /// 初始化Unity视图层
     /// </summary>
@@ -133,7 +113,7 @@ public class Ra2Demo : MonoBehaviour
 
         Debug.Log("[StandaloneBattleDemo] 视图系统初始化完成");
     }
-    
+
     /// <summary>
     /// 初始化小地图系统
     /// </summary>
@@ -143,7 +123,7 @@ public class Ra2Demo : MonoBehaviour
         {
             // 尝试查找场景中的小地图控制器
             miniMapController = FindObjectOfType<MiniMapController>();
-            
+
             // 如果找不到，创建一个新的
             if (miniMapController == null)
             {
@@ -151,51 +131,26 @@ public class Ra2Demo : MonoBehaviour
                 miniMapController = miniMapObject.AddComponent<MiniMapController>();
             }
         }
-        
+
         // 获取小地图渲染纹理
         _miniMapTexture = miniMapController.GetMiniMapTexture();
     }
-    
-    /// <summary>
-    /// 加载保存的房间类型选择
-    /// </summary>
-    private void LoadRoomTypeSelection()
-    {
-        if (PlayerPrefs.HasKey("SelectedRoomType"))
-        {
-            selectedRoomType = (RoomType)PlayerPrefs.GetInt("SelectedRoomType");
-        }
-        else
-        {
-            selectedRoomType = RoomType.DUO; // 默认值
-        }
-    }
-    
-    /// <summary>
-    /// 保存房间类型选择
-    /// </summary>
-    private void SaveRoomTypeSelection()
-    {
-        PlayerPrefs.SetInt("SelectedRoomType", (int)selectedRoomType);
-        PlayerPrefs.Save();
-    }
-
 
 
     private Frame frame;
-    
+
     private void Start()
     {
         frame = new Frame();
 
         DiscoverTools.Discover(typeof(Main).Assembly);
 
-        Frame.DispatchEvent(new Ra2StartUpEvent());
-        
+        Frame.DispatchEvent(new Ra2StartUpEvent(this));
+
         // 初始化建筑预览渲染器
         InitializeBuildingPreviewRenderer();
     }
-    
+
     /// <summary>
     /// 初始化建筑预览渲染器
     /// </summary>
@@ -242,7 +197,7 @@ public class Ra2Demo : MonoBehaviour
         {
             // CreateUnitAtPosition(worldPosition);
         }
-        
+
         // 检测点击到的gameobject对象，并设置给相机目标RTSCameraTargetController.Instance
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
@@ -270,7 +225,7 @@ public class Ra2Demo : MonoBehaviour
         }
 
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
-        
+
         // 尝试射线检测地面
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
@@ -306,7 +261,7 @@ public class Ra2Demo : MonoBehaviour
     private bool TryRaycastPlane(Ray ray, Vector3 planePoint, Vector3 planeNormal, out Vector3 hitPoint)
     {
         hitPoint = Vector3.zero;
-        
+
         float denominator = Vector3.Dot(planeNormal, ray.direction);
         if (Mathf.Abs(denominator) < 0.0001f)
             return false; // 射线与平面平行
@@ -318,7 +273,7 @@ public class Ra2Demo : MonoBehaviour
         hitPoint = ray.origin + ray.direction * t;
         return true;
     }
-    
+
     /// <summary>
     /// 开始框选
     /// </summary>
@@ -330,7 +285,7 @@ public class Ra2Demo : MonoBehaviour
         selectionStartPoint = screenPosition;
         selectionEndPoint = screenPosition;
     }
-    
+
     /// <summary>
     /// 更新框选
     /// </summary>
@@ -340,10 +295,10 @@ public class Ra2Demo : MonoBehaviour
         if (isSelecting)
         {
             selectionEndPoint = screenPosition;
-            
+
             // 计算拖拽距离
             float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
-            
+
             // 只有当拖拽距离超过阈值时才真正激活框选
             if (dragDistance > dragThreshold)
             {
@@ -431,7 +386,7 @@ public class Ra2Demo : MonoBehaviour
             EnableOutlineForEntity(entityId);
         }
     }
-    
+
     private int BuildingTypeToPrefabId(BuildingType buildingType)
     {
         switch (buildingType)
@@ -455,7 +410,7 @@ public class Ra2Demo : MonoBehaviour
         // 委托给建筑预览渲染器处理
         if (buildingPreviewRenderer != null)
         {
-            buildingPreviewRenderer.UpdateBuildingPreview(buildingToBuild, NetAdaptor.IsReady);
+            buildingPreviewRenderer.UpdateBuildingPreview(buildingToBuild, true);
         }
     }
 
@@ -470,17 +425,17 @@ public class Ra2Demo : MonoBehaviour
     {
         // 获取网格大小
         float gridSize = (float)_game.MapManager.GetGridSize();
-        
+
         // 绘制绿色斜线表示可建造区域
         GL.PushMatrix();
         GL.LoadOrtho();
-        
+
         // TODO: 实际实现中需要创建一个材质来绘制线条
         // 这里暂时留空，因为需要在OnPostRender或OnRenderObject中实现
-        
+
         GL.PopMatrix();
     }
-    
+
     /// <summary>
     /// 放置建筑
     /// </summary>
@@ -498,7 +453,7 @@ public class Ra2Demo : MonoBehaviour
             }
         }
     }
-    
+
     /// <summary>
     /// 取消建筑建造
     /// </summary>
@@ -510,11 +465,11 @@ public class Ra2Demo : MonoBehaviour
             buildingToBuild = BuildingType.None;
         }
     }
-    
+
     private void FixedUpdate()
     {
         // 每帧开始先处理网络消息
-        NetAdaptor.Client?.DispatchMessageQueue();
+        NetworkManager.Instance.CurrentWebSocket?.DispatchMessageQueue();
 
         if (_game != null)
         {
@@ -546,7 +501,7 @@ public class Ra2Demo : MonoBehaviour
         {
             _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
         }
-        
+
         // 更新建筑预览
         UpdateBuildingPreview();
     }
@@ -599,7 +554,7 @@ public class Ra2Demo : MonoBehaviour
         }
     }
 
-    
+
     /// <summary>
     /// 发送移动命令给选中的单位
     /// </summary>
@@ -640,10 +595,10 @@ public class Ra2Demo : MonoBehaviour
                 DisableOutlineForEntity(entityId);
                 continue;
             }
-            
+
             validEntityIds.Add(entityId);
         }
-        
+
         // 更新选中单位列表，移除无效单位
         selectedEntityIds = new List<int>(validEntityIds);
 
@@ -677,46 +632,8 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
-        // 绘制中央的匹配/准备按钮
-        if (!NetAdaptor.IsConnected || (NetAdaptor.IsConnected && !NetAdaptor.IsMatched) || (NetAdaptor.IsMatched && !NetAdaptor.IsReady))
-        {
-            // 将匹配和准备按钮定位在屏幕中央
-            float screenWidth = Screen.width;
-            float screenHeight = Screen.height;
-            float buttonWidth = 200;
-            float buttonHeight = 100;
-            
-            Rect buttonRect = new Rect(
-                (screenWidth - buttonWidth) / 2,
-                (screenHeight - buttonHeight) / 2,
-                buttonWidth,
-                buttonHeight
-            );
-
-            GUILayout.BeginArea(buttonRect);
-            
-            if (!NetAdaptor.IsConnected)
-            {
-                GUILayout.Space(10);
-                if (GUILayout.Button("匹配", buttonStyle))
-                {
-                    NetAdaptor.ConnectToServer();
-                }
-            }
-            else if (NetAdaptor.IsConnected && !NetAdaptor.IsMatched)
-            {
-                GUILayout.Label("匹配中...", buttonStyle);
-            }
-            else if (NetAdaptor.IsConnected && !NetAdaptor.IsReady)
-            {
-                GUILayout.Label("等待中", buttonStyle);
-            }
-            
-            GUILayout.EndArea();
-        }
-        
         // 绘制生产按钮（左下角）
-        if (NetAdaptor.IsReady)
+        if (NetworkManager.Instance.IsReady)
         {
             GUIStyle produceButtonStyle = new GUIStyle(GUI.skin.button);
             produceButtonStyle.fontSize = 24;
@@ -729,7 +646,7 @@ public class Ra2Demo : MonoBehaviour
                 showProductionList = !showProductionList;
                 showBuildUI = false; // 确保建造UI关闭
             }
-            
+
             // 绘制建造按钮（在生产按钮右侧）
             Rect buildButtonRect = new(120, Screen.height - 100, 80, 80);
             if (GUI.Button(buildButtonRect, "建造", produceButtonStyle))
@@ -737,20 +654,20 @@ public class Ra2Demo : MonoBehaviour
                 showBuildUI = !showBuildUI;
                 showProductionList = false; // 确保生产列表关闭
             }
-            
+
             // 绘制生产建筑列表
             if (showProductionList)
             {
                 DrawProductionBuildingList();
             }
-            
+
             // 绘制建造UI
             if (showBuildUI)
             {
                 DrawBuildUI();
             }
         }
-        
+
         // 绘制工厂生产UI
         if (showFactoryUI && selectedFactoryEntityId != -1)
         {
@@ -764,77 +681,39 @@ public class Ra2Demo : MonoBehaviour
         DrawMiniMap();
 
         // 绘制左上角的房间类型选择和本地测试选项
-        if (!NetAdaptor.IsConnected) 
-        {
-            Rect roomTypeRect = new Rect(20, 20, 250, 800);
-            GUILayout.BeginArea(roomTypeRect);
-            // 添加本地测试选项
-            bool previousValue = NetAdaptor.useLocalServer;
-            NetAdaptor.useLocalServer = GUILayout.Toggle(NetAdaptor.useLocalServer, "使用本地服务器");
-            // 如果值发生变化，保存设置
-            if (NetAdaptor.useLocalServer != previousValue)
-            {
-                NetAdaptor.SaveLocalServerOption();
-            }
-            
-            GUILayout.Space(10);
-            GUILayout.Label("房间类型:", buttonStyle);
-            
-            // 自定义下拉列表实现
-            if (GUILayout.Button(roomTypeOptions[(int)selectedRoomType - 1], buttonStyle))
-            {
-                showRoomTypeDropdown = !showRoomTypeDropdown;
-            }
-            
-            if (showRoomTypeDropdown)
-            {
-                for (int i = 0; i < roomTypeOptions.Length; i++)
-                {
-                    if (GUILayout.Button(roomTypeOptions[i], buttonStyle))
-                    {
-                        selectedRoomType = (RoomType)(i + 1);
-                        showRoomTypeDropdown = false;
-                        SaveRoomTypeSelection(); // 保存选择
-                    }
-                }
-            }
-            GUILayout.EndArea();
-        }
-        else
+        if (NetworkManager.Instance.IsConnected())
         {
             // 将重新开始按钮定位在左上角
             Rect restartButtonRect = new Rect(20, 20, 300, 200);
             GUILayout.BeginArea(restartButtonRect);
-            
+
             if (GUILayout.Button("重新开始", buttonStyle))
             {
                 RestartGame();
             }
-            
+
             GUILayout.EndArea();
-            
+
             // 绘制ping值显示（在重新开始按钮下方）
             GUIStyle pingStyle = new GUIStyle(GUI.skin.label);
             pingStyle.fontSize = 20;
             pingStyle.normal.textColor = Color.white;
-            
-            string pingText = NetAdaptor.CurrentPing >= 0 ? $"Ping: {NetAdaptor.CurrentPing}ms" : "Ping: --";
-            GUI.Label(new Rect(20, 90, 200, 30), pingText, pingStyle);
-            
+
+
             // 绘制经济信息（资金和电力）
             DrawEconomyInfo();
         }
 
         // 显示选中的单位信息
-        if (NetAdaptor.IsReady && selectedEntityIds.Count > 0)
+        if (NetworkManager.Instance.IsReady && selectedEntityIds.Count > 0)
         {
             Rect infoRect = new Rect(Screen.width / 2 - 100, 20, 300, 60);
             GUILayout.BeginArea(infoRect, GUI.skin.box);
-            
+
             GUIStyle centeredLabelStyle = new GUIStyle(GUI.skin.label);
             centeredLabelStyle.fontSize = 20;
             centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
-            
+
             if (selectedEntityIds.Count == 1)
             {
                 GUILayout.Label($"选中单位ID: {selectedEntityIds[0]}", centeredLabelStyle);
@@ -843,16 +722,16 @@ public class Ra2Demo : MonoBehaviour
             {
                 GUILayout.Label($"选中单位数量: {selectedEntityIds.Count}个", centeredLabelStyle);
             }
-            
+
             GUILayout.EndArea();
         }
 
         // 绘制游戏结束界面
-        if (_presentationSystem !=null && _presentationSystem.IsGameOver)
+        if (_presentationSystem != null && _presentationSystem.IsGameOver)
         {
             DrawGameOverUI();
         }
-        
+
         DrawGMConsole();
     }
     /// <summary>
@@ -866,47 +745,47 @@ public class Ra2Demo : MonoBehaviour
         bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
         bgTexture.Apply();
         bgStyle.normal.background = bgTexture;
-        
+
         // 绘制背景
         GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-        
+
         // 绘制建造面板
         GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
         panelStyle.fontSize = 24;
-        
+
         Rect panelRect = new Rect((Screen.width - 300) / 2, (Screen.height - 300) / 2, 300, 300);
         GUI.Box(panelRect, "", panelStyle);
-        
+
         // 显示标题
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
         titleStyle.fontSize = 24;
         titleStyle.alignment = TextAnchor.MiddleCenter;
         GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "选择建筑类型", titleStyle);
-        
+
         // 创建内容区域（为标题预留空间）
         Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
         GUILayout.BeginArea(contentRect);
-        
+
         // 增大按钮字体
         GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
         buttonStyle.fontSize = 20;
-        
+
         // 显示建筑选项
         if (GUILayout.Button("采矿场(800$,5电)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.Smelter); // 采矿场对应unitPrefabs[3]
         }
-        
+
         if (GUILayout.Button("电厂(500$)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.PowerPlant); // 电厂对应unitPrefabs[4]
         }
-        
+
         if (GUILayout.Button("坦克工厂(1000$,5电)", buttonStyle, GUILayout.Height(50)))
         {
             StartBuildingPlacement(BuildingType.Factory); // 坦克工厂对应unitPrefabs[5]
         }
-        
+
         // 关闭按钮
         GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
         closeStyle.fontSize = 20;
@@ -914,10 +793,10 @@ public class Ra2Demo : MonoBehaviour
         {
             showBuildUI = false;
         }
-        
+
         GUILayout.EndArea();
     }
-    
+
     /// <summary>
     /// 开始建筑放置模式
     /// </summary>
@@ -926,10 +805,10 @@ public class Ra2Demo : MonoBehaviour
     {
         buildingToBuild = buildingType;
         showBuildUI = false; // 关闭建造UI
-        
+
         Debug.Log($"[Test] 开始放置建筑: {GetBuildingName(buildingType)}");
     }
-    
+
     /// <summary>
     /// 获取建筑名称
     /// </summary>
@@ -945,7 +824,7 @@ public class Ra2Demo : MonoBehaviour
             default: return $"建筑{buildingType}";
         }
     }
-    
+
     /// <summary>
     /// 绘制工厂生产UI
     /// </summary>
@@ -959,100 +838,100 @@ public class Ra2Demo : MonoBehaviour
             return;
 
         var produceComponent = _game.World.ComponentManager.GetComponent<ProduceComponent>(entity);
-        
+
         // 创建一个半透明背景
         GUIStyle bgStyle = new GUIStyle();
         Texture2D bgTexture = new Texture2D(1, 1);
         bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
         bgTexture.Apply();
         bgStyle.normal.background = bgTexture;
-        
+
         // 绘制背景
         GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-        
+
         // 绘制工厂UI面板
         GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
         panelStyle.fontSize = 24;
-        
+
         Rect panelRect = new Rect((Screen.width - 500) / 2, (Screen.height - 400) / 2, 500, 400);
         GUI.Box(panelRect, "", panelStyle);
-        
+
         // 显示标题
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
         titleStyle.fontSize = 24;
         titleStyle.alignment = TextAnchor.MiddleCenter;
         GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "工厂生产", titleStyle);
-        
+
         // 创建内容区域（为标题预留空间）
         Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
         GUILayout.BeginArea(contentRect, panelStyle);
-        
+
         // 增大标签字体
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
         labelStyle.fontSize = 20;
-        
+
         // 增大按钮字体
         GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
         buttonStyle.fontSize = 20;
-        
+
         // 显示支持生产的单位类型
         foreach (var unitType in produceComponent.SupportedUnitTypes)
         {
-            int produceNumber = produceComponent.ProduceNumbers.ContainsKey(unitType) ? 
+            int produceNumber = produceComponent.ProduceNumbers.ContainsKey(unitType) ?
                 produceComponent.ProduceNumbers[unitType] : 0;
-            int progress = produceComponent.ProduceProgress.ContainsKey(unitType) ? 
+            int progress = produceComponent.ProduceProgress.ContainsKey(unitType) ?
                 produceComponent.ProduceProgress[unitType] : 0;
-                
+
             // 显示单位类型名称和数量
             string unitTypeName = GetUnitTypeName(unitType);
             GUILayout.Label($"{unitTypeName}: {produceNumber}/99", labelStyle);
-            
+
             // 绘制进度条 (放在数量下面)
             Rect progressRect = GUILayoutUtility.GetLastRect();
             progressRect.y += progressRect.height + 5;
             progressRect.width = 300;
             progressRect.height = 20;
-            
+
             // 背景
             GUI.color = Color.gray;
             GUI.DrawTexture(new Rect(progressRect.x, progressRect.y, progressRect.width, progressRect.height), Texture2D.whiteTexture);
-            
+
             // 进度
             GUI.color = Color.green;
             GUI.DrawTexture(new Rect(progressRect.x, progressRect.y, progressRect.width * progress / 100f, progressRect.height), Texture2D.whiteTexture);
-            
+
             // 进度文本
             GUI.color = Color.white;
             GUIStyle progressLabelStyle = new GUIStyle(labelStyle);
             progressLabelStyle.alignment = TextAnchor.MiddleCenter;
             GUI.Label(new Rect(progressRect.x, progressRect.y, progressRect.width, progressRect.height), $"进度: {progress}%", progressLabelStyle);
-            
+
             GUILayout.Space(progressRect.height + 5);
-            
+
             // 增加和减少按钮
             GUILayout.BeginHorizontal();
             GUILayout.Space(100); // 左边空白
-            
+
             // 减少按钮
             if (GUILayout.Button("-", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber > 0)
             {
                 SendProduceCommand(selectedFactoryEntityId, unitType, -1);
             }
-            
+
             GUILayout.Space(20); // 中间空白
-            
+
             // 增加按钮
             if (GUILayout.Button("+", buttonStyle, GUILayout.Width(50), GUILayout.Height(30)) && produceNumber < 99)
             {
                 SendProduceCommand(selectedFactoryEntityId, unitType, 1);
             }
-            
+
             GUILayout.Space(100); // 右边空白
             GUILayout.EndHorizontal();
-            
+
             GUILayout.Space(20); // 单位类型之间的间隔
         }
-        
+
         // 关闭按钮
         GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
         closeStyle.fontSize = 20;
@@ -1061,10 +940,10 @@ public class Ra2Demo : MonoBehaviour
             showFactoryUI = false;
             selectedFactoryEntityId = -1;
         }
-        
+
         GUILayout.EndArea();
     }
-    
+
     /// <summary>
     /// 获取单位类型名称
     /// </summary>
@@ -1080,7 +959,7 @@ public class Ra2Demo : MonoBehaviour
             default: return $"单位{unitType}";
         }
     }
-    
+
     /// <summary>
     /// 发送生产命令
     /// </summary>
@@ -1091,7 +970,7 @@ public class Ra2Demo : MonoBehaviour
     {
         if (_game == null || factoryEntityId == -1)
             return;
-            
+
         var produceCommand = new ProduceCommand(
             campId: 0,
             entityId: factoryEntityId,
@@ -1101,11 +980,11 @@ public class Ra2Demo : MonoBehaviour
         {
             Source = CommandSource.Local
         };
-        
+
         _game.SubmitCommand(produceCommand);
         Debug.Log($"[Test] 发送生产命令: 工厂{factoryEntityId} 单位类型{unitType} 变化值{changeValue}");
     }
-    
+
     /// <summary>
     /// 绘制游戏结束界面
     /// </summary>
@@ -1117,20 +996,20 @@ public class Ra2Demo : MonoBehaviour
         bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
         bgTexture.Apply();
         bgStyle.normal.background = bgTexture;
-        
+
         // 绘制背景
         GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-        
+
         // 显示结果文本
         GUIStyle textStyle = new GUIStyle(GUI.skin.label);
         textStyle.fontSize = 48;
         textStyle.fontStyle = FontStyle.Bold;
         textStyle.alignment = TextAnchor.MiddleCenter;
         textStyle.normal.textColor = _presentationSystem.IsVictory ? Color.green : Color.red;
-        
+
         string resultText = "";
         string infoText = "";
-        
+
         // 根据胜利阵营ID判断游戏结果
         if (_presentationSystem.WinningCampId == -1)
         {
@@ -1143,45 +1022,43 @@ public class Ra2Demo : MonoBehaviour
         {
             // 胜负结果
             resultText = _presentationSystem.IsVictory ? "胜利!" : "失败!";
-            infoText = _presentationSystem.IsVictory ? 
-                $"你击败了阵营 {_presentationSystem.WinningCampId}" : 
+            infoText = _presentationSystem.IsVictory ?
+                $"你击败了阵营 {_presentationSystem.WinningCampId}" :
                 $"你被阵营 {_presentationSystem.WinningCampId} 击败";
         }
-        
+
         GUI.Label(new Rect(0, Screen.height / 2 - 50, Screen.width, 100), resultText, textStyle);
-        
+
         // 显示胜利方信息
         GUIStyle infoStyle = new GUIStyle(GUI.skin.label);
         infoStyle.fontSize = 24;
         infoStyle.alignment = TextAnchor.MiddleCenter;
         infoStyle.normal.textColor = Color.white;
-        
+
         GUI.Label(new Rect(0, Screen.height / 2 + 50, Screen.width, 50), infoText, infoStyle);
-        
+
         // 显示重新开始按钮
         GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
         buttonStyle.fontSize = 24;
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
-        
+
         Rect buttonRect = new Rect((Screen.width - 200) / 2, Screen.height / 2 + 150, 200, 60);
         if (GUI.Button(buttonRect, "重新开始", buttonStyle))
         {
             RestartGame();
         }
     }
-    
+
     /// <summary>
     /// 重新开始游戏
     /// </summary>
     private void RestartGame()
     {
-        // 重置游戏状态
-        NetAdaptor.ReStartGame();
-        
+
         // 清空选中单位列表
         ClearAllOutlines(); // 清除所有单位的描边
-        
+
         // 销毁所有视图对象
         if (_presentationSystem != null)
         {
@@ -1194,10 +1071,10 @@ public class Ra2Demo : MonoBehaviour
             // 注意：C#中没有显式的销毁方法，我们只需要解除引用
             _game = null;
         }
-        
+
         zUDebug.Log("[Ra2Demo] 重新开始游戏");
     }
-    
+
     /// <summary>
     /// 绘制小地图
     /// </summary>
@@ -1213,33 +1090,33 @@ public class Ra2Demo : MonoBehaviour
                 float yPos = miniMapRect.y == -1 ? Screen.height - miniMapRect.height - miniMapMargin : miniMapMargin;
                 actualMiniMapRect = new Rect(xPos, yPos, miniMapRect.width, miniMapRect.height);
             }
-            
+
             // 检测小地图点击事件
             HandleMiniMapClick(actualMiniMapRect);
-            
+
             // 创建一个小地图窗口样式
             GUIStyle miniMapStyle = new GUIStyle(GUI.skin.box);
-            
+
             // 绘制小地图背景
             GUI.Box(actualMiniMapRect, "", miniMapStyle);
-            
+
             // 绘制小地图标题
             GUIStyle miniMapTitleStyle = new GUIStyle(GUI.skin.label);
             miniMapTitleStyle.fontStyle = FontStyle.Bold;
             miniMapTitleStyle.normal.textColor = Color.white;
-            GUI.Label(new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 5, actualMiniMapRect.width, 20), 
+            GUI.Label(new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 5, actualMiniMapRect.width, 20),
                       "小地图", miniMapTitleStyle);
-            
+
             // 绘制小地图内容（留出标题空间）
-            Rect textureRect = new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 25, 
+            Rect textureRect = new Rect(actualMiniMapRect.x, actualMiniMapRect.y + 25,
                                        actualMiniMapRect.width, actualMiniMapRect.height - 30);
             GUI.DrawTexture(textureRect, _miniMapTexture, ScaleMode.StretchToFill, true);
-            
+
             // 可选：在小地图上绘制一个表示主相机视角的框
             DrawCameraViewIndicator(actualMiniMapRect);
         }
     }
-    
+
     /// <summary>
     /// 绘制框选区域
     /// </summary>
@@ -1250,19 +1127,19 @@ public class Ra2Demo : MonoBehaviour
         {
             // 计算拖拽距离
             float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
-            
+
             // 只有当拖拽距离超过阈值时才绘制框选区域
             if (dragDistance <= dragThreshold)
             {
                 return;
             }
-            
+
             // 创建框选区域的样式
             GUIStyle selectionStyle = new GUIStyle();
             selectionStyle.normal.background = Texture2D.whiteTexture;
             Color selectionColor = new Color(0.5f, 0.7f, 1.0f, 0.3f); // 半透明蓝色
             selectionStyle.normal.textColor = selectionColor;
-            
+
             // 计算框选区域 (转换为GUI坐标系统)
             float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
             // GUI系统的Y轴是从上往下增长的，需要转换坐标
@@ -1273,7 +1150,7 @@ public class Ra2Demo : MonoBehaviour
             float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
 
             Rect selectionRect = new Rect(x, y, width, height);
-            
+
             // 绘制半透明的框选区域
             Color oldColor = GUI.color;
             GUI.color = selectionColor;
@@ -1281,7 +1158,7 @@ public class Ra2Demo : MonoBehaviour
             GUI.color = oldColor;
         }
     }
-    
+
     /// <summary>
     /// 处理小地图点击事件
     /// </summary>
@@ -1289,34 +1166,34 @@ public class Ra2Demo : MonoBehaviour
     private void HandleMiniMapClick(Rect miniMapRect)
     {
         // 只有在游戏开始后才响应点击
-        if (!NetAdaptor.IsReady || _mainCamera == null || miniMapController == null)
+        if (!NetworkManager.Instance.IsReady || _mainCamera == null || miniMapController == null)
             return;
-            
+
         // 检查鼠标是否点击在小地图区域
-        if (Event.current != null && Event.current.type == EventType.MouseDown && 
+        if (Event.current != null && Event.current.type == EventType.MouseDown &&
             Event.current.button == 0) // 左键点击
         {
             Vector2 mousePos = Event.current.mousePosition;
-            
+
             // 计算小地图纹理区域（排除标题栏）
-            Rect textureRect = new Rect(miniMapRect.x, miniMapRect.y + 25, 
+            Rect textureRect = new Rect(miniMapRect.x, miniMapRect.y + 25,
                                       miniMapRect.width, miniMapRect.height - 30);
-            
+
             // 检查点击是否在小地图纹理区域
             if (textureRect.Contains(mousePos))
             {
                 // 将鼠标位置转换为相对于纹理区域的位置
                 float localX = mousePos.x - textureRect.x;
                 float localY = mousePos.y - textureRect.y;
-                
+
                 // 将点击位置映射到游戏世界坐标
                 // 小地图纹理是256x256，对应游戏世界0-256坐标
                 float worldX = localX / textureRect.width * 256f;
                 float worldZ = localY / textureRect.height * 256f;
-                
+
                 // 注意：纹理坐标Y轴向下为正，而世界坐标Z轴向上为正，需要翻转
                 worldZ = 256f - worldZ;
-                
+
                 if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
                 {
                     Vector3 targetPos = new(worldX, -50, worldZ);
@@ -1328,7 +1205,7 @@ public class Ra2Demo : MonoBehaviour
             }
         }
     }
-    
+
     /// <summary>
     /// 在小地图上绘制主相机视角指示器
     /// </summary>
@@ -1336,19 +1213,19 @@ public class Ra2Demo : MonoBehaviour
     {
         if (_mainCamera == null || miniMapController == null)
             return;
-            
+
         // 获取地图边界
         Vector4 mapBounds = miniMapController.GetMapBounds();
         float mapWidth = mapBounds.z - mapBounds.x;  // 256
         float mapHeight = mapBounds.w - mapBounds.y; // 256
-        
+
         // 计算主相机在世界坐标系中的视野范围
         Vector3 cameraPosition = _mainCamera.transform.position;
-        
+
         // 将世界坐标转换为小地图纹理坐标 (0-256范围)
         float cameraX = Mathf.Clamp((cameraPosition.x - mapBounds.x) / mapWidth * 256f, 0, 256);
         float cameraY = Mathf.Clamp((cameraPosition.z - mapBounds.y) / mapHeight * 256f, 0, 256);
-        
+
         // 计算小地图在屏幕上的实际位置
         if (miniMapRect.y == -1) // 特殊值表示从底部计算位置
         {
@@ -1357,36 +1234,36 @@ public class Ra2Demo : MonoBehaviour
             {
                 xPos = Screen.width - miniMapRect.width - miniMapMargin;
             }
-            
-            actualMiniMapRect = new Rect(xPos, 
-                                       Screen.height - miniMapRect.height - miniMapMargin, 
-                                       miniMapRect.width, 
+
+            actualMiniMapRect = new Rect(xPos,
+                                       Screen.height - miniMapRect.height - miniMapMargin,
+                                       miniMapRect.width,
                                        miniMapRect.height);
         }
-        
+
         // 计算相机位置在屏幕上的实际绘制位置
         // 需要考虑小地图纹理在屏幕上的绘制区域和标题栏高度(25)
         float drawX = actualMiniMapRect.x + (cameraX / 256f) * actualMiniMapRect.width;
         float drawY = actualMiniMapRect.y + (1.0f - cameraY / 256f) * (actualMiniMapRect.height - 25);
-        
+
         // 绘制相机视角框（红色边框）
         Color oldColor = GUI.color;
         GUI.color = Color.red;
-        
+
         // 绘制一个固定大小的框作为示例（可以根据需要调整大小）
         float boxSize = 30f;
-        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY - boxSize/2, boxSize, 2), Texture2D.whiteTexture); // 上边框
-        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY - boxSize/2, 2, boxSize), Texture2D.whiteTexture); // 左边框
-        GUI.DrawTexture(new Rect(drawX + boxSize/2 - 2, drawY - boxSize/2, 2, boxSize), Texture2D.whiteTexture); // 右边框
-        GUI.DrawTexture(new Rect(drawX - boxSize/2, drawY + boxSize/2 - 2, boxSize, 2), Texture2D.whiteTexture); // 下边框
-        
+        GUI.DrawTexture(new Rect(drawX - boxSize / 2, drawY - boxSize / 2, boxSize, 2), Texture2D.whiteTexture); // 上边框
+        GUI.DrawTexture(new Rect(drawX - boxSize / 2, drawY - boxSize / 2, 2, boxSize), Texture2D.whiteTexture); // 左边框
+        GUI.DrawTexture(new Rect(drawX + boxSize / 2 - 2, drawY - boxSize / 2, 2, boxSize), Texture2D.whiteTexture); // 右边框
+        GUI.DrawTexture(new Rect(drawX - boxSize / 2, drawY + boxSize / 2 - 2, boxSize, 2), Texture2D.whiteTexture); // 下边框
+
         // 在中心绘制一个小点
         GUI.DrawTexture(new Rect(drawX - 3, drawY - 3, 6, 6), Texture2D.whiteTexture);
-        
+
         GUI.color = oldColor;
     }
 
-    
+
     /// <summary>
     /// 绘制GM控制台
     /// </summary>
@@ -1398,13 +1275,13 @@ public class Ra2Demo : MonoBehaviour
         Color backgroundColor = new Color(0f, 0f, 0f, 0.95f);
         Color oldBackgroundColor = GUI.backgroundColor;
         GUI.backgroundColor = backgroundColor;
-        
+
         // 简易的IMGUI控制台界面
         GUILayout.Window(0, new Rect(0, 0, Screen.width, Screen.height * 0.3f), DrawGMConsoleWindow, "GM Console");
-        
+
         GUI.backgroundColor = oldBackgroundColor;
     }
-    
+
     private void DrawGMConsoleWindow(int windowID)
     {
         // 日志显示区域（可滚动）
@@ -1448,7 +1325,7 @@ public class Ra2Demo : MonoBehaviour
         // 直接查找本地玩家的主基地
         var (mainBaseComponent, entity) = _game.World.ComponentManager.GetComponentWithCondition<MainBaseComponent>(
             e => _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(e));
-        
+
         // 如果找到了本地玩家的主基地
         if (entity.Id != -1)
         {
@@ -1457,7 +1334,7 @@ public class Ra2Demo : MonoBehaviour
             {
                 var transform = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
                 Vector3 factoryPosition = transform.Position.ToVector3();
-                
+
                 // 将相机移动到工厂位置
                 if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
                 {
@@ -1467,7 +1344,7 @@ public class Ra2Demo : MonoBehaviour
                 return;
             }
         }
-        
+
         zUDebug.Log("[Ra2Demo] 未找到我方工厂");
     }
 
@@ -1534,7 +1411,7 @@ public class Ra2Demo : MonoBehaviour
         }
         selectedEntityIds.Clear();
     }
-    
+
     /// <summary>
     /// 绘制生产建筑列表
     /// </summary>
@@ -1545,7 +1422,7 @@ public class Ra2Demo : MonoBehaviour
 
         // 获取所有具有生产功能且属于本地玩家的建筑实体
         List<int> productionBuildings = GetLocalPlayerProductionBuildings();
-        
+
         if (productionBuildings.Count == 0)
             return;
 
@@ -1555,31 +1432,31 @@ public class Ra2Demo : MonoBehaviour
         bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
         bgTexture.Apply();
         bgStyle.normal.background = bgTexture;
-        
+
         // 绘制背景
         GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-        
+
         // 绘制面板
         GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
         panelStyle.fontSize = 24;
-        
+
         Rect panelRect = new Rect((Screen.width - 300) / 2, (Screen.height - 200) / 2, 300, 200);
         GUI.Box(panelRect, "", panelStyle);
-        
+
         // 显示标题
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
         titleStyle.fontSize = 24;
         titleStyle.alignment = TextAnchor.MiddleCenter;
         GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "选择生产建筑", titleStyle);
-        
+
         // 创建内容区域（为标题预留空间）
         Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
         GUILayout.BeginArea(contentRect);
-        
+
         // 增大按钮字体
         GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
         buttonStyle.fontSize = 20;
-        
+
         // 显示所有生产建筑
         foreach (int entityId in productionBuildings)
         {
@@ -1597,7 +1474,7 @@ public class Ra2Demo : MonoBehaviour
                 }
             }
         }
-        
+
         // 关闭按钮
         GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
         closeStyle.fontSize = 20;
@@ -1605,10 +1482,10 @@ public class Ra2Demo : MonoBehaviour
         {
             showProductionList = false;
         }
-        
+
         GUILayout.EndArea();
     }
-    
+
     /// <summary>
     /// 获取所有本地玩家的生产建筑
     /// </summary>
@@ -1619,25 +1496,25 @@ public class Ra2Demo : MonoBehaviour
     private List<int> GetLocalPlayerProductionBuildings()
     {
         List<int> result = new List<int>();
-        
+
         if (_game == null || _game.World == null)
             return result;
 
         // 使用GetComponentsWithCondition一次性获取符合条件的实体
         var components = _game.World.ComponentManager
-            .GetComponentsWithCondition<ProduceComponent>(entity => 
+            .GetComponentsWithCondition<ProduceComponent>(entity =>
                 _game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
                 !_game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
                 _game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
-                
+
         foreach (var (_, entity) in components)
         {
             result.Add(entity.Id);
         }
-        
+
         return result;
     }
-    
+
     /// <summary>
     /// 获取建筑类型名称
     /// </summary>
@@ -1668,24 +1545,24 @@ public class Ra2Demo : MonoBehaviour
 
         // 获取全局信息组件以确定本地玩家阵营ID
         var globalInfoComponent = _game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-        
+
         // 查找属于本地玩家的经济组件
         var (economyComponent, _) = _game.World.ComponentManager.GetComponentWithCondition<EconomyComponent>(
-            e => _game.World.ComponentManager.HasComponent<CampComponent>(e) && 
+            e => _game.World.ComponentManager.HasComponent<CampComponent>(e) &&
             _game.World.ComponentManager.GetComponent<CampComponent>(e).CampId == globalInfoComponent.LocalPlayerCampId);
-        
+
         if (economyComponent.Equals(default(EconomyComponent)))
         {
             UnityEngine.Debug.LogWarning($"[Ra2Demo] 未找到本地玩家阵营 {globalInfoComponent.LocalPlayerCampId} 的经济组件");
             return;
         }
-        
+
         // 创建GUI样式
         GUIStyle econStyle = new GUIStyle(GUI.skin.label);
         econStyle.fontSize = 20;
         econStyle.normal.textColor = Color.yellow;
         econStyle.alignment = TextAnchor.UpperCenter;
-        
+
         // 绘制经济信息
         string econText = $"资金: {economyComponent.Money} 电力: {economyComponent.Power}";
         GUI.Label(new Rect(Screen.width / 2 - 150, 10, 300, 30), econText, econStyle);
