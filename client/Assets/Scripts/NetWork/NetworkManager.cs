@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Examples;
 using Game.RA2.Client;
 using UnityEngine;
+using ZFrame;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Sync.Command;
 
@@ -128,6 +129,8 @@ public class NetworkManager
             _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
         }
 
+        Frame.DispatchEvent(new MatchedEvent());
+
         // 发送准备就绪消息
         _currentWebSocket.SendReady();
     }
@@ -139,6 +142,8 @@ public class NetworkManager
     private void OnGameStart()
     {
         IsReady = true;
+
+        Frame.DispatchEvent(new GameStartEvent());
 
         Debug.Log("[NetworkManager] 游戏开始");
         // 可以在这里添加游戏开始的处理逻辑

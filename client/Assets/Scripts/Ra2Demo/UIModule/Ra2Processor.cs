@@ -42,7 +42,9 @@ public class Ra2Processor : BaseProcessor
     {
         return new List<Type>()
         {
-            typeof(Ra2StartUpEvent)
+            typeof(Ra2StartUpEvent),
+            typeof(MatchedEvent),
+            typeof(GameStartEvent),
         };
     }
 
@@ -59,6 +61,20 @@ public class Ra2Processor : BaseProcessor
                     _ra2Demo = e.Ra2Demo;
                     // MainPanel.Open();
                     MatchPanel.Open();
+                }
+                break;
+            case MatchedEvent e:
+                {
+                    // 匹配成功
+                    zUDebug.Log("[Ra2Processor] 匹配成功");
+                    MatchPanel.HideMatchingGroup();
+                }
+                break;
+            case GameStartEvent e:
+                {
+                    // 匹配成功
+                    zUDebug.Log("[Ra2Processor] 开始游戏");
+                    MainPanel.Open();
                 }
                 break;
         }

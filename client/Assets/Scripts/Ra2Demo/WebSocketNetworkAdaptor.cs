@@ -26,30 +26,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
         // 绑定网络适配器
         _ra2Demo.GetBattleGame().FrameSyncManager.NetworkAdapter = this;
-    }
-
-    /// <summary>
-    /// 游戏开始事件处理
-    /// </summary>
-    private void OnGameStart()
-    {
-        // 在游戏正式启动时，发送一个初始帧确认（帧0）
-        // 这样可以启动帧同步逻辑
-        if (_ra2Demo.GetBattleGame() != null && _ra2Demo.GetBattleGame().FrameSyncManager != null)
-        {
-            // 确认第0帧（空帧），启动帧同步逻辑
-            _ra2Demo.GetBattleGame().FrameSyncManager.ConfirmFrame(0, new List<ICommand>());
-        }
-
-        zUDebug.Log("[Ra2Demo] 游戏开始，帧同步已启动");
-        
-        // 获取我方战车工厂位置，相机移动到此位置
-        _ra2Demo.MoveCameraToOurFactory();
-        
-        // 调整相机位置
-        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
-        RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
-
+        _client.OnFrameSync += OnFrameSync(_ra2Demo.GetBattleGame());
     }
 
     public void SendCommandToServer(ICommand command)
@@ -57,7 +34,7 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
         _client.SendFrameInput(command.ExecuteFrame, command);
     }
 
-    private static System.Action<FrameSyncData> OnFrameSync(ZLockstep.Sync.Game game)
+    private static Action<FrameSyncData> OnFrameSync(ZLockstep.Sync.Game game)
     {
         return (data) =>
         {
@@ -119,10 +96,5 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
 
             game.FrameSyncManager.ConfirmFrame(data.Frame, commandList);
         };
-    }
-
-    public void ReStartGame()
-    {
-        
     }
 }

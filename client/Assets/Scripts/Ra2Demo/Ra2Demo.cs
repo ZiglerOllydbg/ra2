@@ -77,8 +77,6 @@ public class Ra2Demo : MonoBehaviour
         _mainCamera = Camera.main;
         _controls = new RTSControl();
 
-        NetworkManager.Instance.SetRa2Demo(this);
-
         // 初始化小地图系统
         InitializeMiniMap();
     }
@@ -143,8 +141,9 @@ public class Ra2Demo : MonoBehaviour
     {
         frame = new Frame();
 
-        DiscoverTools.Discover(typeof(Main).Assembly);
+        NetworkManager.Instance.SetRa2Demo(this);
 
+        DiscoverTools.Discover(typeof(Main).Assembly);
         Frame.DispatchEvent(new Ra2StartUpEvent(this));
 
         // 初始化建筑预览渲染器
@@ -683,23 +682,6 @@ public class Ra2Demo : MonoBehaviour
         // 绘制左上角的房间类型选择和本地测试选项
         if (NetworkManager.Instance.IsConnected())
         {
-            // 将重新开始按钮定位在左上角
-            Rect restartButtonRect = new Rect(20, 20, 300, 200);
-            GUILayout.BeginArea(restartButtonRect);
-
-            if (GUILayout.Button("重新开始", buttonStyle))
-            {
-                RestartGame();
-            }
-
-            GUILayout.EndArea();
-
-            // 绘制ping值显示（在重新开始按钮下方）
-            GUIStyle pingStyle = new GUIStyle(GUI.skin.label);
-            pingStyle.fontSize = 20;
-            pingStyle.normal.textColor = Color.white;
-
-
             // 绘制经济信息（资金和电力）
             DrawEconomyInfo();
         }

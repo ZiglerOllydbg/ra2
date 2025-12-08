@@ -167,4 +167,12 @@ public class MatchPanel : BasePanel
             _matchingGroup.gameObject.SetActive(true);
         }
     }
+
+    public void HideMatchingGroup()
+    {
+        if (_matchingGroup != null)
+        {
+            _matchingGroup.gameObject.SetActive(false);
+        }
+    }
 }
