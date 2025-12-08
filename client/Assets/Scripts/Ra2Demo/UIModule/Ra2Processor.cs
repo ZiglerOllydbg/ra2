@@ -18,6 +18,20 @@ public class Ra2Processor : BaseProcessor
         }
     }
 
+    private MainPanel _mainPanel;
+    public MainPanel MainPanel
+    {
+        get
+        {
+            if (_mainPanel == null)
+            {
+                // 使用字符串ID，业务层可以定义自己的枚举并通过ToString()转换
+                _mainPanel = _mainPanel.New<MainPanel>(this, "MainPanel");
+            }
+            return _mainPanel;
+        }
+    }
+
     public Ra2Processor(Module _module) : base(_module)
     {
     }
@@ -40,6 +54,7 @@ public class Ra2Processor : BaseProcessor
         {
             case Ra2StartUpEvent e:
                 {
+                    MainPanel.Open();
                     MatchPanel.Open();
                 }
                 break;
