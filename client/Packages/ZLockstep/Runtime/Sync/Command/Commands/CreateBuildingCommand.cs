@@ -1,9 +1,9 @@
 using zUnity;
 using ZLockstep.Simulation;
-using ZLockstep.Simulation.Events;
-using ZLockstep.Flow;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
+using System.Text;
+using ZLockstep.Simulation.Events;
 using ZLockstep.Simulation.ECS.Utils;
 
 namespace ZLockstep.Sync.Command.Commands
@@ -191,10 +191,34 @@ namespace ZLockstep.Sync.Command.Commands
             }
             
             // 扣除资源
+            int oldMoney = economyComponent.Money;
             economyComponent.Money -= costMoney;
+            int newMoney = economyComponent.Money;
+            
+            // 触发资金变化事件
+            world.EventManager.Publish(new MoneyChangedEvent
+            {
+                CampId = CampId,
+                OldMoney = oldMoney,
+                NewMoney = newMoney,
+                Reason = "建造建筑消耗资金"
+            });
+            
             if (costPower > 0)
             {
+                int oldPower = economyComponent.Power;
                 economyComponent.Power -= costPower; // 扣除电力供应
+                int newPower = economyComponent.Power;
+                
+                // 触发电力变化事件
+                world.EventManager.Publish(new PowerChangedEvent
+                {
+                    CampId = CampId,
+                    OldPower = oldPower,
+                    NewPower = newPower,
+                    Reason = "建造建筑消耗电力"
+                });
+                
                 zUDebug.Log($"[CreateBuildingCommand] 扣除电力成功。消耗电力: {costPower}。剩余电力: {economyComponent.Power}");
             }
             

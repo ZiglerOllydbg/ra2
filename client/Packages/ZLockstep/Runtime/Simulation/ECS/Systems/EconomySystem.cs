@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Components;
 using zUnity;
+using ZLockstep.Simulation.Events; // 添加事件命名空间
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -142,9 +143,24 @@ namespace ZLockstep.Simulation.ECS.Systems
             
             int totalPower = 10 + powerPlants * 10 - smelters * 5 - factories * 5;
             
-            // 更新电力值
-            economyComponent.Power = totalPower;
-            ComponentManager.AddComponent(economyEntity, economyComponent);
+            // 检查电力是否发生变化，如果变化则触发事件
+            if (economyComponent.Power != totalPower)
+            {
+                int oldPower = economyComponent.Power;
+                // 更新电力值
+                economyComponent.Power = totalPower;
+                
+                // 触发电力变化事件
+                World.EventManager.Publish(new PowerChangedEvent
+                {
+                    CampId = campId,
+                    OldPower = oldPower,
+                    NewPower = totalPower,
+                    Reason = "建筑变更导致电力变化"
+                });
+                
+                ComponentManager.AddComponent(economyEntity, economyComponent);
+            }
         }
         
         /// <summary>
@@ -203,7 +219,19 @@ namespace ZLockstep.Simulation.ECS.Systems
             if (entity.Id != -1)
             {
                 // 找到玩家的经济组件，增加资金
+                int oldMoney = economyComponent.Money;
                 economyComponent.Money += amount;
+                int newMoney = economyComponent.Money;
+                
+                // 触发资金变化事件
+                World.EventManager.Publish(new MoneyChangedEvent
+                {
+                    CampId = campId,
+                    OldMoney = oldMoney,
+                    NewMoney = newMoney,
+                    Reason = "采矿收入"
+                });
+                
                 ComponentManager.AddComponent(entity, economyComponent);
             }
         }

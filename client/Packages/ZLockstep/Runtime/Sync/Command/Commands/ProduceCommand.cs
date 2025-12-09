@@ -3,6 +3,7 @@ using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using System.Text;
+using ZLockstep.Simulation.Events;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -167,7 +168,18 @@ namespace ZLockstep.Sync.Command.Commands
             }
             
             // 扣除资源
+            int oldMoney = economyComponent.Money;
             economyComponent.Money -= costMoney;
+            int newMoney = economyComponent.Money;
+            
+            // 触发资金变化事件
+            world.EventManager.Publish(new MoneyChangedEvent
+            {
+                CampId = campId,
+                OldMoney = oldMoney,
+                NewMoney = newMoney,
+                Reason = "生产单位消耗资金"
+            });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
@@ -214,7 +226,18 @@ namespace ZLockstep.Sync.Command.Commands
             }
             
             // 返还资源
+            int oldMoney = economyComponent.Money;
             economyComponent.Money += refundMoney;
+            int newMoney = economyComponent.Money;
+            
+            // 触发资金变化事件
+            world.EventManager.Publish(new MoneyChangedEvent
+            {
+                CampId = campId,
+                OldMoney = oldMoney,
+                NewMoney = newMoney,
+                Reason = "取消生产单位返还资金"
+            });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);

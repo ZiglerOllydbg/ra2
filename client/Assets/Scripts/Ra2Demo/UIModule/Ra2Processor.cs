@@ -61,6 +61,7 @@ public class Ra2Processor : BaseProcessor
             typeof(Ra2StartUpEvent),
             typeof(MatchedEvent),
             typeof(GameStartEvent),
+            typeof(EconomyEvent)
         };
     }
 
@@ -106,12 +107,23 @@ public class Ra2Processor : BaseProcessor
                     LoadingPanel.Close();
                     MainPanel.Open();
 
-                    Utils.GetLocalPlayerEconomy(_ra2Demo.GetBattleGame(), out int money, out int power);
-                    
-                    MainPanel.SetMoney(money);
-                    MainPanel.SetPower(power);
+                    RefreshEconomy();
                 }
                 break;
+            case EconomyEvent e:
+                    RefreshEconomy();
+                break;
         }
+    }
+
+    /// <summary>
+    /// 刷新经济显示
+    /// </summary>
+    private void RefreshEconomy()
+    {
+        Utils.GetLocalPlayerEconomy(_ra2Demo.GetBattleGame(), out int money, out int power);
+        
+        MainPanel.SetMoney(money);
+        MainPanel.SetPower(power);
     }
 }

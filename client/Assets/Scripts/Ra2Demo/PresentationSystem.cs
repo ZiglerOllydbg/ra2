@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ZFrame;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
@@ -41,7 +42,7 @@ namespace ZLockstep.View.Systems
         public bool Enabled { get; set; } = true;
 
         // 添加对Game对象的引用
-        private Game _game;
+        private ZLockstep.Sync.Game _game;
 
         // 游戏结束状态变量
         public bool IsGameOver { get; private set; } = false;
@@ -86,7 +87,7 @@ namespace ZLockstep.View.Systems
         /// <summary>
         /// 设置Game对象引用（由GameWorldBridge调用）
         /// </summary>
-        public void SetGame(Game game)
+        public void SetGame(ZLockstep.Sync.Game game)
         {
             _game = game;
         }
@@ -102,11 +103,39 @@ namespace ZLockstep.View.Systems
             // 3. 检查死亡动画状态
             CheckDyingEntities();
 
+            // 4. 处理经济变化事件
+            ProcessEconomyEvents();
+
             // 5. 处理游戏结束事件
             ProcessGameOverEvents();
 
             // 6. 同步已有的View
             SyncAllViews();
+        }
+
+        /// <summary>
+        /// 处理经济变化事件（资金和电力变化）
+        /// </summary>
+        private void ProcessEconomyEvents()
+        {
+            // 处理资金变化事件
+            var moneyEvents = EventManager.GetEvents<MoneyChangedEvent>();
+            foreach (var evt in moneyEvents)
+            {
+                // 这里可以添加处理资金变化的逻辑
+                // 例如：更新UI上的资金显示
+                Debug.Log($"[PresentationSystem] 阵营{evt.CampId}资金变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
+                Frame.DispatchEvent(new EconomyEvent());
+            }
+
+            // 处理电力变化事件
+            var powerEvents = EventManager.GetEvents<PowerChangedEvent>();
+            foreach (var evt in powerEvents)
+            {
+                // 这里可以添加处理电力变化的逻辑
+                // 例如：更新UI上的电力显示
+                Debug.Log($"[PresentationSystem] 阵营{evt.CampId}电力变化: {evt.OldPower} -> {evt.NewPower} ({evt.Reason})");
+            }
         }
 
         /// <summary>

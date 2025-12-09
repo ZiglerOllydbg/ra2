@@ -73,7 +73,7 @@ namespace ZLockstep.View
         // ═══════════════════════════════════════════════════════════
         // 核心：持有 Game 实例（不是创建 zWorld！）
         // ═══════════════════════════════════════════════════════════
-        private Game _game;
+        private ZLockstep.Sync.Game _game;
 
         // Unity特定：表现系统
         private PresentationSystem _presentationSystem;
@@ -84,7 +84,7 @@ namespace ZLockstep.View
         /// <summary>
         /// 暴露Game供外部访问（如Test.cs）
         /// </summary>
-        public Game Game => _game;
+        public ZLockstep.Sync.Game Game => _game;
 
         /// <summary>
         /// 快捷访问：逻辑世界（实际是 _game.World）
@@ -245,7 +245,7 @@ namespace ZLockstep.View
         private void InitializeGame()
         {
             // 创建 Game（Game会创建唯一的zWorld）
-            _game = new Game(gameMode, logicFrameRate, localPlayerId);
+            _game = new ZLockstep.Sync.Game(gameMode, logicFrameRate, localPlayerId);
             _game.Init();
 
             Debug.Log($"[GameWorldBridge] Game初始化完成 - 模式:{gameMode}");
