@@ -20,6 +20,21 @@ public class Ra2Processor : BaseProcessor
         }
     }
 
+    // loading 面板
+    private LoadingPanel _loadingPanel;
+    public LoadingPanel LoadingPanel
+    {
+        get
+        {
+            if (_loadingPanel == null)
+            {
+                // 使用字符串ID，业务层可以定义自己的枚举并通过ToString()转换
+                _loadingPanel = _loadingPanel.New<LoadingPanel>(this, "LoadingPanel");
+            }
+            return _loadingPanel;
+        }
+    }
+
     private MainPanel _mainPanel;
     public MainPanel MainPanel
     {
@@ -67,13 +82,15 @@ public class Ra2Processor : BaseProcessor
                 {
                     // 匹配成功
                     zUDebug.Log("[Ra2Processor] 匹配成功");
-                    MatchPanel.HideMatchingGroup();
+                    MatchPanel.Close();
+                    LoadingPanel.Open();
                 }
                 break;
             case GameStartEvent e:
                 {
                     // 匹配成功
                     zUDebug.Log("[Ra2Processor] 开始游戏");
+                    LoadingPanel.Close();
                     MainPanel.Open();
                 }
                 break;
