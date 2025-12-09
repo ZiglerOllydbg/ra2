@@ -74,14 +74,14 @@ namespace Game.Examples
         /// <summary>
         /// 初始化战斗游戏
         /// </summary>
-        public new void Init()
+        public new void Init(byte[] bytes)
         {
             // 初始化命令映射
             CommandMapper.Initialize();
             // 初始化地图和导航系统
-            InitializeMapAndNavigation();
+            InitializeMapAndNavigation(bytes);
             // 先调用基类初始化
-            base.Init();
+            base.Init(bytes);
 
             zUDebug.Log("[BattleGame] 战斗游戏初始化完成");
         }
@@ -89,12 +89,14 @@ namespace Game.Examples
         /// <summary>
         /// 初始化地图和导航系统
         /// </summary>
-        private void InitializeMapAndNavigation()
+        private void InitializeMapAndNavigation(byte[] bytes)
         {
             // 1. 创建256x256地图，每格1.0米
             MapManager = new SimpleMapManager();
             MapManager.Initialize(256, 256, zfloat.One);
             zUDebug.Log("[BattleGame] 地图初始化: 256x256格，每格1.0米");
+            
+            MapManager.LoadFromBinary(bytes);
 
             // 2. 设置地图边界为障碍物
             SetupMapBorders();

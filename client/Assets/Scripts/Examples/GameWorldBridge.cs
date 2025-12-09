@@ -130,7 +130,8 @@ namespace ZLockstep.View
 
         private void Awake()
         {
-            InitializeGame();
+            var textAsset = Resources.Load<TextAsset>("mapMapData");
+            InitializeGame(textAsset.bytes);
             InitializeUnityView();
         }
 
@@ -242,11 +243,11 @@ namespace ZLockstep.View
         /// <summary>
         /// 初始化纯逻辑部分（Game + zWorld）
         /// </summary>
-        private void InitializeGame()
+        private void InitializeGame(byte[] bytes)
         {
             // 创建 Game（Game会创建唯一的zWorld）
             _game = new ZLockstep.Sync.Game(gameMode, logicFrameRate, localPlayerId);
-            _game.Init();
+            _game.Init(bytes);
 
             Debug.Log($"[GameWorldBridge] Game初始化完成 - 模式:{gameMode}");
         }

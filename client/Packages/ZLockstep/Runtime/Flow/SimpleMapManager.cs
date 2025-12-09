@@ -1,5 +1,6 @@
 using zUnity;
 using System.Collections.Generic;
+using System.IO;
 
 namespace ZLockstep.Flow
 {
@@ -12,7 +13,7 @@ namespace ZLockstep.Flow
         private int width;
         private int height;
         private zfloat gridSize;
-        
+
         private bool[] walkableGrid;
         private Dictionary<int, DynamicObstacleInfo> dynamicObstacles; // agentId -> obstacle info
         private HashSet<long> occupiedCells; // cells occupied by dynamic obstacles
@@ -25,7 +26,7 @@ namespace ZLockstep.Flow
             public zVector2 position;
             public zfloat radius;
             public HashSet<long> occupiedCells;
-            
+
             public DynamicObstacleInfo(zVector2 pos, zfloat r)
             {
                 position = pos;
@@ -45,17 +46,61 @@ namespace ZLockstep.Flow
             this.width = width;
             this.height = height;
             this.gridSize = gridSize;
-            
+
             // 初始化格子数据
             walkableGrid = new bool[width * height];
             for (int i = 0; i < walkableGrid.Length; i++)
             {
                 walkableGrid[i] = true;
             }
-            
+
             // 初始化动态障碍物集合
             dynamicObstacles = new Dictionary<int, DynamicObstacleInfo>();
             occupiedCells = new HashSet<long>();
+        }
+
+        /// <summary>
+        /// 【新增】从二进制数据加载地图
+        /// </summary>
+        /// <param name="mapData">二进制字节数组 (TextAsset.bytes)</param>
+        public void LoadFromBinary(byte[] mapData)
+        {
+            if (mapData == null || mapData.Length == 0)
+            {
+                UnityEngine.Debug.LogError("地图二进制数据为空！");
+                return;
+            }
+
+            using (MemoryStream ms = new MemoryStream(mapData))
+            using (BinaryReader reader = new BinaryReader(ms))
+            {
+                // 1. 读取头信息
+                int mapW = reader.ReadInt32();
+                int mapH = reader.ReadInt32();
+                zUDebug.Log("map loaded" + mapW + " " + mapH);
+                float sizeRaw = reader.ReadSingle();
+
+                // 转换 float -> zfloat
+                zfloat size = (zfloat)sizeRaw;
+
+                // 2. 调用原有的初始化逻辑分配内存
+                Initialize(mapW, mapH, size);
+
+                // 3. 填充行走数据
+                // 确保数据长度匹配
+                int totalCells = mapW * mapH;
+
+                // 为了极致性能，直接循环读取
+                // 注意：这里一定要和导出时的循环顺序 (y * width + x) 保持一致
+                for (int i = 0; i < totalCells; i++)
+                {
+                    // 读取一个字节，1为可行走，0为不可行走
+                    byte val = reader.ReadByte();
+                    walkableGrid[i] = (val == 1);
+                }
+            }
+
+            UnityEngine.Debug.Log($"地图加载完成: {width}x{height}, GridSize: {gridSize}");
         }
 
         /// <summary>
@@ -110,14 +155,14 @@ namespace ZLockstep.Flow
         {
             // 移除已存在的同ID障碍物
             RemoveDynamicObstacle(agentId);
-            
+
             // 创建新的动态障碍物信息
             var obstacleInfo = new DynamicObstacleInfo(position, radius);
-            
+
             // 计算影响的格子范围
             WorldToGrid(position, out int centerX, out int centerY);
             int radiusInCells = (int)(radius / gridSize) + 1;
-            
+
             for (int y = centerY - radiusInCells; y <= centerY + radiusInCells; y++)
             {
                 for (int x = centerX - radiusInCells; x <= centerX + radiusInCells; x++)
@@ -126,7 +171,7 @@ namespace ZLockstep.Flow
                     {
                         zVector2 cellCenter = GridToWorld(x, y);
                         zfloat distance = (cellCenter - position).magnitude;
-                        
+
                         // 如果格子中心到智能体中心的距离小于半径，则认为该格子被占据
                         if (distance <= radius)
                         {
@@ -137,7 +182,7 @@ namespace ZLockstep.Flow
                     }
                 }
             }
-            
+
             // 添加到动态障碍物字典
             dynamicObstacles[agentId] = obstacleInfo;
         }
@@ -154,7 +199,7 @@ namespace ZLockstep.Flow
                 {
                     occupiedCells.Remove(cellKey);
                 }
-                
+
                 // 从动态障碍物字典中移除
                 dynamicObstacles.Remove(agentId);
             }
@@ -208,7 +253,7 @@ namespace ZLockstep.Flow
                 {
                     return false;
                 }
-                
+
                 return walkableGrid[gridY * width + gridX];
             }
             return false;
@@ -225,7 +270,7 @@ namespace ZLockstep.Flow
         {
             gridX = (int)(worldPos.x / gridSize);
             gridY = (int)(worldPos.y / gridSize);
-            
+
             // 限制在地图范围内
             if (gridX < 0) gridX = 0;
             if (gridY < 0) gridY = 0;

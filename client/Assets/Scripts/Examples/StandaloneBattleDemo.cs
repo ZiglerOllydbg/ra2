@@ -59,14 +59,15 @@ public class StandaloneBattleDemo : MonoBehaviour
     private void Awake()
     {
         _mainCamera = Camera.main;
-        InitializeGame();
+        var text = Resources.Load<TextAsset>("MapData");
+        InitializeGame(text.bytes);
         InitializeUnityView();
     }
 
     /// <summary>
     /// 初始化游戏逻辑
     /// </summary>
-    private void InitializeGame()
+    private void InitializeGame(byte[] bytes)
     {
         // 创建BattleGame（单机模式）
         _battleGame = new BattleGame(
@@ -75,7 +76,7 @@ public class StandaloneBattleDemo : MonoBehaviour
             localPlayerId: 0
         );
 
-        _battleGame.Init();
+        _battleGame.Init(bytes);
 
         // // 创建初始基地
         // _battleGame.InitializeStartingUnits();

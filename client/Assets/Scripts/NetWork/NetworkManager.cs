@@ -108,8 +108,9 @@ public class NetworkManager
         Debug.Log($"[NetworkManager] 匹配成功：房间ID={data.RoomId}, 阵营ID={data.CampId}");
         // 可以在这里添加匹配成功的处理逻辑
         // 创建BattleGame实例
+        var text = Resources.Load<TextAsset>("MapData");
         _ra2Demo.SetBattleGame(new BattleGame(_ra2Demo.Mode, 20, 0));
-        _ra2Demo.GetBattleGame().Init();
+        _ra2Demo.GetBattleGame().Init(text.bytes);
         
         // 初始化Unity视图层
         _ra2Demo.InitializeUnityView();

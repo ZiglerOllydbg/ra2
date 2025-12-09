@@ -143,7 +143,7 @@ namespace ZLockstep.Sync
         /// <summary>
         /// 初始化游戏
         /// </summary>
-        public void Init()
+        public void Init(byte[] bytes)
         {
             // 创建唯一的 zWorld
             World = new zWorld();
