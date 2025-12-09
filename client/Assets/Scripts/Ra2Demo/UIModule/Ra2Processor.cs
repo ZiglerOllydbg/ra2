@@ -92,6 +92,7 @@ public class Ra2Processor : BaseProcessor
                     LoadingPanel.SetPlayerCount(playerNum);
                     
                     
+                    
                     // 延迟2秒后调用SendReady
                     Tick.SetTimeout(() => {
                         NetworkManager.Instance.CurrentWebSocket.SendReady();
@@ -104,6 +105,11 @@ public class Ra2Processor : BaseProcessor
                     zUDebug.Log("[Ra2Processor] 开始游戏");
                     LoadingPanel.Close();
                     MainPanel.Open();
+
+                    Utils.GetLocalPlayerEconomy(_ra2Demo.GetBattleGame(), out int money, out int power);
+                    
+                    MainPanel.SetMoney(money);
+                    MainPanel.SetPower(power);
                 }
                 break;
         }
