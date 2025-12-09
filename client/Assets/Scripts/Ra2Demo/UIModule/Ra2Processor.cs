@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ZFrame;
+using ZLib; // 添加这个using语句以使用Tick
 
 public class Ra2Processor : BaseProcessor
 {
@@ -83,7 +84,18 @@ public class Ra2Processor : BaseProcessor
                     // 匹配成功
                     zUDebug.Log("[Ra2Processor] 匹配成功");
                     MatchPanel.Close();
+
+                    // 获取对战人数
                     LoadingPanel.Open();
+                    int playerNum = e.data.InitialState.Count - 1;
+                    LoadingPanel.SetProgress(0.5f);
+                    LoadingPanel.SetPlayerCount(playerNum);
+                    
+                    
+                    // 延迟2秒后调用SendReady
+                    Tick.SetTimeout(() => {
+                        NetworkManager.Instance.CurrentWebSocket.SendReady();
+                    }, 2.0f);
                 }
                 break;
             case GameStartEvent e:

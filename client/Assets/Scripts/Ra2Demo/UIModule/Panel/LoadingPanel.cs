@@ -17,7 +17,7 @@ public class LoadingPanel : BasePanel
     // 声明UI组件引用
     private Image _image;
     private Transform _numPlayer;
-    private TextMeshPro _value; // 改为TextMeshPro
+    private TMP_Text _value; // 改为TextMeshPro
     
     public LoadingPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -32,8 +32,9 @@ public class LoadingPanel : BasePanel
         _image = PanelObject.transform.Find("Loading/Image")?.GetComponent<Image>();
         
         // 获取NumPlayer容器和其子组件
-        _numPlayer = PanelObject.transform.Find("NumPlayer");
-        _value = _numPlayer?.Find("Value")?.GetComponentInChildren<TextMeshPro>(); // 改为TextMeshPro
+        _numPlayer = PanelObject.transform.Find("Loading/NumPlayer");
+        zUDebug.Log("[LoadingPanel] 获取NumPlayer容器 " + _numPlayer);            
+        _value = _numPlayer?.Find("Value")?.GetComponentInChildren<TMP_Text>(); // 改为TextMeshPro
     }
 
     protected override void AddEvent()

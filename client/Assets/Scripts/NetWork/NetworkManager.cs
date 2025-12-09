@@ -129,10 +129,7 @@ public class NetworkManager
             _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
         }
 
-        Frame.DispatchEvent(new MatchedEvent());
-
-        // 发送准备就绪消息
-        _currentWebSocket.SendReady();
+        Frame.DispatchEvent(new MatchedEvent(data));
     }
     
     
