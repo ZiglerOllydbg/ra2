@@ -61,7 +61,8 @@ public class Ra2Processor : BaseProcessor
             typeof(Ra2StartUpEvent),
             typeof(MatchedEvent),
             typeof(GameStartEvent),
-            typeof(EconomyEvent)
+            typeof(EconomyEvent),
+            typeof(SelectBuildEvent),
         };
     }
 
@@ -97,7 +98,7 @@ public class Ra2Processor : BaseProcessor
                     // 延迟2秒后调用SendReady
                     Tick.SetTimeout(() => {
                         NetworkManager.Instance.CurrentWebSocket.SendReady();
-                    }, 2.0f);
+                    }, 1.0f);
                 }
                 break;
             case GameStartEvent e:
@@ -112,6 +113,9 @@ public class Ra2Processor : BaseProcessor
                 break;
             case EconomyEvent e:
                     RefreshEconomy();
+                break;
+            case SelectBuildEvent e:
+                _ra2Demo.StartBuildingPlacement(e.BuildingType);
                 break;
         }
     }

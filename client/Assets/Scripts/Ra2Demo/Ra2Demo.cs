@@ -41,8 +41,6 @@ public class Ra2Demo : MonoBehaviour
     private int miniMapMargin = 10; // 小地图边距
     private RenderTexture _miniMapTexture;
 
-
-
     private RTSControl _controls;
     public Camera _mainCamera;
     // 添加多选支持相关字段
@@ -63,7 +61,6 @@ public class Ra2Demo : MonoBehaviour
     private bool showProductionList = false; // 是否显示生产建筑列表
 
     // 添加建造功能相关字段
-    private bool showBuildUI = false; // 是否显示建造UI
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
 
     // GM相关
@@ -404,7 +401,7 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 更新建筑预览位置
     /// </summary>
-    private void UpdateBuildingPreview()
+    public void UpdateBuildingPreview()
     {
         // 委托给建筑预览渲染器处理
         if (buildingPreviewRenderer != null)
@@ -414,34 +411,12 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 在网格上绘制可建造区域
-    /// </summary>
-    /// <param name="minGridX">最小网格X坐标</param>
-    /// <param name="minGridY">最小网格Y坐标</param>
-    /// <param name="maxGridX">最大网格X坐标</param>
-    /// <param name="maxGridY">最大网格Y坐标</param>
-    private void DrawBuildableAreaOnGrid(int minGridX, int minGridY, int maxGridX, int maxGridY)
-    {
-        // 获取网格大小
-        float gridSize = (float)_game.MapManager.GetGridSize();
-
-        // 绘制绿色斜线表示可建造区域
-        GL.PushMatrix();
-        GL.LoadOrtho();
-
-        // TODO: 实际实现中需要创建一个材质来绘制线条
-        // 这里暂时留空，因为需要在OnPostRender或OnRenderObject中实现
-
-        GL.PopMatrix();
-    }
-
-    /// <summary>
     /// 放置建筑
     /// </summary>
     /// <summary>
     /// 放置建筑
     /// </summary>
-    private void PlaceBuilding()
+    public void PlaceBuilding()
     {
         if (buildingPreviewRenderer != null)
         {
@@ -643,27 +618,12 @@ public class Ra2Demo : MonoBehaviour
             if (GUI.Button(productionButtonRect, "生产", produceButtonStyle))
             {
                 showProductionList = !showProductionList;
-                showBuildUI = false; // 确保建造UI关闭
-            }
-
-            // 绘制建造按钮（在生产按钮右侧）
-            Rect buildButtonRect = new(120, Screen.height - 100, 80, 80);
-            if (GUI.Button(buildButtonRect, "建造", produceButtonStyle))
-            {
-                showBuildUI = !showBuildUI;
-                showProductionList = false; // 确保生产列表关闭
             }
 
             // 绘制生产建筑列表
             if (showProductionList)
             {
                 DrawProductionBuildingList();
-            }
-
-            // 绘制建造UI
-            if (showBuildUI)
-            {
-                DrawBuildUI();
             }
         }
 
@@ -679,35 +639,6 @@ public class Ra2Demo : MonoBehaviour
         // 绘制小地图
         DrawMiniMap();
 
-        // 绘制左上角的房间类型选择和本地测试选项
-        if (NetworkManager.Instance.IsConnected())
-        {
-            // 绘制经济信息（资金和电力）
-            DrawEconomyInfo();
-        }
-
-        // 显示选中的单位信息
-        if (NetworkManager.Instance.IsReady && selectedEntityIds.Count > 0)
-        {
-            Rect infoRect = new Rect(Screen.width / 2 - 100, 20, 300, 60);
-            GUILayout.BeginArea(infoRect, GUI.skin.box);
-
-            GUIStyle centeredLabelStyle = new GUIStyle(GUI.skin.label);
-            centeredLabelStyle.fontSize = 20;
-            centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
-
-            if (selectedEntityIds.Count == 1)
-            {
-                GUILayout.Label($"选中单位ID: {selectedEntityIds[0]}", centeredLabelStyle);
-            }
-            else
-            {
-                GUILayout.Label($"选中单位数量: {selectedEntityIds.Count}个", centeredLabelStyle);
-            }
-
-            GUILayout.EndArea();
-        }
-
         // 绘制游戏结束界面
         if (_presentationSystem != null && _presentationSystem.IsGameOver)
         {
@@ -716,77 +647,14 @@ public class Ra2Demo : MonoBehaviour
 
         DrawGMConsole();
     }
-    /// <summary>
-    /// 绘制建造UI
-    /// </summary>
-    private void DrawBuildUI()
-    {
-        // 创建一个半透明背景
-        GUIStyle bgStyle = new GUIStyle();
-        Texture2D bgTexture = new Texture2D(1, 1);
-        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
-        bgTexture.Apply();
-        bgStyle.normal.background = bgTexture;
-
-        // 绘制背景
-        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-
-        // 绘制建造面板
-        GUIStyle panelStyle = new GUIStyle(GUI.skin.box);
-        panelStyle.fontSize = 24;
-
-        Rect panelRect = new Rect((Screen.width - 300) / 2, (Screen.height - 300) / 2, 300, 300);
-        GUI.Box(panelRect, "", panelStyle);
-
-        // 显示标题
-        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-        titleStyle.fontSize = 24;
-        titleStyle.alignment = TextAnchor.MiddleCenter;
-        GUI.Label(new Rect(panelRect.x, panelRect.y + 10, panelRect.width, 30), "选择建筑类型", titleStyle);
-
-        // 创建内容区域（为标题预留空间）
-        Rect contentRect = new Rect(panelRect.x, panelRect.y + 50, panelRect.width, panelRect.height - 60);
-        GUILayout.BeginArea(contentRect);
-
-        // 增大按钮字体
-        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
-        buttonStyle.fontSize = 20;
-
-        // 显示建筑选项
-        if (GUILayout.Button("采矿场(800$,5电)", buttonStyle, GUILayout.Height(50)))
-        {
-            StartBuildingPlacement(BuildingType.Smelter); // 采矿场对应unitPrefabs[3]
-        }
-
-        if (GUILayout.Button("电厂(500$)", buttonStyle, GUILayout.Height(50)))
-        {
-            StartBuildingPlacement(BuildingType.PowerPlant); // 电厂对应unitPrefabs[4]
-        }
-
-        if (GUILayout.Button("坦克工厂(1000$,5电)", buttonStyle, GUILayout.Height(50)))
-        {
-            StartBuildingPlacement(BuildingType.Factory); // 坦克工厂对应unitPrefabs[5]
-        }
-
-        // 关闭按钮
-        GUIStyle closeStyle = new GUIStyle(GUI.skin.button);
-        closeStyle.fontSize = 20;
-        if (GUILayout.Button("关闭", closeStyle, GUILayout.Height(40)))
-        {
-            showBuildUI = false;
-        }
-
-        GUILayout.EndArea();
-    }
 
     /// <summary>
     /// 开始建筑放置模式
     /// </summary>
     /// <param name="buildingType">建筑类型 (3=采矿场, 4=电厂, 5=坦克工厂)</param>
-    private void StartBuildingPlacement(BuildingType buildingType)
+    public void StartBuildingPlacement(BuildingType buildingType)
     {
         buildingToBuild = buildingType;
-        showBuildUI = false; // 关闭建造UI
 
         Debug.Log($"[Test] 开始放置建筑: {GetBuildingName(buildingType)}");
     }
@@ -1511,43 +1379,6 @@ public class Ra2Demo : MonoBehaviour
             case 3: return "矿场";
             default: return $"建筑{buildingType}";
         }
-    }
-
-    /// <summary>
-    /// 绘制经济信息（资金和电力）
-    /// </summary>
-    private void DrawEconomyInfo()
-    {
-        if (_game == null || _game.World == null)
-            return;
-
-        // 检查是否存在全局信息组件
-        if (!_game.World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
-            return;
-
-        // 获取全局信息组件以确定本地玩家阵营ID
-        var globalInfoComponent = _game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
-
-        // 查找属于本地玩家的经济组件
-        var (economyComponent, _) = _game.World.ComponentManager.GetComponentWithCondition<EconomyComponent>(
-            e => _game.World.ComponentManager.HasComponent<CampComponent>(e) &&
-            _game.World.ComponentManager.GetComponent<CampComponent>(e).CampId == globalInfoComponent.LocalPlayerCampId);
-
-        if (economyComponent.Equals(default(EconomyComponent)))
-        {
-            UnityEngine.Debug.LogWarning($"[Ra2Demo] 未找到本地玩家阵营 {globalInfoComponent.LocalPlayerCampId} 的经济组件");
-            return;
-        }
-
-        // 创建GUI样式
-        GUIStyle econStyle = new GUIStyle(GUI.skin.label);
-        econStyle.fontSize = 20;
-        econStyle.normal.textColor = Color.yellow;
-        econStyle.alignment = TextAnchor.UpperCenter;
-
-        // 绘制经济信息
-        string econText = $"资金: {economyComponent.Money} 电力: {economyComponent.Power}";
-        GUI.Label(new Rect(Screen.width / 2 - 150, 10, 300, 30), econText, econStyle);
     }
 
     public void SetBattleGame(BattleGame game)
