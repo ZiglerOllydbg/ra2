@@ -12,39 +12,39 @@ using TWC.Utilities;
 
 namespace TWC.Actions
 {
-	[ActionNameAttribute(Name="Objects")]
+	[ActionNameAttribute(Name = "Objects")]
 	public class InstantiateObjects : TWCBuildLayer
 	{
 		public int selectedCopyLayerIndex;
-        //public Guid guidCopyLayer;
+		//public Guid guidCopyLayer;
 
-        public Guid useTileRotationFrom;
-        public bool mergeObjects;
+		public Guid useTileRotationFrom;
+		public bool mergeObjects;
 		public bool keepPrefabConnection = false;
 		public bool addMeshCollider;
-		
+
 		public GameObject prefab;
-	
-		
+
+
 		public bool instantiateChilds;
 		public bool selectFromPrefabList;
 		public GameObject childPrefab;
 		public List<GameObject> randomChildPrefabs;
 		public int count;
 		public float radius;
-		
+
 		public bool useSubdividedMap;
-	
+
 		public LayerMask assignLayer;
 		public bool setShadowCastingMode;
 		public ShadowCastingMode shadowCasting = ShadowCastingMode.On;
-		
+
 		public bool disableTileRotation;
-		
-		
+
+
 		public Vector3 globalPositionOffset, globalRotationOffset, globalScaleOffset;
 		public Vector3 localPositionOffset, localRotationOffset, localScaleOffset;
-	
+
 		public bool rndPosition;
 		public Vector3 minRndPosition, maxRndPosition;
 		public bool rndScaling;
@@ -54,27 +54,35 @@ namespace TWC.Actions
 		public Vector3 minRndScale, maxRndScale;
 		public bool rndRotation;
 		public Vector3 minRndRotation, maxRndRotation;
-		
-		
+
+		public List<string> ignoreLayers = new List<string>();
+
 		WorldMap tileMap;
 		WorldMap tileMapTMP;
-		
-		
+
+
 		public class GenericMenuData
 		{
 			public int selectedIndex;
 			public TileWorldCreatorAsset twcAsset;
 		}
-		
+
+		public class GenericMenuIgnoreLayerData
+		{
+			public int selectedIndex;
+			public int ignoreLayerListIndex;
+			public TileWorldCreatorAsset twcAsset;
+		}
+
 		public override TWCBuildLayer Clone()
 		{
-			
+
 			var _r = new InstantiateObjects();
-			
+
 			_r.guid = Guid.NewGuid();
 			_r.selectedCopyLayerIndex = this.selectedCopyLayerIndex;
 			_r.useTileRotationFrom = this.useTileRotationFrom;
-            _r.mergeObjects = this.mergeObjects;
+			_r.mergeObjects = this.mergeObjects;
 			_r.keepPrefabConnection = this.keepPrefabConnection;
 			_r.assignLayer = this.assignLayer;
 			_r.setShadowCastingMode = this.setShadowCastingMode;
@@ -106,11 +114,18 @@ namespace TWC.Actions
 			_r.rndRotation = this.rndRotation;
 			_r.minRndRotation = this.minRndRotation;
 			_r.maxRndRotation = this.maxRndRotation;
-			
+
+			_r.ignoreLayers = new List<string>();
+
+			for (int i = 0; i < this.ignoreLayers.Count; i++)
+			{
+				_r.ignoreLayers.Add(this.ignoreLayers[i]);
+			}
+
 			return _r as TWCBuildLayer;
 		}
-		
-		#if UNITY_EDITOR
+
+#if UNITY_EDITOR
 		public override void DrawGUI(TileWorldCreatorAsset _twcAsset)
 		{
 			using (new GUILayout.VerticalScope("Box"))
@@ -344,26 +359,90 @@ namespace TWC.Actions
 					}
 				}
 			}
+			
+			using (new GUILayout.VerticalScope("Box"))
+			{
+				GUILayout.Label("Ignore layers", "boldLabel");
+				
+				if (GUILayout.Button("Add ignore layer"))
+				{
+					ignoreLayers.Add("");	
+				}
+				
+				var _availableLayerNames =  EditorUtilities.GetAllGenerationLayerNames(_twcAsset);
+
+				if (ignoreLayers == null) ignoreLayers = new List<string>();
+
+                for (int i = 0; i < ignoreLayers.Count; i ++)
+				{
+					using (new GUILayout.HorizontalScope())
+					{
+					
+						var _selectedIgnoreLayerName = "";
+						Guid _guid = Guid.Empty;
+						Guid.TryParse(ignoreLayers[i], out _guid);
+						if (_guid != Guid.Empty)
+						{
+							var _selectedIgnoreLayerData = _twcAsset.GetBlueprintLayerData(_guid);
+							if (_selectedIgnoreLayerData != null)
+							{
+								_selectedIgnoreLayerName = _selectedIgnoreLayerData.layerName;
+							}
+						}
+						using (new GUILayout.HorizontalScope())
+						{
+							EditorGUILayout.LabelField("Ignore Layer");
+							if (EditorGUILayout.DropdownButton(new GUIContent(_selectedIgnoreLayerName), FocusType.Keyboard))
+							{
+								GenericMenu menu = new GenericMenu();
+						
+								for (int n = 0; n < _availableLayerNames.Length; n ++)
+								{
+									var _data = new GenericMenuIgnoreLayerData();
+									_data.selectedIndex = n;
+									_data.twcAsset = _twcAsset;
+									_data.ignoreLayerListIndex = i;
+									menu.AddItem(new GUIContent(_availableLayerNames[n]), false, AssignIgnoreLayer, _data);
+								}
+						
+								menu.ShowAsContext();
+							}
+						}
+						
+						
+						if (GUILayout.Button("x", GUILayout.Width(20)))
+						{
+							ignoreLayers.RemoveAt(i);	
+						}
+					}
+				}
+			}
 		}
-	    #endif
-	    
+#endif
+
 		void AssignLayer(object _data)
 		{
 			var _d = _data as GenericMenuData;
 			assignedGenerationLayerGuid = _d.twcAsset.mapBlueprintLayers[_d.selectedIndex].guid;
 		}
 
-        void AssignTileRotationLayer(object _data)
-        {
-            var _d = _data as GenericMenuData;
-            useTileRotationFrom = _d.twcAsset.mapBlueprintLayers[_d.selectedIndex].guid;
-        }
+		void AssignTileRotationLayer(object _data)
+		{
+			var _d = _data as GenericMenuData;
+			useTileRotationFrom = _d.twcAsset.mapBlueprintLayers[_d.selectedIndex].guid;
+		}
 
-        public override void Execute(TileWorldCreator _twc, bool _forceRebuild)
+		void AssignIgnoreLayer(object _data)
+		{
+			var _d = _data as GenericMenuIgnoreLayerData;
+			ignoreLayers[_d.ignoreLayerListIndex] = _d.twcAsset.mapBlueprintLayers[_d.selectedIndex].guid.ToString();
+		}
+
+		public override void Execute(TileWorldCreator _twc, bool _forceRebuild)
 		{
 
-            tileMap = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString() + "_UNSUBD");
-   //         if (!useSubdividedMap)
+			tileMap = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString() + "_UNSUBD");
+			//         if (!useSubdividedMap)
 			//{	
 			//	tileMap = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString() + "_UNSUBD");
 			//}
@@ -371,26 +450,26 @@ namespace TWC.Actions
 			//{
 			//	tileMap = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString());
 			//}
-			
+
 			if (prefab == null)
 				return;
-			
+
 			if (tileMap != null)
 			{
 				if (!useSubdividedMap)
-				{	
+				{
 					tileMapTMP = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString() + "_UNSUBD" + "_TMP");
 				}
 				else
 				{
 					tileMapTMP = _twc.GetGeneratedBlueprintMap(assignedGenerationLayerGuid.ToString() + "_TMP");
 				}
-				
+
 				if (!Application.isPlaying)
 				{
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					TWC.Utilities.EditorCoroutines.Execute(InstantiateIE(_twc, _forceRebuild));
-					#endif
+#endif
 				}
 				else
 				{
@@ -398,38 +477,38 @@ namespace TWC.Actions
 				}
 			}
 		}
-		
-		
+
+
 		IEnumerator InstantiateIE(TileWorldCreator _twc, bool _forceRebuild)
 		{
 			List<int> modifiedClusters = new List<int>();
-			
+
 			var _layerObject = _twc.AddLayerObject(layerName, guid);
 			_layerObject.transform.SetParent(_twc.worldObject.transform, false);
-		
-		
-		
+
+
+
 			// Add global scale offset
 			_layerObject.transform.localScale = new Vector3(
 				_layerObject.transform.localScale.x + globalScaleOffset.x,
 				_layerObject.transform.localScale.y + globalScaleOffset.y,
 				_layerObject.transform.localScale.z + globalScaleOffset.z
 			);
-			
+
 			// Add global position offset
 			_layerObject.transform.localPosition = new Vector3(
 				_layerObject.transform.localPosition.x + globalPositionOffset.x,
 				_layerObject.transform.localPosition.y + globalPositionOffset.y,
 				_layerObject.transform.localPosition.z + globalPositionOffset.z);
-						
+
 			// Add global rotation offset
 			_layerObject.transform.localRotation = Quaternion.Euler(new Vector3(
 				_layerObject.transform.localRotation.eulerAngles.x + globalRotationOffset.x,
 				_layerObject.transform.localRotation.eulerAngles.y + globalRotationOffset.y,
 				_layerObject.transform.localRotation.eulerAngles.z + globalRotationOffset.z
 			));
-			
-			
+
+
 			// Compare New map and last temp map
 			if (tileMapTMP != null)
 			{
@@ -439,8 +518,8 @@ namespace TWC.Actions
 					var _intCluster = -1;
 					var _buildNeigbouringClusters = true;
 					Vector2Int _quadrantPosition = Vector2Int.zero;
-					
-					
+
+
 					foreach (var _position in tileMap.clusters[_cluster].Keys)
 					{
 						if (tileMapTMP.clusters.ContainsKey(_cluster))
@@ -449,19 +528,19 @@ namespace TWC.Actions
 							{
 							}
 							else
-							{	
+							{
 								var _clr = tileMap.GetPositionHashMapKey(new Vector3(_position.x, 0, _position.y));
-				
+
 								_addCluster = true;
 								_intCluster = _clr;
-								
+
 								// Check if we should update all adjacent clusters as well.
 								// To do this we look if the tile position is located on the border of a cluster
 								_quadrantPosition = tileMap.GetQuadrantPosition(_position);
-							
+
 								var _minQuadrantPosition = new Vector2Int(_quadrantPosition.x * tileMap.ClusterCellSize, _quadrantPosition.y * tileMap.ClusterCellSize);
 								var _maxQuadrantPosition = new Vector2Int(_minQuadrantPosition.x + tileMap.ClusterCellSize, _minQuadrantPosition.y + tileMap.ClusterCellSize);
-						
+
 								if (_position.x > _minQuadrantPosition.x + 2 && _position.x < _maxQuadrantPosition.x - 2 && _position.y > _minQuadrantPosition.y + 2 && _position.y < _maxQuadrantPosition.y - 2)
 								{
 									_buildNeigbouringClusters = false;
@@ -474,7 +553,7 @@ namespace TWC.Actions
 							_intCluster = _cluster;
 						}
 					}
-					
+
 					if (_addCluster)
 					{
 						if (!_buildNeigbouringClusters)
@@ -495,15 +574,15 @@ namespace TWC.Actions
 						}
 					}
 				}
-				
+
 				foreach (var _oldCluster in tileMapTMP.clusters.Keys)
 				{
 					var _addCluster = false;
 					var _intCluster = -1;
 					var _buildNeigbouringClusters = true;
 					Vector2Int _quadrantPosition = Vector2Int.zero;
-					
-					
+
+
 					foreach (var _oldPosition in tileMapTMP.clusters[_oldCluster].Keys)
 					{
 						if (tileMap.clusters.ContainsKey(_oldCluster))
@@ -512,19 +591,19 @@ namespace TWC.Actions
 							{
 							}
 							else
-							{	
+							{
 								var _clr = tileMapTMP.GetPositionHashMapKey(new Vector3(_oldPosition.x, 0, _oldPosition.y));
-				
+
 								_addCluster = true;
 								_intCluster = _clr;
-								
+
 								// Check if we should update all adjacent clusters as well.
 								// To do this we look if the tile position is located on the border of a cluster
 								_quadrantPosition = tileMapTMP.GetQuadrantPosition(_oldPosition);
-							
+
 								var _minQuadrantPosition = new Vector2Int(_quadrantPosition.x * tileMapTMP.ClusterCellSize, _quadrantPosition.y * tileMapTMP.ClusterCellSize);
 								var _maxQuadrantPosition = new Vector2Int(_minQuadrantPosition.x + tileMapTMP.ClusterCellSize, _minQuadrantPosition.y + tileMapTMP.ClusterCellSize);
-						
+
 								if (_oldPosition.x > _minQuadrantPosition.x + 2 && _oldPosition.x < _maxQuadrantPosition.x - 2 && _oldPosition.y > _minQuadrantPosition.y + 2 && _oldPosition.y < _maxQuadrantPosition.y - 2)
 								{
 									_buildNeigbouringClusters = false;
@@ -537,7 +616,7 @@ namespace TWC.Actions
 							_intCluster = _oldCluster;
 						}
 					}
-					
+
 					if (_addCluster)
 					{
 						if (!_buildNeigbouringClusters)
@@ -559,150 +638,152 @@ namespace TWC.Actions
 					}
 				}
 			}
-			
-			
+
+
 			// clean up modified cluster list and remove duplicates
 			modifiedClusters = modifiedClusters.Distinct().ToList();
-			
+
 			// Only rebuild changed parts
 			if (modifiedClusters.Count > 0 && !tileMap.mapSizeChanged && !_forceRebuild)
 			{
 				var _clusterCount = 1;
-				
-				for (int c = 0; c < modifiedClusters.Count; c ++)
+
+				for (int c = 0; c < modifiedClusters.Count; c++)
 				{
-					
+
 					if (tileMap.clusters.ContainsKey(modifiedClusters[c]))
-					{				
-						
-						#if UNITY_EDITOR
+					{
+
+#if UNITY_EDITOR
 						if (!Application.isPlaying)
 						{
 							EditorUtility.DisplayProgressBar("TileWorldCreator", "Instantiating objects", (float)_clusterCount / (float)modifiedClusters.Count);
 						}
-						#endif
-						
+#endif
+
 						var _clusterObject = _twc.AddCluster(layerName, guid, modifiedClusters[c]);
-					
+
 						foreach (var _position in tileMap.clusters[modifiedClusters[c]].Keys)
 						{
-							TileDataStruct _tileData = tileMap.clusters[modifiedClusters[c]][_position];
-						
-							//// use object rotation from a different blueprint layer
-							//if (useTileRotationFrom != Guid.Empty)
-							//{
-							//	var _rotationMapData = _twc.GetMapOutputFromBlueprintLayer(useTileRotationFrom);
-							//	var _neighbours = TileWorldCreatorUtilities.GetNeighboursLocation(_rotationMapData, _position.x, _position.y);
-							//	var _rotationTileData = TileWorldCreatorUtilities.ReturnTileRotation(_neighbours);
-								
-							//	_tileData.rotation = Quaternion.Euler(0f, _rotationTileData, 0f);
-       //                     }
+							if (!IgnoreTileCheck(_position, _twc))
+							{
+								TileDataStruct _tileData = tileMap.clusters[modifiedClusters[c]][_position];
+
+								//// use object rotation from a different blueprint layer
+								//if (useTileRotationFrom != Guid.Empty)
+								//{
+								//	var _rotationMapData = _twc.GetMapOutputFromBlueprintLayer(useTileRotationFrom);
+								//	var _neighbours = TileWorldCreatorUtilities.GetNeighboursLocation(_rotationMapData, _position.x, _position.y);
+								//	var _rotationTileData = TileWorldCreatorUtilities.ReturnTileRotation(_neighbours);
+
+								//	_tileData.rotation = Quaternion.Euler(0f, _rotationTileData, 0f);
+								//                     }
 
 
-                            // use object rotation from a different blueprint layer
-                            if (useTileRotationFrom != Guid.Empty)
-                            {
-								bool[,] _rotationMapData;
-								_rotationMapData = _twc.GetMapOutputFromBlueprintLayer(useTileRotationFrom);
-							
-
-								var _north = false;
-								var _south = false;
-								var _west = false;
-								var _east = false;
-
-								for (int x = -1; x < 2; x ++)
+								// use object rotation from a different blueprint layer
+								if (useTileRotationFrom != Guid.Empty)
 								{
-									for (int y = -1; y < 2; y ++)
+									bool[,] _rotationMapData;
+									_rotationMapData = _twc.GetMapOutputFromBlueprintLayer(useTileRotationFrom);
+
+
+									var _north = false;
+									var _south = false;
+									var _west = false;
+									var _east = false;
+
+									for (int x = -1; x < 2; x++)
 									{
-										try
+										for (int y = -1; y < 2; y++)
 										{
-											var _pos = new Vector2Int((int)_tileData.position.x + x, (int)_tileData.position.z + y);
-											
-											if (_rotationMapData[_pos.x, _pos.y])
+											try
 											{
-												if (x == -1 && y == 0) // west
+												var _pos = new Vector2Int((int)_tileData.position.x + x, (int)_tileData.position.z + y);
+
+												if (_rotationMapData[_pos.x, _pos.y])
 												{
-													_west = true;
-												}
-												else if (x == 1 && y == 0) // east
-												{
-													_east = true;
-												}
-												else if (x == 0 && y == 1) // north
-												{
-													_north = true;
-												}
-												else if (x == 0 && y == -1) // south
-												{
-													_south = true;
+													if (x == -1 && y == 0) // west
+													{
+														_west = true;
+													}
+													else if (x == 1 && y == 0) // east
+													{
+														_east = true;
+													}
+													else if (x == 0 && y == 1) // north
+													{
+														_north = true;
+													}
+													else if (x == 0 && y == -1) // south
+													{
+														_south = true;
+													}
 												}
 											}
+											catch { }
 										}
-										catch{}
 									}
+
+									NeighboursLocation _location = new NeighboursLocation
+									{
+										north = _north,
+										south = _south,
+										west = _west,
+										east = _east
+									};
+									var _newRotation = TileWorldCreatorUtilities.ReturnTileRotation(_location);
+
+									// Special case, choose between one orientation
+									if (_north && _south && !_west && !_east)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : 180;
+									}
+									if (_west && _east && !_north && !_south)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 90 : -90;
+									}
+									if (_north && _south && _west && !_east)
+									{
+										_newRotation = -90;
+									}
+									if (_north && _south && _east && !_west)
+									{
+										_newRotation = 90;
+									}
+									if (_west && _east && _south && !_north)
+									{
+										_newRotation = 180;
+									}
+									if (_west && _east && _north && !_south)
+									{
+										_newRotation = 0;
+									}
+									if (!_west && _east && _south && !_north)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 180 : 90;
+									}
+									if (!_west && _east && !_south && _north)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : 90;
+									}
+									if (_west && !_east && _south && !_north)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 180 : -90;
+									}
+									if (_west && !_east && !_south && _north)
+									{
+										_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : -90;
+									}
+
+									_tileData.rotation = Quaternion.Euler(new Vector3(_tileData.rotation.x, _newRotation, _tileData.rotation.z));
+
+									Debug.Log(_newRotation);
 								}
 
-								NeighboursLocation _location = new NeighboursLocation
-								{
-									north = _north,
-									south = _south,
-									west = _west,
-									east = _east
-								};
-								var _newRotation = TileWorldCreatorUtilities.ReturnTileRotation(_location);
 
-								// Special case, choose between one orientation
-								if (_north && _south && !_west && !_east)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : 180;
-								}
-								if (_west && _east && !_north && !_south)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 90 : -90;
-								}
-								if (_north && _south && _west && !_east)
-								{
-									_newRotation = -90;
-								}
-								if (_north && _south && _east && !_west)
-								{
-									_newRotation = 90;
-								}
-								if (_west && _east && _south && !_north)
-								{
-									_newRotation = 180;
-								}
-								if (_west && _east && _north && !_south)
-								{
-									_newRotation = 0;
-								}
-								if (!_west && _east && _south && !_north)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 180 : 90;
-								}
-								if (!_west && _east && !_south && _north)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : 90;
-								}
-								if (_west && !_east && _south && !_north)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 180 : -90;
-								}
-								if (_west && !_east && !_south && _north)
-								{
-									_newRotation = UnityEngine.Random.Range(0, 2) == 0 ? 0 : -90;
-								}
+								GameObject _tileObject = null;
 
-								_tileData.rotation = Quaternion.Euler(new Vector3(_tileData.rotation.x, _newRotation, _tileData.rotation.z));
-
-								Debug.Log(_newRotation);
-                            }
-
-
-                            GameObject _tileObject = null;
-							
-							#if UNITY_EDITOR
+#if UNITY_EDITOR
 							if (!mergeObjects && keepPrefabConnection)
 							{
 								_tileObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab as GameObject);
@@ -714,77 +795,77 @@ namespace TWC.Actions
                                 _tileObject = MonoBehaviour.Instantiate(prefab,  _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
 							}
 #else
-							_tileObject = MonoBehaviour.Instantiate(prefab,  _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
+								_tileObject = MonoBehaviour.Instantiate(prefab, _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
 #endif
 
-                            var _wrldPos =  ReturnTileWorldPosition(new Vector2Int((int)_tileData.position.x, (int)_tileData.position.z), _twc);
-						
-							if (!useSubdividedMap)
-							{
-								_tileObject.transform.localPosition = new Vector3(_wrldPos.x * 2, _wrldPos.y * 2, _wrldPos.z * 2);
-							}
-							else
-							{
-								_tileObject.transform.localPosition = _wrldPos;
-							}
-								
-							// Add global position offset
-							_tileObject.transform.localPosition = new Vector3(
-								_tileObject.transform.localPosition.x + localPositionOffset.x,
-								_tileObject.transform.localPosition.y + localPositionOffset.y,
-								_tileObject.transform.localPosition.z + localPositionOffset.z);
-						
-							// Add global rotation offset
-							_tileObject.transform.localRotation = Quaternion.Euler(new Vector3(
-								_tileObject.transform.localRotation.eulerAngles.x + localRotationOffset.x,
-								_tileObject.transform.localRotation.eulerAngles.y + localRotationOffset.y,
-								_tileObject.transform.localRotation.eulerAngles.z + localRotationOffset.z
-							));
-						
-							//// Add global scale offset
-							_tileObject.transform.localScale = new Vector3(
-								_tileObject.transform.localScale.x + localScaleOffset.x,
-								_tileObject.transform.localScale.y + localScaleOffset.y,
-								_tileObject.transform.localScale.z + localScaleOffset.z
-							);
-							
-							
-							if (rndPosition)
-							{
-								_tileObject.transform.localPosition = RndPosition(_tileObject.transform.localPosition);
-							}
-							
-							if (rndRotation)
-							{
-								var _rndQ = RndRotation(_tileObject.transform.localRotation);
-								_tileObject.transform.localRotation *= _rndQ;
-							}
-							
-							if (rndScaling)
-							{
-								_tileObject.transform.localScale += RndScale();
-							}
-							
-							
-							if (instantiateChilds)
-							{
-							
-								for (int i = 0; i < count; i ++)
+								var _wrldPos = ReturnTileWorldPosition(new Vector2Int((int)_tileData.position.x, (int)_tileData.position.z), _twc);
+
+								if (!useSubdividedMap)
 								{
-									Vector3 _rndPos = (UnityEngine.Random.insideUnitSphere * radius) + _tileObject.transform.localPosition;
-									if (_twc.twcAsset.mapOrientation == TileWorldCreatorAsset.MapOrientation.XZ)
+									_tileObject.transform.localPosition = new Vector3(_wrldPos.x * 2, _wrldPos.y * 2, _wrldPos.z * 2);
+								}
+								else
+								{
+									_tileObject.transform.localPosition = _wrldPos;
+								}
+
+								// Add global position offset
+								_tileObject.transform.localPosition = new Vector3(
+									_tileObject.transform.localPosition.x + localPositionOffset.x,
+									_tileObject.transform.localPosition.y + localPositionOffset.y,
+									_tileObject.transform.localPosition.z + localPositionOffset.z);
+
+								// Add global rotation offset
+								_tileObject.transform.localRotation = Quaternion.Euler(new Vector3(
+									_tileObject.transform.localRotation.eulerAngles.x + localRotationOffset.x,
+									_tileObject.transform.localRotation.eulerAngles.y + localRotationOffset.y,
+									_tileObject.transform.localRotation.eulerAngles.z + localRotationOffset.z
+								));
+
+								//// Add global scale offset
+								_tileObject.transform.localScale = new Vector3(
+									_tileObject.transform.localScale.x + localScaleOffset.x,
+									_tileObject.transform.localScale.y + localScaleOffset.y,
+									_tileObject.transform.localScale.z + localScaleOffset.z
+								);
+
+
+								if (rndPosition)
+								{
+									_tileObject.transform.localPosition = RndPosition(_tileObject.transform.localPosition);
+								}
+
+								if (rndRotation)
+								{
+									var _rndQ = RndRotation(_tileObject.transform.localRotation);
+									_tileObject.transform.localRotation *= _rndQ;
+								}
+
+								if (rndScaling)
+								{
+									_tileObject.transform.localScale += RndScale();
+								}
+
+
+								if (instantiateChilds)
+								{
+
+									for (int i = 0; i < count; i++)
 									{
-										_rndPos = new Vector3(_rndPos.x, _tileObject.transform.localPosition.y, _rndPos.z);
-									}
-									else
-									{
-										_rndPos = new Vector3(_rndPos.x, _rndPos.y, _tileObject.transform.localPosition.z);
-									}
-									
-									GameObject _childObj = null;
-									var _childPrefab = selectFromPrefabList ? randomChildPrefabs[UnityEngine.Random.Range(0, randomChildPrefabs.Count)] : childPrefab;
-									
-									#if UNITY_EDITOR
+										Vector3 _rndPos = (UnityEngine.Random.insideUnitSphere * radius) + _tileObject.transform.localPosition;
+										if (_twc.twcAsset.mapOrientation == TileWorldCreatorAsset.MapOrientation.XZ)
+										{
+											_rndPos = new Vector3(_rndPos.x, _tileObject.transform.localPosition.y, _rndPos.z);
+										}
+										else
+										{
+											_rndPos = new Vector3(_rndPos.x, _rndPos.y, _tileObject.transform.localPosition.z);
+										}
+
+										GameObject _childObj = null;
+										var _childPrefab = selectFromPrefabList ? randomChildPrefabs[UnityEngine.Random.Range(0, randomChildPrefabs.Count)] : childPrefab;
+
+#if UNITY_EDITOR
 									if (!mergeObjects && keepPrefabConnection)
 									{
 										_childObj = (GameObject)PrefabUtility.InstantiatePrefab(_childPrefab as GameObject);
@@ -795,45 +876,46 @@ namespace TWC.Actions
 									{
 										_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, _tileObject.transform.localRotation);
 									}
-									#else
-									_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, _tileObject.transform.localRotation);
-									#endif
-									
-									if (rndPosition)
-									{
-										_childObj.transform.localPosition = RndPosition(_childObj.transform.localPosition);
+#else
+										_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, _tileObject.transform.localRotation);
+#endif
+
+										if (rndPosition)
+										{
+											_childObj.transform.localPosition = RndPosition(_childObj.transform.localPosition);
+										}
+
+										if (rndRotation)
+										{
+											var _rndQ = RndRotation(_childObj.transform.localRotation);
+											_childObj.transform.localRotation *= _rndQ;
+										}
+
+										if (rndScaling)
+										{
+											_childObj.transform.localScale = RndScale();
+										}
+
+
+										_childObj.transform.SetParent(_clusterObject.transform, false);
 									}
-						
-									if (rndRotation)
-									{
-										var _rndQ = RndRotation(_childObj.transform.localRotation);
-										_childObj.transform.localRotation *= _rndQ;
-									}
-											
-									if (rndScaling)
-									{
-										_childObj.transform.localScale = RndScale();
-									}
-									
-									
-									_childObj.transform.SetParent(_clusterObject.transform, false);
+
 								}
-							
-							}
-	
-							_tileObject.transform.SetParent(_clusterObject.transform, false);
-							
-							if (!mergeObjects && _tileObject != null)
-							{
-								_tileObject.layer = assignLayer.value;
-								
-								if (setShadowCastingMode)
+
+								_tileObject.transform.SetParent(_clusterObject.transform, false);
+
+								if (!mergeObjects && _tileObject != null)
 								{
-									_tileObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
+									_tileObject.layer = assignLayer.value;
+
+									if (setShadowCastingMode)
+									{
+										_tileObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
+									}
 								}
 							}
 						}
-						
+
 						TWC.Utilities.MeshCombiner _comb = null;
 						if (mergeObjects)
 						{
@@ -842,30 +924,30 @@ namespace TWC.Actions
 							_comb.CreateMultiMaterialMesh = true;
 							_comb.DestroyCombinedChildren = true;
 							_comb.CombineMeshes(false);
-							
+
 							if (addMeshCollider)
 							{
 								_clusterObject.AddComponent<MeshCollider>();
 							}
-							
+
 							_clusterObject.layer = assignLayer.value;
-							
+
 							if (setShadowCastingMode)
 							{
 								_clusterObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
 							}
 						}
-						
+
 						_clusterCount++;
-						
+
 						if (_clusterObject != null)
 						{
 							_clusterObject.transform.SetParent(_layerObject.transform, false);
 						}
-				
-						
+
+
 						yield return null;
-						
+
 						if (mergeObjects)
 						{
 							MonoBehaviour.DestroyImmediate(_comb);
@@ -873,73 +955,75 @@ namespace TWC.Actions
 					}
 					else
 					{
-						var _cl = _twc.FindCluster( guid, modifiedClusters[c]);
+						var _cl = _twc.FindCluster(guid, modifiedClusters[c]);
 						if (_cl != null)
 						{
 							MonoBehaviour.DestroyImmediate(_cl);
 						}
-						
+
 						yield return null;
 					}
 				}
-				 
-				#if UNITY_EDITOR
+
+#if UNITY_EDITOR
 				if (!Application.isPlaying)
 				{
 					EditorUtility.ClearProgressBar();
 				}
-				#endif		
-				
+#endif
+
 			}
 			// Rebuild complete map
-			else if (tileMap.mapSizeChanged ||  _forceRebuild)
+			else if (tileMap.mapSizeChanged || _forceRebuild)
 			{
-				
+
 				_twc.DestroyAllClusters(guid);
 
-				
+
 				tileMap.mapSizeChanged = false;
-				
+
 				var _clusterCount = 1;
-				
+
 				foreach (var _cluster in tileMap.clusters.Keys)
 				{
-					
-					#if UNITY_EDITOR
+
+#if UNITY_EDITOR
 					if (!Application.isPlaying)
 					{
 						EditorUtility.DisplayProgressBar("TileWorldCreator", "Instantiating objects", (float)_clusterCount / (float)modifiedClusters.Count);
 					}
-					#endif
-						
-						
+#endif
+
+
 					var _clusterObject = _twc.AddCluster(layerName, guid, _cluster);
-					
+
 					foreach (var _position in tileMap.clusters[_cluster].Keys)
 					{
-						TileDataStruct _tileData = tileMap.clusters[_cluster][_position];
+						if (!IgnoreTileCheck(_position, _twc))
+						{
+							TileDataStruct _tileData = tileMap.clusters[_cluster][_position];
 
-                        // use object rotation from a different blueprint layer
-                        if (useTileRotationFrom != Guid.Empty)
-                        {
-							
-							bool[,] _rotationMapData;
+							// use object rotation from a different blueprint layer
+							if (useTileRotationFrom != Guid.Empty)
+							{
+
+								bool[,] _rotationMapData;
 								_rotationMapData = _twc.GetMapOutputFromBlueprintLayer(useTileRotationFrom);
-							
+
 
 								var _north = false;
 								var _south = false;
 								var _west = false;
 								var _east = false;
 
-								for (int x = -1; x < 2; x ++)
+								for (int x = -1; x < 2; x++)
 								{
-									for (int y = -1; y < 2; y ++)
+									for (int y = -1; y < 2; y++)
 									{
 										try
 										{
 											var _pos = new Vector2Int((int)_tileData.position.x + x, (int)_tileData.position.z + y);
-											
+
 											if (_rotationMapData[_pos.x, _pos.y])
 											{
 												if (x == -1 && y == 0) // west
@@ -960,7 +1044,7 @@ namespace TWC.Actions
 												}
 											}
 										}
-										catch{}
+										catch { }
 									}
 								}
 
@@ -1016,11 +1100,11 @@ namespace TWC.Actions
 								}
 
 								_tileData.rotation = Quaternion.Euler(new Vector3(_tileData.rotation.x, _newRotation, _tileData.rotation.z));
-                        }
+							}
 
-                        GameObject _tileObject = null;	
-					
-						#if UNITY_EDITOR
+							GameObject _tileObject = null;
+
+#if UNITY_EDITOR
 						if (!mergeObjects && keepPrefabConnection)
 						{
 							_tileObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab as GameObject);
@@ -1032,68 +1116,68 @@ namespace TWC.Actions
                             _tileObject = MonoBehaviour.Instantiate(prefab,  _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
                         }
 #else
-						_tileObject = MonoBehaviour.Instantiate(prefab,  _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
+							_tileObject = MonoBehaviour.Instantiate(prefab, _tileData.position, disableTileRotation ? Quaternion.identity : _tileData.rotation);
 #endif
 
-                        var _wrldPos =  ReturnTileWorldPosition(new Vector2Int((int)_tileData.position.x, (int)_tileData.position.z), _twc);
-						
-						if (!useSubdividedMap)
-						{
-							_tileObject.transform.localPosition = new Vector3(_wrldPos.x * 2, _wrldPos.y * 2, _wrldPos.z * 2);
-						}
-						else
-						{
-							_tileObject.transform.localPosition = _wrldPos;
-						}
-								
-						//Add global position offset
-						_tileObject.transform.localPosition = new Vector3(
-							_tileObject.transform.localPosition.x + localPositionOffset.x,
-							_tileObject.transform.localPosition.y + localPositionOffset.y,
-							_tileObject.transform.localPosition.z + localPositionOffset.z);
-						
-						// Add global rotation offset
-						_tileObject.transform.localRotation = Quaternion.Euler(new Vector3(
-							_tileObject.transform.localRotation.eulerAngles.x + localRotationOffset.x,
-							_tileObject.transform.localRotation.eulerAngles.y + localRotationOffset.y,
-							_tileObject.transform.localRotation.eulerAngles.z + localRotationOffset.z
-						));
-						
-						//// Add global scale offset
-						_tileObject.transform.localScale = new Vector3(
-							_tileObject.transform.localScale.x + localScaleOffset.x,
-							_tileObject.transform.localScale.y + localScaleOffset.y,
-							_tileObject.transform.localScale.z + localScaleOffset.z
-						);
-						
-						
-						if (rndPosition)
-						{
-							_tileObject.transform.localPosition = RndPosition(_tileObject.transform.localPosition);
-						}
-						
-						if (rndRotation)
-						{
-							var _rndQ = RndRotation(_tileObject.transform.localRotation);
-							_tileObject.transform.localRotation *= _rndQ;
-						}
-											
-						if (rndScaling)
-						{
-							_tileObject.transform.localScale += RndScale();
-						}
-						
-						if (instantiateChilds)
-						{
-							
-							for (int i = 0; i < count; i ++)
+							var _wrldPos = ReturnTileWorldPosition(new Vector2Int((int)_tileData.position.x, (int)_tileData.position.z), _twc);
+
+							if (!useSubdividedMap)
 							{
-								Vector3 _rndPos = (UnityEngine.Random.insideUnitSphere * radius) + _tileObject.transform.localPosition;
-								_rndPos = new Vector3(_rndPos.x, _tileObject.transform.localPosition.y, _rndPos.z);
-								
-								GameObject _childObj = null;							
-								var _childPrefab = selectFromPrefabList ? randomChildPrefabs[UnityEngine.Random.Range(0, randomChildPrefabs.Count)] : childPrefab;
-								
+								_tileObject.transform.localPosition = new Vector3(_wrldPos.x * 2, _wrldPos.y * 2, _wrldPos.z * 2);
+							}
+							else
+							{
+								_tileObject.transform.localPosition = _wrldPos;
+							}
+
+							//Add global position offset
+							_tileObject.transform.localPosition = new Vector3(
+								_tileObject.transform.localPosition.x + localPositionOffset.x,
+								_tileObject.transform.localPosition.y + localPositionOffset.y,
+								_tileObject.transform.localPosition.z + localPositionOffset.z);
+
+							// Add global rotation offset
+							_tileObject.transform.localRotation = Quaternion.Euler(new Vector3(
+								_tileObject.transform.localRotation.eulerAngles.x + localRotationOffset.x,
+								_tileObject.transform.localRotation.eulerAngles.y + localRotationOffset.y,
+								_tileObject.transform.localRotation.eulerAngles.z + localRotationOffset.z
+							));
+
+							//// Add global scale offset
+							_tileObject.transform.localScale = new Vector3(
+								_tileObject.transform.localScale.x + localScaleOffset.x,
+								_tileObject.transform.localScale.y + localScaleOffset.y,
+								_tileObject.transform.localScale.z + localScaleOffset.z
+							);
+
+
+							if (rndPosition)
+							{
+								_tileObject.transform.localPosition = RndPosition(_tileObject.transform.localPosition);
+							}
+
+							if (rndRotation)
+							{
+								var _rndQ = RndRotation(_tileObject.transform.localRotation);
+								_tileObject.transform.localRotation *= _rndQ;
+							}
+
+							if (rndScaling)
+							{
+								_tileObject.transform.localScale += RndScale();
+							}
+
+							if (instantiateChilds)
+							{
+
+								for (int i = 0; i < count; i++)
+								{
+									Vector3 _rndPos = (UnityEngine.Random.insideUnitSphere * radius) + _tileObject.transform.localPosition;
+									_rndPos = new Vector3(_rndPos.x, _tileObject.transform.localPosition.y, _rndPos.z);
+
+									GameObject _childObj = null;
+									var _childPrefab = selectFromPrefabList ? randomChildPrefabs[UnityEngine.Random.Range(0, randomChildPrefabs.Count)] : childPrefab;
+
 #if UNITY_EDITOR
 								if (!mergeObjects && keepPrefabConnection)
 								{
@@ -1106,110 +1190,111 @@ namespace TWC.Actions
 									_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, Quaternion.identity);
 								}
 #else
-								_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, Quaternion.identity);
+									_childObj = MonoBehaviour.Instantiate(_childPrefab, _rndPos, Quaternion.identity);
 #endif
-								
-								if (rndPosition)
-								{
-									_childObj.transform.localPosition = RndPosition(_childObj.transform.localPosition);
-								}
-						
-								if (rndRotation)
-								{
-									var _rndQ = RndRotation(_childObj.transform.localRotation);
-									_childObj.transform.localRotation *= _rndQ;
-								}
-											
-								if (rndScaling)
-								{
-									_childObj.transform.localScale = RndScale();
-								}
-								
-								
-								_childObj.transform.SetParent(_clusterObject.transform, false);
-							}
-							
-						}
-						
-						
-						_tileObject.transform.SetParent(_clusterObject.transform, false);
 
-						if (!mergeObjects && _tileObject != null)
-						{
-							_tileObject.layer = assignLayer.value;
-							
-							if (setShadowCastingMode)
+									if (rndPosition)
+									{
+										_childObj.transform.localPosition = RndPosition(_childObj.transform.localPosition);
+									}
+
+									if (rndRotation)
+									{
+										var _rndQ = RndRotation(_childObj.transform.localRotation);
+										_childObj.transform.localRotation *= _rndQ;
+									}
+
+									if (rndScaling)
+									{
+										_childObj.transform.localScale = RndScale();
+									}
+
+
+									_childObj.transform.SetParent(_clusterObject.transform, false);
+								}
+
+							}
+
+
+							_tileObject.transform.SetParent(_clusterObject.transform, false);
+
+							if (!mergeObjects && _tileObject != null)
 							{
-								_tileObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
+								_tileObject.layer = assignLayer.value;
+
+								if (setShadowCastingMode)
+								{
+									_tileObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
+								}
 							}
 						}
 					}
-					
+
 					TWC.Utilities.MeshCombiner _comb = null;
-					
+
 					if (mergeObjects)
 					{
-						
+
 						_comb = _clusterObject.AddComponent<TWC.Utilities.MeshCombiner>();
 						_comb.CreateMultiMaterialMesh = true;
 						_comb.DestroyCombinedChildren = true;
 						_comb.CombineMeshes(false);
-							
+
 						if (addMeshCollider)
 						{
 							_clusterObject.AddComponent<MeshCollider>();
 						}
-					
+
 						_clusterObject.layer = assignLayer.value;
-					
+
 						if (setShadowCastingMode)
 						{
 							_clusterObject.GetComponent<MeshRenderer>().shadowCastingMode = shadowCasting;
 						}
 					}
-					
-					
+
+
 					if (_clusterObject != null)
 					{
 						_clusterObject.transform.SetParent(_layerObject.transform, false);
 					}
-					
+
 					_clusterCount++;
-					
+
 					yield return null;
-					
+
 					if (mergeObjects)
 					{
 						MonoBehaviour.DestroyImmediate(_comb);
 					}
 				}
 			}
-			
-			
-			
-							
-			
+
+
+
+
+
 			yield return null;
-			
+
 #if UNITY_EDITOR
 			if (!Application.isPlaying)
 			{
 				EditorUtility.ClearProgressBar();
 			}
 #endif
-			
-			
+
+
 			_twc.executedBuildLayersCount += 1;
 		}
-		
-		
+
+
 		Vector3 ReturnTileWorldPosition(Vector2Int _pos, TileWorldCreator _twc)
 		{
 			var _cellSize = _twc.twcAsset.cellSize;
 			var _cellOffset = _cellSize / 4;
 			//_cellSize = (_cellSize * 0.5f) + 0.5f;
 			//var _cellOffset = (_cellSize * 2f) / 4f;
-			
+
 			return new Vector3(((_pos.x * _cellSize) / 2) + _cellOffset, 0, ((_pos.y * _cellSize) / 2) + _cellOffset);
 			//if (_twc.twcAsset.mapOrientation == TileWorldCreatorAsset.MapOrientation.XZ)
 			//{
@@ -1220,7 +1305,7 @@ namespace TWC.Actions
 			//	return new Vector3(((_pos.x * _cellSize) + _cellOffset), 0, ((_pos.y * _cellSize) + _cellOffset));
 			//}
 		}
-		
+
 		Vector3 RndPosition(Vector3 _position)
 		{
 			// Add random position
@@ -1228,10 +1313,10 @@ namespace TWC.Actions
 				_position.x + UnityEngine.Random.Range(minRndPosition.x, maxRndPosition.x),
 				_position.y + UnityEngine.Random.Range(minRndPosition.y, maxRndPosition.y),
 				_position.z + UnityEngine.Random.Range(minRndPosition.z, maxRndPosition.z)
-								
+
 			);
 		}
-		
+
 		Quaternion RndRotation(Quaternion _rotation)
 		{
 			// Add random rotation
@@ -1241,7 +1326,7 @@ namespace TWC.Actions
 				UnityEngine.Random.Range(minRndRotation.z, maxRndRotation.z)
 			));
 		}
-		
+
 		Vector3 RndScale()
 		{
 			// Add random scale
@@ -1258,6 +1343,26 @@ namespace TWC.Actions
 				var _rnd = UnityEngine.Random.Range(minRndUniformScale, maxRndUniformScale);
 				return new Vector3(_rnd, _rnd, _rnd);
 			}
+		}
+
+		bool IgnoreTileCheck(Vector2Int _position, TileWorldCreator _twc)
+		{
+			for (int i = 0; i < ignoreLayers.Count; i++)
+			{
+				var _map = _twc.GetMapOutputFromBlueprintLayer(Guid.Parse(ignoreLayers[i]));
+
+				try
+				{
+					if (_map[_position.x, _position.y])
+					{
+						return true;
+					}
+				}
+				catch { }
+
+			}
+
+			return false;
 		}
 	}
 }
