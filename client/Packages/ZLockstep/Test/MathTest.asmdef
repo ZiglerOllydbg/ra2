@@ -1,0 +1,21 @@
+{
+    "name": "MathTest",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "LockStepRuntime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -33,16 +33,16 @@ namespace zUnity
 				switch (index)
 				{
 					case 0:
-                        this.x.value = value.value;
+						this.x.value = value.value;
 						break;
 					case 1:
-                        this.y.value = value.value;
+						this.y.value = value.value;
 						break;
 					case 2:
-                        this.z.value = value.value;
+						this.z.value = value.value;
 						break;
 					case 3:
-                        this.w.value = value.value;
+						this.w.value = value.value;
 						break;
 					default:
 						throw new IndexOutOfRangeException("Invalid zQuaternion index!");
@@ -50,14 +50,14 @@ namespace zUnity
 			}
 		}
 
-        public static readonly zQuaternion identity = new zQuaternion(zfloat.Zero, zfloat.Zero, zfloat.Zero, zfloat.One);
-        //public static zQuaternion identity
-        //{
-        //    get
-        //    {
-        //        return _identity;
-        //    }
-        //}
+		public static readonly zQuaternion identity = new zQuaternion(zfloat.Zero, zfloat.Zero, zfloat.Zero, zfloat.One);
+		//public static zQuaternion identity
+		//{
+		//    get
+		//    {
+		//        return _identity;
+		//    }
+		//}
 
 		/// <summary>
 		/// 返回欧拉角
@@ -66,11 +66,11 @@ namespace zUnity
 		{
 			get
 			{
-                return ToEuler(this);
+				return ToEuler(this);
 			}
 			set
 			{
-                this = Euler(value);
+				this = Euler(value);
 			}
 		}
 
@@ -84,74 +84,78 @@ namespace zUnity
 		{
 			zVector3 euler;
 
-            //euler.x = zMathf.Asin(2 * (-q.y * q.z + q.x * q.w)) * zMathf.Rad2Deg;
-            //euler.y = zMathf.Atan2(2 * (q.y * q.w + q.z * q.x), (1 - 2 * (q.y * q.y + q.x * q.x))) * zMathf.Rad2Deg;
-            //euler.z = -zMathf.Atan2(2 * (-q.z * q.w - q.y * q.x), (1 - 2 * (q.z * q.z + q.x * q.x))) * zMathf.Rad2Deg;
+			//euler.x = zMathf.Asin(2 * (-q.y * q.z + q.x * q.w)) * zMathf.Rad2Deg;
+			//euler.y = zMathf.Atan2(2 * (q.y * q.w + q.z * q.x), (1 - 2 * (q.y * q.y + q.x * q.x))) * zMathf.Rad2Deg;
+			//euler.z = -zMathf.Atan2(2 * (-q.z * q.w - q.y * q.x), (1 - 2 * (q.z * q.z + q.x * q.x))) * zMathf.Rad2Deg;
 
-            zfloat sqw = zq.w * zq.w;
-            zfloat sqx = zq.x * zq.x;
-            zfloat sqy = zq.y * zq.y;
-            zfloat sqz = zq.z * zq.z;
-            zfloat unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor 
-            zfloat test = zq.x * zq.w - zq.y * zq.z;
-            zVector3 v;
+			zfloat sqw = zq.w * zq.w;
+			zfloat sqx = zq.x * zq.x;
+			zfloat sqy = zq.y * zq.y;
+			zfloat sqz = zq.z * zq.z;
+			zfloat unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor 
+			zfloat test = zq.x * zq.w - zq.y * zq.z;
+			zVector3 v;
 
-            zfloat tv = zfloat.CreateFloat(4995);
+			zfloat tv = zfloat.CreateFloat(4995);
 
-            if (test > tv * unit)
-            { // singularity at north pole 
-                v.y = 2 * zMathf.Atan2(zq.y, zq.x);
-                v.x = zMathf.PI / 2;
-                v.z = zfloat.Zero;
-                return NormalizeAngles(v * zMathf.Rad2Deg);
-            }
-            if (test < -tv * unit)
-            { // singularity at south pole 
-                v.y = -2 * zMathf.Atan2(zq.y, zq.x);
-                v.x = -zMathf.PI / 2;
-                v.z = zfloat.Zero;
-                return NormalizeAngles(v * zMathf.Rad2Deg);
-            }
+			if (test > tv * unit)
+			{ // singularity at north pole 
+				v.y = 2 * zMathf.Atan2(zq.y, zq.x);
+				v.x = zMathf.PI / 2;
+				v.z = zfloat.Zero;
+				return NormalizeAngles(v * zMathf.Rad2Deg);
+			}
+			if (test < -tv * unit)
+			{ // singularity at south pole 
+				v.y = -2 * zMathf.Atan2(zq.y, zq.x);
+				v.x = -zMathf.PI / 2;
+				v.z = zfloat.Zero;
+				return NormalizeAngles(v * zMathf.Rad2Deg);
+			}
 
-            zQuaternion q = new zQuaternion(zq.w, zq.z, zq.x, zq.y);
+			zQuaternion q = new zQuaternion(zq.w, zq.z, zq.x, zq.y);
 
-            euler.x = zMathf.Asin(2 * (q.x * q.z - q.w * q.y)) * zMathf.Rad2Deg;                             // Pitch 
-            euler.y = zMathf.Atan2(2 * q.x * q.w + 2 * q.y * q.z, 1 - 2 * (q.z * q.z + q.w * q.w)) * zMathf.Rad2Deg;     // Yaw 
-            euler.z = zMathf.Atan2(2 * q.x * q.y + 2 * q.z * q.w, 1 - 2 * (q.y * q.y + q.z * q.z)) * zMathf.Rad2Deg;      // Roll 
-            
-            //euler.x = zMathf.Asin(2 * (q.x * q.z - q.w * q.y)) * zMathf.Rad2Deg;                             // Pitch 
-            //euler.y = zMathf.Atan2(2 * q.x * q.w + 2 * q.y * q.z, 1 - 2 * (q.z * q.z + q.w * q.w)) * zMathf.Rad2Deg;     // Yaw 
-            //euler.z = zMathf.Atan2(2 * q.x * q.y + 2 * q.z * q.w, 1 - 2 * (q.y * q.y + q.z * q.z)) * zMathf.Rad2Deg;      // Roll 
+			zfloat sinp = 2 * (q.x * q.z - q.w * q.y);
+			if (sinp > zfloat.One) sinp = zfloat.One;
+			if (sinp < -zfloat.One) sinp = -zfloat.One;
 
-            return euler;
+			euler.x = zMathf.Asin(sinp) * zMathf.Rad2Deg;                           // Pitch 
+			euler.y = zMathf.Atan2(2 * q.x * q.w + 2 * q.y * q.z, 1 - 2 * (q.z * q.z + q.w * q.w)) * zMathf.Rad2Deg;     // Yaw 
+			euler.z = zMathf.Atan2(2 * q.x * q.y + 2 * q.z * q.w, 1 - 2 * (q.y * q.y + q.z * q.z)) * zMathf.Rad2Deg;      // Roll 
+
+			//euler.x = zMathf.Asin(2 * (q.x * q.z - q.w * q.y)) * zMathf.Rad2Deg;                             // Pitch 
+			//euler.y = zMathf.Atan2(2 * q.x * q.w + 2 * q.y * q.z, 1 - 2 * (q.z * q.z + q.w * q.w)) * zMathf.Rad2Deg;     // Yaw 
+			//euler.z = zMathf.Atan2(2 * q.x * q.y + 2 * q.z * q.w, 1 - 2 * (q.y * q.y + q.z * q.z)) * zMathf.Rad2Deg;      // Roll 
+
+			return euler;
 		}
 
-        static zVector3 NormalizeAngles(zVector3 angles)
-        {
-            angles.x = NormalizeAngle(angles.x);
-            angles.y = NormalizeAngle(angles.y);
-            angles.z = NormalizeAngle(angles.z);
-            return angles;
-        }
-
-        static zfloat NormalizeAngle(zfloat angle)
-        {
-            return angle % 360;
-        }
-
-        /// <summary>
-        /// 直接构建四元数，一般不建议这样使用
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <param name="w"></param>
-        public zQuaternion(zfloat x, zfloat y, zfloat z, zfloat w)
+		static zVector3 NormalizeAngles(zVector3 angles)
 		{
-            this.x.value = x.value;
-            this.y.value = y.value;
-            this.z.value = z.value;
-            this.w.value = w.value;
+			angles.x = NormalizeAngle(angles.x);
+			angles.y = NormalizeAngle(angles.y);
+			angles.z = NormalizeAngle(angles.z);
+			return angles;
+		}
+
+		static zfloat NormalizeAngle(zfloat angle)
+		{
+			return angle % 360;
+		}
+
+		/// <summary>
+		/// 直接构建四元数，一般不建议这样使用
+		/// </summary>
+		/// <param name="x"></param>
+		/// <param name="y"></param>
+		/// <param name="z"></param>
+		/// <param name="w"></param>
+		public zQuaternion(zfloat x, zfloat y, zfloat z, zfloat w)
+		{
+			this.x.value = x.value;
+			this.y.value = y.value;
+			this.z.value = z.value;
+			this.w.value = w.value;
 		}
 
 		/// <summary>
@@ -163,10 +167,10 @@ namespace zUnity
 		/// <param name="new_w"></param>
 		public void Set(zfloat new_x, zfloat new_y, zfloat new_z, zfloat new_w)
 		{
-            this.x.value = new_x.value;
-            this.y.value = new_y.value;
-            this.z.value = new_z.value;
-            this.w.value = new_w.value;
+			this.x.value = new_x.value;
+			this.y.value = new_y.value;
+			this.z.value = new_z.value;
+			this.w.value = new_w.value;
 		}
 
 		/// <summary>
@@ -179,9 +183,9 @@ namespace zUnity
 		/// <returns></returns>
 		public static zfloat Dot(zQuaternion a, zQuaternion b)
 		{
-            zfloat result;
-            result.value = (a.x.value * b.x.value + a.y.value * b.y.value + a.z.value * b.z.value + a.w.value * b.w.value) / zfloat.SCALE_10000;
-            return result;
+			zfloat result;
+			result.value = (a.x.value * b.x.value + a.y.value * b.y.value + a.z.value * b.z.value + a.w.value * b.w.value) / zfloat.SCALE_10000;
+			return result;
 			//return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 		}
 
@@ -194,17 +198,17 @@ namespace zUnity
 		public static zQuaternion AngleAxis(zfloat angle, zVector3 axis)
 		{
 			zQuaternion ans;// = new zQuaternion();
-			if(axis.sqrMagnitude.value != zfloat.One.value)
+			if (axis.sqrMagnitude.value != zfloat.One.value)
 			{
 				axis.Normalize();
 			}
-			
+
 			zfloat halfAngle;
-            halfAngle.value = angle.value * zfloat.Half.value / zfloat.SCALE_10000;
+			halfAngle.value = angle.value * zfloat.Half.value / zfloat.SCALE_10000;
 			zfloat s;
-            s.value = zMathf.SinAngle(halfAngle).value;
+			s.value = zMathf.SinAngle(halfAngle).value;
 			zfloat c;
-            c.value = zMathf.CosAngle(halfAngle).value;
+			c.value = zMathf.CosAngle(halfAngle).value;
 
 			ans.x.value = axis.x.value * s.value / zfloat.SCALE_10000;
 			ans.y.value = axis.y.value * s.value / zfloat.SCALE_10000;
@@ -225,84 +229,84 @@ namespace zUnity
 		/// <returns></returns>
 		public static zQuaternion FromMatrix(zMatrix4x4 m)
 		{
-            //zQuaternion q = new zQuaternion();
-            //zfloat tr = m.m00 + m.m11 + m.m22;
+			//zQuaternion q = new zQuaternion();
+			//zfloat tr = m.m00 + m.m11 + m.m22;
 
-            //if (tr > 0)
-            //{
-            //    zfloat S = zMathf.Sqrt(tr + zfloat.One) * 2; // S=4*qw 
-            //    q.w = zfloat.Quarter * S;
-            //    q.x = (m.m21 - m.m12) / S;
-            //    q.y = (m.m02 - m.m20) / S;
-            //    q.z = (m.m10 - m.m01) / S;
-            //}
-            //else if ((m.m00 > m.m11) & (m.m00 > m.m22))
-            //{
-            //    zfloat S = zMathf.Sqrt(zfloat.One + m.m00 - m.m11 - m.m22) * 2; // S=4*qx 
-            //    q.w = (m.m21 - m.m12) / S;
-            //    q.x = zfloat.Quarter * S;
-            //    q.y = (m.m01 + m.m10) / S;
-            //    q.z = (m.m02 + m.m20) / S;
-            //}
-            //else if (m.m11 > m.m22)
-            //{
-            //    zfloat S = zMathf.Sqrt(zfloat.One + m.m11 - m.m00 - m.m22) * 2; // S=4*qy
-            //    q.w = (m.m02 - m.m20) / S;
-            //    q.x = (m.m01 + m.m10) / S;
-            //    q.y = zfloat.Quarter * S;
-            //    q.z = (m.m12 + m.m21) / S;
-            //}
-            //else
-            //{
-            //    zfloat S = zMathf.Sqrt(zfloat.One + m.m22 - m.m00 - m.m11) * 2; // S=4*qz
-            //    q.w = (m.m10 - m.m01) / S;
-            //    q.x = (m.m02 + m.m20) / S;
-            //    q.y = (m.m12 + m.m21) / S;
-            //    q.z = zfloat.Quarter * S;
-            //}
-            //return q;
+			//if (tr > 0)
+			//{
+			//    zfloat S = zMathf.Sqrt(tr + zfloat.One) * 2; // S=4*qw 
+			//    q.w = zfloat.Quarter * S;
+			//    q.x = (m.m21 - m.m12) / S;
+			//    q.y = (m.m02 - m.m20) / S;
+			//    q.z = (m.m10 - m.m01) / S;
+			//}
+			//else if ((m.m00 > m.m11) & (m.m00 > m.m22))
+			//{
+			//    zfloat S = zMathf.Sqrt(zfloat.One + m.m00 - m.m11 - m.m22) * 2; // S=4*qx 
+			//    q.w = (m.m21 - m.m12) / S;
+			//    q.x = zfloat.Quarter * S;
+			//    q.y = (m.m01 + m.m10) / S;
+			//    q.z = (m.m02 + m.m20) / S;
+			//}
+			//else if (m.m11 > m.m22)
+			//{
+			//    zfloat S = zMathf.Sqrt(zfloat.One + m.m11 - m.m00 - m.m22) * 2; // S=4*qy
+			//    q.w = (m.m02 - m.m20) / S;
+			//    q.x = (m.m01 + m.m10) / S;
+			//    q.y = zfloat.Quarter * S;
+			//    q.z = (m.m12 + m.m21) / S;
+			//}
+			//else
+			//{
+			//    zfloat S = zMathf.Sqrt(zfloat.One + m.m22 - m.m00 - m.m11) * 2; // S=4*qz
+			//    q.w = (m.m10 - m.m01) / S;
+			//    q.x = (m.m02 + m.m20) / S;
+			//    q.y = (m.m12 + m.m21) / S;
+			//    q.z = zfloat.Quarter * S;
+			//}
+			//return q;
 
-            zQuaternion q;// = new zQuaternion();
-            zfloat tr;
-            tr.value = m.m00.value + m.m11.value + m.m22.value;
+			zQuaternion q;// = new zQuaternion();
+			zfloat tr;
+			tr.value = m.m00.value + m.m11.value + m.m22.value;
 
-            if (tr.value > 0)
-            {
-                zfloat S;
-                S.value = zMathf.SqrtScale(tr.value + zfloat.One.value) * 2; // S=4*qw 
-                q.w.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
-                q.x.value = (m.m21.value - m.m12.value) * zfloat.SCALE_10000 / S.value;
-                q.y.value = (m.m02.value - m.m20.value) * zfloat.SCALE_10000 / S.value;
-                q.z.value = (m.m10.value - m.m01.value) * zfloat.SCALE_10000 / S.value;
-            }
-            else if ((m.m00.value > m.m11.value) && (m.m00.value > m.m22.value))
-            {
-                zfloat S;
-                S.value = zMathf.SqrtScale(zfloat.One.value + m.m00.value - m.m11.value - m.m22.value) * 2; // S=4*qx 
-                q.w.value = (m.m21.value - m.m12.value) * zfloat.SCALE_10000 / S.value;
-                q.x.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
-                q.y.value = (m.m01.value + m.m10.value) * zfloat.SCALE_10000 / S.value;
-                q.z.value = (m.m02.value + m.m20.value) * zfloat.SCALE_10000 / S.value;
-            }
-            else if (m.m11.value > m.m22.value)
-            {
-                zfloat S;
-                S.value = zMathf.SqrtScale(zfloat.One.value + m.m11.value - m.m00.value - m.m22.value) * 2; // S=4*qy
-                q.w.value = (m.m02.value - m.m20.value) * zfloat.SCALE_10000 / S.value;
-                q.x.value = (m.m01.value + m.m10.value) * zfloat.SCALE_10000 / S.value;
-                q.y.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
-                q.z.value = (m.m12.value + m.m21.value) * zfloat.SCALE_10000 / S.value;
-            }
-            else
-            {
-                zfloat S;
-                S.value = zMathf.SqrtScale(zfloat.One.value + m.m22.value - m.m00.value - m.m11.value) * 2; // S=4*qz
-                q.w.value = (m.m10.value - m.m01.value) * zfloat.SCALE_10000 / S.value;
-                q.x.value = (m.m02.value + m.m20.value) * zfloat.SCALE_10000 / S.value;
-                q.y.value = (m.m12.value + m.m21.value) * zfloat.SCALE_10000 / S.value;
-                q.z.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
-            }
-            return q;
+			if (tr.value > 0)
+			{
+				zfloat S;
+				S.value = zMathf.SqrtScale(tr.value + zfloat.One.value) * 2; // S=4*qw 
+				q.w.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
+				q.x.value = (m.m21.value - m.m12.value) * zfloat.SCALE_10000 / S.value;
+				q.y.value = (m.m02.value - m.m20.value) * zfloat.SCALE_10000 / S.value;
+				q.z.value = (m.m10.value - m.m01.value) * zfloat.SCALE_10000 / S.value;
+			}
+			else if ((m.m00.value > m.m11.value) && (m.m00.value > m.m22.value))
+			{
+				zfloat S;
+				S.value = zMathf.SqrtScale(zfloat.One.value + m.m00.value - m.m11.value - m.m22.value) * 2; // S=4*qx 
+				q.w.value = (m.m21.value - m.m12.value) * zfloat.SCALE_10000 / S.value;
+				q.x.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
+				q.y.value = (m.m01.value + m.m10.value) * zfloat.SCALE_10000 / S.value;
+				q.z.value = (m.m02.value + m.m20.value) * zfloat.SCALE_10000 / S.value;
+			}
+			else if (m.m11.value > m.m22.value)
+			{
+				zfloat S;
+				S.value = zMathf.SqrtScale(zfloat.One.value + m.m11.value - m.m00.value - m.m22.value) * 2; // S=4*qy
+				q.w.value = (m.m02.value - m.m20.value) * zfloat.SCALE_10000 / S.value;
+				q.x.value = (m.m01.value + m.m10.value) * zfloat.SCALE_10000 / S.value;
+				q.y.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
+				q.z.value = (m.m12.value + m.m21.value) * zfloat.SCALE_10000 / S.value;
+			}
+			else
+			{
+				zfloat S;
+				S.value = zMathf.SqrtScale(zfloat.One.value + m.m22.value - m.m00.value - m.m11.value) * 2; // S=4*qz
+				q.w.value = (m.m10.value - m.m01.value) * zfloat.SCALE_10000 / S.value;
+				q.x.value = (m.m02.value + m.m20.value) * zfloat.SCALE_10000 / S.value;
+				q.y.value = (m.m12.value + m.m21.value) * zfloat.SCALE_10000 / S.value;
+				q.z.value = zfloat.Quarter.value * S.value / zfloat.SCALE_10000;
+			}
+			return q;
 		}
 
 		/// <summary>
@@ -313,43 +317,43 @@ namespace zUnity
 		/// <param name="axis"></param>
 		public void ToAngleAxis(out zfloat angle, out zVector3 axis)
 		{
-            //zfloat fSqrLength = x * x + y * y + z * z;
-            //if (fSqrLength > zfloat.Zero)
-            //{
-            //    angle = 2 * zMathf.AcosAngle(w);
-            //    zfloat fInvLength = 1 / zMathf.Sqrt(fSqrLength);
-            //    axis.x = x * fInvLength;
-            //    axis.y = y * fInvLength;
-            //    axis.z = z * fInvLength;
-            //}
-            //else
-            //{
-            //    // angle is 0 (mod 2*pi), so any axis will do
-            //    angle = zfloat.Zero;
-            //    axis.x = zfloat.One;
-            //    axis.y = zfloat.Zero;
-            //    axis.z = zfloat.Zero;
-            //}
+			//zfloat fSqrLength = x * x + y * y + z * z;
+			//if (fSqrLength > zfloat.Zero)
+			//{
+			//    angle = 2 * zMathf.AcosAngle(w);
+			//    zfloat fInvLength = 1 / zMathf.Sqrt(fSqrLength);
+			//    axis.x = x * fInvLength;
+			//    axis.y = y * fInvLength;
+			//    axis.z = z * fInvLength;
+			//}
+			//else
+			//{
+			//    // angle is 0 (mod 2*pi), so any axis will do
+			//    angle = zfloat.Zero;
+			//    axis.x = zfloat.One;
+			//    axis.y = zfloat.Zero;
+			//    axis.z = zfloat.Zero;
+			//}
 
-            zfloat fSqrLength;
-            fSqrLength.value = (x.value * x.value + y.value * y.value + z.value * z.value) / zfloat.SCALE_10000;
-            if (fSqrLength.value > zfloat.Zero.value)
-            {
-                angle.value = 2 * zMathf.AcosAngle(w).value;
-                zfloat fInvLength;
-                fInvLength.value = zfloat.One.value * zfloat.SCALE_10000 / zMathf.SqrtScale(fSqrLength.value);
-                axis.x.value = x.value * fInvLength.value / zfloat.SCALE_10000;
-                axis.y.value = y.value * fInvLength.value / zfloat.SCALE_10000;
-                axis.z.value = z.value * fInvLength.value / zfloat.SCALE_10000;
-            }
-            else
-            {
-                // angle is 0 (mod 2*pi), so any axis will do
-                angle.value = zfloat.Zero.value;
-                axis.x.value = zfloat.One.value;
-                axis.y.value = zfloat.Zero.value;
-                axis.z.value = zfloat.Zero.value;
-            }
+			zfloat fSqrLength;
+			fSqrLength.value = (x.value * x.value + y.value * y.value + z.value * z.value) / zfloat.SCALE_10000;
+			if (fSqrLength.value > zfloat.Zero.value)
+			{
+				angle.value = 2 * zMathf.AcosAngle(w).value;
+				zfloat fInvLength;
+				fInvLength.value = zfloat.One.value * zfloat.SCALE_10000 / zMathf.SqrtScale(fSqrLength.value);
+				axis.x.value = x.value * fInvLength.value / zfloat.SCALE_10000;
+				axis.y.value = y.value * fInvLength.value / zfloat.SCALE_10000;
+				axis.z.value = z.value * fInvLength.value / zfloat.SCALE_10000;
+			}
+			else
+			{
+				// angle is 0 (mod 2*pi), so any axis will do
+				angle.value = zfloat.Zero.value;
+				axis.x.value = zfloat.One.value;
+				axis.y.value = zfloat.Zero.value;
+				axis.z.value = zfloat.Zero.value;
+			}
 		}
 
 		/// <summary>
@@ -386,7 +390,7 @@ namespace zUnity
 			zVector3 n = zVector3.Cross(fromDirection, toDirection);//不需要归一化，因为AngleAxis内部会进行归一化
 			fromDirection.Normalize();
 			toDirection.Normalize();
-			zfloat angle = zMathf.AcosAngle(zVector3.Dot(ref fromDirection,ref toDirection));
+			zfloat angle = zMathf.AcosAngle(zVector3.Dot(ref fromDirection, ref toDirection));
 			return AngleAxis(angle, n);
 		}
 
@@ -456,16 +460,16 @@ namespace zUnity
 			upwards = zVector3.Cross(forward, right).normalized;
 			zMatrix4x4 mat = zMatrix4x4.identity;
 			mat.m00.value = right.x.value;
-            mat.m10.value = right.y.value;
-            mat.m20.value = right.z.value;
+			mat.m10.value = right.y.value;
+			mat.m20.value = right.z.value;
 
-            mat.m01.value = upwards.x.value;
-            mat.m11.value = upwards.y.value;
-            mat.m21.value = upwards.z.value;
+			mat.m01.value = upwards.x.value;
+			mat.m11.value = upwards.y.value;
+			mat.m21.value = upwards.z.value;
 
-            mat.m02.value = forward.x.value;
-            mat.m12.value = forward.y.value;
-            mat.m22.value = forward.z.value;
+			mat.m02.value = forward.x.value;
+			mat.m12.value = forward.y.value;
+			mat.m22.value = forward.z.value;
 
 			//zUDebug.Log(mat);
 
@@ -642,15 +646,28 @@ namespace zUnity
 			return result;
 		}
 
-		/* public static zQuaternion RotateTowards(zQuaternion from, zQuaternion to, zfloat maxDegreesDelta)
-		 {
-			 return identity;
-		 }
-		 private static zQuaternion UnclampedSlerp(zQuaternion from, zQuaternion to, zfloat t)
-		 {
-			 return identity;
-			 //return zQuaternion.INTERNAL_CALL_UnclampedSlerp(ref from, ref to, t);
-		 }*/
+		/// <summary>
+		/// 从from旋转到to，但旋转角度不超过maxDegreesDelta
+		/// </summary>
+		/// <param name="from">起始旋转</param>
+		/// <param name="to">目标旋转</param>
+		/// <param name="maxDegreesDelta">最大旋转角度（度数）</param>
+		/// <returns></returns>
+		public static zQuaternion RotateTowards(zQuaternion from, zQuaternion to, zfloat maxDegreesDelta)
+		{
+			zfloat angle = Angle(from, to);
+			if (angle.value <= maxDegreesDelta.value || angle.value <= zfloat.Zero.value)
+			{
+				return to;
+			}
+			zfloat t;
+			t.value = maxDegreesDelta.value * zfloat.SCALE_10000 / angle.value;
+			if (t.value > zfloat.SCALE_10000)
+			{
+				t.value = zfloat.SCALE_10000;
+			}
+			return Slerp(from, to, t);
+		}
 
 		/// <summary>
 		/// 反向旋转
@@ -681,37 +698,46 @@ namespace zUnity
 			return (x + " , " + y + " , " + z + " , " + w);
 		}
 
-		/* public static zfloat Angle(zQuaternion a, zQuaternion b)
-		 {
-			 return zfloat.Zero;
-			// zfloat f = zQuaternion.Dot(a, b);
-			// return zMath.Acos(zMath.Min(zMath.Abs(f), 1f)) * 2f * 57.29578f;
-		 }*/
+		/// <summary>
+		/// 计算两个四元数之间的角度（度数）
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		public static zfloat Angle(zQuaternion a, zQuaternion b)
+		{
+			zfloat f = Dot(a, b);
+			zfloat absF = zMathf.Abs(f);
+			zfloat clampedF = zMathf.Min(absF, zfloat.One);
+			zfloat angle;
+			angle.value = zMathf.Acos(clampedF).value * zMathf.Rad2Deg.value * 2 / zfloat.SCALE_10000;
+			return angle;
+		}
 
 		public static zQuaternion Euler(zfloat x, zfloat y, zfloat z)
 		{
 			zfloat sr, cr, sp, cp, sy, cy;
 			zfloat roll;
-            zfloat pitch;
-            zfloat yaw;
-            roll.value = z.value;
-            pitch.value = x.value;
-            yaw.value = y.value;
+			zfloat pitch;
+			zfloat yaw;
+			roll.value = z.value;
+			pitch.value = x.value;
+			yaw.value = y.value;
 
 			zfloat halfRoll;
-            halfRoll.value = roll.value * zfloat.Half.value / zfloat.SCALE_10000;
+			halfRoll.value = roll.value * zfloat.Half.value / zfloat.SCALE_10000;
 			sr.value = zMathf.SinAngle(halfRoll).value;
 			cr.value = zMathf.CosAngle(halfRoll).value;
 
 
 			zfloat halfPitch;
-            halfPitch.value = pitch.value * zfloat.Half.value / zfloat.SCALE_10000;
+			halfPitch.value = pitch.value * zfloat.Half.value / zfloat.SCALE_10000;
 			sp = zMathf.SinAngle(halfPitch);
 			cp = zMathf.CosAngle(halfPitch);
 
 
 			zfloat halfYaw;
-            halfYaw.value = yaw.value * zfloat.Half.value / zfloat.SCALE_10000;
+			halfYaw.value = yaw.value * zfloat.Half.value / zfloat.SCALE_10000;
 			sy = zMathf.SinAngle(halfYaw);
 			cy = zMathf.CosAngle(halfYaw);
 
@@ -719,14 +745,14 @@ namespace zUnity
 			zQuaternion result;
 
 
-			result.x.value = ((cy.value * sp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000) 
-                + ((sy.value * cp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
-            result.y.value = ((sy.value * cp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000)
-                - ((cy.value * sp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
-            result.z.value = ((cy.value * cp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000)
-                - ((sy.value * sp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000);
-            result.w.value = ((cy.value * cp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000)
-                + ((sy.value * sp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
+			result.x.value = ((cy.value * sp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000)
+				+ ((sy.value * cp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
+			result.y.value = ((sy.value * cp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000)
+				- ((cy.value * sp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
+			result.z.value = ((cy.value * cp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000)
+				- ((sy.value * sp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000);
+			result.w.value = ((cy.value * cp.value / zfloat.SCALE_10000) * cr.value / zfloat.SCALE_10000)
+				+ ((sy.value * sp.value / zfloat.SCALE_10000) * sr.value / zfloat.SCALE_10000);
 
 
 			return result;
@@ -747,10 +773,10 @@ namespace zUnity
 		{
 			zQuaternion ans;
 
-            ans.x.value = -value.x.value;
-            ans.y.value = -value.y.value;
-            ans.z.value = -value.z.value;
-            ans.w.value = value.w.value;
+			ans.x.value = -value.x.value;
+			ans.y.value = -value.y.value;
+			ans.z.value = -value.z.value;
+			ans.w.value = value.w.value;
 
 			return ans;
 		}
@@ -771,17 +797,17 @@ namespace zUnity
 		}
 		public static zQuaternion operator *(zQuaternion lhs, zQuaternion rhs)
 		{
-            zQuaternion zq;
+			zQuaternion zq;
 			//return new zQuaternion(lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y, lhs.w * rhs.y + lhs.y * rhs.w + lhs.z * rhs.x - lhs.x * rhs.z, lhs.w * rhs.z + lhs.z * rhs.w + lhs.x * rhs.y - lhs.y * rhs.x, lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z);
 			long x = (lhs.w.value * rhs.x.value + lhs.x.value * rhs.w.value + lhs.y.value * rhs.z.value - lhs.z.value * rhs.y.value) / zfloat.SCALE_10000;
 			long y = (lhs.w.value * rhs.y.value + lhs.y.value * rhs.w.value + lhs.z.value * rhs.x.value - lhs.x.value * rhs.z.value) / zfloat.SCALE_10000;
 			long z = (lhs.w.value * rhs.z.value + lhs.z.value * rhs.w.value + lhs.x.value * rhs.y.value - lhs.y.value * rhs.x.value) / zfloat.SCALE_10000;
 			long w = (lhs.w.value * rhs.w.value - lhs.x.value * rhs.x.value - lhs.y.value * rhs.y.value - lhs.z.value * rhs.z.value) / zfloat.SCALE_10000;
 
-            zq.x.value = x;
-            zq.y.value = y;
-            zq.z.value = z;
-            zq.w.value = w;
+			zq.x.value = x;
+			zq.y.value = y;
+			zq.z.value = z;
+			zq.w.value = w;
 
 			return zq;
 

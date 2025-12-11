@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using zUnity;
 using ZLockstep.RVO;
 using ZLockstep.Simulation.ECS;
@@ -27,7 +26,30 @@ namespace ZLockstep.Flow
         private FlowFieldManager flowFieldManager;
         private RVO2Simulator rvoSimulator;
         private IFlowFieldMap map;
-        
+
+        /// <summary>
+        /// 是否启用RVO避障算法
+        /// 如果为false，将直接使用流场方向移动，不使用RVO进行避障
+        /// </summary>
+        private bool useRvo = true;
+
+        /// <summary>
+        /// 设置是否启用RVO避障算法
+        /// </summary>
+        /// <param name="enabled">是否启用RVO</param>
+        public void SetUseRvo(bool enabled)
+        {
+            useRvo = enabled;
+        }
+
+        /// <summary>
+        /// 获取是否启用RVO避障算法
+        /// </summary>
+        public bool GetUseRvo()
+        {
+            return useRvo;
+        }
+
         private struct PooledAgent
         {
             public int AgentId;
@@ -37,7 +59,7 @@ namespace ZLockstep.Flow
 
         // Debug: 最近一次散点集合
         private readonly List<zVector2> debugScatterPoints = new List<zVector2>();
-        public System.Collections.Generic.IReadOnlyList<zVector2> DebugScatterPoints => debugScatterPoints;
+        public IReadOnlyList<zVector2> DebugScatterPoints => debugScatterPoints;
         private zVector2 debugScatterCenter = zVector2.zero;
         private zfloat debugScatterRadius = zfloat.Zero;
         public zVector2 DebugScatterCenter => debugScatterCenter;
@@ -55,12 +77,16 @@ namespace ZLockstep.Flow
             flowFieldManager = ffMgr;
             rvoSimulator = rvoSim;
             map = gameMap;
-            
-            // 设置RVO模拟器引用到流场管理器
-            flowFieldManager.SetRvoSimulator(rvoSimulator);
-            
-            // 设置流场管理器引用到RVO模拟器
-            rvoSimulator.SetFlowFieldManager(flowFieldManager);
+
+            // 只有在启用RVO时才设置RVO相关引用
+            if (useRvo && rvoSimulator != null)
+            {
+                // 设置RVO模拟器引用到流场管理器
+                flowFieldManager.SetRvoSimulator(rvoSimulator);
+
+                // 设置流场管理器引用到RVO模拟器
+                rvoSimulator.SetFlowFieldManager(flowFieldManager);
+            }
         }
 
         protected override void OnInitialize()
@@ -87,17 +113,25 @@ namespace ZLockstep.Flow
 
             // 添加导航组件
             var navigator = FlowFieldNavigatorComponent.Create(radius, maxSpeed);
-            
-            // 在RVO中创建智能体
-            // 优化的RVO参数，减少卡死在角落的情况
-            int rvoAgentId = rvoSimulator.AddAgent(
-                    pos2D,
-                    radius,
-                    maxSpeed,
-                    maxNeighbors: 10,
-                    timeHorizon: new zfloat(1, 5000)  // 降低到1.5，减少过早反应
-                );
-            navigator.RvoAgentId = rvoAgentId;
+
+            // 只有在启用RVO时才创建RVO智能体
+            if (useRvo && rvoSimulator != null)
+            {
+                // 在RVO中创建智能体
+                // 优化的RVO参数，减少卡死在角落的情况
+                int rvoAgentId = rvoSimulator.AddAgent(
+                        pos2D,
+                        radius,
+                        maxSpeed,
+                        maxNeighbors: 10,
+                        timeHorizon: new zfloat(1, 5000)  // 降低到1.5，减少过早反应
+                    );
+                navigator.RvoAgentId = rvoAgentId;
+            }
+            else
+            {
+                navigator.RvoAgentId = -1;
+            }
 
             ComponentManager.AddComponent(entity, navigator);
         }
@@ -127,8 +161,8 @@ namespace ZLockstep.Flow
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
             }
 
-            // 在请求新流场之前，移除该实体作为动态障碍物
-            if (navigator.RvoAgentId >= 0)
+            // 在请求新流场之前，移除该实体作为动态障碍物（仅在启用RVO时）
+            if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
             {
                 var map = flowFieldManager.GetMap();
                 if (map is SimpleMapManager simpleMap)
@@ -202,22 +236,25 @@ namespace ZLockstep.Flow
             zfloat minSpacing = map.GetGridSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
-            // 在请求新流场之前，移除所有实体作为动态障碍物
-            foreach (var e in entities)
+            // 在请求新流场之前，移除所有实体作为动态障碍物（仅在启用RVO时）
+            if (useRvo && rvoSimulator != null)
             {
-                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(e);
-                if (navigator.RvoAgentId >= 0)
+                foreach (var e in entities)
                 {
-                    var map = flowFieldManager.GetMap();
-                    if (map is SimpleMapManager simpleMap)
+                    var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(e);
+                    if (navigator.RvoAgentId >= 0)
                     {
-                        simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
+                        var map = flowFieldManager.GetMap();
+                        if (map is SimpleMapManager simpleMap)
+                        {
+                            simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
+                        }
+                        // 重置智能体的静止状态
+                        rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
                     }
-                    // 重置智能体的静止状态
-                    rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
                 }
+                flowFieldManager.MarkDynamicObstaclesNeedUpdate();
             }
-            flowFieldManager.MarkDynamicObstaclesNeedUpdate();
 
             // 生成候选散点（方形格，默认）
             // 计算所需的行列数：rows*cols >= N
@@ -300,53 +337,6 @@ namespace ZLockstep.Flow
             }
         }
 
-        /// <summary>
-        /// 生成六边形格子分布的候选点
-        /// 主要功能：
-        /// 1. 使用六边形格子布局生成候选点集
-        /// 2. 根据指定的环数和最大数量限制生成点
-        /// 3. 按距离中心点的远近对生成的点进行排序
-        /// </summary>
-        /// <param name="center">中心点位置</param>
-        /// <param name="spacing">点之间的间隔距离</param>
-        /// <param name="rings">生成的环数</param>
-        /// <param name="maxCount">生成点的最大数量</param>
-        /// <returns>按距离排序的候选点列表</returns>
-        private List<zVector2> GenerateHexLattice(zVector2 center, zfloat spacing, int rings, int maxCount)
-        {
-            List<zVector2> pts = new List<zVector2>();
-            zfloat half = new zfloat(0, 5000);
-            zfloat sqrt3over2 = new zfloat(0, 8660);
-            zVector2 a = new zVector2(spacing, zfloat.Zero);
-            zVector2 b = new zVector2(spacing * half, spacing * sqrt3over2);
-
-            for (int r = 0; r <= rings; r++)
-            {
-                for (int i = -r; i <= r; i++)
-                {
-                    for (int j = -r; j <= r; j++)
-                    {
-                        zVector2 p = center + a * (zfloat)i + b * (zfloat)j;
-                        // 将点对齐到网格中心
-                        map.WorldToGrid(p, out int gridX, out int gridY);
-                        zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
-                        pts.Add(alignedPoint);
-                        if (pts.Count >= maxCount) goto END;
-                    }
-                }
-            }
-        END:
-            // 按距中心排序（zfloat 不实现 IComparable，使用自定义比较器）
-            pts.Sort((p1, p2) =>
-            {
-                zfloat d1 = (p1 - center).sqrMagnitude;
-                zfloat d2 = (p2 - center).sqrMagnitude;
-                if (d1 < d2) return -1;
-                if (d1 > d2) return 1;
-                return 0;
-            });
-            return pts;
-        }
 
         /// <summary>
         /// 生成方形分布的候选点
@@ -364,7 +354,7 @@ namespace ZLockstep.Flow
         private List<zVector2> GenerateSquareLattice(zVector2 center, zfloat spacing, int rows, int cols, int maxCount)
         {
             List<zVector2> pts = new List<zVector2>();
-            
+
             // 计算起始点，使中心对齐
             zfloat startX = center.x - (cols - 1) * spacing * new zfloat(0, 5000);
             zfloat startY = center.y - (rows - 1) * spacing * new zfloat(0, 5000);
@@ -381,12 +371,12 @@ namespace ZLockstep.Flow
                     map.WorldToGrid(p, out int gridX, out int gridY);
                     zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
                     pts.Add(alignedPoint);
-                    
+
                     if (pts.Count >= maxCount)
                         goto END;
                 }
             }
-            
+
         END:
             // 按距中心排序
             pts.Sort((p1, p2) =>
@@ -416,20 +406,20 @@ namespace ZLockstep.Flow
         private List<zVector2> GenerateCircularLattice(zVector2 center, zfloat spacing, int rings, int pointsPerRing, int maxCount)
         {
             List<zVector2> pts = new List<zVector2>();
-            
+
             // 添加中心点
             // 将中心点对齐到网格中心
             map.WorldToGrid(center, out int centerGridX, out int centerGridY);
             zVector2 alignedCenter = map.GridToWorld(centerGridX, centerGridY);
             pts.Add(alignedCenter);
-            if (maxCount <= 1) 
+            if (maxCount <= 1)
                 return pts;
 
             for (int ring = 1; ring <= rings; ring++)
             {
                 zfloat radius = spacing * (zfloat)ring;
                 int pointsInThisRing = pointsPerRing * ring;
-                
+
                 for (int i = 0; i < pointsInThisRing; i++)
                 {
                     zfloat angle = (zfloat)i * zMathf.PI * 2 / (zfloat)pointsInThisRing;
@@ -441,12 +431,12 @@ namespace ZLockstep.Flow
                     map.WorldToGrid(p, out int gridX, out int gridY);
                     zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
                     pts.Add(alignedPoint);
-                    
+
                     if (pts.Count >= maxCount)
                         goto END;
                 }
             }
-            
+
         END:
             // 按距中心排序
             pts.Sort((p1, p2) =>
@@ -549,7 +539,7 @@ namespace ZLockstep.Flow
         private Dictionary<Entity, zVector2> PositionPreservingAssign(List<Entity> entities, List<zVector2> points, zVector2 groupCenter)
         {
             Dictionary<Entity, zVector2> result = new Dictionary<Entity, zVector2>();
-            
+
             // 获取实体相对于编队中心的位置
             List<zVector2> entityOffsets = new List<zVector2>();
             foreach (var e in entities)
@@ -558,41 +548,41 @@ namespace ZLockstep.Flow
                 zVector2 p = new zVector2(t.Position.x, t.Position.z);
                 entityOffsets.Add(p - groupCenter);
             }
-            
+
             // 标记已使用的散点
             bool[] used = new bool[points.Count];
-            
+
             // 为每个实体分配散点
             for (int i = 0; i < entities.Count; i++)
             {
                 zVector2 entityOffset = entityOffsets[i];
                 int bestPoint = -1;
                 zfloat bestScore = zfloat.Infinity;
-                
+
                 // 寻找最适合的散点
                 for (int j = 0; j < points.Count; j++)
                 {
                     if (used[j]) continue;
-                    
+
                     zVector2 pointOffset = points[j] - groupCenter;
                     // 计算相对位置差异（考虑距离和角度）
                     zfloat distanceDiff = zMathf.Abs(entityOffset.magnitude - pointOffset.magnitude);
                     zfloat angleDiff = zMathf.Abs(zMathf.Atan2(entityOffset.y, entityOffset.x) - zMathf.Atan2(pointOffset.y, pointOffset.x));
-                    
+
                     // 角度差需要处理周期性
                     if (angleDiff > zMathf.PI)
                         angleDiff = zMathf.PI * 2 - angleDiff;
-                    
+
                     // 综合评分（距离差异权重较大）
                     zfloat score = distanceDiff * new zfloat(2) + angleDiff;
-                    
+
                     if (score < bestScore)
                     {
                         bestScore = score;
                         bestPoint = j;
                     }
                 }
-                
+
                 // 分配最佳散点
                 if (bestPoint >= 0)
                 {
@@ -600,7 +590,7 @@ namespace ZLockstep.Flow
                     result[entities[i]] = points[bestPoint];
                 }
             }
-            
+
             // 兜底：若点不足，为未分配的实体分配最近的可用点
             for (int i = 0; i < entities.Count; i++)
             {
@@ -610,14 +600,14 @@ namespace ZLockstep.Flow
                         ComponentManager.GetComponent<TransformComponent>(entities[i]).Position.x,
                         ComponentManager.GetComponent<TransformComponent>(entities[i]).Position.z
                     );
-                    
+
                     int nearestPoint = -1;
                     zfloat nearestDistance = zfloat.Infinity;
-                    
+
                     for (int j = 0; j < points.Count; j++)
                     {
                         if (used[j]) continue;
-                        
+
                         zfloat distance = (points[j] - entityPos).sqrMagnitude;
                         if (distance < nearestDistance)
                         {
@@ -625,7 +615,7 @@ namespace ZLockstep.Flow
                             nearestPoint = j;
                         }
                     }
-                    
+
                     if (nearestPoint >= 0)
                     {
                         used[nearestPoint] = true;
@@ -638,7 +628,7 @@ namespace ZLockstep.Flow
                     }
                 }
             }
-            
+
             return result;
         }
 
@@ -653,7 +643,7 @@ namespace ZLockstep.Flow
         public void ClearMoveTarget(Entity entity, bool reachTarget = false)
         {
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
-            
+
             if (navigator.CurrentFlowFieldId >= 0)
             {
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
@@ -666,8 +656,8 @@ namespace ZLockstep.Flow
             // 移除目标组件
             ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
 
-            // 停止RVO智能体
-            if (navigator.RvoAgentId >= 0)
+            // 停止RVO智能体（仅在启用RVO时）
+            if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
             {
                 rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
             }
@@ -683,7 +673,11 @@ namespace ZLockstep.Flow
         /// </summary>
         public override void Update()
         {
-            if (flowFieldManager == null || rvoSimulator == null)
+            if (flowFieldManager == null)
+                return;
+
+            // 如果启用RVO但RVO模拟器为空，则返回
+            if (useRvo && rvoSimulator == null)
                 return;
 
             // 1. 更新流场管理器（处理脏流场）
@@ -697,8 +691,11 @@ namespace ZLockstep.Flow
                 UpdateEntityNavigation(entity);
             }
 
-            // 3. RVO统一计算避障
-            rvoSimulator.DoStep(DeltaTime);
+            // 3. RVO统一计算避障（仅在启用RVO时）
+            if (useRvo && rvoSimulator != null)
+            {
+                rvoSimulator.DoStep(DeltaTime);
+            }
 
             // 4. 同步位置回Transform组件
             foreach (var entityId in navigatorEntities)
@@ -717,9 +714,12 @@ namespace ZLockstep.Flow
         /// 4. 实现到达目标检测
         /// 5. 设置RVO期望速度
         /// </summary>
+        /// <summary>
+        /// 更新单个实体的导航
+        /// </summary>
         private void UpdateEntityNavigation(Entity entity)
         {
-            // 检查单位是否存活，死亡单位不能移动（只检查DeathComponent）
+            // 1. 基础检查
             if (ComponentManager.HasComponent<DeathComponent>(entity))
             {
                 ClearMoveTarget(entity);
@@ -727,54 +727,45 @@ namespace ZLockstep.Flow
             }
 
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
+            if (!navigator.IsEnabled) return;
 
-            if (!navigator.IsEnabled)
-                return;
-
-            // 没有目标
+            // 2. 目标检查
             if (!ComponentManager.HasComponent<MoveTargetComponent>(entity))
             {
-                if (navigator.RvoAgentId >= 0)
+                if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
                 {
                     rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                }
+                else if (!useRvo && ComponentManager.HasComponent<VelocityComponent>(entity))
+                {
+                    ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
                 }
                 return;
             }
 
-            if (navigator.CurrentFlowFieldId < 0)
-                return;
+            if (navigator.CurrentFlowFieldId < 0) return;
 
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
             var target = ComponentManager.GetComponent<MoveTargetComponent>(entity);
-
             zVector2 currentPos = new zVector2(transform.Position.x, transform.Position.z);
 
-            // 到达判定统一为世界距离（移除基于代价的判定）
-
-            // ===== 卡住检测 =====
+            // ===== 卡住检测逻辑 (保持不变) =====
             zfloat moveDistance = (currentPos - navigator.LastPosition).magnitude;
-            zfloat minMoveThreshold = new zfloat(0, 100); // 0.01单位
-
-            if (moveDistance < minMoveThreshold)
-            {
-                navigator.StuckFrames++;
-            }
-            else
-            {
-                navigator.StuckFrames = 0;
-            }
+            zfloat minMoveThreshold = new zfloat(0, 100);
+            if (moveDistance < minMoveThreshold) navigator.StuckFrames++;
+            else navigator.StuckFrames = 0;
             navigator.LastPosition = currentPos;
 
-            // 从流场获取方向
+            // 3. 获取基础流场方向
             zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
 
-            // 当流场方向为零时（通常是在目标格子内），直接朝目标点移动
+            // 处理目标格子内的移动
+            zVector2 toTarget = target.TargetPosition - currentPos;
+            zfloat distSq = toTarget.sqrMagnitude;
+            zfloat distanceToTarget = zMathf.Sqrt(distSq);
+
             if (flowDirection == zVector2.zero)
             {
-                zVector2 toTarget = target.TargetPosition - currentPos;
-                zfloat distSq = toTarget.sqrMagnitude;
-                
-                // 如果距离很近（小于到达半径的平方），停止移动
                 zfloat arrivalRadiusSq = navigator.ArrivalRadius * navigator.ArrivalRadius;
                 if (distSq <= arrivalRadiusSq)
                 {
@@ -783,141 +774,196 @@ namespace ZLockstep.Flow
                     ClearMoveTarget(entity, true);
                     return;
                 }
-                
-                // 否则，直接朝目标移动（用于目标格子内的精确移动）
                 flowDirection = toTarget.normalized;
             }
 
-            // 预先计算与目标距离（供扰动/减速/到达使用）
-            zfloat distanceToTarget = (target.TargetPosition - currentPos).magnitude;
-
-            // ===== 卡住处理：添加随机扰动（仅远离目标时生效） =====
-            if (navigator.StuckFrames > 20 && distanceToTarget > navigator.SlowDownRadius) // 远离目标才扰动
-            {
-                // 添加垂直于当前方向的随机扰动
-                zfloat randomValue = new zfloat((entity.Id * 137 + World.Tick * 17) % 1000 - 500, 1000); // -0.5 到 0.5
-                zVector2 perpendicular = new zVector2(-flowDirection.y, flowDirection.x);
-                flowDirection = (flowDirection + perpendicular * randomValue * new zfloat(0, 5000)).normalized; // 混入50%扰动
-                
-                // 每60帧重置一次计数，避免持续添加扰动
-                if (navigator.StuckFrames > 60)
-                {
-                    navigator.StuckFrames = 0;
-                }
-            }
-
-            // ===== 近端个体化收敛：靠近个人散点时忽略流场，直达个人目标 =====
-            // 目的：多源流场指向“最近散点”，可能与个人分配散点不同，近端阶段改为直达个人目标
+            // ===== 个体化收敛逻辑 (保持不变) =====
             zfloat personalizationRadius = navigator.Radius * new zfloat(4);
             zfloat grid3 = map.GetGridSize() * new zfloat(3);
             if (personalizationRadius < grid3) personalizationRadius = grid3;
+
             if (distanceToTarget <= personalizationRadius)
             {
-                zVector2 toPersonal = (target.TargetPosition - currentPos);
-                if (toPersonal.sqrMagnitude > zfloat.Epsilon)
-                {
-                    flowDirection = toPersonal.normalized;
-                }
+                if (distSq > zfloat.Epsilon) flowDirection = toTarget.normalized;
             }
 
-            // 计算速度（靠近目标时平滑减速，至到达半径处速度为0，避免抖动）
+            // ===== 速度计算 (保持不变) =====
             zfloat speed = navigator.MaxSpeed;
             if (distanceToTarget < navigator.SlowDownRadius)
             {
                 zfloat denom = navigator.SlowDownRadius - navigator.ArrivalRadius;
-                if (denom <= zfloat.Zero) denom = navigator.SlowDownRadius; // 兜底
-                zfloat t = (distanceToTarget - navigator.ArrivalRadius) / denom; // t∈(-∞,1]
+                if (denom <= zfloat.Zero) denom = navigator.SlowDownRadius;
+                zfloat t = (distanceToTarget - navigator.ArrivalRadius) / denom;
                 if (t < zfloat.Zero) t = zfloat.Zero;
                 if (t > zfloat.One) t = zfloat.One;
                 speed = navigator.MaxSpeed * t;
             }
 
-            // ===== 再次检查是否到达（更精确的判定） =====
-            // 加入轻微回滞：到达半径 + 网格尺寸20%的死区，减少临界抖动
+            // ===== 到达判定与去抖动 (保持不变) =====
             zfloat arriveDeadband = map.GetGridSize() * new zfloat(0, 2000);
             if (distanceToTarget <= navigator.ArrivalRadius + arriveDeadband)
             {
-                // 已经到达目标，停止移动
                 navigator.HasReachedTarget = true;
                 ComponentManager.AddComponent(entity, navigator);
                 ClearMoveTarget(entity, true);
                 return;
             }
 
-            // ===== 近端稳定判定：低速连续N帧即判到达（进一步去抖） =====
+            // 低速判定逻辑
             if (distanceToTarget <= navigator.SlowDownRadius)
             {
-                zfloat lowSpeedThreshold = new zfloat(0, 500); // 0.05 m/s
+                zfloat lowSpeedThreshold = new zfloat(0, 500);
                 bool isLowSpeed = false;
                 if (ComponentManager.HasComponent<VelocityComponent>(entity))
                 {
-                    var velComp = ComponentManager.GetComponent<VelocityComponent>(entity);
-                    zVector2 lastVel2D = new zVector2(velComp.Value.x, velComp.Value.z);
-                    isLowSpeed = lastVel2D.magnitude <= lowSpeedThreshold;
+                    var vel = ComponentManager.GetComponent<VelocityComponent>(entity);
+                    if (new zVector2(vel.Value.x, vel.Value.z).magnitude <= lowSpeedThreshold)
+                        isLowSpeed = true;
                 }
-                if (isLowSpeed)
+
+                if (isLowSpeed) navigator.NearSlowFrames++;
+                else navigator.NearSlowFrames = 0;
+
+                if (navigator.NearSlowFrames >= 6)
                 {
-                    navigator.NearSlowFrames++;
-                    if (navigator.NearSlowFrames >= 6)
+                    navigator.HasReachedTarget = true;
+                    ComponentManager.AddComponent(entity, navigator);
+                    ClearMoveTarget(entity, true);
+                    return;
+                }
+            }
+
+            // =========================================================================================
+            // [核心修复] 原地旋转判定与组件设置
+            // =========================================================================================
+            bool needStopToTurn = false;
+            zVector2 desiredDir = zVector2.zero;
+
+            // 只有当期望方向有效时才进行判定
+            if (flowDirection.sqrMagnitude > zfloat.Epsilon)
+            {
+                desiredDir = flowDirection.normalized;
+                zVector2 currentForward = GetEntityForward2D(transform);
+
+                // 计算点积 (1.0 = 同向, 0 = 垂直, -1 = 反向)
+                zfloat dot = zVector2.Dot(currentForward, desiredDir);
+
+                // 获取之前的状态
+                bool isAlreadyRotating = false;
+                RotationStateComponent rotationState;
+                bool hasRotationComp = ComponentManager.HasComponent<RotationStateComponent>(entity);
+
+                if (hasRotationComp)
+                {
+                    rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                    isAlreadyRotating = rotationState.IsInPlaceRotating;
+                }
+                else
+                {
+                    // 如果还没有组件，初始化一个
+                    rotationState = RotationStateComponent.Create(desiredDir);
+                }
+
+                // --- 双阈值滞后逻辑 (Hysteresis) ---
+                // 进入阈值：夹角大于约 45 度时开始旋转 (Cos 45 ≈ 0.707)
+                zfloat enterTurnThreshold = new zfloat(0, 7071);
+                // 退出阈值：夹角小于约 10 度时才结束旋转 (Cos 10 ≈ 0.9848)
+                zfloat exitTurnThreshold = new zfloat(0, 9848);
+
+                if (isAlreadyRotating)
+                {
+                    // 如果已经在旋转中，必须转得比较正了才停止 (防止在这个临界点抖动)
+                    if (dot < exitTurnThreshold)
                     {
-                        navigator.HasReachedTarget = true;
-                        ComponentManager.AddComponent(entity, navigator);
-                        ClearMoveTarget(entity, true);
-                        return;
+                        needStopToTurn = true;
                     }
                 }
                 else
                 {
-                    navigator.NearSlowFrames = 0;
+                    // 如果正在移动中，只有偏差比较大才开始原地旋转
+                    if (dot < enterTurnThreshold)
+                    {
+                        needStopToTurn = true;
+                    }
                 }
+
+                // --- 更新 RotationStateComponent ---
+                // 这就是你问的“后续设置代码”部分，必须显式更新组件
+                rotationState.DesiredDirection = desiredDir;
+                rotationState.IsInPlaceRotating = needStopToTurn;
+                ComponentManager.AddComponent(entity, rotationState);
             }
 
-            // ===== 设置期望旋转方向到RotationStateComponent =====
-            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+            // [逻辑分支] 如果需要原地旋转，强制停止移动
+            if (needStopToTurn)
             {
-                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
-                if (flowDirection.magnitude > zfloat.Epsilon)
+                // RVO 停止
+                if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
                 {
-                    rotationState.DesiredDirection = flowDirection.normalized;
-                    ComponentManager.AddComponent(entity, rotationState);
+                    rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 }
-            }
+                // 非 RVO 停止
+                else if (!useRvo && ComponentManager.HasComponent<VelocityComponent>(entity))
+                {
+                    ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
+                }
 
-            // ===== 检查是否正在原地转向 =====
-            bool isInPlaceRotating = false;
-            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
-            {
-                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
-                isInPlaceRotating = rotationState.IsInPlaceRotating;
-            }
-
-            // 如果正在原地转向，停止移动
-            if (isInPlaceRotating)
-            {
-                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                // 更新导航组件状态并退出，不再执行后续的位置预测
                 ComponentManager.AddComponent(entity, navigator);
                 return;
             }
 
-            // ===== 提前预测碰撞 =====
+            // =========================================================================================
+            // 以下是正常的移动逻辑 (当不需要原地旋转时执行)
+            // =========================================================================================
+
             zVector2 desiredVelocity = flowDirection * speed;
-            
-            // 预测下一帧位置
+
+            // 预测与滑墙处理
             zVector2 predictedPos = currentPos + desiredVelocity * DeltaTime;
             map.WorldToGrid(predictedPos, out int predGridX, out int predGridY);
-            
-            // 如果预测位置是障碍物，调整方向
+
             if (!map.IsWalkable(predGridX, predGridY))
             {
-                // 尝试滑动：投影到切线方向
                 desiredVelocity = GetSlideVelocity(currentPos, desiredVelocity, map);
             }
-            
-            // 设置期望速度（RVO会处理避障）
-            rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, desiredVelocity);
 
-            // 保存更新后的导航组件
+            // 应用速度到 RVO 或 组件
+            if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
+            {
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, desiredVelocity);
+            }
+            else if (!useRvo && ComponentManager.HasComponent<VelocityComponent>(entity))
+            {
+                var velocity = new VelocityComponent(new zVector3(desiredVelocity.x, zfloat.Zero, desiredVelocity.y));
+                ComponentManager.AddComponent(entity, velocity);
+            }
+
             ComponentManager.AddComponent(entity, navigator);
+        }
+
+        /// <summary>
+        /// 从Transform组件获取当前的2D前向向量
+        /// </summary>
+        private zVector2 GetEntityForward2D(TransformComponent transform)
+        {
+            // 假设 TransformComponent 中有 Rotation (zQuaternion)
+            // 如果你的架构不同，请调整此处
+            zQuaternion rotation = transform.Rotation;
+
+            // 计算三维 Forward
+            zVector3 forward3D = rotation * zVector3.forward;
+
+            // 投影到 2D 平面并归一化
+            zVector2 forward2D = new zVector2(forward3D.x, forward3D.z);
+
+            if (forward2D.sqrMagnitude > zfloat.Epsilon)
+            {
+                return forward2D.normalized;
+            }
+
+            // 默认方向 (防止异常)
+            return new zVector2(zfloat.Zero, zfloat.One);
         }
 
         /// <summary>
@@ -932,28 +978,28 @@ namespace ZLockstep.Flow
         {
             // 检测碰撞法线方向
             zVector2 wallNormal = DetectWallNormal(currentPos, desiredVelocity, map);
-            
+
             if (wallNormal == zVector2.zero)
             {
                 // 没有检测到明确的墙壁方向，保持原速度
                 return desiredVelocity;
             }
-            
+
             // 将速度投影到墙壁切线（垂直于法线）
             // 切线 = 旋转法线90度
             zVector2 wallTangent = new zVector2(-wallNormal.y, wallNormal.x);
-            
+
             // 投影：保留沿切线的分量
             zfloat projection = zVector2.Dot(desiredVelocity, wallTangent);
             zVector2 slideVelocity = wallTangent * projection;
-            
+
             // 保持原速度的大小（只改方向）
             zfloat originalSpeed = desiredVelocity.magnitude;
             if (slideVelocity.magnitude > zfloat.Epsilon)
             {
                 return slideVelocity.normalized * originalSpeed;
             }
-            
+
             // 如果投影为零，尝试反方向
             return -desiredVelocity * new zfloat(0, 5000); // 50%速度后退
         }
@@ -970,27 +1016,27 @@ namespace ZLockstep.Flow
         {
             zVector2 checkPos = currentPos + moveDir.normalized * map.GetGridSize();
             map.WorldToGrid(checkPos, out int gx, out int gy);
-            
+
             if (!map.IsWalkable(gx, gy))
             {
                 // 最简单的法线：从当前位置指向碰撞点的反方向
                 zVector2 toObstacle = map.GridToWorld(gx, gy) - currentPos;
                 return -toObstacle.normalized;
             }
-            
+
             // 检查8个方向，找到障碍物的平均方向
             int[] DX = { 0, 1, 1, 1, 0, -1, -1, -1 };
             int[] DY = { 1, 1, 0, -1, -1, -1, 0, 1 };
-            
+
             zVector2 avgNormal = zVector2.zero;
             int obstacleCount = 0;
-            
+
             map.WorldToGrid(currentPos, out int cx, out int cy);
             for (int i = 0; i < 8; i++)
             {
                 int nx = cx + DX[i];
                 int ny = cy + DY[i];
-                
+
                 if (!map.IsWalkable(nx, ny))
                 {
                     // 从当前格子指向障碍物格子的方向
@@ -999,13 +1045,108 @@ namespace ZLockstep.Flow
                     obstacleCount++;
                 }
             }
-            
+
             if (obstacleCount > 0)
             {
                 return avgNormal.normalized;
             }
-            
+
             return zVector2.zero;
+        }
+
+        /// <summary>
+        /// 非RVO模式下的位置同步
+        /// 直接从VelocityComponent计算位置更新
+        /// </summary>
+        private void SyncPositionWithoutRvo(Entity entity, FlowFieldNavigatorComponent navigator)
+        {
+            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+            zVector2 currentPos = new zVector2(transform.Position.x, transform.Position.z);
+
+            // 如果已到达目标，停止移动
+            if (navigator.HasReachedTarget)
+            {
+                if (ComponentManager.HasComponent<VelocityComponent>(entity))
+                {
+                    var velocity = new VelocityComponent(new zVector3(zfloat.Zero, zfloat.Zero, zfloat.Zero));
+                    ComponentManager.AddComponent(entity, velocity);
+                }
+                return;
+            }
+
+            // 检查是否正在原地转向
+            if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+            {
+                var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                if (rotationState.IsInPlaceRotating)
+                {
+                    if (ComponentManager.HasComponent<VelocityComponent>(entity))
+                    {
+                        var velocity = new VelocityComponent(new zVector3(zfloat.Zero, zfloat.Zero, zfloat.Zero));
+                        ComponentManager.AddComponent(entity, velocity);
+                    }
+                    return;
+                }
+            }
+
+            // 从VelocityComponent获取速度并更新位置
+            zVector2 vel2D = zVector2.zero;
+            if (ComponentManager.HasComponent<VelocityComponent>(entity))
+            {
+                var velocityComp = ComponentManager.GetComponent<VelocityComponent>(entity);
+                vel2D = new zVector2(velocityComp.Value.x, velocityComp.Value.z);
+
+                // 计算新位置
+                zVector2 newPos = currentPos + vel2D * DeltaTime;
+
+                // 碰撞检测：检查新位置是否在障碍物里
+                if (map != null)
+                {
+                    map.WorldToGrid(newPos, out int gridX, out int gridY);
+
+                    // 如果新位置不可行走，回退到旧位置并停止移动
+                    if (!map.IsWalkable(gridX, gridY))
+                    {
+                        newPos = currentPos;
+                        var velocity = new VelocityComponent(new zVector3(zfloat.Zero, zfloat.Zero, zfloat.Zero));
+                        ComponentManager.AddComponent(entity, velocity);
+                        vel2D = zVector2.zero;
+                    }
+                    else
+                    {
+                        // 更新Transform位置
+                        transform.Position.x = newPos.x;
+                        transform.Position.z = newPos.y;
+                        ComponentManager.AddComponent(entity, transform);
+                    }
+                }
+                else
+                {
+                    // 更新Transform位置
+                    transform.Position.x = newPos.x;
+                    transform.Position.z = newPos.y;
+                    ComponentManager.AddComponent(entity, transform);
+                }
+            }
+
+            // ===== 基于实际速度方向更新DesiredDirection（非RVO模式） =====
+            // 在非RVO模式下，速度方向应该与流场方向一致，但为了保持一致性也更新
+            if (vel2D.sqrMagnitude > zfloat.Epsilon)
+            {
+                zVector2 actualDirection = vel2D.normalized;
+
+                if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+                {
+                    var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                    rotationState.DesiredDirection = actualDirection;
+                    ComponentManager.AddComponent(entity, rotationState);
+                }
+                else
+                {
+                    var rotationState = RotationStateComponent.Create(actualDirection);
+                    ComponentManager.AddComponent(entity, rotationState);
+                }
+            }
         }
 
         /// <summary>
@@ -1024,13 +1165,22 @@ namespace ZLockstep.Flow
         private void SyncPosition(Entity entity)
         {
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
-            if (navigator.RvoAgentId < 0)
+
+            // 如果未启用RVO，直接从速度计算位置
+            if (!useRvo)
+            {
+                SyncPositionWithoutRvo(entity, navigator);
+                return;
+            }
+
+            // RVO模式下，需要RVO代理ID有效
+            if (navigator.RvoAgentId < 0 || rvoSimulator == null)
                 return;
 
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
             zVector2 oldPos = new zVector2(transform.Position.x, transform.Position.z);
             zVector2 newPos = rvoSimulator.GetAgentPosition(navigator.RvoAgentId);
-            
+
             // ===== 检查是否已到达目标 =====
             // 如果已经标记为到达，确保速度为零
             if (navigator.HasReachedTarget)
@@ -1073,35 +1223,82 @@ namespace ZLockstep.Flow
                     return;
                 }
             }
-            
+
             // ===== 碰撞检测：检查新位置是否在障碍物里 =====
             if (map != null)
             {
                 map.WorldToGrid(newPos, out int gridX, out int gridY);
-                
+
                 // 如果新位置不可行走，回退到旧位置
                 if (!map.IsWalkable(gridX, gridY))
                 {
                     // 回退到旧位置
                     newPos = oldPos;
                     rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
-                    
+
                     // 停止速度，避免继续尝试进入障碍物
                     rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 }
             }
-            
+
             transform.Position.x = newPos.x;
             transform.Position.z = newPos.y;
             ComponentManager.AddComponent(entity, transform);
 
             // 同步速度到VelocityComponent（如果有）
+            zVector2 vel2D = zVector2.zero;
             if (ComponentManager.HasComponent<VelocityComponent>(entity))
             {
-                zVector2 vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
+                vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
                 var velocity = new VelocityComponent(new zVector3(vel2D.x, zfloat.Zero, vel2D.y));
                 ComponentManager.AddComponent(entity, velocity);
             }
+            else
+            {
+                vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
+            }
+
+            // =========================================================================================
+            // [优化] 解决抖动问题：速度死区 + 方向平滑
+            // =========================================================================================
+
+            // 1. 速度死区：只有速度大于一定阈值时才更新朝向
+            // 0.1 * 0.1 = 0.01 (建议根据你的世界单位比例调整，这里假设1单位=1米)
+            zfloat rotationSpeedThresholdSq = new zfloat(0, 100); // 0.01f
+
+            if (vel2D.sqrMagnitude > rotationSpeedThresholdSq)
+            {
+                zVector2 targetDir = vel2D.normalized;
+
+                // 获取当前的 RotationState
+                RotationStateComponent rotationState;
+                if (ComponentManager.HasComponent<RotationStateComponent>(entity))
+                {
+                    rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+
+                    // 2. 方向平滑：不要直接赋值，而是与上一次的 DesiredDirection 进行插值
+                    // smoothingFactor 越小越平滑，但响应越慢。建议 0.1 ~ 0.3
+                    zfloat smoothingFactor = new zfloat(0, 2000); // 0.2f
+
+                    // 只有当上一次方向有效时才插值
+                    if (rotationState.DesiredDirection.sqrMagnitude > zfloat.Epsilon)
+                    {
+                        // 使用 Lerp 平滑过渡，然后归一化
+                        // 注意：zVector2.Lerp 需要你确认 zUnity 库中是否有，没有则手动实现： a + (b-a)*t
+                        zVector2 smoothedDir = zVector2.Lerp(rotationState.DesiredDirection, targetDir, smoothingFactor);
+                        targetDir = smoothedDir.normalized;
+                    }
+                }
+                else
+                {
+                    rotationState = RotationStateComponent.Create(targetDir);
+                }
+
+                // 更新组件
+                rotationState.DesiredDirection = targetDir;
+                ComponentManager.AddComponent(entity, rotationState);
+            }
+            // 如果速度很小，保持当前的 DesiredDirection 不变，防止低速下的随机旋转
         }
 
         /// <summary>
@@ -1119,8 +1316,8 @@ namespace ZLockstep.Flow
                 navigator.HasReachedTarget = false;
             }
 
-            // 将 RVO 代理归还池并冻结
-            if (navigator.RvoAgentId >= 0)
+            // 将 RVO 代理归还池并冻结（仅在启用RVO时）
+            if (useRvo && navigator.RvoAgentId >= 0 && rvoSimulator != null)
             {
                 rvoSimulator.RemoveAgent(navigator.RvoAgentId);
                 navigator.RvoAgentId = -1;

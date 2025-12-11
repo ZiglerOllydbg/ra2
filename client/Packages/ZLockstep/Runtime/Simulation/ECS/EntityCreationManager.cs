@@ -280,8 +280,8 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, vehicleType);
 
             // 添加旋转状态组件
-            var rotationState = RotationStateComponent.Create();
-            world.ComponentManager.AddComponent(entity, rotationState);
+            //var rotationState = RotationStateComponent.Create();
+            //world.ComponentManager.AddComponent(entity, rotationState);
 
             // 如果有炮塔，添加炮塔组件
             if (vehicleType.HasTurret)

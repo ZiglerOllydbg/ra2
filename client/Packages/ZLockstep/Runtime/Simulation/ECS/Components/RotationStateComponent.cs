@@ -38,6 +38,11 @@ namespace ZLockstep.Simulation.ECS.Components
         public zfloat LastRotationAngle;
 
         /// <summary>
+        /// 锁定转向符号：0=无，1=顺时针，-1=逆时针
+        /// </summary>
+        public int TurnSign;
+
+        /// <summary>
         /// 创建默认旋转状态
         /// </summary>
         public static RotationStateComponent Create()

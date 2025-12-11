@@ -108,7 +108,7 @@ namespace Game.Examples
             zUDebug.Log("[BattleGame] 流场管理器初始化完成");
 
             // 4. 创建RVO模拟器
-            RvoSimulator = new RVO2Simulator();
+            RvoSimulator = new RVO2SimulatorAdapter(); //new RVO2Simulator();
             zUDebug.Log("[BattleGame] RVO模拟器初始化完成");
         }
 
