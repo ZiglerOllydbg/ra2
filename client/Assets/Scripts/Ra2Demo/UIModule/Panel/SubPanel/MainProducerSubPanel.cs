@@ -129,53 +129,56 @@ public class MainProducerSubPanel
         if (game == null)
             return;
 
-        // 查找所有具有ProduceComponent的实体
-        var entities = game.World.ComponentManager.GetAllEntityIdsWith<ProduceComponent>();
+        // 使用GetComponentsWithCondition一次性获取符合条件的实体
+        var components = game.World.ComponentManager
+            .GetComponentsWithCondition<ProduceComponent>(entity =>
+                game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
+                !game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
+                game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
+
         var dataList = new List<ProducerItemData>();
-        
-        foreach (var entityId in entities)
+
+        foreach (var (produceComponent, entity) in components)
         {
-            var entity = new Entity(entityId);
-            if (game.World.ComponentManager.HasComponent<ProduceComponent>(entity))
+            // 为每个支持的单位类型创建一个ProducerItemData
+            foreach (var unitType in produceComponent.SupportedUnitTypes)
             {
-                var produceComponent = game.World.ComponentManager.GetComponent<ProduceComponent>(entity);
-                
-                // 为每个支持的单位类型创建一个ProducerItemData
-                foreach (var unitType in produceComponent.SupportedUnitTypes)
+                // 获取当前生产数量
+                int currentProduceCount = 0;
+                if (produceComponent.ProduceNumbers.ContainsKey(unitType))
                 {
-                    // 获取当前生产数量
-                    int currentProduceCount = 0;
-                    if (produceComponent.ProduceNumbers.ContainsKey(unitType))
-                    {
-                        currentProduceCount = produceComponent.ProduceNumbers[unitType];
-                    }
-                    
-                    // 获取当前生产进度
-                    int productionProgressPercentage = 0;
-                    if (produceComponent.ProduceProgress.ContainsKey(unitType))
-                    {
-                        productionProgressPercentage = produceComponent.ProduceProgress[unitType];
-                    }
-                    
-                    // 构造带生产数量和进度的名称
-                    string displayName = GetUnitTypeName(unitType);
-                    if (currentProduceCount > 0)
-                    {
-                        displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
-                    }
-                    
-                    var itemData = new ProducerItemData
-                    {
-                        Name = displayName,
-                        BelongFactory = "坦克工厂" + entityId,
-                        Description = GetUnitTypeDescription(unitType),
-                        UnitType = unitType,
-                        FactoryEntityId = entityId,
-                    };
-                    dataList.Add(itemData);
+                    currentProduceCount = produceComponent.ProduceNumbers[unitType];
                 }
+                
+                // 获取当前生产进度
+                int productionProgressPercentage = 0;
+                if (produceComponent.ProduceProgress.ContainsKey(unitType))
+                {
+                    productionProgressPercentage = produceComponent.ProduceProgress[unitType];
+                }
+                
+                // 构造带生产数量和进度的名称
+                string displayName = GetUnitTypeName(unitType);
+                if (currentProduceCount > 0)
+                {
+                    displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
+                }
+                
+                var itemData = new ProducerItemData
+                {
+                    Name = displayName,
+                    BelongFactory = "坦克工厂" + entity.Id,
+                    Description = GetUnitTypeDescription(unitType),
+                    UnitType = unitType,
+                    FactoryEntityId = entity.Id,
+                };
+                dataList.Add(itemData);
             }
         }
+
+        
+        
+
         
         RefreshList(dataList);
     }
