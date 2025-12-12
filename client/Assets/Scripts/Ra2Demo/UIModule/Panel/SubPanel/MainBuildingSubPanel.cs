@@ -218,7 +218,7 @@ public class MainBuildingSubPanel
     private void OnListItemSelect(BuildingListItem item)
     {
         Debug.Log($"选中了列表项: {item.ItemData?.Name}");
-        Frame.DispatchEvent(new SelectBuildEvent(item.ItemData.BuildingType));
+        Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
         Hide();
     }
     
