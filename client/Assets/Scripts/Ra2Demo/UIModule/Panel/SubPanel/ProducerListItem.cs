@@ -11,7 +11,8 @@ public class ProducerListItem : BaseListItem
     private Image iconImage;
     private TMP_Text producerNameText;
     private TMP_Text factoryNameText;
-    private Button selectBtn;
+    private Button addBtn;
+    private Button subBtn;
     
     /// <summary>
     /// 绑定的数据
@@ -19,9 +20,14 @@ public class ProducerListItem : BaseListItem
     public ProducerItemData ItemData { get; private set; }
     
     /// <summary>
-    /// 选中回调（可选，用于通知父面板）
+    /// 添加回调（用于通知父面板增加单位生产）
     /// </summary>
-    public Action<ProducerListItem> OnItemSelect;
+    public Action<ProducerListItem> OnItemAdd;
+    
+    /// <summary>
+    /// 减少回调（用于通知父面板减少单位生产）
+    /// </summary>
+    public Action<ProducerListItem> OnItemSub;
     
     public ProducerListItem(GameObject __target) : base(__target)
     {
@@ -29,8 +35,10 @@ public class ProducerListItem : BaseListItem
         iconImage = __target.transform.Find("Image")?.GetComponent<Image>();
         producerNameText = __target.transform.Find("ProducerName")?.GetComponent<TMP_Text>();
         factoryNameText = __target.transform.Find("FactoryName")?.GetComponent<TMP_Text>();
-        selectBtn = __target.transform.Find("Button")?.GetComponent<Button>();
-        selectBtn?.onClick.AddListener(OnSelectClick);
+        addBtn = __target.transform.Find("AddBtn")?.GetComponent<Button>();
+        subBtn = __target.transform.Find("SubBtn")?.GetComponent<Button>();
+        addBtn?.onClick.AddListener(OnAddClick);
+        subBtn?.onClick.AddListener(OnSubClick);
     }
     
     /// <summary>
@@ -54,10 +62,16 @@ public class ProducerListItem : BaseListItem
             factoryNameText.text = ItemData.BelongFactory.ToString();
     }
     
-    private void OnSelectClick()
+    private void OnAddClick()
     {
-        // 触发选中回调
-        OnItemSelect?.Invoke(this);
+        // 触发添加回调
+        OnItemAdd?.Invoke(this);
+    }
+    
+    private void OnSubClick()
+    {
+        // 触发减少回调
+        OnItemSub?.Invoke(this);
     }
     
     /// <summary>
@@ -65,8 +79,10 @@ public class ProducerListItem : BaseListItem
     /// </summary>
     public override void Destroy()
     {
-        selectBtn?.onClick.RemoveListener(OnSelectClick);
-        OnItemSelect = null;
+        addBtn?.onClick.RemoveListener(OnAddClick);
+        subBtn?.onClick.RemoveListener(OnSubClick);
+        OnItemAdd = null;
+        OnItemSub = null;
         base.Destroy();
     }
 }

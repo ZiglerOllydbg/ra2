@@ -152,7 +152,8 @@ public class MainProducerSubPanel
             
             var item = new ProducerListItem(itemGo);
             item.SetData(data);
-            item.OnItemSelect = OnListItemSelect;
+            item.OnItemAdd = OnListItemAdd;
+            item.OnItemSub = OnListItemSub;
             listItems.Add(item);
         }
         
@@ -209,6 +210,24 @@ public class MainProducerSubPanel
         {
             listScrollRect.verticalNormalizedPosition = Mathf.Clamp01(normalizedPosition);
         }
+    }
+    
+    /// <summary>
+    /// 列表项添加回调
+    /// </summary>
+    private void OnListItemAdd(ProducerListItem item)
+    {
+        Debug.Log($"请求添加生产项: {item.ItemData?.Name}");
+        // TODO: 实现添加逻辑，例如发送命令增加单位生产
+    }
+    
+    /// <summary>
+    /// 列表项减少回调
+    /// </summary>
+    private void OnListItemSub(ProducerListItem item)
+    {
+        Debug.Log($"请求减少生产项: {item.ItemData?.Name}");
+        // TODO: 实现减少逻辑，例如发送命令减少单位生产
     }
     
     /// <summary>
