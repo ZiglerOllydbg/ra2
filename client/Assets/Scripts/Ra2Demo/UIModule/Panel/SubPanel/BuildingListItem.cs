@@ -6,7 +6,7 @@ using TMPro;
 /// <summary>
 /// 主面板列表项 - 继承自BaseListItem
 /// </summary>
-public class MainListItem : BaseListItem
+public class BuildingListItem : BaseListItem
 {
     private Image iconImage;
     private TMP_Text buildingNameText;
@@ -20,9 +20,9 @@ public class MainListItem : BaseListItem
     /// <summary>
     /// 选中回调（可选，用于通知父面板）
     /// </summary>
-    public Action<MainListItem> OnItemSelect;
+    public Action<BuildingListItem> OnItemSelect;
     
-    public MainListItem(GameObject __target) : base(__target)
+    public BuildingListItem(GameObject __target) : base(__target)
     {
         // 获取子组件引用
         iconImage = __target.transform.Find("Image")?.GetComponent<Image>();

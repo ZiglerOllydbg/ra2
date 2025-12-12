@@ -9,7 +9,7 @@ using ZFrame;
 /// <summary>
 /// 主面板的子面板控制器 - 封装子面板的UI逻辑和数据
 /// </summary>
-public class MainBuildSubPanel
+public class MainBuildingSubPanel
 {
     private GameObject root;
     private TMP_Text titleText;
@@ -19,7 +19,7 @@ public class MainBuildSubPanel
     private ScrollRect listScrollRect;
     private Transform listContent;      // ScrollRect的Content，列表项放这里
     private GameObject itemTemplate;
-    private List<MainListItem> listItems = new List<MainListItem>();
+    private List<BuildingListItem> listItems = new List<BuildingListItem>();
     
     /// <summary>
     /// 绑定的数据
@@ -31,7 +31,7 @@ public class MainBuildSubPanel
     /// </summary>
     public Action OnCloseClick;
     
-    public MainBuildSubPanel(Transform parent)
+    public MainBuildingSubPanel(Transform parent)
     {
         root = parent.Find("Build")?.gameObject;
         if (root == null) return;
@@ -151,7 +151,7 @@ public class MainBuildSubPanel
             
             itemGo.SetActive(true);
             
-            var item = new MainListItem(itemGo);
+            var item = new BuildingListItem(itemGo);
             item.SetData(data);
             item.OnItemSelect = OnListItemSelect;
             listItems.Add(item);
@@ -215,7 +215,7 @@ public class MainBuildSubPanel
     /// <summary>
     /// 列表项选中回调
     /// </summary>
-    private void OnListItemSelect(MainListItem item)
+    private void OnListItemSelect(BuildingListItem item)
     {
         Debug.Log($"选中了列表项: {item.ItemData?.Name}");
         Frame.DispatchEvent(new SelectBuildEvent(item.ItemData.BuildingType));

@@ -27,7 +27,7 @@ public class MainPanel : BasePanel
     private Button settingBtn;
     
     // 子面板控制器
-    private MainBuildSubPanel subPanel;
+    private MainBuildingSubPanel subPanel;
 
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -48,7 +48,7 @@ public class MainPanel : BasePanel
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
         
         // 初始化子面板
-        subPanel = new MainBuildSubPanel(PanelObject.transform);
+        subPanel = new MainBuildingSubPanel(PanelObject.transform);
         subPanel.OnCloseClick = OnSubPanelClosed;
         subPanel.Hide();
     }
