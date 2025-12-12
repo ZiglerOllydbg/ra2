@@ -7,9 +7,9 @@ using ZLockstep.Simulation.ECS;
 using ZFrame;
 
 /// <summary>
-/// 主面板的子面板控制器 - 封装子面板的UI逻辑和数据
+/// 主面板的生产子面板控制器 - 封装子面板的UI逻辑和数据
 /// </summary>
-public class MainBuildingSubPanel
+public class MainProducerSubPanel
 {
     private GameObject root;
     private TMP_Text titleText;
@@ -19,7 +19,7 @@ public class MainBuildingSubPanel
     private ScrollRect listScrollRect;
     private Transform listContent;      // ScrollRect的Content，列表项放这里
     private GameObject itemTemplate;
-    private List<BuildingListItem> listItems = new List<BuildingListItem>();
+    private List<ProducerListItem> listItems = new List<ProducerListItem>();
     
     /// <summary>
     /// 绑定的数据
@@ -31,9 +31,9 @@ public class MainBuildingSubPanel
     /// </summary>
     public Action OnCloseClick;
     
-    public MainBuildingSubPanel(Transform parent)
+    public MainProducerSubPanel(Transform parent)
     {
-        root = parent.Find("Building")?.gameObject;
+        root = parent.Find("Producer")?.gameObject;
         if (root == null) return;
         
         // 获取组件引用
@@ -60,11 +60,10 @@ public class MainBuildingSubPanel
         }
         itemTemplate?.SetActive(false); // 隐藏模板
 
-        var testData = new List<BuildItemData>
+        var testData = new List<ProducerItemData>
         {
-            new() { BuildingType = BuildingType.Smelter, Name = "采矿场", Description = "可以进行采矿" },
-            new() { BuildingType = BuildingType.PowerPlant, Name = "电厂", Description = "可以进行发电" },
-            new() { BuildingType = BuildingType.Factory, Name = "坦克工厂", Description = "可以进行建造坦克" },
+            new() { Name = "动员兵", BelongFactory = BuildingType.Factory, Description = "基础步兵单位", UnitType = UnitType.Infantry },
+            new() { Name = "坦克", BelongFactory = BuildingType.Factory, Description = "重装甲战斗单位", UnitType = UnitType.Tank },
         };
         RefreshList(testData);
     }
@@ -115,7 +114,7 @@ public class MainBuildingSubPanel
     /// 刷新列表数据
     /// 注意：Content 节点需要添加 VerticalLayoutGroup 或 HorizontalLayoutGroup 组件来自动排列子项
     /// </summary>
-    public void RefreshList(List<BuildItemData> dataList)
+    public void RefreshList(List<ProducerItemData> dataList)
     {
         ClearList();
         
@@ -151,7 +150,7 @@ public class MainBuildingSubPanel
             
             itemGo.SetActive(true);
             
-            var item = new BuildingListItem(itemGo);
+            var item = new ProducerListItem(itemGo);
             item.SetData(data);
             item.OnItemSelect = OnListItemSelect;
             listItems.Add(item);
@@ -215,10 +214,10 @@ public class MainBuildingSubPanel
     /// <summary>
     /// 列表项选中回调
     /// </summary>
-    private void OnListItemSelect(BuildingListItem item)
+    private void OnListItemSelect(ProducerListItem item)
     {
-        Debug.Log($"选中了列表项: {item.ItemData?.Name}");
-        Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
+        Debug.Log($"选中了生产项: {item.ItemData?.Name}");
+        Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BelongFactory));
         Hide();
     }
     

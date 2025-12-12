@@ -1275,7 +1275,7 @@ GameObject:
   - component: {fileID: 324708485049460859}
   - component: {fileID: 1939755703675036901}
   m_Layer: 5
-  m_Name: ProduceBtn
+  m_Name: ProducerBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2174,7 +2174,7 @@ GameObject:
   - component: {fileID: 1884600032236071429}
   - component: {fileID: 7328805798671662105}
   m_Layer: 5
-  m_Name: BuildBtn
+  m_Name: BuildingBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2295,7 +2295,7 @@ GameObject:
   - component: {fileID: 2789755537290162646}
   - component: {fileID: 3642722517507226658}
   m_Layer: 0
-  m_Name: ProduceName
+  m_Name: ProducerName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5146,7 +5146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3452677575791237408}
   m_Layer: 5
-  m_Name: Produce
+  m_Name: Producer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5185,7 +5185,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6211102640260425098}
   m_Layer: 5
-  m_Name: Build
+  m_Name: Building
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

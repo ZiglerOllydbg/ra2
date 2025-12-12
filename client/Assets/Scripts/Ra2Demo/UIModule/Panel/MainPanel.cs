@@ -25,9 +25,13 @@ public class MainPanel : BasePanel
     private Button selectBtn;
     private Button buildBtn;
     private Button settingBtn;
+    private Button producerBtn; // 新增生产按钮引用
     
     // 子面板控制器
-    private MainBuildingSubPanel subPanel;
+    private MainBuildingSubPanel buildingSubPanel;
+
+    // 生产按钮子子面板
+    private MainProducerSubPanel producerSubPanel;
 
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -44,13 +48,19 @@ public class MainPanel : BasePanel
         
         // 获取按钮组件
         selectBtn = PanelObject.transform.Find("SelectBtn")?.GetComponent<Button>();
-        buildBtn = PanelObject.transform.Find("BuildBtn")?.GetComponent<Button>();
+        buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
+        producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>(); // 新增生产按钮
         
-        // 初始化子面板
-        subPanel = new MainBuildingSubPanel(PanelObject.transform);
-        subPanel.OnCloseClick = OnSubPanelClosed;
-        subPanel.Hide();
+        // 初始化建造子面板
+        buildingSubPanel = new MainBuildingSubPanel(PanelObject.transform);
+        buildingSubPanel.OnCloseClick = OnSubPanelClosed;
+        buildingSubPanel.Hide();
+
+        // 初始化生产子面板
+        producerSubPanel = new MainProducerSubPanel(PanelObject.transform);
+        producerSubPanel.OnCloseClick = OnSubPanelClosed;
+        producerSubPanel.Hide();
     }
 
     protected override void AddEvent()
@@ -71,6 +81,12 @@ public class MainPanel : BasePanel
         if (settingBtn != null)
         {
             settingBtn.onClick.AddListener(OnSettingButtonClick);
+        }
+
+        // 新增生产按钮事件监听
+        if (producerBtn != null)
+        {
+            producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
     }
 
@@ -93,6 +109,12 @@ public class MainPanel : BasePanel
         {
             settingBtn.onClick.RemoveListener(OnSettingButtonClick);
         }
+
+        // 移除生产按钮事件监听
+        if (producerBtn != null)
+        {
+            producerBtn.onClick.RemoveListener(OnProducerButtonClick);
+        }
     }
     
     protected override void OnBecameInvisible()
@@ -100,8 +122,11 @@ public class MainPanel : BasePanel
         base.OnBecameInvisible();
         
         // 清理子面板
-        subPanel?.Destroy();
-        subPanel = null;
+        buildingSubPanel?.Destroy();
+        buildingSubPanel = null;
+
+        producerSubPanel?.Destroy();
+        producerSubPanel = null;
     }
 
     /// <summary>
@@ -167,22 +192,6 @@ public class MainPanel : BasePanel
     #region 子面板控制
     
     /// <summary>
-    /// 显示子面板并传入数据
-    /// </summary>
-    public void ShowSubPanel(SubPanelData data)
-    {
-        subPanel?.Show(data);
-    }
-    
-    /// <summary>
-    /// 隐藏子面板
-    /// </summary>
-    public void HideSubPanel()
-    {
-        subPanel?.Hide();
-    }
-    
-    /// <summary>
     /// 子面板关闭回调
     /// </summary>
     private void OnSubPanelClosed()
@@ -197,7 +206,7 @@ public class MainPanel : BasePanel
     public void RefreshList(List<DemoItemData> dataList)
     {
         // 确保子面板已经显示
-        if (subPanel != null)
+        if (buildingSubPanel != null)
         {
             // 这里可以根据实际需要决定是否自动显示子面板
             // ShowSubPanel(new SubPanelData { Title = "列表面板", Content = "这是一个列表" });
@@ -229,8 +238,28 @@ public class MainPanel : BasePanel
             Content = "请选择要建造的建筑" 
         };
         
+        producerSubPanel.Hide();
         // 显示子面板
-        ShowSubPanel(subPanelData);
+        buildingSubPanel.Show(subPanelData);
+    }
+
+    /// <summary>
+    /// 生产按钮点击处理 - 打开生产子面板
+    /// </summary>
+    private void OnProducerButtonClick()
+    {
+        Debug.Log("Producer按钮被点击了！");
+        
+        // 创建子面板数据
+        var subPanelData = new SubPanelData 
+        { 
+            Title = "生产菜单", 
+            Content = "请选择要生产的单位" 
+        };
+        
+        buildingSubPanel.Hide();
+        // 显示子面板
+        producerSubPanel.Show(subPanelData);
     }
     
     /// <summary>
