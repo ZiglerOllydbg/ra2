@@ -113,7 +113,7 @@ public class MainProducerSubPanel
         // 检查面板是否处于激活状态
         if (root != null && root.activeInHierarchy)
         {
-            RefreshProducerList(); // 复用已有的刷新逻辑
+            UpdateProducerListData(); // 只更新数据，不重建控件
             
             // 重新启动定时器以实现持续刷新
             if (refreshTimerId != -1)
@@ -181,6 +181,69 @@ public class MainProducerSubPanel
     }
     
     /// <summary>
+    /// 更新生产者列表数据，不重建控件
+    /// </summary>
+    private void UpdateProducerListData()
+    {
+        if (game == null || listItems == null)
+            return;
+
+        // 查找所有具有ProduceComponent的实体
+        var entities = game.World.ComponentManager.GetAllEntityIdsWith<ProduceComponent>();
+        
+        int itemIndex = 0;
+        foreach (var entityId in entities)
+        {
+            var entity = new Entity(entityId);
+            if (game.World.ComponentManager.HasComponent<ProduceComponent>(entity))
+            {
+                var produceComponent = game.World.ComponentManager.GetComponent<ProduceComponent>(entity);
+                
+                // 为每个支持的单位类型更新ProducerItemData
+                foreach (var unitType in produceComponent.SupportedUnitTypes)
+                {
+                    if (itemIndex >= listItems.Count)
+                        return; // 避免索引越界
+                    
+                    // 获取当前生产数量
+                    int currentProduceCount = 0;
+                    if (produceComponent.ProduceNumbers.ContainsKey(unitType))
+                    {
+                        currentProduceCount = produceComponent.ProduceNumbers[unitType];
+                    }
+                    
+                    // 获取当前生产进度
+                    int productionProgressPercentage = 0;
+                    if (produceComponent.ProduceProgress.ContainsKey(unitType))
+                    {
+                        productionProgressPercentage = produceComponent.ProduceProgress[unitType];
+                    }
+                    
+                    // 构造带生产数量和进度的名称
+                    string displayName = GetUnitTypeName(unitType);
+                    if (currentProduceCount > 0)
+                    {
+                        displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
+                    }
+                    
+                    var itemData = new ProducerItemData
+                    {
+                        Name = displayName,
+                        BelongFactory = "坦克工厂" + entityId,
+                        Description = GetUnitTypeDescription(unitType),
+                        UnitType = unitType,
+                        FactoryEntityId = entityId,
+                    };
+                    
+                    // 更新对应索引的列表项数据
+                    listItems[itemIndex].SetData(itemData);
+                    itemIndex++;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
     /// 获取单位类型名称
     /// </summary>
     private string GetUnitTypeName(UnitType unitType)
@@ -188,7 +251,7 @@ public class MainProducerSubPanel
         switch (unitType)
         {
             case UnitType.Infantry: return "动员兵";
-            case UnitType.Tank: return "坦克";
+            case UnitType.Tank: return "坦克($300)";
             case UnitType.Harvester: return "矿车";
             default: return $"单位{unitType}";
         }

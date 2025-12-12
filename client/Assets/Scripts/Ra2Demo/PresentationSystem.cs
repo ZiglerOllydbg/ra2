@@ -124,7 +124,7 @@ namespace ZLockstep.View.Systems
             {
                 // 这里可以添加处理资金变化的逻辑
                 // 例如：更新UI上的资金显示
-                Debug.Log($"[PresentationSystem] 阵营{evt.CampId}资金变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
+                // Debug.Log($"[PresentationSystem] 阵营{evt.CampId}资金变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
                 Frame.DispatchEvent(new EconomyEvent());
             }
 

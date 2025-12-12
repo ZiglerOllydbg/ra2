@@ -62,9 +62,9 @@ public class MainBuildingSubPanel
 
         var testData = new List<BuildItemData>
         {
-            new() { BuildingType = BuildingType.Smelter, Name = "采矿场", Description = "可以进行采矿" },
-            new() { BuildingType = BuildingType.PowerPlant, Name = "电厂", Description = "可以进行发电" },
-            new() { BuildingType = BuildingType.Factory, Name = "坦克工厂", Description = "可以进行建造坦克" },
+            new() { BuildingType = BuildingType.Smelter, Name = "采矿场($800)", Description = "可以进行采矿" },
+            new() { BuildingType = BuildingType.PowerPlant, Name = "电厂($500)", Description = "可以进行发电" },
+            new() { BuildingType = BuildingType.Factory, Name = "坦克工厂($1000)", Description = "可以进行建造坦克" },
         };
         RefreshList(testData);
     }
