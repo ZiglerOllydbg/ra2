@@ -2,11 +2,11 @@ using Game.RA2.Client;
 using ZFrame;
 using ZLockstep.Simulation.ECS;
 
-public class SelectBuildEvent : ModuleEvent
+public class SelectBuildingEvent : ModuleEvent
 {
     public BuildingType BuildingType { get; private set; }
 
-    public SelectBuildEvent(BuildingType buildingType) : base()
+    public SelectBuildingEvent(BuildingType buildingType) : base()
     {
         BuildingType = buildingType;
     }
