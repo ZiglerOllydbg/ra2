@@ -6,7 +6,7 @@ using TMPro;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZFrame;
-using Game.Examples;
+using ZLib;
 
 /// <summary>
 /// 主面板的生产子面板控制器 - 封装子面板的UI逻辑和数据
@@ -24,7 +24,11 @@ public class MainProducerSubPanel
     private List<ProducerListItem> listItems = new List<ProducerListItem>();
     
     // 添加游戏实例引用
-    private BattleGame game;
+    private ZLockstep.Sync.Game game;
+    
+    // 定时刷新相关
+    private int refreshTimerId = -1;
+    private const float REFRESH_INTERVAL = 0.1f; // 每秒刷新一次
     
     /// <summary>
     /// 绑定的数据
@@ -69,7 +73,7 @@ public class MainProducerSubPanel
     /// <summary>
     /// 设置游戏实例引用
     /// </summary>
-    public void SetGameContext(BattleGame game)
+    public void SetGameContext(ZLockstep.Sync.Game game)
     {
         this.game = game;
     }
@@ -79,13 +83,47 @@ public class MainProducerSubPanel
     /// </summary>
     public void Show(SubPanelData data)
     {
-        OnShowBefore();
+        RefreshProducerList();
         Data = data;
         UpdateUI();
         SetActive(true);
+        
+        // 启动定时刷新
+        StartAutoRefresh();
     }
 
-    private void OnShowBefore()
+    private void StartAutoRefresh()
+    {
+        // 如果已经有定时器在运行，先停止它
+        if (refreshTimerId != -1)
+        {
+            // 注意：这里可能需要根据实际的API来停止定时器
+            refreshTimerId = -1;
+        }
+        
+        // 启动新的定时器，每秒刷新一次
+        refreshTimerId = Tick.SetTimeout(RefreshProductionData, REFRESH_INTERVAL);
+    }
+    
+    /// <summary>
+    /// 刷新生产数据
+    /// </summary>
+    private void RefreshProductionData()
+    {
+        // 检查面板是否处于激活状态
+        if (root != null && root.activeInHierarchy)
+        {
+            RefreshProducerList(); // 复用已有的刷新逻辑
+            
+            // 重新启动定时器以实现持续刷新
+            if (refreshTimerId != -1)
+            {
+                refreshTimerId = Tick.SetTimeout(RefreshProductionData, REFRESH_INTERVAL);
+            }
+        }
+    }
+    
+    private void RefreshProducerList()
     {
         // 获取建筑列表
         if (game == null)
@@ -176,6 +214,17 @@ public class MainProducerSubPanel
     public void Hide()
     {
         SetActive(false);
+        // 停止定时刷新
+        StopAutoRefresh();
+    }
+    
+    private void StopAutoRefresh()
+    {
+        if (refreshTimerId != -1)
+        {
+            // 注意：这里可能需要根据实际的API来停止定时器
+            refreshTimerId = -1;
+        }
     }
     
     /// <summary>
@@ -362,6 +411,9 @@ public class MainProducerSubPanel
     {
         closeBtn?.onClick.RemoveListener(OnClose);
         OnCloseClick = null;
+        
+        // 停止定时刷新
+        StopAutoRefresh();
         
         // 清理列表
         ClearList();
