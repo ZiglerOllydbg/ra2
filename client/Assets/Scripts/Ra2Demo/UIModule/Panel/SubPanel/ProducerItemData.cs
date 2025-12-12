@@ -13,7 +13,7 @@ public class ProducerItemData
     /// <summary>
     /// 所属工厂
     /// </summary>
-    public BuildingType BelongFactory;
+    public string BelongFactory;
     
     /// <summary>
     /// 描述
@@ -24,4 +24,9 @@ public class ProducerItemData
     /// 单位类型
     /// </summary>
     public UnitType UnitType;
+    
+    /// <summary>
+    /// 工厂实体ID
+    /// </summary>
+    public int FactoryEntityId;
 }

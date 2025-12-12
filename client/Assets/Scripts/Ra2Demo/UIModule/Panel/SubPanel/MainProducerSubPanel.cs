@@ -4,7 +4,9 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using ZLockstep.Simulation.ECS;
+using ZLockstep.Simulation.ECS.Components;
 using ZFrame;
+using Game.Examples;
 
 /// <summary>
 /// 主面板的生产子面板控制器 - 封装子面板的UI逻辑和数据
@@ -20,6 +22,9 @@ public class MainProducerSubPanel
     private Transform listContent;      // ScrollRect的Content，列表项放这里
     private GameObject itemTemplate;
     private List<ProducerListItem> listItems = new List<ProducerListItem>();
+    
+    // 添加游戏实例引用
+    private BattleGame game;
     
     /// <summary>
     /// 绑定的数据
@@ -59,13 +64,14 @@ public class MainProducerSubPanel
             itemTemplate = listContent.Find("ItemTemplate")?.gameObject;
         }
         itemTemplate?.SetActive(false); // 隐藏模板
-
-        var testData = new List<ProducerItemData>
-        {
-            new() { Name = "动员兵", BelongFactory = BuildingType.Factory, Description = "基础步兵单位", UnitType = UnitType.Infantry },
-            new() { Name = "坦克", BelongFactory = BuildingType.Factory, Description = "重装甲战斗单位", UnitType = UnitType.Tank },
-        };
-        RefreshList(testData);
+    }
+    
+    /// <summary>
+    /// 设置游戏实例引用
+    /// </summary>
+    public void SetGameContext(BattleGame game)
+    {
+        this.game = game;
     }
     
     /// <summary>
@@ -73,9 +79,95 @@ public class MainProducerSubPanel
     /// </summary>
     public void Show(SubPanelData data)
     {
+        OnShowBefore();
         Data = data;
         UpdateUI();
         SetActive(true);
+    }
+
+    private void OnShowBefore()
+    {
+        // 获取建筑列表
+        if (game == null)
+            return;
+
+        // 查找所有具有ProduceComponent的实体
+        var entities = game.World.ComponentManager.GetAllEntityIdsWith<ProduceComponent>();
+        var dataList = new List<ProducerItemData>();
+        
+        foreach (var entityId in entities)
+        {
+            var entity = new Entity(entityId);
+            if (game.World.ComponentManager.HasComponent<ProduceComponent>(entity))
+            {
+                var produceComponent = game.World.ComponentManager.GetComponent<ProduceComponent>(entity);
+                
+                // 为每个支持的单位类型创建一个ProducerItemData
+                foreach (var unitType in produceComponent.SupportedUnitTypes)
+                {
+                    // 获取当前生产数量
+                    int currentProduceCount = 0;
+                    if (produceComponent.ProduceNumbers.ContainsKey(unitType))
+                    {
+                        currentProduceCount = produceComponent.ProduceNumbers[unitType];
+                    }
+                    
+                    // 获取当前生产进度
+                    int productionProgressPercentage = 0;
+                    if (produceComponent.ProduceProgress.ContainsKey(unitType))
+                    {
+                        productionProgressPercentage = produceComponent.ProduceProgress[unitType];
+                    }
+                    
+                    // 构造带生产数量和进度的名称
+                    string displayName = GetUnitTypeName(unitType);
+                    if (currentProduceCount > 0)
+                    {
+                        displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
+                    }
+                    
+                    var itemData = new ProducerItemData
+                    {
+                        Name = displayName,
+                        BelongFactory = "坦克工厂" + entityId,
+                        Description = GetUnitTypeDescription(unitType),
+                        UnitType = unitType,
+                        FactoryEntityId = entityId,
+                    };
+                    dataList.Add(itemData);
+                }
+            }
+        }
+        
+        RefreshList(dataList);
+    }
+    
+    /// <summary>
+    /// 获取单位类型名称
+    /// </summary>
+    private string GetUnitTypeName(UnitType unitType)
+    {
+        switch (unitType)
+        {
+            case UnitType.Infantry: return "动员兵";
+            case UnitType.Tank: return "坦克";
+            case UnitType.Harvester: return "矿车";
+            default: return $"单位{unitType}";
+        }
+    }
+    
+    /// <summary>
+    /// 获取单位类型描述
+    /// </summary>
+    private string GetUnitTypeDescription(UnitType unitType)
+    {
+        switch (unitType)
+        {
+            case UnitType.Infantry: return "基础步兵单位";
+            case UnitType.Tank: return "重装甲战斗单位";
+            case UnitType.Harvester: return "采集矿物单位";
+            default: return $"单位类型{unitType}";
+        }
     }
     
     /// <summary>
@@ -218,7 +310,11 @@ public class MainProducerSubPanel
     private void OnListItemAdd(ProducerListItem item)
     {
         Debug.Log($"请求添加生产项: {item.ItemData?.Name}");
-        // TODO: 实现添加逻辑，例如发送命令增加单位生产
+        // 实现添加逻辑，例如发送命令增加单位生产
+        if (item.ItemData != null && game != null)
+        {
+            SendProduceCommand(item.ItemData.FactoryEntityId, item.ItemData.UnitType, 1);
+        }
     }
     
     /// <summary>
@@ -227,17 +323,36 @@ public class MainProducerSubPanel
     private void OnListItemSub(ProducerListItem item)
     {
         Debug.Log($"请求减少生产项: {item.ItemData?.Name}");
-        // TODO: 实现减少逻辑，例如发送命令减少单位生产
+        // 实现减少逻辑，例如发送命令减少单位生产
+        if (item.ItemData != null && game != null)
+        {
+            SendProduceCommand(item.ItemData.FactoryEntityId, item.ItemData.UnitType, -1);
+        }
     }
     
     /// <summary>
-    /// 列表项选中回调
+    /// 发送生产命令
     /// </summary>
-    private void OnListItemSelect(ProducerListItem item)
+    /// <param name="factoryEntityId">工厂实体ID</param>
+    /// <param name="unitType">单位类型</param>
+    /// <param name="changeValue">变化值</param>
+    private void SendProduceCommand(int factoryEntityId, UnitType unitType, int changeValue)
     {
-        Debug.Log($"选中了生产项: {item.ItemData?.Name}");
-        Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BelongFactory));
-        Hide();
+        if (game == null || factoryEntityId == -1)
+            return;
+
+        var produceCommand = new ZLockstep.Sync.Command.Commands.ProduceCommand(
+            campId: 0,
+            entityId: factoryEntityId,
+            unitType: unitType,
+            changeValue: changeValue
+        )
+        {
+            Source = ZLockstep.Sync.Command.CommandSource.Local
+        };
+
+        game.SubmitCommand(produceCommand);
+        Debug.Log($"[Test] 发送生产命令: 工厂{factoryEntityId} 单位类型{unitType} 变化值{changeValue}");
     }
     
     /// <summary>

@@ -26,6 +26,8 @@ public class MainPanel : BasePanel
     private Button buildBtn;
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
+
+    public Ra2Demo Ra2Demo { get; set; }
     
     // 子面板控制器
     private MainBuildingSubPanel buildingSubPanel;
@@ -61,6 +63,7 @@ public class MainPanel : BasePanel
         producerSubPanel = new MainProducerSubPanel(PanelObject.transform);
         producerSubPanel.OnCloseClick = OnSubPanelClosed;
         producerSubPanel.Hide();
+        producerSubPanel.SetGameContext(Ra2Demo.GetBattleGame());
     }
 
     protected override void AddEvent()

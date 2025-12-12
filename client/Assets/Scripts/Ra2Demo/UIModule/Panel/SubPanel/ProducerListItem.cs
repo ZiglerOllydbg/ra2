@@ -59,7 +59,7 @@ public class ProducerListItem : BaseListItem
             producerNameText.text = ItemData.Name;
             
         if (factoryNameText != null && ItemData != null)
-            factoryNameText.text = ItemData.BelongFactory.ToString();
+            factoryNameText.text = ItemData.BelongFactory;
     }
     
     private void OnAddClick()

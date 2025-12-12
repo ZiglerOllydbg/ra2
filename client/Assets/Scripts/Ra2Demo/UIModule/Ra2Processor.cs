@@ -106,8 +106,10 @@ public class Ra2Processor : BaseProcessor
                     // 匹配成功
                     zUDebug.Log("[Ra2Processor] 开始游戏");
                     LoadingPanel.Close();
-                    MainPanel.Open();
 
+                    MainPanel.Ra2Demo = _ra2Demo;
+                    MainPanel.Open();
+                    
                     RefreshEconomy();
                 }
                 break;
