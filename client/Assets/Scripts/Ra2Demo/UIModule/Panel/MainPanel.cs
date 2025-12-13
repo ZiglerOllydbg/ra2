@@ -4,6 +4,7 @@ using ZFrame;
 using TMPro;
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
+using ZLib;
 
 /// <summary>
 /// 主面板 - 游戏主界面
@@ -26,6 +27,15 @@ public class MainPanel : BasePanel
     private Button buildBtn;
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
+
+    // 消息提示相关
+    private TMP_Text messageText;
+    private CanvasGroup messageCanvasGroup;
+    private int messageTimerId = 0;
+    private float fadeStartTime = -1f;
+    private const float DISPLAY_DURATION = 3f;
+    private const float FADE_START_TIME = 2f;
+    private const float FADE_DURATION = 1f;
 
     public Ra2Demo Ra2Demo { get; set; }
     
@@ -53,6 +63,20 @@ public class MainPanel : BasePanel
         buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
         producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>(); // 新增生产按钮
+        
+        // 获取消息提示组件
+        var messageGroup = PanelObject.transform.Find("Tips");
+        if (messageGroup != null) 
+        {
+            messageCanvasGroup = messageGroup.GetComponent<CanvasGroup>();
+            if (messageCanvasGroup == null)
+                messageCanvasGroup = messageGroup.gameObject.AddComponent<CanvasGroup>();
+            
+            // 初始隐藏消息
+            messageCanvasGroup.alpha = 0;
+        }
+
+        messageText = PanelObject.transform.Find("Tips/Message")?.GetComponent<TMP_Text>();
         
         // 初始化建造子面板
         buildingSubPanel = new MainBuildingSubPanel(PanelObject.transform);
@@ -130,6 +154,13 @@ public class MainPanel : BasePanel
 
         producerSubPanel?.Destroy();
         producerSubPanel = null;
+        
+        // 停止正在进行的消息显示定时器
+        if (messageTimerId != 0)
+        {
+            Tick.ClearTimeout(messageTimerId);
+            messageTimerId = 0;
+        }
     }
 
     /// <summary>
@@ -192,6 +223,65 @@ public class MainPanel : BasePanel
         powerText = text;
     }
     
+    #region 消息提示系统
+    
+    /// <summary>
+    /// 显示消息提示，持续3秒，2秒后开始淡出
+    /// </summary>
+    /// <param name="message">要显示的消息内容</param>
+    public void ShowMessage(string message)
+    {
+        if (messageText == null || messageCanvasGroup == null) return;
+        
+        // 如果已经有消息正在显示，则停止它
+        if (messageTimerId != 0)
+        {
+            Tick.ClearTimeout(messageTimerId);
+            messageTimerId = 0;
+        }
+        
+        // 设置消息文本
+        messageText.text = message;
+        
+        // 显示消息 (alpha从0到1)
+        messageCanvasGroup.alpha = 1f;
+        
+        // 启动新的消息显示定时器
+        messageTimerId = Tick.SetTimeout(StartFadeOut, FADE_START_TIME);
+    }
+    
+    /// <summary>
+    /// 开始淡出消息
+    /// </summary>
+    private void StartFadeOut()
+    {
+        messageTimerId = Tick.SetInterval(FadeOut, 0.02f); // 每0.02秒更新一次淡出效果
+        fadeStartTime = Time.time;
+    }
+    
+    /// <summary>
+    /// 淡出消息
+    /// </summary>
+    private void FadeOut()
+    {
+        float elapsed = Time.time - fadeStartTime;
+        if (elapsed >= FADE_DURATION)
+        {
+            // 淡出完成
+            messageCanvasGroup.alpha = 0f;
+            messageText.text = "";
+            Tick.ClearTimeout(messageTimerId);
+            messageTimerId = 0;
+        }
+        else
+        {
+            // 更新透明度
+            messageCanvasGroup.alpha = 1f - (elapsed / FADE_DURATION);
+        }
+    }
+    
+    #endregion
+    
     #region 子面板控制
     
     /// <summary>
@@ -225,6 +315,7 @@ public class MainPanel : BasePanel
     private void OnSelectButtonClick()
     {
         Debug.Log("Select按钮被点击了！");
+        ShowMessage("选择了单位");
     }
     
     /// <summary>
@@ -233,17 +324,24 @@ public class MainPanel : BasePanel
     private void OnBuildButtonClick()
     {
         Debug.Log("Build按钮被点击了！");
-        
-        // 创建子面板数据
-        var subPanelData = new SubPanelData 
-        { 
-            Title = "建造菜单", 
-            Content = "请选择要建造的建筑" 
-        };
-        
+
         producerSubPanel.Hide();
-        // 显示子面板
-        buildingSubPanel.Show(subPanelData);
+
+        if (buildingSubPanel.IsVisiable())
+        {
+            buildingSubPanel.Hide();
+        }
+        else
+        {
+            // 创建子面板数据
+            var subPanelData = new SubPanelData
+            {
+                Title = "建造菜单",
+                Content = "请选择要建造的建筑"
+            };
+            // 显示子面板
+            buildingSubPanel.Show(subPanelData);
+        }
     }
 
     /// <summary>
@@ -253,16 +351,23 @@ public class MainPanel : BasePanel
     {
         Debug.Log("Producer按钮被点击了！");
         
-        // 创建子面板数据
-        var subPanelData = new SubPanelData 
-        { 
-            Title = "生产菜单", 
-            Content = "请选择要生产的单位" 
-        };
-        
         buildingSubPanel.Hide();
-        // 显示子面板
-        producerSubPanel.Show(subPanelData);
+
+        if (producerSubPanel.IsVisiable())
+        {
+            producerSubPanel.Hide();
+        }
+        else
+        {
+            // 创建子面板数据
+            var subPanelData = new SubPanelData
+            {
+                Title = "生产菜单",
+                Content = "请选择要生产的单位"
+            };
+            // 显示子面板
+            producerSubPanel.Show(subPanelData);
+        }
     }
     
     /// <summary>
@@ -271,5 +376,6 @@ public class MainPanel : BasePanel
     private void OnSettingButtonClick()
     {
         Debug.Log("Setting按钮被点击了！");
+        ShowMessage("打开设置面板");
     }
 }
