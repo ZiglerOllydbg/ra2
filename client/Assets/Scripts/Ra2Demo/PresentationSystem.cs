@@ -111,7 +111,22 @@ namespace ZLockstep.View.Systems
 
             // 6. 同步已有的View
             SyncAllViews();
+
+            // 7. 消息提示
+            ProcessShowMessage();
         }
+
+        private void ProcessShowMessage()
+        {
+            var events = EventManager.GetEvents<MessageEvent>();
+            foreach (var evt in events)
+            {
+                // 显示消息提示
+                Debug.Log($"[PresentationSystem] 显示消息：{evt.Message}");
+                Frame.DispatchEvent(new ShowMessageEvent(evt.Message));
+            }
+        }
+
 
         /// <summary>
         /// 处理经济变化事件（资金和电力变化）

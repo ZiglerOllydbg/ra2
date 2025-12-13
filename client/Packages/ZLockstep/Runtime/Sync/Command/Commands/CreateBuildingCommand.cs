@@ -50,6 +50,7 @@ namespace ZLockstep.Sync.Command.Commands
                 if (!BuildingPlacementUtils.CheckBuildableArea(world, Position, BuildingType, CampId))
                 {
                     UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：超出主城建造范围");
+                    world.EventManager.Publish(new MessageEvent($"建造失败：超出主城建造范围"));
                     return;
                 }
             }
@@ -59,6 +60,7 @@ namespace ZLockstep.Sync.Command.Commands
                 if (!CheckMineProximity(world, Position))
                 {
                     UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造采矿场 在位置{Position} 失败：不在矿源附近");
+                    world.EventManager.Publish(new MessageEvent($"建造采矿场失败：不在矿源附近"));
                     return;
                 }
             }
@@ -68,6 +70,7 @@ namespace ZLockstep.Sync.Command.Commands
             if (!BuildingPlacementUtils.CheckBuildingPlacement(BuildingType, Position, mapManager))
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
+                world.EventManager.Publish(new MessageEvent("无法建造建筑，请检查资源是否充足"));
                 return;
             }
 
@@ -181,12 +184,21 @@ namespace ZLockstep.Sync.Command.Commands
             if (economyComponent.Money < costMoney)
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
+
+                world.EventManager.Publish(new MessageEvent
+                {
+                    Message = "资金不足！"
+                });
                 return false;
             }
 
             if (economyComponent.Power < costPower)
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
+                world.EventManager.Publish(new MessageEvent
+                {
+                    Message = "电力不足！"
+                });
                 return false;
             }
             

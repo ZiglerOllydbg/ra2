@@ -63,6 +63,7 @@ public class Ra2Processor : BaseProcessor
             typeof(GameStartEvent),
             typeof(EconomyEvent),
             typeof(SelectBuildingEvent),
+            typeof(ShowMessageEvent)
         };
     }
 
@@ -118,6 +119,9 @@ public class Ra2Processor : BaseProcessor
                 break;
             case SelectBuildingEvent e:
                 _ra2Demo.StartBuildingPlacement(e.BuildingType);
+                break;
+            case ShowMessageEvent e:
+                MainPanel.ShowMessage(e.Message);
                 break;
         }
     }
