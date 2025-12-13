@@ -86,6 +86,11 @@ public class MainBuildingSubPanel
     {
         SetActive(false);
     }
+
+    public bool IsVisiable()
+    {
+        return root != null && root.activeSelf;
+    }
     
     /// <summary>
     /// 刷新UI显示

@@ -282,6 +282,11 @@ public class MainProducerSubPanel
         // 停止定时刷新
         StopAutoRefresh();
     }
+
+    public bool IsVisiable()
+    {
+        return root?.activeSelf ?? false;
+    }
     
     private void StopAutoRefresh()
     {
