@@ -13,6 +13,8 @@ namespace ZLockstep.Simulation.ECS.Systems
     {
 
         private bool _gameOver = false;
+        private bool _canCheckGameOver = false;
+        private int _startTick;
 
         public SettlementSystem()
         {
@@ -38,11 +40,28 @@ namespace ZLockstep.Simulation.ECS.Systems
         
         public override void Update()
         {
+            // 记录起始帧
+            if (_startTick == 0)
+                _startTick = Tick;
+            
+            // 10秒后才允许检测游戏结束条件
+            if (!_canCheckGameOver)
+            {
+                // 计算经过的时间（秒）
+                zfloat elapsedTime = (Tick - _startTick) * DeltaTime;
+                if (elapsedTime >= new zfloat(3)) // 10秒后
+                {
+                    _canCheckGameOver = true;
+                }
+            }
+
             // 如果游戏已经结束，不再检查结束条件
             if (_gameOver)
                 return;
                 
-            CheckGameOverCondition();
+            // 10秒后开始检查游戏结束条件
+            if (_canCheckGameOver)
+                CheckGameOverCondition();
         }
         
         /// <summary>
