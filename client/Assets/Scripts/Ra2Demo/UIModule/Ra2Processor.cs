@@ -141,8 +141,8 @@ public class Ra2Processor : BaseProcessor
                 break;
             case SettleEvent e:
                 MainPanel.Close();
-                SettlePanel.SetResult(e.IsVictory);
                 SettlePanel.Open();
+                SettlePanel.SetResult(e.IsVictory);
                 break;
             case RestartGameEvent e:
                 _ra2Demo.RestartGame();

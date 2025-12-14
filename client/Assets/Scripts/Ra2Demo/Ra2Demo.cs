@@ -383,21 +383,6 @@ public class Ra2Demo : MonoBehaviour
         }
     }
 
-    private int BuildingTypeToPrefabId(BuildingType buildingType)
-    {
-        switch (buildingType)
-        {
-            case BuildingType.Smelter:
-                return 3;
-            case BuildingType.PowerPlant:
-                return 4;
-            case BuildingType.Factory:
-                return 5;
-            default:
-                return -1;
-        }
-    }
-
     /// <summary>
     /// 更新建筑预览位置
     /// </summary>

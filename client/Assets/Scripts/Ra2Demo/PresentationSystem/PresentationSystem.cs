@@ -43,11 +43,6 @@ namespace ZLockstep.View.Systems
         // 添加对Game对象的引用
         private ZLockstep.Sync.Game _game;
 
-        // 游戏结束状态变量
-        public bool IsGameOver { get; private set; } = false;
-        public bool IsVictory { get; private set; } = false;
-        public int WinningCampId { get; private set; } = -1;
-
         /// <summary>
         /// 初始化系统（由GameWorldBridge调用）
         /// </summary>
@@ -70,11 +65,6 @@ namespace ZLockstep.View.Systems
             {
                 Object.Destroy(_viewRoot.GetChild(i).gameObject);
             }
-
-            // 清理游戏结束状态
-            IsGameOver = false;
-            IsVictory = false;
-            WinningCampId = -1;
             
             // 清理死亡实体列表
             _dyingEntities.Clear();
@@ -259,15 +249,11 @@ namespace ZLockstep.View.Systems
         /// </summary>
         private void ProcessGameOverEvents()
         {
-            var events = EventManager.GetEvents<ZLockstep.Simulation.ECS.Systems.SettlementSystem.GameOverEvent>();
+            var events = EventManager.GetEvents<GameOverEvent>();
             foreach (var evt in events)
             {
-                IsGameOver = true;
-                IsVictory = evt.IsVictory;
-                WinningCampId = evt.WinningCampId;
-                
                 // 触发结算事件
-                Frame.DispatchEvent(new SettleEvent(IsVictory));
+                Frame.DispatchEvent(new SettleEvent(evt.IsVictory));
             }
         }
 
