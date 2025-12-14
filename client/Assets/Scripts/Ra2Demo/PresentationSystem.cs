@@ -8,7 +8,6 @@ using ZLockstep.Sync;
 using ZLockstep.View.Components;
 using static ZLockstep.Simulation.ECS.Systems.SettlementSystem;
 
-
 namespace ZLockstep.View.Systems
 {
     /// <summary>
@@ -260,12 +259,15 @@ namespace ZLockstep.View.Systems
         /// </summary>
         private void ProcessGameOverEvents()
         {
-            var events = EventManager.GetEvents<GameOverEvent>();
+            var events = EventManager.GetEvents<ZLockstep.Simulation.ECS.Systems.SettlementSystem.GameOverEvent>();
             foreach (var evt in events)
             {
                 IsGameOver = true;
                 IsVictory = evt.IsVictory;
                 WinningCampId = evt.WinningCampId;
+                
+                // 触发结算事件
+                Frame.DispatchEvent(new SettleEvent(IsVictory));
             }
         }
 

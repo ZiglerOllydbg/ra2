@@ -290,7 +290,7 @@ namespace Game.Examples
             }
             
             // TODO 调试用
-            if (initialState.Count == 2)
+            if (initialState.Count == 3)
             {
                 // 添加一个camp2的主基地，在64,64位置
                 var entityEvent = EntityCreationManager.CreateBuildingEntity(World, 2, BuildingType.Base,

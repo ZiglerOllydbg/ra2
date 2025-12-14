@@ -50,6 +50,20 @@ public class Ra2Processor : BaseProcessor
         }
     }
 
+    // 结算面板
+    private SettlePanel _settlePanel;
+    public SettlePanel SettlePanel
+    {
+        get
+        {
+            if (_settlePanel == null)
+            {
+                _settlePanel = _settlePanel.New<SettlePanel>(this, "SettlePanel");
+            }
+            return _settlePanel;
+        }
+    }
+
     public Ra2Processor(Module _module) : base(_module)
     {
     }
@@ -63,7 +77,9 @@ public class Ra2Processor : BaseProcessor
             typeof(GameStartEvent),
             typeof(EconomyEvent),
             typeof(SelectBuildingEvent),
-            typeof(ShowMessageEvent)
+            typeof(ShowMessageEvent),
+            typeof(SettleEvent),
+            typeof(RestartGameEvent)
         };
     }
 
@@ -122,6 +138,17 @@ public class Ra2Processor : BaseProcessor
                 break;
             case ShowMessageEvent e:
                 MainPanel.ShowMessage(e.Message);
+                break;
+            case SettleEvent e:
+                MainPanel.Close();
+                SettlePanel.SetResult(e.IsVictory);
+                SettlePanel.Open();
+                break;
+            case RestartGameEvent e:
+                _ra2Demo.RestartGame();
+                MainPanel.Close();
+                SettlePanel.Close();
+                MatchPanel.Open();
                 break;
         }
     }

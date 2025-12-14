@@ -46,6 +46,11 @@ public class MatchPanel : BasePanel
         
         // 加载保存的UseLocalNet选项
         LoadUseLocalNetOption();
+
+        // 显示Match按钮组
+        _matchGroup.gameObject.SetActive(true);
+        // 隐藏匹配中界面
+        _matchingGroup.gameObject.SetActive(false);
     }
 
     // 3. 在AddEvent中添加按钮事件（面板显示时自动调用）

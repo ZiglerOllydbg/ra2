@@ -606,18 +606,11 @@ public class Ra2Demo : MonoBehaviour
         buttonStyle.fixedHeight = 60;
         buttonStyle.fixedWidth = 200;
 
-
         // 绘制框选区域
         DrawSelectionBox();
 
         // 绘制小地图
         DrawMiniMap();
-
-        // 绘制游戏结束界面
-        if (_presentationSystem != null && _presentationSystem.IsGameOver)
-        {
-            DrawGameOverUI();
-        }
 
         DrawGMConsole();
     }
@@ -632,74 +625,9 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 绘制游戏结束界面
-    /// </summary>
-    private void DrawGameOverUI()
-    {
-        // 创建一个半透明背景
-        GUIStyle bgStyle = new GUIStyle();
-        Texture2D bgTexture = new Texture2D(1, 1);
-        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
-        bgTexture.Apply();
-        bgStyle.normal.background = bgTexture;
-
-        // 绘制背景
-        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "", bgStyle);
-
-        // 显示结果文本
-        GUIStyle textStyle = new GUIStyle(GUI.skin.label);
-        textStyle.fontSize = 48;
-        textStyle.fontStyle = FontStyle.Bold;
-        textStyle.alignment = TextAnchor.MiddleCenter;
-        textStyle.normal.textColor = _presentationSystem.IsVictory ? Color.green : Color.red;
-
-        string resultText = "";
-        string infoText = "";
-
-        // 根据胜利阵营ID判断游戏结果
-        if (_presentationSystem.WinningCampId == -1)
-        {
-            // 平局
-            resultText = "平局!";
-            infoText = "所有阵营都被击败";
-            textStyle.normal.textColor = Color.yellow; // 平局用黄色显示
-        }
-        else
-        {
-            // 胜负结果
-            resultText = _presentationSystem.IsVictory ? "胜利!" : "失败!";
-            infoText = _presentationSystem.IsVictory ?
-                $"你击败了阵营 {_presentationSystem.WinningCampId}" :
-                $"你被阵营 {_presentationSystem.WinningCampId} 击败";
-        }
-
-        GUI.Label(new Rect(0, Screen.height / 2 - 50, Screen.width, 100), resultText, textStyle);
-
-        // 显示胜利方信息
-        GUIStyle infoStyle = new GUIStyle(GUI.skin.label);
-        infoStyle.fontSize = 24;
-        infoStyle.alignment = TextAnchor.MiddleCenter;
-        infoStyle.normal.textColor = Color.white;
-
-        GUI.Label(new Rect(0, Screen.height / 2 + 50, Screen.width, 50), infoText, infoStyle);
-
-        // 显示重新开始按钮
-        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
-        buttonStyle.fontSize = 24;
-        buttonStyle.fixedHeight = 60;
-        buttonStyle.fixedWidth = 200;
-
-        Rect buttonRect = new Rect((Screen.width - 200) / 2, Screen.height / 2 + 150, 200, 60);
-        if (GUI.Button(buttonRect, "重新开始", buttonStyle))
-        {
-            RestartGame();
-        }
-    }
-
-    /// <summary>
     /// 重新开始游戏
     /// </summary>
-    private void RestartGame()
+    public void RestartGame()
     {
 
         // 清空选中单位列表
