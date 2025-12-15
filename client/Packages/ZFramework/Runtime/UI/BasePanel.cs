@@ -407,11 +407,12 @@ public abstract class BasePanel
         this.PanelObject = _go;
 
         var rectTransform = this.PanelObject?.GetComponent<RectTransform>();
-        if (rectTransform) //发现有部分UI会自动修改这里的数据，强制纠正过来了。
-        {
-            rectTransform.offsetMax = Vector2.zero;
-            rectTransform.offsetMin = Vector2.zero;
-        }
+        // if (rectTransform) //发现有部分UI会自动修改这里的数据，强制纠正过来了。
+        // {
+        //     rectTransform.offsetMax = Vector2.zero;
+        //     rectTransform.offsetMin = Vector2.zero;
+        // }
+        // 纠正会出问题，所以这里取消
 
         this.SetParent(PanelManager.instance.GetParentByPanelDepthType(this.ModelData.PanelUIDepthType));
         InitializePanelData();
