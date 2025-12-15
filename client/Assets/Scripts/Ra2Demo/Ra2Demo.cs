@@ -631,7 +631,7 @@ public class Ra2Demo : MonoBehaviour
         DrawSelectionBox();
 
         // 绘制小地图
-        DrawMiniMap();
+        // DrawMiniMap();
 
         DrawGMConsole();
     }
