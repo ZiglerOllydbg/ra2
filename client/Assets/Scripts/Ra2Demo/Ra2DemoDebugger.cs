@@ -343,7 +343,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         labelStyle.fontSize = 16;
         labelStyle.normal.textColor = Color.white;
         
-        Rect toggleRect = new Rect(20, 130, 200, 150);
+        Rect toggleRect = new Rect(20, 500, 200, 150);
         GUILayout.BeginArea(toggleRect);
         showUnits = GUILayout.Toggle(showUnits, "显示单位", toggleStyle);
         showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示RVO智能体", toggleStyle);
