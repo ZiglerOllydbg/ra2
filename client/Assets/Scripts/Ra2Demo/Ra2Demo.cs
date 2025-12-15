@@ -55,11 +55,6 @@ public class Ra2Demo : MonoBehaviour
      * UI部分
      *************************************/
 
-    // 添加工厂生产相关字段
-    private int selectedFactoryEntityId = -1; // 选中的工厂实体ID
-    private bool showFactoryUI = false; // 是否显示工厂UI
-    private bool showProductionList = false; // 是否显示生产建筑列表
-
     // 添加建造功能相关字段
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
 
@@ -165,6 +160,9 @@ public class Ra2Demo : MonoBehaviour
     {
         _controls.Create.Enable();
         _controls.Create.createUnit.performed += OnCreateUnit;
+        _controls.Camera.Enable();
+        _controls.Camera.Pan.performed += OnCameraPan;
+        _controls.Camera.Zoom.performed += OnCameraZoom;
     }
 
     private void OnDisable()
@@ -172,6 +170,36 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Disable();
         _controls.Create.createUnit.performed -= OnCreateUnit;
 
+        _controls.Camera.Disable();
+        _controls.Camera.Pan.performed -= OnCameraPan;
+        _controls.Camera.Zoom.performed -= OnCameraZoom;
+
+    }
+
+    private void OnCameraZoom(InputAction.CallbackContext context)
+    {
+        // 获取鼠标/触摸位置
+        Vector2 zoom = _controls.Camera.Zoom.ReadValue<Vector2>();
+
+        zUDebug.Log($"[StandaloneBattleDemo] OnCameraZoom zoom: {zoom}");
+
+    }
+
+    private void OnCameraPan(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Vector2 panInput  = _controls.Camera.Pan.ReadValue<Vector2>();
+            // _mainCamera.transform.Translate(panInput.x, 0, panInput.y);
+
+            zUDebug.Log($"[StandaloneBattleDemo] OnCameraPan panInput: {panInput}");
+        }
+        else if (context.canceled)
+        {
+            Vector2 panInput  = _controls.Camera.Pan.ReadValue<Vector2>();
+
+            zUDebug.Log($"[StandaloneBattleDemo] OnCameraPan end, panInput : {panInput}");
+        }
     }
 
     /// <summary>
@@ -181,7 +209,7 @@ public class Ra2Demo : MonoBehaviour
     {
         if (_game == null || _game.World == null)
         {
-            Debug.LogWarning("[Test] GameWorldBridge 未初始化！");
+            // Debug.LogWarning("[Test] GameWorldBridge 未初始化！");
             return;
         }
 
