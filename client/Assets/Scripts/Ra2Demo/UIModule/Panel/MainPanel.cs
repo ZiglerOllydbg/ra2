@@ -37,6 +37,10 @@ public class MainPanel : BasePanel
     private const float FADE_START_TIME = 2f;
     private const float FADE_DURATION = 1f;
 
+    // 小地图刷新定时器ID
+    private int miniMapRefreshTimerId = 0;
+    private const float MINIMAP_REFRESH_INTERVAL = 0.1f; // 0.1秒刷新间隔
+
     public Ra2Demo Ra2Demo { get; set; }
     
     // 子面板控制器
@@ -44,6 +48,9 @@ public class MainPanel : BasePanel
 
     // 生产按钮子子面板
     private MainProducerSubPanel producerSubPanel;
+
+    // 小地图子面板
+    private MiniMapSubPanel miniMapSubPanel;
 
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -88,6 +95,49 @@ public class MainPanel : BasePanel
         producerSubPanel.OnCloseClick = OnSubPanelClosed;
         producerSubPanel.Hide();
         producerSubPanel.SetGameContext(Ra2Demo.GetBattleGame());
+
+        // 初始化小地图子面板
+        miniMapSubPanel = new MiniMapSubPanel(PanelObject.transform);
+        miniMapSubPanel.Show(new MiniMapPanelData() { Title = "小地图", SizeText = "地图尺寸：256*256"});
+        
+        // 设置小地图纹理
+        if (Ra2Demo != null && miniMapSubPanel != null)
+        {
+            var miniMapTexture = Ra2Demo.GetMiniMapTexture();
+            miniMapSubPanel.SetMiniMapTexture(miniMapTexture);
+        }
+        
+        // 启动小地图定时刷新
+        StartMiniMapRefresh();
+    }
+
+    /// <summary>
+    /// 启动小地图刷新定时器
+    /// </summary>
+    private void StartMiniMapRefresh()
+    {
+        if (miniMapRefreshTimerId != 0)
+        {
+            Tick.ClearTimeout(miniMapRefreshTimerId);
+        }
+        
+        miniMapRefreshTimerId = Tick.SetTimeout(RefreshMiniMapTexture, MINIMAP_REFRESH_INTERVAL);
+    }
+    
+    /// <summary>
+    /// 刷新小地图纹理
+    /// </summary>
+    private void RefreshMiniMapTexture()
+    {
+        // 检查面板是否可见且Ra2Demo和miniMapSubPanel存在
+        if (Ra2Demo != null && miniMapSubPanel != null)
+        {
+            var miniMapTexture = Ra2Demo.GetMiniMapTexture();
+            miniMapSubPanel.SetMiniMapTexture(miniMapTexture);
+        }
+        
+        // 重新启动定时器以实现持续刷新
+        StartMiniMapRefresh();
     }
 
     protected override void AddEvent()
@@ -115,6 +165,7 @@ public class MainPanel : BasePanel
         {
             producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
+
     }
 
     protected override void RemoveEvent()
@@ -142,6 +193,7 @@ public class MainPanel : BasePanel
         {
             producerBtn.onClick.RemoveListener(OnProducerButtonClick);
         }
+
     }
     
     protected override void OnBecameInvisible()
@@ -154,12 +206,19 @@ public class MainPanel : BasePanel
 
         producerSubPanel?.Destroy();
         producerSubPanel = null;
-        
+
         // 停止正在进行的消息显示定时器
         if (messageTimerId != 0)
         {
             Tick.ClearTimeout(messageTimerId);
             messageTimerId = 0;
+        }
+        
+        // 停止小地图刷新定时器
+        if (miniMapRefreshTimerId != 0)
+        {
+            Tick.ClearTimeout(miniMapRefreshTimerId);
+            miniMapRefreshTimerId = 0;
         }
     }
 

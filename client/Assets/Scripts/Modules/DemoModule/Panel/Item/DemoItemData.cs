@@ -38,3 +38,12 @@ public class SubPanelData
     /// </summary>
 }
 
+/// <summary>
+/// 迷你地图数据结构
+/// </summary>
+public class MiniMapPanelData
+{
+    public string Title;
+    public string SizeText;
+}
+

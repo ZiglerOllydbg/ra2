@@ -126,6 +126,14 @@ public class Ra2Demo : MonoBehaviour
         _miniMapTexture = miniMapController.GetMiniMapTexture();
     }
 
+    /// <summary>
+    /// 获取小地图渲染纹理
+    /// </summary>
+    /// <returns>小地图渲染纹理</returns>
+    public RenderTexture GetMiniMapTexture()
+    {
+        return _miniMapTexture;
+    }
 
     private Frame frame;
 
