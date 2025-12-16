@@ -769,15 +769,62 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 为指定实体启用OutlineComponent
+    /// 清除所有单位的OutlineComponent
     /// </summary>
-    /// <param name="entityId">实体ID</param>
-    private void EnableOutlineForEntity(int entityId)
+    public void ClearAllOutlines()
     {
         if (_game == null || _game.World == null || _presentationSystem == null)
             return;
 
+        // 禁用之前选中单位的OutlineComponent
+        foreach (int entityId in selectedEntityIds)
+        {
+            DisableOutlineForEntity(entityId);
+        }
+        selectedEntityIds.Clear();
+    }
+
+    /// <summary>
+    /// 获取当前选中的单位ID列表
+    /// </summary>
+    /// <returns>选中的单位ID列表的副本</returns>
+    public List<int> GetSelectedEntityIds()
+    {
+        return new List<int>(selectedEntityIds);
+    }
+
+    /// <summary>
+    /// 设置当前选中的单位ID列表
+    /// </summary>
+    /// <param name="entityIds">要设置为选中状态的单位ID列表</param>
+    public void SetSelectedEntityIds(List<int> entityIds)
+    {
+        // 清除当前选择
+        ClearAllOutlines();
+        
+        // 更新选择列表
+        selectedEntityIds.Clear();
+        if (entityIds != null)
+        {
+            selectedEntityIds.AddRange(entityIds);
+        }
+    }
+
+    /// <summary>
+    /// 为指定实体启用OutlineComponent
+    /// </summary>
+    /// <param name="entityId">实体ID</param>
+    /// <returns>如果成功启用轮廓返回true，否则返回false</returns>
+    public bool EnableOutlineForEntity(int entityId)
+    {
+        if (_game == null || _game.World == null || _presentationSystem == null)
+            return false;
+
         var entity = new Entity(entityId);
+        // 检查实体是否存在（通过检查是否有TransformComponent组件来判断实体是否存在）
+        if (!_game.World.ComponentManager.HasComponent<TransformComponent>(entity))
+            return false;
+
         if (_game.World.ComponentManager.HasComponent<ViewComponent>(entity))
         {
             var viewComponent = _game.World.ComponentManager.GetComponent<ViewComponent>(entity);
@@ -787,16 +834,18 @@ public class Ra2Demo : MonoBehaviour
                 if (outlineComponent != null)
                 {
                     outlineComponent.enabled = true;
+                    return true; // 成功启用轮廓
                 }
             }
         }
+        return false; // 启用轮廓失败
     }
 
     /// <summary>
     /// 为指定实体禁用OutlineComponent
     /// </summary>
     /// <param name="entityId">实体ID</param>
-    private void DisableOutlineForEntity(int entityId)
+    public void DisableOutlineForEntity(int entityId)
     {
         if (_game == null || _game.World == null || _presentationSystem == null)
             return;
@@ -815,24 +864,6 @@ public class Ra2Demo : MonoBehaviour
             }
         }
     }
-
-    /// <summary>
-    /// 清除所有单位的OutlineComponent
-    /// </summary>
-    private void ClearAllOutlines()
-    {
-        if (_game == null || _game.World == null || _presentationSystem == null)
-            return;
-
-        // 禁用之前选中单位的OutlineComponent
-        foreach (int entityId in selectedEntityIds)
-        {
-            DisableOutlineForEntity(entityId);
-        }
-        selectedEntityIds.Clear();
-    }
-
-    
 
     public void SetBattleGame(BattleGame game)
     {
