@@ -1702,7 +1702,7 @@ GameObject:
   - component: {fileID: 4586628821637027399}
   - component: {fileID: 3002578468691580144}
   - component: {fileID: 8422703156439523152}
-  - component: {fileID: 4575637414363310057}
+  - component: {fileID: 3388586326239277609}
   m_Layer: 0
   m_Name: Hot2
   m_TagString: Untagged
@@ -1769,7 +1769,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4575637414363310057
+--- !u!114 &3388586326239277609
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1813,7 +1813,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
-  longPressDuration: 3
   onClick:
     m_PersistentCalls:
       m_Calls: []
@@ -3729,7 +3728,7 @@ GameObject:
   - component: {fileID: 1899426079708430990}
   - component: {fileID: 7669783013371365049}
   - component: {fileID: 5375713534900978453}
-  - component: {fileID: 4576388766404222671}
+  - component: {fileID: 1093017527201589378}
   m_Layer: 0
   m_Name: Hot4
   m_TagString: Untagged
@@ -3796,7 +3795,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4576388766404222671
+--- !u!114 &1093017527201589378
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3840,7 +3839,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
-  longPressDuration: 3
   onClick:
     m_PersistentCalls:
       m_Calls: []
@@ -3897,7 +3895,7 @@ GameObject:
   - component: {fileID: 1645701975391760501}
   - component: {fileID: 8341097213984618809}
   - component: {fileID: 4598633677727112864}
-  - component: {fileID: 3360060577252182684}
+  - component: {fileID: 6847072771503065306}
   m_Layer: 0
   m_Name: Hot1
   m_TagString: Untagged
@@ -3964,7 +3962,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3360060577252182684
+--- !u!114 &6847072771503065306
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4008,7 +4006,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
-  longPressDuration: 1
   onClick:
     m_PersistentCalls:
       m_Calls: []
@@ -6670,7 +6667,7 @@ GameObject:
   - component: {fileID: 5691300749817535151}
   - component: {fileID: 5353015200776143537}
   - component: {fileID: 4400399664588649857}
-  - component: {fileID: 8298036302512257662}
+  - component: {fileID: 2214922225183707305}
   m_Layer: 0
   m_Name: Hot3
   m_TagString: Untagged
@@ -6737,7 +6734,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8298036302512257662
+--- !u!114 &2214922225183707305
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6781,7 +6778,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
-  longPressDuration: 3
   onClick:
     m_PersistentCalls:
       m_Calls: []
