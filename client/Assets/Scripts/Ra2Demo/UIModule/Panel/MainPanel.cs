@@ -52,6 +52,9 @@ public class MainPanel : BasePanel
     // 小地图子面板
     private MiniMapSubPanel miniMapSubPanel;
 
+    // 新增：热键快捷栏子面板
+    private HotKeySubPanel hotKeySubPanel;
+
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
     {
@@ -109,6 +112,10 @@ public class MainPanel : BasePanel
         
         // 启动小地图定时刷新
         StartMiniMapRefresh();
+
+        // 初始化热键快捷栏子面板
+        hotKeySubPanel = new HotKeySubPanel(PanelObject.transform);
+        hotKeySubPanel.Show(new HotKeyPanelData() { HotKeys = new string[] { "1", "2", "3", "4" } });
     }
 
     /// <summary>
@@ -220,6 +227,10 @@ public class MainPanel : BasePanel
             Tick.ClearTimeout(miniMapRefreshTimerId);
             miniMapRefreshTimerId = 0;
         }
+
+        // 新增：销毁热键快捷栏子面板
+        hotKeySubPanel?.Destroy();
+        hotKeySubPanel = null;
     }
 
     /// <summary>

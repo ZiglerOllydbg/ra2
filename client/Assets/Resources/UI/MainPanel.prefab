@@ -1702,7 +1702,7 @@ GameObject:
   - component: {fileID: 4586628821637027399}
   - component: {fileID: 3002578468691580144}
   - component: {fileID: 8422703156439523152}
-  - component: {fileID: 5445625477380709522}
+  - component: {fileID: 4575637414363310057}
   m_Layer: 0
   m_Name: Hot2
   m_TagString: Untagged
@@ -1769,7 +1769,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &5445625477380709522
+--- !u!114 &4575637414363310057
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1778,7 +1778,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3006107377599079371}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 80accf98c75e87845a6d71e2450db84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -1811,6 +1811,13 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 8422703156439523152}
   m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+  longPressDuration: 3
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onLongPress:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &3094887555854657234
@@ -3722,7 +3729,7 @@ GameObject:
   - component: {fileID: 1899426079708430990}
   - component: {fileID: 7669783013371365049}
   - component: {fileID: 5375713534900978453}
-  - component: {fileID: 22224721294794106}
+  - component: {fileID: 4576388766404222671}
   m_Layer: 0
   m_Name: Hot4
   m_TagString: Untagged
@@ -3789,7 +3796,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &22224721294794106
+--- !u!114 &4576388766404222671
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3798,7 +3805,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5512988241616388445}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 80accf98c75e87845a6d71e2450db84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -3831,6 +3838,13 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 5375713534900978453}
   m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+  longPressDuration: 3
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onLongPress:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &5904646076020316087
@@ -3883,7 +3897,7 @@ GameObject:
   - component: {fileID: 1645701975391760501}
   - component: {fileID: 8341097213984618809}
   - component: {fileID: 4598633677727112864}
-  - component: {fileID: 7066480918296528894}
+  - component: {fileID: 3360060577252182684}
   m_Layer: 0
   m_Name: Hot1
   m_TagString: Untagged
@@ -3950,7 +3964,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &7066480918296528894
+--- !u!114 &3360060577252182684
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3959,7 +3973,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5972354129831943035}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 80accf98c75e87845a6d71e2450db84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -3992,6 +4006,13 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 4598633677727112864}
   m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+  longPressDuration: 1
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onLongPress:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &6090775738200344182
@@ -6649,7 +6670,7 @@ GameObject:
   - component: {fileID: 5691300749817535151}
   - component: {fileID: 5353015200776143537}
   - component: {fileID: 4400399664588649857}
-  - component: {fileID: 4221111777910532581}
+  - component: {fileID: 8298036302512257662}
   m_Layer: 0
   m_Name: Hot3
   m_TagString: Untagged
@@ -6716,7 +6737,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4221111777910532581
+--- !u!114 &8298036302512257662
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6725,7 +6746,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8948394614159141444}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 80accf98c75e87845a6d71e2450db84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -6758,5 +6779,12 @@ MonoBehaviour:
   m_Interactable: 1
   m_TargetGraphic: {fileID: 4400399664588649857}
   m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+  longPressDuration: 3
+  onClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onLongPress:
     m_PersistentCalls:
       m_Calls: []
