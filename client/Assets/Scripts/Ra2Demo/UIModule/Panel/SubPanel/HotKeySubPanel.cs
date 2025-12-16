@@ -67,6 +67,13 @@ public class HotKeySubPanel
                 hotButtons[i].onLongPress.AddListener(() => OnHotKeyLongPressed(index));
             }
         }
+
+        // 清空编队，重置按钮颜色
+        for (int i = 0; i < hotkeyGroups.Length; i++)
+        {
+            hotkeyGroups[i].Clear();
+            RestoreButtonColor(i);
+        }
     }
 
     /// <summary>
@@ -83,6 +90,7 @@ public class HotKeySubPanel
             if (hotkeyGroups[index].Count == 0)
             {
                 Frame.DispatchEvent(new ShowMessageEvent($"当前编组[{index + 1}]没有单位！"));
+                RestoreButtonColor(index);
                 return;
             }
 
