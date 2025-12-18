@@ -384,8 +384,28 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSelectButtonClick()
     {
-        Debug.Log("Select按钮被点击了！");
-        ShowMessage("选择了单位");
+        // 获取按钮上的文本组件
+        TMP_Text buttonText = selectBtn.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            // 切换按钮文本
+            if (buttonText.text == "选择")
+            {
+                Ra2Demo.IsSelectMode = false;
+                buttonText.text = "移动";
+                ShowMessage("切换到移动模式");
+            }
+            else
+            {
+                Ra2Demo.IsSelectMode = true;
+                buttonText.text = "选择";
+                ShowMessage("切换到选择模式");
+            }
+        }
+        else
+        {
+            zUDebug.LogError("Can't find button text component!");
+        }
     }
     
     /// <summary>

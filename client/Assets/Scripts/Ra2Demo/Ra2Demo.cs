@@ -11,6 +11,7 @@ using Game.Examples;
 using ZLockstep.Sync;
 using ZLockstep.View.Systems;
 using ZFrame;
+using System;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -47,6 +48,7 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 selectionStartPoint; // 框选起始点
     private Vector2 selectionEndPoint; // 框选结束点
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
+    private Vector3 m_CameraInitialPosition = Vector3.zero; // 相机初始位置
 
     /**************************************
      * UI部分
@@ -59,6 +61,9 @@ public class Ra2Demo : MonoBehaviour
     private bool _isConsoleVisible = false;
     private string _inputFieldGM = "";
     private Vector2 _scrollPosition;
+
+    // 选择模式/（相机）移动模式
+    public bool IsSelectMode { get; set; } = true;
 
 
     private void Awake()
@@ -284,10 +289,26 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="screenPosition">屏幕位置</param>
     private void StartSelectionBox(Vector2 screenPosition)
     {
-        isSelecting = true;
-        isClickOnUnit = false; // 重置单位点击状态
-        selectionStartPoint = screenPosition;
-        selectionEndPoint = screenPosition;
+        if (IsSelectMode)
+        {
+            isSelecting = true;
+            isClickOnUnit = false; // 重置单位点击状态
+            selectionStartPoint = screenPosition;
+            selectionEndPoint = screenPosition;
+        }
+        else
+        {
+            // 相机移动模式：记录初始鼠标位置和相机位置
+            isSelecting = true;
+            selectionStartPoint = screenPosition;
+            selectionEndPoint = screenPosition;
+            
+            // 记录相机初始位置
+            if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
+            {
+                m_CameraInitialPosition = RTSCameraTargetController.Instance.CameraTarget.position;
+            }
+        }
     }
 
     /// <summary>
@@ -300,14 +321,48 @@ public class Ra2Demo : MonoBehaviour
         {
             selectionEndPoint = screenPosition;
 
-            // 计算拖拽距离
-            float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
-
-            // 只有当拖拽距离超过阈值时才真正激活框选
-            if (dragDistance > dragThreshold)
+            if (IsSelectMode)
             {
-                // 激活框选可视化
-                isSelecting = true;
+                // 选择模式：计算拖拽距离
+                float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
+
+                // 只有当拖拽距离超过阈值时才真正激活框选
+                if (dragDistance > dragThreshold)
+                {
+                    // 激活框选可视化
+                    isSelecting = true;
+                }
+            }
+            else
+            {
+                // 相机移动模式：根据鼠标移动偏移量移动相机
+                Vector2 delta = selectionEndPoint - selectionStartPoint;
+                
+                // 转换为世界坐标偏移量（考虑相机高度和视野）
+                if (RTSCameraTargetController.Instance != null && _mainCamera != null)
+                {
+                    // 获取相机到地面的距离
+                    float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
+                    
+                    // 降低移动速度，使操作更加精确
+                    float moveSpeed = cameraHeight * 0.002f;
+                    
+                    // 计算世界坐标偏移量
+                    Vector3 worldDelta = new Vector3(-delta.x * moveSpeed, 0, -delta.y * moveSpeed);
+                    
+                    // 转换为相对于相机朝向的移动方向
+                    Vector3 forward = _mainCamera.transform.forward;
+                    Vector3 right = _mainCamera.transform.right;
+                    forward.y = 0;
+                    right.y = 0;
+                    forward.Normalize();
+                    right.Normalize();
+                    
+                    Vector3 relativeDelta = forward * worldDelta.z + right * worldDelta.x;
+                    
+                    // 更新相机位置
+                    RTSCameraTargetController.Instance.CameraTarget.position = m_CameraInitialPosition - relativeDelta;
+                }
             }
         }
     }
@@ -322,73 +377,78 @@ public class Ra2Demo : MonoBehaviour
 
         isSelecting = false;
 
-        // 计算拖拽距离
-        float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
-
-        // 只有当拖拽距离超过阈值时才执行框选
-        if (dragDistance <= dragThreshold)
+        // 仅在选择模式下执行框选逻辑
+        if (IsSelectMode)
         {
-            return;
-        }
+            // 计算拖拽距离
+            float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
 
-        // 计算框选区域 (统一使用屏幕坐标系统)
-        float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
-        float y = Mathf.Min(selectionStartPoint.y, selectionEndPoint.y);
-        float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
-        float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
-
-        Rect selectionRect = new Rect(x, y, width, height);
-
-        // 清空之前的选择
-        ClearAllOutlines();
-        // selectedEntityIds.Clear();
-
-        // 查找框选区域内的单位
-        if (_game != null && _game.World != null)
-        {
-            var entities = _game.World.ComponentManager
-                .GetAllEntityIdsWith<TransformComponent>();
-
-            foreach (var entityId in entities)
+            // 只有当拖拽距离超过阈值时才执行框选
+            if (dragDistance <= dragThreshold)
             {
-                var entity = new Entity(entityId);
-                var transform = _game.World.ComponentManager
-                    .GetComponent<TransformComponent>(entity);
-
-                // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
-                if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
-                {
-                    continue; // 跳过非本地玩家单位
-                }
-
-                if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
-                {
-                    continue; // 跳过非单位实体
-                }
-
-                // 将世界坐标转换为屏幕坐标
-                Vector3 worldPosition = transform.Position.ToVector3();
-                Vector3 screenPos = _mainCamera.WorldToScreenPoint(worldPosition);
-
-                // 注意：屏幕坐标的Y轴是从下往上增长的
-                // selectionRect也使用相同的坐标系统，所以不需要转换
-
-                // 检查单位是否在框选区域内
-                if (selectionRect.Contains(screenPos))
-                {
-                    // 添加到选中列表
-                    selectedEntityIds.Add(entityId);
-                    Debug.Log($"[Test] 框选添加单位: EntityId={entityId}");
-                }
+                return;
             }
 
-        }
+            // 计算框选区域 (统一使用屏幕坐标系统)
+            float x = Mathf.Min(selectionStartPoint.x, selectionEndPoint.x);
+            float y = Mathf.Min(selectionStartPoint.y, selectionEndPoint.y);
+            float width = Mathf.Abs(selectionStartPoint.x - selectionEndPoint.x);
+            float height = Mathf.Abs(selectionStartPoint.y - selectionEndPoint.y);
 
-        // 为所有新选中的单位启用OutlineComponent
-        foreach (int entityId in selectedEntityIds)
-        {
-            EnableOutlineForEntity(entityId);
+            Rect selectionRect = new Rect(x, y, width, height);
+
+            // 清空之前的选择
+            ClearAllOutlines();
+            // selectedEntityIds.Clear();
+
+            // 查找框选区域内的单位
+            if (_game != null && _game.World != null)
+            {
+                var entities = _game.World.ComponentManager
+                    .GetAllEntityIdsWith<TransformComponent>();
+
+                foreach (var entityId in entities)
+                {
+                    var entity = new Entity(entityId);
+                    var transform = _game.World.ComponentManager
+                        .GetComponent<TransformComponent>(entity);
+
+                    // 检查实体是否包含LocalPlayerComponent（只有本地玩家单位才能被选择）
+                    if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                    {
+                        continue; // 跳过非本地玩家单位
+                    }
+
+                    if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+                    {
+                        continue; // 跳过非单位实体
+                    }
+
+                    // 将世界坐标转换为屏幕坐标
+                    Vector3 worldPosition = transform.Position.ToVector3();
+                    Vector3 screenPos = _mainCamera.WorldToScreenPoint(worldPosition);
+
+                    // 注意：屏幕坐标的Y轴是从下往上增长的
+                    // selectionRect也使用相同的坐标系统，所以不需要转换
+
+                    // 检查单位是否在框选区域内
+                    if (selectionRect.Contains(screenPos))
+                    {
+                        // 添加到选中列表
+                        selectedEntityIds.Add(entityId);
+                        Debug.Log($"[Test] 框选添加单位: EntityId={entityId}");
+                    }
+                }
+
+            }
+
+            // 为所有新选中的单位启用OutlineComponent
+            foreach (int entityId in selectedEntityIds)
+            {
+                EnableOutlineForEntity(entityId);
+            }
         }
+        // 相机移动模式不需要额外处理，只需重置isSelecting状态即可
     }
 
     /// <summary>
@@ -648,7 +708,7 @@ public class Ra2Demo : MonoBehaviour
     private void DrawSelectionBox()
     {
         // 只有当真正激活框选时才绘制（拖拽距离超过阈值且未点击在单位上）
-        if (isSelecting && !isClickOnUnit)
+        if (isSelecting && !isClickOnUnit && IsSelectMode)
         {
             // 计算拖拽距离
             float dragDistance = Vector2.Distance(selectionStartPoint, selectionEndPoint);
