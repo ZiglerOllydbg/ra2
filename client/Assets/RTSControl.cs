@@ -83,6 +83,15 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""tap"",
+                    ""type"": ""Button"",
+                    ""id"": ""f0530e5f-2356-4747-9c20-8c196a3b9dca"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -94,6 +103,17 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""createUnit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3f17a44c-2ee2-4f80-b1e8-1b2703e27879"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": ""Tap"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""tap"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -115,6 +135,7 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
         // Create
         m_Create = asset.FindActionMap("Create", throwIfNotFound: true);
         m_Create_createUnit = m_Create.FindAction("createUnit", throwIfNotFound: true);
+        m_Create_tap = m_Create.FindAction("tap", throwIfNotFound: true);
     }
 
     ~@RTSControl()
@@ -237,11 +258,13 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Create;
     private List<ICreateActions> m_CreateActionsCallbackInterfaces = new List<ICreateActions>();
     private readonly InputAction m_Create_createUnit;
+    private readonly InputAction m_Create_tap;
     public struct CreateActions
     {
         private @RTSControl m_Wrapper;
         public CreateActions(@RTSControl wrapper) { m_Wrapper = wrapper; }
         public InputAction @createUnit => m_Wrapper.m_Create_createUnit;
+        public InputAction @tap => m_Wrapper.m_Create_tap;
         public InputActionMap Get() { return m_Wrapper.m_Create; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -254,6 +277,9 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @createUnit.started += instance.OnCreateUnit;
             @createUnit.performed += instance.OnCreateUnit;
             @createUnit.canceled += instance.OnCreateUnit;
+            @tap.started += instance.OnTap;
+            @tap.performed += instance.OnTap;
+            @tap.canceled += instance.OnTap;
         }
 
         private void UnregisterCallbacks(ICreateActions instance)
@@ -261,6 +287,9 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @createUnit.started -= instance.OnCreateUnit;
             @createUnit.performed -= instance.OnCreateUnit;
             @createUnit.canceled -= instance.OnCreateUnit;
+            @tap.started -= instance.OnTap;
+            @tap.performed -= instance.OnTap;
+            @tap.canceled -= instance.OnTap;
         }
 
         public void RemoveCallbacks(ICreateActions instance)
@@ -295,5 +324,6 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
     public interface ICreateActions
     {
         void OnCreateUnit(InputAction.CallbackContext context);
+        void OnTap(InputAction.CallbackContext context);
     }
 }

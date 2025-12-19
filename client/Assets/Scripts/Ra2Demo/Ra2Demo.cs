@@ -12,6 +12,7 @@ using ZLockstep.Sync;
 using ZLockstep.View.Systems;
 using ZFrame;
 using System;
+using Unity.VisualScripting;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -167,6 +168,8 @@ public class Ra2Demo : MonoBehaviour
     {
         _controls.Create.Enable();
         _controls.Create.createUnit.performed += OnCreateUnit;
+        _controls.Create.tap.performed += OnTap;
+
         _controls.Camera.Enable();
         _controls.Camera.Pan.performed += OnCameraPan;
         _controls.Camera.Zoom.performed += OnCameraZoom;
@@ -176,11 +179,20 @@ public class Ra2Demo : MonoBehaviour
     {
         _controls.Create.Disable();
         _controls.Create.createUnit.performed -= OnCreateUnit;
+        _controls.Create.tap.performed -= OnTap;
 
         _controls.Camera.Disable();
         _controls.Camera.Pan.performed -= OnCameraPan;
         _controls.Camera.Zoom.performed -= OnCameraZoom;
 
+    }
+
+    private void OnTap(InputAction.CallbackContext context)
+    {
+        zUDebug.Log($"[StandaloneBattleDemo] OnTap");
+
+        // 移动
+        SendMoveCommandForSelectedUnit();
     }
 
     private void OnCameraZoom(InputAction.CallbackContext context)
@@ -189,7 +201,6 @@ public class Ra2Demo : MonoBehaviour
         Vector2 zoom = _controls.Camera.Zoom.ReadValue<Vector2>();
 
         zUDebug.Log($"[StandaloneBattleDemo] OnCameraZoom zoom: {zoom}");
-
     }
 
     private void OnCameraPan(InputAction.CallbackContext context)
@@ -226,8 +237,17 @@ public class Ra2Demo : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
-            // 如果没有点击到建筑，则开始框选
+            // 则开始框选
             StartSelectionBox(screenPosition);
+        }
+
+        if (isSelecting)
+        {
+            zUDebug.Log($"[StandaloneBattleDemo] isSelecting");
+        }
+        else
+        {
+            zUDebug.Log($"[StandaloneBattleDemo] isSelecting end");
         }
     }
 
