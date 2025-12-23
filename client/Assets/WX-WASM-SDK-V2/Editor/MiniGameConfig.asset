@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: MiniGameConfig
   m_EditorClassIdentifier: 
   ProjectConf:
-    projectName: 
+    projectName: "\u94C1\u6D41\u7EAA\u5143"
     Appid: wx528c1d78338ae4b7
-    CDN: https://www.zhegepai.cn/webgl/
+    CDN: http://192.168.3.130:8000/
     assetLoadType: 0
     compressDataPackage: 0
     VideoUrl: 
-    relativeDST: C:/MyZiegler/github/ra2wx
-    DST: C:/MyZiegler/github/ra2wx
+    relativeDST: C:/MyZiegler/github/wx
+    DST: C:/MyZiegler/github/wx
     StreamCDN: 
     bundleHashLength: 32
     bundlePathIdentifier: StreamingAssets;
@@ -45,10 +45,10 @@ MonoBehaviour:
     UseFriendRelation: 0
     UseCompressedTexture: 0
     UseMiniGameChat: 0
-    PreloadWXFont: 1
+    PreloadWXFont: 0
     disableMultiTouch: 0
   CompileOptions:
-    DevelopBuild: 0
+    DevelopBuild: 1
     AutoProfile: 0
     ScriptOnly: 0
     Il2CppOptimizeSize: 1

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: PlayableConfig
   m_EditorClassIdentifier: 
   ProjectConf:
-    projectName: "\u94C1\u6D41\u7EAA\u5143-test"
+    projectName: "\u94C1\u6D41\u7EAA\u5143(\u8BD5\u73A9)"
     Appid: wx528c1d78338ae4b7
-    relativeDST: C:/MyZiegler/github/ra2wx-test
-    DST: C:/MyZiegler/github/ra2wx-test
+    relativeDST: C:/MyZiegler/github/wxtest
+    DST: C:/MyZiegler/github/wxtest
     MemorySize: 256
     Orientation: 1
     IOSDevicePixelRatio: 0
