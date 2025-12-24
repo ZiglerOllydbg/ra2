@@ -213,7 +213,7 @@ public class Ra2Demo : MonoBehaviour
         
         // 记录按下状态和起始位置，支持鼠标和触摸
         isPressing = true;
-        pressStartPosition = currentPosition;
+        pressStartPosition = GetCurrentInputPosition();
     }
 
     private void OnDrag(InputAction.CallbackContext context)
@@ -239,7 +239,8 @@ public class Ra2Demo : MonoBehaviour
     private void OnRelease(InputAction.CallbackContext context)
     {
         zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
-        
+        currentPosition = GetCurrentInputPosition();
+
         // 检查是否之前处于按下状态（即发生了拖拽）
         if (isPressing)
         {
@@ -259,6 +260,27 @@ public class Ra2Demo : MonoBehaviour
         
         // 重置拖拽状态
         isPressing = false;
+    }
+
+    private Vector2 GetCurrentInputPosition()
+    {
+        // 优先级获取：先尝试鼠标，再尝试触摸[1,2](@ref)
+        if (Mouse.current != null && Mouse.current.position.IsActuated())
+        {
+            return Mouse.current.position.ReadValue();
+        }
+        
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.IsActuated())
+        {
+            var touch = Touchscreen.current.primaryTouch;
+            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Began || touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Ended)
+            {
+                return touch.position.ReadValue();
+            }
+        }
+        
+        // 备用方案：如果上述都失败，使用最后已知位置
+        return currentPosition;
     }
 
     private void OnCameraZoom(InputAction.CallbackContext context)
