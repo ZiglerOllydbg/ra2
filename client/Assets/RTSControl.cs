@@ -92,6 +92,33 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Press"",
+                    ""type"": ""Button"",
+                    ""id"": ""42f5414b-c2b0-4a54-8ab9-86bcef313ffe"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Drag"",
+                    ""type"": ""Value"",
+                    ""id"": ""4b62f986-c275-47bc-9a2d-cedae0424ac7"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Release"",
+                    ""type"": ""Button"",
+                    ""id"": ""d3562155-098b-445c-97d9-a67bd269728e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -116,6 +143,72 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""action"": ""tap"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e81be31d-4ebe-472e-a904-5714fda0f737"",
+                    ""path"": ""<Touchscreen>/Press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Press"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""49713fa9-749b-487a-a97a-69e98e0fbff7"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Press"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""75263940-3383-4d96-b1f8-6b9687403453"",
+                    ""path"": ""<Touchscreen>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3971ed9c-c82e-4223-b876-264f575a9fd7"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""aae7b2f9-5d4f-4196-a439-4d7449327299"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": ""Press(behavior=1)"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Release"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c3fd1413-2eac-4b75-abe2-83eb76872364"",
+                    ""path"": ""<Touchscreen>/Press"",
+                    ""interactions"": ""Press(behavior=1)"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Release"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -136,6 +229,9 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
         m_Create = asset.FindActionMap("Create", throwIfNotFound: true);
         m_Create_createUnit = m_Create.FindAction("createUnit", throwIfNotFound: true);
         m_Create_tap = m_Create.FindAction("tap", throwIfNotFound: true);
+        m_Create_Press = m_Create.FindAction("Press", throwIfNotFound: true);
+        m_Create_Drag = m_Create.FindAction("Drag", throwIfNotFound: true);
+        m_Create_Release = m_Create.FindAction("Release", throwIfNotFound: true);
     }
 
     ~@RTSControl()
@@ -259,12 +355,18 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
     private List<ICreateActions> m_CreateActionsCallbackInterfaces = new List<ICreateActions>();
     private readonly InputAction m_Create_createUnit;
     private readonly InputAction m_Create_tap;
+    private readonly InputAction m_Create_Press;
+    private readonly InputAction m_Create_Drag;
+    private readonly InputAction m_Create_Release;
     public struct CreateActions
     {
         private @RTSControl m_Wrapper;
         public CreateActions(@RTSControl wrapper) { m_Wrapper = wrapper; }
         public InputAction @createUnit => m_Wrapper.m_Create_createUnit;
         public InputAction @tap => m_Wrapper.m_Create_tap;
+        public InputAction @Press => m_Wrapper.m_Create_Press;
+        public InputAction @Drag => m_Wrapper.m_Create_Drag;
+        public InputAction @Release => m_Wrapper.m_Create_Release;
         public InputActionMap Get() { return m_Wrapper.m_Create; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -280,6 +382,15 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @tap.started += instance.OnTap;
             @tap.performed += instance.OnTap;
             @tap.canceled += instance.OnTap;
+            @Press.started += instance.OnPress;
+            @Press.performed += instance.OnPress;
+            @Press.canceled += instance.OnPress;
+            @Drag.started += instance.OnDrag;
+            @Drag.performed += instance.OnDrag;
+            @Drag.canceled += instance.OnDrag;
+            @Release.started += instance.OnRelease;
+            @Release.performed += instance.OnRelease;
+            @Release.canceled += instance.OnRelease;
         }
 
         private void UnregisterCallbacks(ICreateActions instance)
@@ -290,6 +401,15 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @tap.started -= instance.OnTap;
             @tap.performed -= instance.OnTap;
             @tap.canceled -= instance.OnTap;
+            @Press.started -= instance.OnPress;
+            @Press.performed -= instance.OnPress;
+            @Press.canceled -= instance.OnPress;
+            @Drag.started -= instance.OnDrag;
+            @Drag.performed -= instance.OnDrag;
+            @Drag.canceled -= instance.OnDrag;
+            @Release.started -= instance.OnRelease;
+            @Release.performed -= instance.OnRelease;
+            @Release.canceled -= instance.OnRelease;
         }
 
         public void RemoveCallbacks(ICreateActions instance)
@@ -325,5 +445,8 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
     {
         void OnCreateUnit(InputAction.CallbackContext context);
         void OnTap(InputAction.CallbackContext context);
+        void OnPress(InputAction.CallbackContext context);
+        void OnDrag(InputAction.CallbackContext context);
+        void OnRelease(InputAction.CallbackContext context);
     }
 }

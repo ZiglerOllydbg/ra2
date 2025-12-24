@@ -51,6 +51,12 @@ public class Ra2Demo : MonoBehaviour
     private const float dragThreshold = 5f; // 拖拽阈值，像素单位
     private Vector3 m_CameraInitialPosition = Vector3.zero; // 相机初始位置
 
+    // 拖拽检测相关字段
+    private bool isPressing = false; // 是否正在按下状态
+    private Vector2 pressStartPosition; // 按下时的起始位置
+    private Vector2 currentPosition; // 当前位置
+    private const float DRAG_THRESHOLD = 5f; // 拖拽阈值，像素单位
+
     /**************************************
      * UI部分
      *************************************/
@@ -169,6 +175,9 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Enable();
         _controls.Create.createUnit.performed += OnCreateUnit;
         _controls.Create.tap.performed += OnTap;
+        _controls.Create.Press.performed += OnPress;
+        _controls.Create.Drag.performed += OnDrag;
+        _controls.Create.Release.performed += OnRelease;
 
         _controls.Camera.Enable();
         _controls.Camera.Pan.performed += OnCameraPan;
@@ -180,6 +189,9 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Disable();
         _controls.Create.createUnit.performed -= OnCreateUnit;
         _controls.Create.tap.performed -= OnTap;
+        _controls.Create.Press.performed -= OnPress;
+        _controls.Create.Drag.performed -= OnDrag;
+        _controls.Create.Release.performed -= OnRelease;
 
         _controls.Camera.Disable();
         _controls.Camera.Pan.performed -= OnCameraPan;
@@ -193,6 +205,60 @@ public class Ra2Demo : MonoBehaviour
 
         // 移动
         SendMoveCommandForSelectedUnit();
+    }
+
+    private void OnPress(InputAction.CallbackContext context)
+    {
+        zUDebug.Log($"[StandaloneBattleDemo] OnPress, performed={context.performed}");
+        
+        // 记录按下状态和起始位置，支持鼠标和触摸
+        isPressing = true;
+        pressStartPosition = currentPosition;
+    }
+
+    private void OnDrag(InputAction.CallbackContext context)
+    {
+        currentPosition = context.ReadValue<Vector2>();
+
+        // 仅在按下状态下处理拖拽
+        if (isPressing)
+        {
+            float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
+            
+            // zUDebug.Log($"[StandaloneBattleDemo] OnDrag - Position: {currentDragPosition}, Distance: {dragDistance}");
+            
+            // 如果拖拽距离超过阈值，认为是有效拖拽
+            if (dragDistance > DRAG_THRESHOLD)
+            {
+                // 这里可以处理拖拽逻辑
+                zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
+            }
+        }
+    }
+
+    private void OnRelease(InputAction.CallbackContext context)
+    {
+        zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
+        
+        // 检查是否之前处于按下状态（即发生了拖拽）
+        if (isPressing)
+        {
+            float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
+            
+            if (totalDragDistance > DRAG_THRESHOLD)
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] Drag ended - Total distance: {totalDragDistance}");
+                // 这里可以处理拖拽结束后的逻辑
+            }
+            else
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] Click detected (not drag) - Distance: {totalDragDistance}");
+                // 如果拖拽距离小于阈值，可能是一次点击
+            }
+        }
+        
+        // 重置拖拽状态
+        isPressing = false;
     }
 
     private void OnCameraZoom(InputAction.CallbackContext context)
