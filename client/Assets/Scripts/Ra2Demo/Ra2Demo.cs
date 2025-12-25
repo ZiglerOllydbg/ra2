@@ -13,6 +13,7 @@ using ZLockstep.View.Systems;
 using ZFrame;
 using System;
 using Unity.VisualScripting;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -204,20 +205,32 @@ public class Ra2Demo : MonoBehaviour
         zUDebug.Log($"[StandaloneBattleDemo] OnTap");
 
         // 移动
-        SendMoveCommandForSelectedUnit();
+        Vector2 pos = GetCurrentInputPosition();
+        SendMoveCommandForSelectedUnit(pos);
     }
 
     private void OnPress(InputAction.CallbackContext context)
     {
+        if (EventSystem.current.IsPointerOverGameObject()) {
+            return;
+        }
+
         zUDebug.Log($"[StandaloneBattleDemo] OnPress, performed={context.performed}");
         
         // 记录按下状态和起始位置，支持鼠标和触摸
         isPressing = true;
         pressStartPosition = GetCurrentInputPosition();
+
+        // 开始框选
+        StartSelectionBox(pressStartPosition);
     }
 
     private void OnDrag(InputAction.CallbackContext context)
     {
+        if (EventSystem.current.IsPointerOverGameObject()) {
+            return;
+        }
+
         currentPosition = context.ReadValue<Vector2>();
 
         // 仅在按下状态下处理拖拽
@@ -232,12 +245,19 @@ public class Ra2Demo : MonoBehaviour
             {
                 // 这里可以处理拖拽逻辑
                 zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
+                UpdateSelectionBox(currentPosition);
             }
+
+            
         }
     }
 
     private void OnRelease(InputAction.CallbackContext context)
     {
+        if (EventSystem.current.IsPointerOverGameObject()) {
+            return;
+        }
+        
         zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
         currentPosition = GetCurrentInputPosition();
 
@@ -250,11 +270,13 @@ public class Ra2Demo : MonoBehaviour
             {
                 zUDebug.Log($"[StandaloneBattleDemo] Drag ended - Total distance: {totalDragDistance}");
                 // 这里可以处理拖拽结束后的逻辑
+                EndSelectionBox();
             }
             else
             {
                 zUDebug.Log($"[StandaloneBattleDemo] Click detected (not drag) - Distance: {totalDragDistance}");
                 // 如果拖拽距离小于阈值，可能是一次点击
+                SendMoveCommandForSelectedUnit(currentPosition);
             }
         }
         
@@ -326,7 +348,7 @@ public class Ra2Demo : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
             // 则开始框选
-            StartSelectionBox(screenPosition);
+            // StartSelectionBox(screenPosition);
         }
 
         if (isSelecting)
@@ -650,18 +672,18 @@ public class Ra2Demo : MonoBehaviour
             if (Mouse.current.leftButton.isPressed)
             {
                 Vector2 currentMousePosition = Mouse.current.position.ReadValue();
-                UpdateSelectionBox(currentMousePosition);
+                // UpdateSelectionBox(currentMousePosition);
             }
             else
             {
                 // 鼠标左键释放，结束框选
-                EndSelectionBox();
+                // EndSelectionBox();
             }
         }
         else if (!isSelecting && Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
         {
             // 确保在鼠标释放时也结束框选（额外的安全检查）
-            EndSelectionBox();
+            // EndSelectionBox();
         }
 
         // 左键点击放置建筑或选择单位
@@ -684,7 +706,7 @@ public class Ra2Demo : MonoBehaviour
             }
             else
             {
-                SendMoveCommandForSelectedUnit();
+                // SendMoveCommandForSelectedUnit();
             }
         }
     }
@@ -693,7 +715,7 @@ public class Ra2Demo : MonoBehaviour
     /// <summary>
     /// 发送移动命令给选中的单位
     /// </summary>
-    private void SendMoveCommandForSelectedUnit()
+    private void SendMoveCommandForSelectedUnit(Vector2 screenPosition)
     {
         // 检查是否有选中的单位
         if (selectedEntityIds.Count == 0)
@@ -705,7 +727,6 @@ public class Ra2Demo : MonoBehaviour
         if (_game == null || _game.World == null)
             return;
 
-        Vector2 screenPosition = Mouse.current.position.ReadValue();
         if (!TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
             return;
 
