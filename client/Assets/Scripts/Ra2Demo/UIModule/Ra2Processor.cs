@@ -135,6 +135,8 @@ public class Ra2Processor : BaseProcessor
                 break;
             case SelectBuildingEvent e:
                 _ra2Demo.StartBuildingPlacement(e.BuildingType);
+                // 显示确认和取消按钮
+                MainPanel.ShowConfirm();
                 break;
             case ShowMessageEvent e:
                 MainPanel.ShowMessage(e.Message);

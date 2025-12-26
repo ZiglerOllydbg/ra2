@@ -192,7 +192,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
     /// <summary>
     /// 更新建筑预览位置
     /// </summary>
-    public void UpdateBuildingPreview(BuildingType currentBuildingToBuild, bool currentIsReady)
+    public void UpdateBuildingPreview(BuildingType currentBuildingToBuild, bool currentIsReady, Vector2 pos)
     {
         buildingToBuild = currentBuildingToBuild;
         isReady = currentIsReady;
@@ -252,10 +252,9 @@ public class BuildingPreviewRenderer : MonoBehaviour
         }
 
         // 更新预览建筑的位置
-        if (previewBuilding != null && UnityEngine.InputSystem.Mouse.current != null)
+        if (previewBuilding != null)
         {
-            Vector2 mousePosition = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-            if (TryGetGroundPosition(mousePosition, out Vector3 worldPosition))
+            if (TryGetGroundPosition(pos, out Vector3 worldPosition))
             {
                 // 对齐到网格中心
                 zVector2 zWorldPos = new zVector2(

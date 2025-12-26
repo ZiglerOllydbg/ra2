@@ -501,6 +501,20 @@ public class Ra2Demo : MonoBehaviour
         // 相机移动模式不需要额外处理，只需重置isSelecting状态即可
     }
 
+    public void OnConfirmOk()
+    {
+        zUDebug.Log("OnConfirmOk");
+        
+        PlaceBuilding();
+    }
+
+    public void OnConfirmCancel()
+    {
+        zUDebug.Log("OnConfirmCancel");
+        
+        CancelBuilding();
+    }
+
     /// <summary>
     /// 更新建筑预览位置
     /// </summary>
@@ -509,7 +523,8 @@ public class Ra2Demo : MonoBehaviour
         // 委托给建筑预览渲染器处理
         if (buildingPreviewRenderer != null)
         {
-            buildingPreviewRenderer.UpdateBuildingPreview(buildingToBuild, true);
+            Vector2 screenCenterPos = new(Screen.width / 2f, Screen.height / 2f);
+            buildingPreviewRenderer.UpdateBuildingPreview(buildingToBuild, true, screenCenterPos);
         }
     }
 

@@ -28,6 +28,10 @@ public class MainPanel : BasePanel
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
 
+    // 确认和取消
+    private Button confirmOkBtn;
+    private Button confirmCancelBtn;
+
     // 消息提示相关
     private TMP_Text messageText;
     private CanvasGroup messageCanvasGroup;
@@ -73,6 +77,10 @@ public class MainPanel : BasePanel
         buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
         producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>(); // 新增生产按钮
+
+        confirmOkBtn = PanelObject.transform.Find("Confirm/OK")?.GetComponent<Button>();
+        confirmCancelBtn = PanelObject.transform.Find("Confirm/Cancel")?.GetComponent<Button>();
+        HideConfirm();
         
         // 获取消息提示组件
         var messageGroup = PanelObject.transform.Find("Tips");
@@ -173,6 +181,16 @@ public class MainPanel : BasePanel
             producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
 
+        if (confirmOkBtn != null)
+        {
+            confirmOkBtn.onClick.AddListener(OnConfirmOkClick);
+        }
+
+        if (confirmCancelBtn != null)
+        {
+            confirmCancelBtn.onClick.AddListener(OnConfirmCancelClick);
+        }
+
     }
 
     protected override void RemoveEvent()
@@ -201,6 +219,15 @@ public class MainPanel : BasePanel
             producerBtn.onClick.RemoveListener(OnProducerButtonClick);
         }
 
+        if (confirmOkBtn != null)
+        {
+            confirmOkBtn.onClick.RemoveListener(OnConfirmOkClick);
+        }
+
+        if (confirmCancelBtn != null)
+        {
+            confirmCancelBtn.onClick.RemoveListener(OnConfirmCancelClick);
+        }
     }
     
     protected override void OnBecameInvisible()
@@ -379,6 +406,32 @@ public class MainPanel : BasePanel
     
     #endregion
     
+    private void OnConfirmOkClick()
+    {
+        Ra2Demo.OnConfirmOk();
+
+        HideConfirm();
+    }
+
+    private void OnConfirmCancelClick()
+    {
+        Ra2Demo.OnConfirmCancel();
+
+        HideConfirm();
+    }
+
+    public void ShowConfirm()
+    {
+        confirmOkBtn.gameObject.SetActive(true);
+        confirmCancelBtn.gameObject.SetActive(true);
+    }
+
+    public void HideConfirm()
+    {
+        confirmOkBtn.gameObject.SetActive(false);
+        confirmCancelBtn.gameObject.SetActive(false);
+    }
+
     /// <summary>
     /// Select按钮点击处理
     /// </summary>
