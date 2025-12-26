@@ -174,39 +174,17 @@ public class Ra2Demo : MonoBehaviour
     private void OnEnable()
     {
         _controls.Create.Enable();
-        _controls.Create.createUnit.performed += OnCreateUnit;
-        _controls.Create.tap.performed += OnTap;
         _controls.Create.Press.performed += OnPress;
         _controls.Create.Drag.performed += OnDrag;
         _controls.Create.Release.performed += OnRelease;
-
-        _controls.Camera.Enable();
-        _controls.Camera.Pan.performed += OnCameraPan;
-        _controls.Camera.Zoom.performed += OnCameraZoom;
     }
 
     private void OnDisable()
     {
         _controls.Create.Disable();
-        _controls.Create.createUnit.performed -= OnCreateUnit;
-        _controls.Create.tap.performed -= OnTap;
         _controls.Create.Press.performed -= OnPress;
         _controls.Create.Drag.performed -= OnDrag;
         _controls.Create.Release.performed -= OnRelease;
-
-        _controls.Camera.Disable();
-        _controls.Camera.Pan.performed -= OnCameraPan;
-        _controls.Camera.Zoom.performed -= OnCameraZoom;
-
-    }
-
-    private void OnTap(InputAction.CallbackContext context)
-    {
-        zUDebug.Log($"[StandaloneBattleDemo] OnTap");
-
-        // 移动
-        Vector2 pos = GetCurrentInputPosition();
-        SendMoveCommandForSelectedUnit(pos);
     }
 
     private void OnPress(InputAction.CallbackContext context)
@@ -247,8 +225,6 @@ public class Ra2Demo : MonoBehaviour
                 zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
                 UpdateSelectionBox(currentPosition);
             }
-
-            
         }
     }
 
@@ -257,7 +233,7 @@ public class Ra2Demo : MonoBehaviour
         if (EventSystem.current.IsPointerOverGameObject()) {
             return;
         }
-        
+
         zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
         currentPosition = GetCurrentInputPosition();
 
@@ -303,62 +279,6 @@ public class Ra2Demo : MonoBehaviour
         
         // 备用方案：如果上述都失败，使用最后已知位置
         return currentPosition;
-    }
-
-    private void OnCameraZoom(InputAction.CallbackContext context)
-    {
-        // 获取鼠标/触摸位置
-        Vector2 zoom = _controls.Camera.Zoom.ReadValue<Vector2>();
-
-        zUDebug.Log($"[StandaloneBattleDemo] OnCameraZoom zoom: {zoom}");
-    }
-
-    private void OnCameraPan(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            Vector2 panInput  = _controls.Camera.Pan.ReadValue<Vector2>();
-            // _mainCamera.transform.Translate(panInput.x, 0, panInput.y);
-
-            zUDebug.Log($"[StandaloneBattleDemo] OnCameraPan panInput: {panInput}");
-        }
-        else if (context.canceled)
-        {
-            Vector2 panInput  = _controls.Camera.Pan.ReadValue<Vector2>();
-
-            zUDebug.Log($"[StandaloneBattleDemo] OnCameraPan end, panInput : {panInput}");
-        }
-    }
-
-    /// <summary>
-    /// 响应创建单位的输入（使用Command系统）
-    /// </summary>
-    private void OnCreateUnit(InputAction.CallbackContext context)
-    {
-        if (_game == null || _game.World == null)
-        {
-            return;
-        }
-
-        // 获取鼠标/触摸位置
-        Vector2 screenPosition = Pointer.current.position.ReadValue();
-
-        // 检测点击到的gameobject对象，并设置给相机目标RTSCameraTargetController.Instance
-        Ray ray = _mainCamera.ScreenPointToRay(screenPosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
-        {
-            // 则开始框选
-            // StartSelectionBox(screenPosition);
-        }
-
-        if (isSelecting)
-        {
-            zUDebug.Log($"[StandaloneBattleDemo] isSelecting");
-        }
-        else
-        {
-            zUDebug.Log($"[StandaloneBattleDemo] isSelecting end");
-        }
     }
 
     /// <summary>
@@ -651,8 +571,6 @@ public class Ra2Demo : MonoBehaviour
             GUI.FocusControl("InputField");
         }
 
-        InputAction();
-
         // 表现系统：插值更新
         if (_presentationSystem != null)
         {
@@ -662,55 +580,6 @@ public class Ra2Demo : MonoBehaviour
         // 更新建筑预览
         UpdateBuildingPreview();
     }
-
-    private void InputAction()
-    {
-        // 更新框选状态
-        if (isSelecting && Mouse.current != null)
-        {
-            // 如果鼠标左键仍然按下，更新框选区域
-            if (Mouse.current.leftButton.isPressed)
-            {
-                Vector2 currentMousePosition = Mouse.current.position.ReadValue();
-                // UpdateSelectionBox(currentMousePosition);
-            }
-            else
-            {
-                // 鼠标左键释放，结束框选
-                // EndSelectionBox();
-            }
-        }
-        else if (!isSelecting && Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
-        {
-            // 确保在鼠标释放时也结束框选（额外的安全检查）
-            // EndSelectionBox();
-        }
-
-        // 左键点击放置建筑或选择单位
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            // 如果处于建造模式，放置建筑
-            if (buildingToBuild != BuildingType.None)
-            {
-                PlaceBuilding();
-            }
-        }
-
-        // 右键点击发送移动命令
-        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
-        {
-            // 如果在建造模式下，取消建造
-            if (buildingToBuild != BuildingType.None)
-            {
-                CancelBuilding();
-            }
-            else
-            {
-                // SendMoveCommandForSelectedUnit();
-            }
-        }
-    }
-
 
     /// <summary>
     /// 发送移动命令给选中的单位
@@ -790,9 +659,6 @@ public class Ra2Demo : MonoBehaviour
 
         // 绘制框选区域
         DrawSelectionBox();
-
-        // 绘制小地图
-        // DrawMiniMap();
 
         DrawGMConsole();
     }
