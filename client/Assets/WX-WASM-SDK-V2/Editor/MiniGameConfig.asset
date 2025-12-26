@@ -15,9 +15,9 @@ MonoBehaviour:
   ProjectConf:
     projectName: "\u94C1\u6D41\u7EAA\u5143"
     Appid: wx528c1d78338ae4b7
-    CDN: http://192.168.3.130:8000/
+    CDN: https://www.zhegepai.cn/webgl/
     assetLoadType: 0
-    compressDataPackage: 0
+    compressDataPackage: 1
     VideoUrl: 
     relativeDST: C:/MyZiegler/github/wx
     DST: C:/MyZiegler/github/wx
@@ -48,7 +48,7 @@ MonoBehaviour:
     PreloadWXFont: 0
     disableMultiTouch: 0
   CompileOptions:
-    DevelopBuild: 1
+    DevelopBuild: 0
     AutoProfile: 0
     ScriptOnly: 0
     Il2CppOptimizeSize: 1
