@@ -15,7 +15,7 @@ MonoBehaviour:
   ProjectConf:
     projectName: "\u94C1\u6D41\u7EAA\u5143"
     Appid: wx528c1d78338ae4b7
-    CDN: https://www.zhegepai.cn/webgl/
+    CDN: https://ra2-1305378363.cos.ap-beijing.myqcloud.com/webgl/
     assetLoadType: 0
     compressDataPackage: 1
     VideoUrl: 

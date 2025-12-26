@@ -1,4 +1,5 @@
 // @ts-nocheck
+import './encoder-decoder.min'
 import './weapp-adapter';
 import './events';
 import './texture-config';
