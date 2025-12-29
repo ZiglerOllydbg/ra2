@@ -903,7 +903,8 @@ public class Ra2Demo : MonoBehaviour
                 var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
                 if (outlineComponent != null)
                 {
-                    outlineComponent.enabled = true;
+                    outlineComponent.ShowCircle();
+                    // outlineComponent.enabled = true;
                     return true; // 成功启用轮廓
                 }
             }
@@ -929,7 +930,8 @@ public class Ra2Demo : MonoBehaviour
                 var outlineComponent = viewComponent.GameObject.GetComponent<OutlineComponent>();
                 if (outlineComponent != null)
                 {
-                    outlineComponent.enabled = false;
+                    // outlineComponent.enabled = false;
+                    outlineComponent.HideCircle();
                 }
             }
         }

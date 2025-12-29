@@ -2,14 +2,9 @@ using UnityEngine;
 
 public class OutlineComponent : MonoBehaviour
 {
-    [Header("Outline Settings")]
+        [Header("Outline Settings")]
     [SerializeField] private Color outlineColor = Color.white;
     [SerializeField] private float outlineWidth = 0.02f;
-    
-    // 存储原始材质，用于恢复
-    private Material[] _originalMaterials;
-    // 描边材质
-    private static Material _sharedOutlineMaterial;
     
     public Color OutlineColor
     {
@@ -17,7 +12,6 @@ public class OutlineComponent : MonoBehaviour
         set
         {
             outlineColor = value;
-            UpdateOutlineMaterial();
         }
     }
     
@@ -27,76 +21,69 @@ public class OutlineComponent : MonoBehaviour
         set
         {
             outlineWidth = value;
-            UpdateOutlineMaterial();
         }
     }
-    
+
     private void Awake()
     {
-        // 初始化共享描边材质（如果尚未创建）
-        if (_sharedOutlineMaterial == null)
-        {
-            // 创建一个简单的发光材质作为描边
-            _sharedOutlineMaterial = new Material(Shader.Find("Standard"));
-            _sharedOutlineMaterial.SetColor("_EmissionColor", outlineColor);
-            _sharedOutlineMaterial.SetFloat("_Metallic", 0f);
-            _sharedOutlineMaterial.SetFloat("_Glossiness", 0f);
-            _sharedOutlineMaterial.EnableKeyword("_EMISSION");
-        }
-    }
-    
-    private void UpdateOutlineMaterial()
-    {
-        if (_sharedOutlineMaterial != null)
-        {
-            _sharedOutlineMaterial.SetColor("_EmissionColor", outlineColor * 2); // 增强发光效果
-        }
+        HideCircle();
     }
     
     private void OnEnable()
     {
-        ApplyOutlineMaterial();
+
     }
     
     private void OnDisable()
     {
-        RestoreOriginalMaterials();
+
     }
-    
-    private void ApplyOutlineMaterial()
+   
+    /// <summary>
+    /// 显示名为Circle的子组件
+    /// </summary>
+    public void ShowCircle()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) return;
-        
-        // 保存原始材质
-        _originalMaterials = new Material[renderers.Length];
-        for (int i = 0; i < renderers.Length; i++)
+        Transform circleTransform = FindDeepChild(transform, "Circle");
+        if (circleTransform != null)
         {
-            if (renderers[i] != null)
-            {
-                _originalMaterials[i] = renderers[i].material;
-                // 应用描边材质
-                if (_sharedOutlineMaterial != null)
-                {
-                    renderers[i].material = _sharedOutlineMaterial;
-                }
-            }
+            circleTransform.gameObject.SetActive(true);
         }
     }
-    
-    private void RestoreOriginalMaterials()
+
+    /// <summary>
+    /// 隐藏名为Circle的子组件
+    /// </summary>
+    public void HideCircle()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0 || _originalMaterials == null) return;
-        
-        for (int i = 0; i < renderers.Length; i++)
+        Transform circleTransform = FindDeepChild(transform, "Circle");
+        if (circleTransform != null)
         {
-            if (i < _originalMaterials.Length && renderers[i] != null && _originalMaterials[i] != null)
-            {
-                renderers[i].material = _originalMaterials[i];
-            }
+            circleTransform.gameObject.SetActive(false);
         }
-        
-        _originalMaterials = null;
+    }
+
+    /// <summary>
+    /// 深度查找子对象（递归查找所有层级）
+    /// </summary>
+    /// <param name="parent">父级变换组件</param>
+    /// <param name="name">要查找的对象名称</param>
+    /// <returns>找到的变换组件或null</returns>
+    private Transform FindDeepChild(Transform parent, string name)
+    {
+        // 先在直接子对象中查找
+        Transform result = parent.Find(name);
+        if (result != null)
+            return result;
+
+        // 如果没找到，则递归查找每个子对象的子对象
+        foreach (Transform child in parent)
+        {
+            result = FindDeepChild(child, name);
+            if (result != null)
+                return result;
+        }
+
+        return null;
     }
 }
