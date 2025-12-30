@@ -62,6 +62,9 @@ public class Ra2Demo : MonoBehaviour
      * UI部分
      *************************************/
 
+         // 相机移动相关的常量
+    private const float JOYSTICK_CAMERA_MOVE_SPEED = 0.02f;  // 虚拟摇杆相机移动速度
+
     // 添加建造功能相关字段
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
 
@@ -178,6 +181,7 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Drag.performed += OnDrag;
         _controls.Create.Release.performed += OnRelease;
         _controls.Create.Move.performed += OnMove;
+        _controls.Create.Move.canceled += OnMove;
     }
 
     private void OnDisable()
@@ -187,15 +191,47 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Drag.performed -= OnDrag;
         _controls.Create.Release.performed -= OnRelease;
         _controls.Create.Move.performed -= OnMove;
+        _controls.Create.Move.canceled -= OnMove;
     }
 
     private void OnMove(InputAction.CallbackContext context)
     {
+        // 更新输入向量值
         Vector2 inputVector = context.ReadValue<Vector2>();
-        zUDebug.Log($"[StandaloneBattleDemo] OnMove, value={inputVector}");
-
-        // 使用虚拟摇杆的输入值控制相机移动
-        if (RTSCameraTargetController.Instance != null && _mainCamera != null)
+        _currentInputVector = inputVector;
+        
+        // 检查输入动作的阶段
+        if (context.performed)
+        {
+            // 开始移动时，设置移动标志
+            _isMoving = true;
+        }
+        else if (context.canceled)
+        {
+            // 输入取消时，取消移动标志
+            _isMoving = false;
+        }
+        // 关键修改：无论是否触发了performed或canceled事件，只要输入值为零就停止移动
+        else if (inputVector == Vector2.zero)
+        {
+            _isMoving = false;
+        }
+        // 如果输入值不为零，说明有移动输入，设置移动标志
+        else if (inputVector != Vector2.zero)
+        {
+            _isMoving = true;
+        }
+        
+        zUDebug.Log($"[StandaloneBattleDemo] OnMove, value={inputVector}, phase={context.phase}, isMoving={_isMoving}");
+    }
+    
+    private Vector2 _currentInputVector = Vector2.zero;
+    private bool _isMoving = false;
+    
+    private void UpdateCameraMovement()
+    {
+        // 在Update中处理相机移动，仅当处于移动状态时
+        if (_isMoving && RTSCameraTargetController.Instance != null && _mainCamera != null && _currentInputVector != Vector2.zero)
         {
             // 获取相机到地面的距离
             float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
@@ -204,7 +240,7 @@ public class Ra2Demo : MonoBehaviour
             float moveSpeed = cameraHeight * JOYSTICK_CAMERA_MOVE_SPEED;
             
             // 计算世界坐标偏移量
-            Vector3 worldDelta = new Vector3(-inputVector.x * moveSpeed, 0, -inputVector.y * moveSpeed);
+            Vector3 worldDelta = new Vector3(-_currentInputVector.x * moveSpeed, 0, -_currentInputVector.y * moveSpeed);
             
             // 转换为相对于相机朝向的移动方向
             Vector3 forward = _mainCamera.transform.forward;
@@ -256,7 +292,7 @@ public class Ra2Demo : MonoBehaviour
             if (dragDistance > DRAG_THRESHOLD)
             {
                 // 这里可以处理拖拽逻辑
-                zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
+                // zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
                 UpdateSelectionBox(currentPosition);
             }
         }
@@ -628,6 +664,8 @@ public class Ra2Demo : MonoBehaviour
 
         // 更新建筑预览
         UpdateBuildingPreview();
+
+        UpdateCameraMovement();
     }
 
     /// <summary>
@@ -976,7 +1014,6 @@ public class Ra2Demo : MonoBehaviour
         _game = game;
     }
 
-    // 相机移动相关的常量
-    private const float JOYSTICK_CAMERA_MOVE_SPEED = 0.05f;  // 虚拟摇杆相机移动速度
+
 
 }

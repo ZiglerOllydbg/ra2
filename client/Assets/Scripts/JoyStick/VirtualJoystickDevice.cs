@@ -26,6 +26,7 @@ public class VirtualJoystickDevice : InputDevice
         {
             Vector.WriteValueIntoEvent(value, eventPtr);
             InputSystem.QueueEvent(eventPtr);
+            zUDebug.Log($"SetJoystickValue:{value}");
         }
     }
 }
