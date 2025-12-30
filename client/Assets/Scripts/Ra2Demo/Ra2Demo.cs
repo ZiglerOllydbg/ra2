@@ -177,6 +177,10 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Press.performed += OnPress;
         _controls.Create.Drag.performed += OnDrag;
         _controls.Create.Release.performed += OnRelease;
+        _controls.Create.Move.performed += OnMove;
+        // _controls.Create.Move.canceled += OnMoveEnd;
+        _controls.Create.Move.performed += OnMove;
+        // _controls.Create.Move.canceled += OnMoveEnd;
     }
 
     private void OnDisable()
