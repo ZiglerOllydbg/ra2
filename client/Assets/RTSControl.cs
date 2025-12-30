@@ -119,6 +119,15 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""8ed367be-982b-48b7-a91c-43bec03d9333"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -209,6 +218,17 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
                     ""action"": ""Release"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""456d124e-7d56-4c1d-8a76-c05ed0023def"",
+                    ""path"": ""<VirtualJoystickDevice>/Vector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -232,6 +252,7 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
         m_Create_Press = m_Create.FindAction("Press", throwIfNotFound: true);
         m_Create_Drag = m_Create.FindAction("Drag", throwIfNotFound: true);
         m_Create_Release = m_Create.FindAction("Release", throwIfNotFound: true);
+        m_Create_Move = m_Create.FindAction("Move", throwIfNotFound: true);
     }
 
     ~@RTSControl()
@@ -358,6 +379,7 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
     private readonly InputAction m_Create_Press;
     private readonly InputAction m_Create_Drag;
     private readonly InputAction m_Create_Release;
+    private readonly InputAction m_Create_Move;
     public struct CreateActions
     {
         private @RTSControl m_Wrapper;
@@ -367,6 +389,7 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
         public InputAction @Press => m_Wrapper.m_Create_Press;
         public InputAction @Drag => m_Wrapper.m_Create_Drag;
         public InputAction @Release => m_Wrapper.m_Create_Release;
+        public InputAction @Move => m_Wrapper.m_Create_Move;
         public InputActionMap Get() { return m_Wrapper.m_Create; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -391,6 +414,9 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @Release.started += instance.OnRelease;
             @Release.performed += instance.OnRelease;
             @Release.canceled += instance.OnRelease;
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
         }
 
         private void UnregisterCallbacks(ICreateActions instance)
@@ -410,6 +436,9 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
             @Release.started -= instance.OnRelease;
             @Release.performed -= instance.OnRelease;
             @Release.canceled -= instance.OnRelease;
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
         }
 
         public void RemoveCallbacks(ICreateActions instance)
@@ -448,5 +477,6 @@ public partial class @RTSControl: IInputActionCollection2, IDisposable
         void OnPress(InputAction.CallbackContext context);
         void OnDrag(InputAction.CallbackContext context);
         void OnRelease(InputAction.CallbackContext context);
+        void OnMove(InputAction.CallbackContext context);
     }
 }

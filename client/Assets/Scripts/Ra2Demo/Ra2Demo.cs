@@ -41,7 +41,7 @@ public class Ra2Demo : MonoBehaviour
     [Header("小地图设置")]
     private MiniMapController miniMapController; // 小地图控制器
 
-    private RTSControl _controls;
+    public RTSControl _controls;
     public Camera _mainCamera;
     // 添加多选支持相关字段
     private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
@@ -178,9 +178,6 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Drag.performed += OnDrag;
         _controls.Create.Release.performed += OnRelease;
         _controls.Create.Move.performed += OnMove;
-        // _controls.Create.Move.canceled += OnMoveEnd;
-        _controls.Create.Move.performed += OnMove;
-        // _controls.Create.Move.canceled += OnMoveEnd;
     }
 
     private void OnDisable()
@@ -189,6 +186,39 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Press.performed -= OnPress;
         _controls.Create.Drag.performed -= OnDrag;
         _controls.Create.Release.performed -= OnRelease;
+        _controls.Create.Move.performed -= OnMove;
+    }
+
+    private void OnMove(InputAction.CallbackContext context)
+    {
+        Vector2 inputVector = context.ReadValue<Vector2>();
+        zUDebug.Log($"[StandaloneBattleDemo] OnMove, value={inputVector}");
+
+        // 使用虚拟摇杆的输入值控制相机移动
+        if (RTSCameraTargetController.Instance != null && _mainCamera != null)
+        {
+            // 获取相机到地面的距离
+            float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
+            
+            // 计算移动速度，与相机高度成比例
+            float moveSpeed = cameraHeight * JOYSTICK_CAMERA_MOVE_SPEED;
+            
+            // 计算世界坐标偏移量
+            Vector3 worldDelta = new Vector3(-inputVector.x * moveSpeed, 0, -inputVector.y * moveSpeed);
+            
+            // 转换为相对于相机朝向的移动方向
+            Vector3 forward = _mainCamera.transform.forward;
+            Vector3 right = _mainCamera.transform.right;
+            forward.y = 0;
+            right.y = 0;
+            forward.Normalize();
+            right.Normalize();
+            
+            Vector3 relativeDelta = forward * worldDelta.z + right * worldDelta.x;
+            
+            // 更新相机位置
+            RTSCameraTargetController.Instance.CameraTarget.position += relativeDelta;
+        }
     }
 
     private void OnPress(InputAction.CallbackContext context)
@@ -946,5 +976,7 @@ public class Ra2Demo : MonoBehaviour
         _game = game;
     }
 
+    // 相机移动相关的常量
+    private const float JOYSTICK_CAMERA_MOVE_SPEED = 0.05f;  // 虚拟摇杆相机移动速度
 
 }
