@@ -218,4 +218,4 @@ __marimo__/
 /.vscode
 /client/.vscode
 /client/TextToolDatas
-/client/.history
+*.history
