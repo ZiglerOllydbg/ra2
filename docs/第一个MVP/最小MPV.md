@@ -30,7 +30,13 @@
 
 
 ## 埋点
-- 用Firebase（免费）埋点：game_start、guide_complete、battle_end、player_exit
+- 参考阶段：game_start、guide_complete、battle_end、player_exit
+- 推荐微信游戏日志：对比微信实时日志，游戏日志，指标事件：https://blog.csdn.net/weixin_40677588/article/details/156730177?sharetype=blogdetail&sharerId=156730177&sharerefer=PC&sharesource=weixin_40677588&spm=1011.2480.3001.8118
+- 微信指标事件，方案：https://developers.weixin.qq.com/minigame/analysis/expt/IndexMgnt.html
+- 游戏日志（与实时日志对比，更推荐游戏日志）：wx.getGameLogManager：https://developers.weixin.qq.com/minigame/dev/guide/runtime/debug/gamelogmanager.html#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8
+- 微信实时日志（备用方案）wx.getRealtimeLogManager：https://developers.weixin.qq.com/minigame/dev/guide/runtime/debug/realtimelog/#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8
+
+
 
 
 ## 发布Taptap内测：
