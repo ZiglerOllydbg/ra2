@@ -8,7 +8,7 @@
 
 public class ConfInitUnits
 {
-	public string ID; // 编号
+	public const string JsonFileName = "InitUnits";	public string ID; // 编号
 	public int Camp; // 阵营
 	public string UnitType; // 单元类型
 	public string Position; // 位置

@@ -1,23 +1,25 @@
 {
-  "1": {
-    "ID": 1,
-    "Camp": 1,
-    "UnitType": 2,
-    "Position": "32,0,32",
-    "Note": "主基地"
-  },
-  "2": {
-    "ID": 2,
-    "Camp": 1,
-    "UnitType": 1,
-    "Position": "32,0,10",
-    "Note": "坦克"
-  },
-  "3": {
-    "ID": 3,
-    "Camp": 1,
-    "UnitType": 1,
-    "Position": "32,0,15",
-    "Note": "坦克"
+  "ConfInitUnits": {
+    "1": {
+      "ID": 1,
+      "Camp": 1,
+      "UnitType": 2,
+      "Position": "32,0,32",
+      "Note": "主基地"
+    },
+    "2": {
+      "ID": 2,
+      "Camp": 1,
+      "UnitType": 1,
+      "Position": "32,0,10",
+      "Note": "坦克"
+    },
+    "3": {
+      "ID": 3,
+      "Camp": 1,
+      "UnitType": 1,
+      "Position": "32,0,15",
+      "Note": "坦克"
+    }
   }
 }

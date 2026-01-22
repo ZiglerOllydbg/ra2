@@ -8,7 +8,7 @@
 
 public class ConfNPC
 {
-	public string ID; // 编号
+	public const string JsonFileName = "ExampleData";	public string ID; // 编号
 	public string Name; // 名称
 	public string AssetName; // 资源编号
 	public int HP; // 血
@@ -21,7 +21,7 @@ public class ConfNPC
 
 public class ConfItem
 {
-	public string ID; // 编号
+	public const string JsonFileName = "ExampleData";	public string ID; // 编号
 	public string Name; // 名称
 	public string AssetName; // 资源编号
 }
