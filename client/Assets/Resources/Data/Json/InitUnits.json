@@ -3,22 +3,73 @@
     "1": {
       "ID": 1,
       "Camp": 1,
-      "UnitType": 2,
+      "Type": 1,
+      "SubType": 2,
+      "PrefabId": 1,
       "Position": "32,0,32",
       "Note": "主基地"
     },
     "2": {
       "ID": 2,
       "Camp": 1,
-      "UnitType": 1,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
       "Position": "32,0,10",
-      "Note": "坦克"
+      "Note": "坦克1"
     },
     "3": {
       "ID": 3,
       "Camp": 1,
-      "UnitType": 1,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
       "Position": "32,0,15",
+      "Note": "坦克2"
+    },
+    "4": {
+      "ID": 4,
+      "Camp": 1,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
+      "Position": "32,0,20",
+      "Note": "坦克3"
+    },
+    "5": {
+      "ID": 5,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 2,
+      "PrefabId": 1,
+      "Position": "64,0,32",
+      "Note": "坦克"
+    },
+    "6": {
+      "ID": 6,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
+      "Position": "64,0,10",
+      "Note": "坦克"
+    },
+    "7": {
+      "ID": 7,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
+      "Position": "64,0,15",
+      "Note": "坦克"
+    },
+    "8": {
+      "ID": 8,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "PrefabId": 6,
+      "Position": "64,0,20",
       "Note": "坦克"
     }
   }

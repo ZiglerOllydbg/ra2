@@ -10,6 +10,7 @@ public class DataManagerTest : MonoBehaviour
         TestConfItem();
         TestConfInitUnits();
         TestQueryFunctions(); // 测试新增的查询功能
+        TestGetAllFunction(); // 测试新增的GetAll功能
     }
 
     void TestConfNPC()
@@ -191,5 +192,53 @@ public class DataManagerTest : MonoBehaviour
         }
         
         Debug.Log("\n=== Query Functions Test Complete ===");
+    }
+    
+    void TestGetAllFunction()
+    {
+        Debug.Log("\n=== Testing GetAll Function ===");
+        
+        // 测试获取所有NPC数据
+        Debug.Log("--- Testing GetAll for NPCs ---");
+        var allNpcs = DataManager.GetAll<ConfNPC>();
+        Debug.Log($"Retrieved {allNpcs.Count} NPCs using GetAll:");
+        foreach (var npc in allNpcs)
+        {
+            Debug.Log($"  NPC: ID={npc.ID}, Name={npc.Name}, HP={npc.HP}, Attack={npc.Attack}, Defence={npc.Defence}");
+        }
+        
+        // 测试获取所有Item数据
+        Debug.Log("--- Testing GetAll for Items ---");
+        var allItems = DataManager.GetAll<ConfItem>();
+        Debug.Log($"Retrieved {allItems.Count} Items using GetAll:");
+        foreach (var item in allItems)
+        {
+            Debug.Log($"  Item: ID={item.ID}, Name={item.Name}, AssetName={item.AssetName}");
+        }
+        
+        // 测试获取所有Unit数据
+        Debug.Log("--- Testing GetAll for Units ---");
+        var allUnits = DataManager.GetAll<ConfInitUnits>();
+        Debug.Log($"Retrieved {allUnits.Count} Units using GetAll:");
+        foreach (var unit in allUnits)
+        {
+            Debug.Log($"  Unit: ID={unit.ID}, Camp={unit.Camp}, UnitType={unit.UnitType}, Position={unit.Position}, Note={unit.Note}");
+        }
+        
+        // 验证GetAll和GetListBy无条件查询结果的一致性
+        Debug.Log("--- Verifying consistency between GetAll and GetListBy ---");
+        var allNpcsFromGetAll = DataManager.GetAll<ConfNPC>();
+        var allNpcsFromGetListBy = DataManager.GetListBy<ConfNPC>(_ => true); // 条件始终为真
+        
+        if (allNpcsFromGetAll.Count == allNpcsFromGetListBy.Count)
+        {
+            Debug.Log("✓ GetAll and GetListBy (with always-true condition) return same count");
+        }
+        else
+        {
+            Debug.LogError("✗ Count mismatch between GetAll and GetListBy");
+        }
+        
+        Debug.Log("\n=== GetAll Function Test Complete ===");
     }
 }

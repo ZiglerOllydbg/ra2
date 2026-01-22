@@ -39,6 +39,32 @@ public class DataManager
     }
     
     /// <summary>
+    /// 获取指定类型的所有数据
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <returns>指定类型的所有数据实例列表</returns>
+    public static List<T> GetAll<T>() where T : class
+    {
+        Type type = typeof(T);
+        string cacheKey = type.FullName;
+        
+        // 检查是否已经加载了对应类型的数据
+        if (!_cachedData.ContainsKey(cacheKey))
+        {
+            LoadDataForType<T>();
+        }
+
+        var typeCache = _cachedData[cacheKey] as Dictionary<string, T>;
+        
+        if (typeCache != null)
+        {
+            return new List<T>(typeCache.Values);
+        }
+        
+        return new List<T>();
+    }
+    
+    /// <summary>
     /// 根据条件查询单个实例
     /// </summary>
     /// <typeparam name="T">配置类类型</typeparam>

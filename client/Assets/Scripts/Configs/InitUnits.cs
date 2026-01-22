@@ -10,7 +10,9 @@ public class ConfInitUnits
 {
 	public const string JsonFileName = "InitUnits";	public string ID; // 编号
 	public int Camp; // 阵营
-	public string UnitType; // 单元类型
+	public int Type; // 主类型：1=建筑；2=单位
+	public int SubType; // 子类型
+	public int PrefabId; // 资源ID
 	public string Position; // 位置
 	public string Note; // 备注
 }
