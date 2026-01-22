@@ -6,7 +6,7 @@
 
 // Generate From ExampleData.xlsx
 
-public class NPC
+public class ConfNPC
 {
 	public string ID; // 编号
 	public string Name; // 名称
@@ -14,12 +14,12 @@ public class NPC
 	public int HP; // 血
 	public int Attack; // 攻击
 	public int Defence; // 防御
-	public date DateTest; // 测试日期
+	public string DateTest; // 测试日期
 	public string TestJsonArray; // 测试单元格内的Json数组
 	public string TestJsonObject; // 测试单元格内的Json对象
 }
 
-public class Item
+public class ConfItem
 {
 	public string ID; // 编号
 	public string Name; // 名称

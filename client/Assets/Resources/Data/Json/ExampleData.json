@@ -1,5 +1,5 @@
 {
-  "NPC": {
+  "ConfNPC": {
     "BS001": {
       "ID": "BS001",
       "Name": "鬼道士",
@@ -34,7 +34,7 @@
       "TestJsonObject": "{\"player\":\"enemy\"}"
     }
   },
-  "Item": {
+  "ConfItem": {
     "WP001": {
       "ID": "WP001",
       "Name": "倚天剑",

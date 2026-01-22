@@ -6,7 +6,7 @@
 
 // Generate From InitUnits.xlsx
 
-public class InitUnits
+public class ConfInitUnits
 {
 	public string ID; // 编号
 	public int Camp; // 阵营
