@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using Newtonsoft.Json;
@@ -35,6 +36,104 @@ public class DataManager
         }
         
         return null;
+    }
+    
+    /// <summary>
+    /// 根据条件查询单个实例
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <param name="predicate">查询条件函数</param>
+    /// <returns>符合条件的第一个实例</returns>
+    public static T GetBy<T>(Func<T, bool> predicate) where T : class
+    {
+        // 加载数据（如果尚未加载）
+        Type type = typeof(T);
+        string cacheKey = type.FullName;
+        
+        if (!_cachedData.ContainsKey(cacheKey))
+        {
+            LoadDataForType<T>();
+        }
+
+        var typeCache = _cachedData[cacheKey] as Dictionary<string, T>;
+        
+        if (typeCache != null)
+        {
+            foreach (var kvp in typeCache)
+            {
+                if (predicate(kvp.Value))
+                {
+                    return kvp.Value;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /// <summary>
+    /// 根据多条件查询单个实例
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <param name="predicates">多个查询条件函数</param>
+    /// <returns>符合条件的第一个实例</returns>
+    public static T GetBy<T>(params Func<T, bool>[] predicates) where T : class
+    {
+        return GetListBy<T>(predicates).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// 根据条件查询实例列表
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <param name="predicate">查询条件函数</param>
+    /// <returns>符合条件的实例列表</returns>
+    public static List<T> GetListBy<T>(Func<T, bool> predicate) where T : class
+    {
+        var result = new List<T>();
+        
+        Type type = typeof(T);
+        string cacheKey = type.FullName;
+        
+        if (!_cachedData.ContainsKey(cacheKey))
+        {
+            LoadDataForType<T>();
+        }
+
+        var typeCache = _cachedData[cacheKey] as Dictionary<string, T>;
+        
+        if (typeCache != null)
+        {
+            foreach (var kvp in typeCache)
+            {
+                if (predicate(kvp.Value))
+                {
+                    result.Add(kvp.Value);
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// 根据多条件查询实例列表
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <param name="predicates">多个查询条件函数</param>
+    /// <returns>符合条件的实例列表</returns>
+    public static List<T> GetListBy<T>(params Func<T, bool>[] predicates) where T : class
+    {
+        return GetListBy<T>((T item) => {
+            foreach (var predicate in predicates)
+            {
+                if (!predicate(item))
+                {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
     
     private static void LoadDataForType<T>() where T : class

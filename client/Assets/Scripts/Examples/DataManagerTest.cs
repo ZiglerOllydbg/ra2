@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DataManagerTest : MonoBehaviour
@@ -8,6 +9,7 @@ public class DataManagerTest : MonoBehaviour
         TestConfNPC();
         TestConfItem();
         TestConfInitUnits();
+        TestQueryFunctions(); // 测试新增的查询功能
     }
 
     void TestConfNPC()
@@ -100,5 +102,94 @@ public class DataManagerTest : MonoBehaviour
         {
             Debug.LogError("Failed to load Unit with ID 2");
         }
+    }
+    
+    void TestQueryFunctions()
+    {
+        Debug.Log("\n=== Testing Query Functions ===");
+        
+        // 测试单条件查询返回单个实例
+        Debug.Log("--- Testing GetBy with single condition ---");
+        var highHpNpc = DataManager.GetBy<ConfNPC>(npc => npc.HP > 100);
+        if (highHpNpc != null)
+        {
+            Debug.Log($"Found high HP NPC: {highHpNpc.Name}, HP={highHpNpc.HP}");
+        }
+        else
+        {
+            Debug.Log("No NPC with HP > 100 found");
+        }
+
+        // 测试单条件查询返回实例列表
+        Debug.Log("--- Testing GetListBy with single condition ---");
+        var allNpcs = DataManager.GetListBy<ConfNPC>(npc => npc.Attack > 0);
+        Debug.Log($"Found {allNpcs.Count} NPCs with Attack > 0");
+        foreach (var npc in allNpcs)
+        {
+            Debug.Log($"  NPC: {npc.Name}, Attack={npc.Attack}");
+        }
+
+        // 测试多条件查询返回单个实例
+        Debug.Log("--- Testing GetBy with multiple conditions ---");
+        var specificNpc = DataManager.GetBy<ConfNPC>(
+            npc => npc.Attack > 50,
+            npc => npc.Defence > 20
+        );
+        if (specificNpc != null)
+        {
+            Debug.Log($"Found NPC with Attack > 50 and Defence > 20: {specificNpc.Name}, A={specificNpc.Attack}, D={specificNpc.Defence}");
+        }
+        else
+        {
+            Debug.Log("No NPC meets both Attack > 50 and Defence > 20 conditions");
+        }
+
+        // 测试多条件查询返回实例列表
+        Debug.Log("--- Testing GetListBy with multiple conditions ---");
+        var strongNpcs = DataManager.GetListBy<ConfNPC>(
+            npc => npc.HP > 50,
+            npc => npc.Attack > 30
+        );
+        Debug.Log($"Found {strongNpcs.Count} NPCs with HP > 50 and Attack > 30:");
+        foreach (var npc in strongNpcs)
+        {
+            Debug.Log($"  NPC: {npc.Name}, HP={npc.HP}, Attack={npc.Attack}, Defence={npc.Defence}");
+        }
+
+        // 测试使用名称条件查询
+        Debug.Log("--- Testing GetBy with name condition ---");
+        var namedNpc = DataManager.GetBy<ConfNPC>(npc => npc.Name.Contains("Archer"));
+        if (namedNpc != null)
+        {
+            Debug.Log($"Found NPC with 'Archer' in name: {namedNpc.Name}");
+        }
+        else
+        {
+            Debug.Log("No NPC with 'Archer' in name found");
+        }
+
+        // 测试查询返回空结果的情况
+        Debug.Log("--- Testing queries with no results ---");
+        var nonExistent = DataManager.GetBy<ConfNPC>(npc => npc.HP > 10000);
+        if (nonExistent == null)
+        {
+            Debug.Log("Correctly returned null for condition with no matches (HP > 10000)");
+        }
+        else
+        {
+            Debug.LogError("Should have returned null for condition with no matches");
+        }
+
+        var emptyList = DataManager.GetListBy<ConfNPC>(npc => npc.Name == "NonExistent");
+        if (emptyList.Count == 0)
+        {
+            Debug.Log("Correctly returned empty list for condition with no matches");
+        }
+        else
+        {
+            Debug.LogError("Should have returned empty list for condition with no matches");
+        }
+        
+        Debug.Log("\n=== Query Functions Test Complete ===");
     }
 }
