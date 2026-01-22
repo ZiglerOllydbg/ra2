@@ -306,21 +306,48 @@ namespace Game.Examples
                 World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(2200, 10));
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(2));
 
-                // 增加1辆坦克
-                // 使用EntityCreationManager创建单位
-                int prefabId = 6; // 默认预制体ID
-                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.Tank, 
-                    new zVector3((zfloat)50, zfloat.Zero, (zfloat)64), prefabId);
-                if (unitEvent.HasValue)
-                {
-                    createdEntities.Add(unitEvent.Value);
-                }
+                // 添加蓝方单位
+                CreateBlueUnits(createdEntities);
+
+                // 增加红方单位
+                CreateRedUnits(createdEntities);
             }
 
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
             _genesisEntities = createdEntities;
             
             zUDebug.Log($"[BattleGame] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
+        }
+
+        private void CreateRedUnits(List<UnitCreatedEvent> createdEntities)
+        {
+            // 使用EntityCreationManager创建单位
+            int prefabId = 6; // 默认预制体ID
+            for (int i = 0; i < 10; i++)
+            {
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 1, UnitType.Tank, 
+                    new zVector3((zfloat)(32 + i), zfloat.Zero, (zfloat)16), prefabId);
+                if (unitEvent.HasValue)
+                {
+                    createdEntities.Add(unitEvent.Value);
+                }
+            }
+        }
+
+        private void CreateBlueUnits(List<UnitCreatedEvent> createdEntities)
+        {
+            // 蓝方增加10辆坦克
+            // 使用EntityCreationManager创建单位
+            int prefabId = 6; // 默认预制体ID
+            for (int i = 0; i < 10; i++)
+            {
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.Tank, 
+                    new zVector3((zfloat)(50 + i), zfloat.Zero, (zfloat)64), prefabId);
+                if (unitEvent.HasValue)
+                {
+                    createdEntities.Add(unitEvent.Value);
+                }
+            }
         }
 
 

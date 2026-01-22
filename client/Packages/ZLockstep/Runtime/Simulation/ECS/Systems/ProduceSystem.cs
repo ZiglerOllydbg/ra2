@@ -50,7 +50,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     // 如果生产数量大于0，增加进度
                     if (produceNumber > 0)
                     {
-                        progress += 1;
+                        progress += 2;
                         
                         // 如果进度达到100，生产一个单位
                         if (progress >= 100)

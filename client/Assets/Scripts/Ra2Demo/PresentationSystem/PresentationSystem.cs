@@ -578,8 +578,8 @@ namespace ZLockstep.View.Systems
                 bool isMoving = velocity.IsMoving;
                 float speed = velocity.SqrMagnitude.ToFloat();
 
-                view.Animator.SetBool("IsMoving", isMoving);
-                view.Animator.SetFloat("MoveSpeed", speed);
+                // view.Animator.SetBool("Move", isMoving);
+                view.Animator.SetInteger("speed", (int)speed);
             }
 
             // 根据生命值设置死亡动画
@@ -598,11 +598,11 @@ namespace ZLockstep.View.Systems
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
                 if (attack.HasTarget)
                 {
-                    view.Animator.SetBool("IsAttacking", true);
+                    view.Animator.SetTrigger("Fire");
                 }
                 else
                 {
-                    view.Animator.SetBool("IsAttacking", false);
+                    // view.Animator.SetBool("Fire", false);
                 }
             }
         }
