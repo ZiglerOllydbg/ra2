@@ -4,7 +4,7 @@
       "ID": 1,
       "Camp": 1,
       "Type": 1,
-      "SubType": 2,
+      "SubType": 1,
       "PrefabId": 1,
       "Position": "32,0,32",
       "Note": "主基地"
@@ -40,7 +40,7 @@
       "ID": 5,
       "Camp": 2,
       "Type": 1,
-      "SubType": 2,
+      "SubType": 1,
       "PrefabId": 1,
       "Position": "64,0,32",
       "Note": "坦克"

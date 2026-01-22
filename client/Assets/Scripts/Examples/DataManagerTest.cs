@@ -86,7 +86,7 @@ public class DataManagerTest : MonoBehaviour
         var unit1 = DataManager.Get<ConfInitUnits>("1");
         if (unit1 != null)
         {
-            Debug.Log($"Found Unit: ID={unit1.ID}, Camp={unit1.Camp}, UnitType={unit1.UnitType}, Position={unit1.Position}, Note={unit1.Note}");
+            Debug.Log($"Found Unit: ID={unit1.ID}, Camp={unit1.Camp}, UnitType={unit1.SubType}, Position={unit1.Position}, Note={unit1.Note}");
         }
         else
         {
@@ -97,7 +97,7 @@ public class DataManagerTest : MonoBehaviour
         var unit2 = DataManager.Get<ConfInitUnits>("2");
         if (unit2 != null)
         {
-            Debug.Log($"Found Unit: ID={unit2.ID}, Camp={unit2.Camp}, UnitType={unit2.UnitType}, Position={unit2.Position}, Note={unit2.Note}");
+            Debug.Log($"Found Unit: ID={unit2.ID}, Camp={unit2.Camp}, UnitType={unit2.SubType}, Position={unit2.Position}, Note={unit2.Note}");
         }
         else
         {
@@ -222,7 +222,7 @@ public class DataManagerTest : MonoBehaviour
         Debug.Log($"Retrieved {allUnits.Count} Units using GetAll:");
         foreach (var unit in allUnits)
         {
-            Debug.Log($"  Unit: ID={unit.ID}, Camp={unit.Camp}, UnitType={unit.UnitType}, Position={unit.Position}, Note={unit.Note}");
+            Debug.Log($"  Unit: ID={unit.ID}, Camp={unit.Camp}, UnitType={unit.SubType}, Position={unit.Position}, Note={unit.Note}");
         }
         
         // 验证GetAll和GetListBy无条件查询结果的一致性

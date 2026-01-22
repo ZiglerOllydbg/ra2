@@ -126,7 +126,15 @@ public class NetworkManager
         // 处理创世阶段 - 初始化游戏世界
         if (data.InitialState != null)
         {
-            _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
+            if (data.InitialState.Count == 2)
+            {
+                _ra2Demo.GetBattleGame().CreateWorldByConfig();
+            } else
+            {
+                _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
+            }
+
+            
         }
 
         Frame.DispatchEvent(new MatchedEvent(data));

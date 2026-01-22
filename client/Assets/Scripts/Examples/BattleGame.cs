@@ -174,6 +174,54 @@ namespace Game.Examples
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
 
+        public void CreateWorldByConfig()
+        {
+            List<ConfInitUnits> confs = DataManager.GetAll<ConfInitUnits>();
+
+            // 创建一个临时列表来存储创世阶段创建的实体信息
+            var createdEntities = new List<UnitCreatedEvent>();
+            foreach (var conf in confs)
+            {
+                var confPos = StringToVector3Converter.StringToZVector3(conf.Position);
+
+                if (conf.Type == 1)
+                {
+                    // 建筑
+                    var entEvent = EntityCreationManager.CreateBuildingEntity(World, conf.Camp,
+                        (BuildingType)conf.SubType,
+                        new zVector3(confPos.x, confPos.y, confPos.z),
+                        prefabId: conf.PrefabId, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                    if (entEvent.HasValue)
+                    {
+                        createdEntities.Add(entEvent.Value);
+                    }
+
+                    if ((BuildingType)conf.SubType == BuildingType.Base)
+                    {
+                        // 添加经济
+                        var ecoEntity = World.EntityManager.CreateEntity();
+                        World.ComponentManager.AddComponent(ecoEntity, EconomyComponent.Create(10000, 10));
+                        World.ComponentManager.AddComponent(ecoEntity, CampComponent.Create(conf.Camp));
+                    }
+                } else if (conf.Type == 2)
+                {
+                    // 单位
+                    var entEvent = EntityCreationManager.CreateUnitEntity(World, conf.Camp, (UnitType)conf.SubType,
+                        new zVector3(confPos.x, confPos.y, confPos.z),
+                        prefabId: conf.PrefabId);
+                    if (entEvent.HasValue)
+                    {
+                        createdEntities.Add(entEvent.Value);
+                    }
+                }
+            }
+
+            // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
+            _genesisEntities = createdEntities;
+            
+            zUDebug.Log($"[BattleGame] 通过配置数据进行创世阶段，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
+        }
+
         /// <summary>
         /// 根据匹配成功协议初始化游戏世界（创世阶段）
         /// </summary>
@@ -287,30 +335,6 @@ namespace Game.Examples
                 var economyEntity = World.EntityManager.CreateEntity();
                 World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, 10));
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(campId));
-            }
-            
-            // TODO 调试用
-            if (initialState.Count == 2)
-            {
-                // 添加一个camp2的主基地，在64,64位置
-                var entityEvent = EntityCreationManager.CreateBuildingEntity(World, 2, BuildingType.Base,
-                    new zVector3((zfloat)64, zfloat.Zero, (zfloat)64),
-                    prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
-                if (entityEvent.HasValue)
-                {
-                    createdEntities.Add(entityEvent.Value);
-                }
-
-                // 添加阵营2的经济组件
-                var economyEntity = World.EntityManager.CreateEntity();
-                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(2200, 10));
-                World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(2));
-
-                // 添加蓝方单位
-                CreateBlueUnits(createdEntities);
-
-                // 增加红方单位
-                CreateRedUnits(createdEntities);
             }
 
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
