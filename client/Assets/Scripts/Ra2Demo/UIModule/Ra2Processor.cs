@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using ZFrame;
-using ZLib; // 添加这个using语句以使用Tick
+using ZLib;
+using ZLockstep.Simulation.ECS.Components; // 添加这个using语句以使用Tick
 
 public class Ra2Processor : BaseProcessor
 {
@@ -135,6 +136,8 @@ public class Ra2Processor : BaseProcessor
 
                     MainPanel.Ra2Demo = _ra2Demo;
                     MainPanel.Open();
+
+
                     
                     RefreshEconomy();
                 }

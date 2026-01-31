@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
+using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Sync;
 
 /// <summary>
@@ -123,17 +124,11 @@ public class MatchPanel : BasePanel
         // 初始化Unity视图层
         ra2Demo.InitializeUnityView();
 
-        MatchSuccessData matchSuccessData = new MatchSuccessData();
-        matchSuccessData.RoomId = "1";
-        matchSuccessData.CampId = 1;
-        matchSuccessData.Token = "1";
-        matchSuccessData.InitialState = new JObject(){
-                ["InitialState"] = new JObject
-                {
-                    ["1"] = "1",
-                    ["2"] = "2"
-                }
-            };
+        // 全局数据
+        GlobalInfoComponent globalInfoComponent = new(1);
+        ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
+        // 创建世界
+        ra2Demo.GetBattleGame().CreateWorldByConfig();
 
         Frame.DispatchEvent(new SoloGameStartEvent());
 
