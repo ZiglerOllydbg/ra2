@@ -1,7 +1,10 @@
+using Game.Examples;
 using Game.RA2.Client;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
+using ZLockstep.Sync;
 
 /// <summary>
 /// Demo面板 - 示例如何在业务层配置路径、名称和深度类型
@@ -110,8 +113,29 @@ public class MatchPanel : BasePanel
     // 5. 按钮点击处理方法
     private void OnSoloButtonClick()
     {
-        bool isLocalNet = GetIsLocalNet();
-        NetworkManager.Instance.ConnectToServer(RoomType.SOLO, isLocalNet);
+        // 可以在这里添加匹配成功的处理逻辑
+        Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+        // 创建BattleGame实例
+        ra2Demo.Mode = GameMode.Standalone;
+        ra2Demo.SetBattleGame(new BattleGame(ra2Demo.Mode, 20, 0));
+        ra2Demo.GetBattleGame().Init();
+        
+        // 初始化Unity视图层
+        ra2Demo.InitializeUnityView();
+
+        MatchSuccessData matchSuccessData = new MatchSuccessData();
+        matchSuccessData.RoomId = "1";
+        matchSuccessData.CampId = 1;
+        matchSuccessData.Token = "1";
+        matchSuccessData.InitialState = new JObject(){
+                ["InitialState"] = new JObject
+                {
+                    ["1"] = "1",
+                    ["2"] = "2"
+                }
+            };
+
+        Frame.DispatchEvent(new SoloGameStartEvent());
 
         HideButtons();
     }

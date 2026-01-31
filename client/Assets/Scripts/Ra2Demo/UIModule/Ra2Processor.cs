@@ -79,7 +79,8 @@ public class Ra2Processor : BaseProcessor
             typeof(SelectBuildingEvent),
             typeof(ShowMessageEvent),
             typeof(SettleEvent),
-            typeof(RestartGameEvent)
+            typeof(RestartGameEvent),
+            typeof(SoloGameStartEvent)
         };
     }
 
@@ -110,8 +111,6 @@ public class Ra2Processor : BaseProcessor
                     LoadingPanel.SetProgress(0.5f);
                     LoadingPanel.SetPlayerCount(playerNum);
                     
-                    
-                    
                     // 延迟2秒后调用SendReady
                     Tick.SetTimeout(() => {
                         NetworkManager.Instance.CurrentWebSocket.SendReady();
@@ -120,9 +119,19 @@ public class Ra2Processor : BaseProcessor
                 break;
             case GameStartEvent e:
                 {
-                    // 匹配成功
                     zUDebug.Log("[Ra2Processor] 开始游戏");
                     LoadingPanel.Close();
+
+                    MainPanel.Ra2Demo = _ra2Demo;
+                    MainPanel.Open();
+                    
+                    RefreshEconomy();
+                }
+                break;
+            case SoloGameStartEvent:
+                {
+                    zUDebug.Log("[Ra2Processor]  solo 模式开始游戏");
+                    MatchPanel.Close();
 
                     MainPanel.Ra2Demo = _ra2Demo;
                     MainPanel.Open();
