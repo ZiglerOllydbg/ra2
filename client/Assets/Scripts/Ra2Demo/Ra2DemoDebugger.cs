@@ -4,6 +4,7 @@ using ZLockstep.Simulation.ECS.Components;
 using zUnity;
 using ZLockstep.View;
 using Game.Examples;
+using ZLockstep.Simulation;
 
 /// <summary>
 /// 调试可视化类，负责处理Ra2Demo中的OnGUI和OnDrawGizmos调试功能
@@ -16,11 +17,17 @@ public class Ra2DemoDebugger : MonoBehaviour
     public bool showGrid = true;           // 显示网格
     public bool showObstacles = true;      // 显示障碍物
     public bool showFlowField = true;      // 显示流场方向
+    public bool showSimulationInfo = true; // 显示仿真信息（包括zTime帧率）
 
     private Ra2Demo _demo;
     private Vector3 _lastClickPosition;
     private float _gizmoDisplayTime = 2f;
     private float _lastClickTime;
+    
+    // zTime FPS计算相关变量
+    private float _zTimeAccumulatedTime = 0f;
+    private int _zTimeAccumulatedTicks = 0;
+    private float _zTimeFps = 0f;
 
     private void Awake()
     {
@@ -341,9 +348,9 @@ public class Ra2DemoDebugger : MonoBehaviour
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
         labelStyle.fontSize = 16;
-        labelStyle.normal.textColor = Color.white;
+        labelStyle.normal.textColor = Color.yellow;
         
-        Rect toggleRect = new Rect(20, 500, 200, 150);
+        Rect toggleRect = new Rect(20, 500, 200, 350);
         GUILayout.BeginArea(toggleRect);
         showUnits = GUILayout.Toggle(showUnits, "显示单位", toggleStyle);
         showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示RVO智能体", toggleStyle);
@@ -351,6 +358,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
         showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
         showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
+        showSimulationInfo = GUILayout.Toggle(showSimulationInfo, "显示仿真信息", toggleStyle);
 
         // 显示流场数量
         if (showFlowField && game.FlowFieldManager != null)
@@ -364,6 +372,28 @@ public class Ra2DemoDebugger : MonoBehaviour
         {
             int rvoAgentCount = game.RvoSimulator.GetNumAgents();
             GUILayout.Label($"RVO智能体数量: {rvoAgentCount}", labelStyle);
+        }
+
+        // 显示仿真信息（包括zTime帧率）
+        if (showSimulationInfo && game.World != null && game.World.TimeManager != null)
+        {
+            var timeManager = game.World.TimeManager;
+            
+            // 计算zTime的FPS
+            _zTimeAccumulatedTime += (float)timeManager.DeltaTime;
+            _zTimeAccumulatedTicks++;
+            
+            if (_zTimeAccumulatedTime >= 0.5f) // 每0.5秒更新一次FPS显示
+            {
+                _zTimeFps = _zTimeAccumulatedTicks / _zTimeAccumulatedTime;
+                _zTimeAccumulatedTime = 0f;
+                _zTimeAccumulatedTicks = 0;
+            }
+            
+            GUILayout.Label($"zTime Tick: {timeManager.Tick}", labelStyle);
+            GUILayout.Label($"zTime 时间: {(float)timeManager.Time:F2}s", labelStyle);
+            GUILayout.Label($"zTime DeltaTime: {(float)timeManager.DeltaTime:F3}s", labelStyle);
+            GUILayout.Label($"zTime FPS: {_zTimeFps:F1}", labelStyle);
         }
         
         GUILayout.EndArea();
