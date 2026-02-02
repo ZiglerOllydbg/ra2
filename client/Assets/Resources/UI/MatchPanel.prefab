@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 3719104001734266643}
   - component: {fileID: 3477457575662680917}
   m_Layer: 5
-  m_Name: Replay
+  m_Name: REPLAY
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

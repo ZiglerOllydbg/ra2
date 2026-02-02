@@ -22,6 +22,7 @@ public class MatchPanel : BasePanel
     private Button _soloButton;
     private Button _duoButton;
     private Button _quadButton;
+    private Button _replayButton;
     private Toggle _useLocalNetToggle;
     private Transform _matchGroup;
     private Transform _matchingGroup;
@@ -44,6 +45,7 @@ public class MatchPanel : BasePanel
         _soloButton = PanelObject.transform.Find("Match/SOLO")?.GetComponent<Button>();
         _duoButton = PanelObject.transform.Find("Match/DUO")?.GetComponent<Button>();
         _quadButton = PanelObject.transform.Find("Match/QUAD")?.GetComponent<Button>();
+        _replayButton = PanelObject.transform.Find("Match/REPLAY")?.GetComponent<Button>();
         
         // 获取UseLocalNet Toggle组件
         _useLocalNetToggle = PanelObject.transform.Find("Match/UseLocalNet")?.GetComponent<Toggle>();
@@ -77,6 +79,11 @@ public class MatchPanel : BasePanel
             _quadButton.onClick.AddListener(OnQuadButtonClick);
         }
         
+        if (_replayButton != null)
+        {
+            _replayButton.onClick.AddListener(OnReplayButtonClick);
+        }
+
         // 为UseLocalNet Toggle添加值变化监听
         if (_useLocalNetToggle != null)
         {
@@ -104,6 +111,11 @@ public class MatchPanel : BasePanel
             _quadButton.onClick.RemoveListener(OnQuadButtonClick);
         }
         
+        if (_replayButton != null)
+        {
+            _replayButton.onClick.RemoveListener(OnReplayButtonClick);
+        }
+
         // 移除UseLocalNet Toggle的值变化监听
         if (_useLocalNetToggle != null)
         {
@@ -142,6 +154,89 @@ public class MatchPanel : BasePanel
         Frame.DispatchEvent(new SoloGameStartEvent());
 
         HideButtons();
+    }
+
+    // Replay按钮点击处理方法
+    private void OnReplayButtonClick()
+    {
+        zUDebug.Log("Replay按钮被点击了！");
+        
+        // 获取最近一次录制的命令文件路径
+        // 查找persistentDataPath目录下的command_record_*.txt文件
+        string persistentPath = Application.persistentDataPath;
+        string[] files = System.IO.Directory.GetFiles(persistentPath, "command_record_*.txt");
+        
+        if (files.Length == 0)
+        {
+            zUDebug.LogWarning("没有找到命令记录文件");
+            return;
+        }
+        
+        // 找到最新的命令记录文件
+        string latestFile = "";
+        System.DateTime latestTime = System.DateTime.MinValue;
+        
+        foreach (string file in files)
+        {
+            string fileName = System.IO.Path.GetFileName(file);
+            string dateStr = fileName.Replace("command_record_", "").Replace(".txt", "");
+            
+            if (System.DateTime.TryParseExact(dateStr, "yyyyMMdd_HHmmss", null, System.Globalization.DateTimeStyles.None, out System.DateTime fileTime))
+            {
+                if (fileTime > latestTime)
+                {
+                    latestTime = fileTime;
+                    latestFile = file;
+                }
+            }
+        }
+        
+        if (string.IsNullOrEmpty(latestFile))
+        {
+            zUDebug.LogWarning("未能找到有效的命令记录文件");
+            return;
+        }
+        
+        zUDebug.Log($"正在读取命令记录文件: {latestFile}");
+        
+        // 使用CommandReader读取命令记录
+        Utils.CommandReader commandReader = new Utils.CommandReader();
+        commandReader.LoadFromFile(latestFile);
+        
+        // 输出统计信息
+        zUDebug.Log($"总共加载了 {commandReader.FrameInputs.Count} 条frameInput记录");
+        
+        // 获取所有帧号
+        var allFrames = commandReader.GetAllFrames();
+        zUDebug.Log($"共有 {allFrames.Count} 个不同的帧号");
+        
+        // 输出前几个和后几个帧的信息
+        for (int i = 0; i < Mathf.Min(5, allFrames.Count); i++)
+        {
+            int frame = allFrames[i];
+            var commands = commandReader.GetCommandsByFrame(frame);
+            zUDebug.Log($"帧 {frame}: 包含 {commands.Count} 个命令");
+            
+            // 如果有命令，输出第一个命令的类型
+            if (commands.Count > 0)
+            {
+                var firstCmd = commands[0];
+                zUDebug.Log($"  第一个命令类型ID: {firstCmd.commandType}, 命令内容: {firstCmd.command}");
+            }
+        }
+        
+        // 如果帧数过多，只显示最后几个
+        if (allFrames.Count > 5)
+        {
+            for (int i = Mathf.Max(5, allFrames.Count - 5); i < allFrames.Count; i++)
+            {
+                int frame = allFrames[i];
+                var commands = commandReader.GetCommandsByFrame(frame);
+                zUDebug.Log($"帧 {frame}: 包含 {commands.Count} 个命令");
+            }
+        }
+        
+        zUDebug.Log("命令记录读取完成");
     }
 
     private bool GetIsLocalNet()

@@ -79,6 +79,9 @@ public class Ra2Demo : MonoBehaviour
 
     private void Awake()
     {
+        // 初始化命令映射
+        CommandMapper.Initialize();
+
         _mainCamera = Camera.main;
         _controls = new RTSControl();
 

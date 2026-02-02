@@ -50,18 +50,35 @@ namespace Utils
                         if (jsonObject["type"]?.ToString() == "frameInput")
                         {
                             // 反序列化为FrameInput对象
-                            FrameInput frameInput = JsonConvert.DeserializeObject<FrameInput>(line);
+                            FrameInput frameInput = new FrameInput
+                            {
+                                type = jsonObject["type"]?.ToString(),
+                                frame = int.Parse(jsonObject["frame"]?.ToString()),
+                                data = new List<MyCommand>()
+                            };
                             
                             // 处理命令数据，将JSON字符串转换为具体的命令对象
-                            if (frameInput.data != null)
+                            foreach (var myCommand in jsonObject["data"])
                             {
-                                foreach (var myCommand in frameInput.data)
+                                int commandType = myCommand["commandType"]?.ToObject<int>() ?? 0;
+                                if (commandType != 0 && !string.IsNullOrEmpty(myCommand["command"].ToString()))
                                 {
-                                    if (myCommand.commandType != 0 && !string.IsNullOrEmpty(myCommand.command.ToString()))
+                                    // 使用FrameInputProcessor反序列化命令
+                                    ICommand command = FrameInputProcessor.DeserializeCommand(commandType, myCommand["command"].ToString());
+                                    if (command != null)
                                     {
-                                        // 使用FrameInputProcessor反序列化命令
-                                        myCommand.command = FrameInputProcessor.DeserializeCommand(myCommand.commandType, myCommand.command.ToString());
+                                        frameInput.data.Add(new MyCommand
+                                        {
+                                            commandType = commandType,
+                                            command = command
+                                        });
+                                    } else
+                                    {
+                                        zUDebug.LogWarning($"[CommandReader] 命令反序列化失败: {myCommand}");
                                     }
+                                } else
+                                {
+                                    zUDebug.LogWarning($"[CommandReader] 命令数据无效: {myCommand}");
                                 }
                             }
                             
