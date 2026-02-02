@@ -172,7 +172,7 @@ public class Ra2Processor : BaseProcessor
     /// </summary>
     private void RefreshEconomy()
     {
-        Utils.GetLocalPlayerEconomy(_ra2Demo.GetBattleGame(), out int money, out int power);
+        EcsUtils.GetLocalPlayerEconomy(_ra2Demo.GetBattleGame(), out int money, out int power);
         
         MainPanel.SetMoney(money);
         MainPanel.SetPower(power);

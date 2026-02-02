@@ -59,19 +59,8 @@ public class WebSocketNetworkAdaptor : INetworkAdapter
                             var input = inputs[i] as JObject;
                             int commandType = input["commandType"]?.ToObject<int>() ?? 0;
 
-                            // 根据命令类型创建相应的命令对象
-                            ICommand command = null;
-                            
-                            // 使用映射关系替代switch语句
-                            if (CommandMapper.CommandTypeMap.ContainsKey(commandType))
-                            {
-                                Type commandClass = CommandMapper.CommandTypeMap[commandType];
-                                command = (ICommand)JsonConvert.DeserializeObject(input["command"].ToString(), commandClass);
-                            }
-                            else
-                            {
-                                zUDebug.LogWarning($"[Ra2Demo] 未知的命令类型: {commandType}");
-                            }
+                            // 使用FrameInputProcessor反序列化命令
+                            ICommand command = Utils.FrameInputProcessor.DeserializeCommand(commandType, input["command"].ToString());
 
                             if (command != null)
                             {

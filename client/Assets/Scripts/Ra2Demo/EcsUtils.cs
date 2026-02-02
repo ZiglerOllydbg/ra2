@@ -1,6 +1,6 @@
 using ZLockstep.Simulation.ECS.Components;
 
-public static class Utils
+public static class EcsUtils
 {
     /// <summary>
     /// 获取本地玩家的经济信息（资金和电力）

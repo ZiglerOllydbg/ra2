@@ -164,24 +164,7 @@ namespace Game.RA2.Client
         
         public void SendFrameInput(int frame, ICommand command)
         {
-            FrameInput frameInput = new FrameInput
-            {
-                type = "frameInput",
-                frame = frame,
-                data = new List<MyCommand>()
-            };
-
-            int commandType = CommandMapper.GetCommandType(command.GetType());
-
-            MyCommand myCommand = new MyCommand
-            {
-                commandType = commandType,
-                command = command
-            };
-
-            frameInput.data.Add(myCommand);
-
-            string json = JsonConvert.SerializeObject(frameInput);
+            string json = Utils.FrameInputProcessor.SerializeFrameInput(frame, command);
             
             SendMessage(json);
             zUDebug.Log($"[{clientId}] 发送第 {frame} 帧输入数据: {json}");
