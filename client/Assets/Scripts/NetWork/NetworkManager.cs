@@ -164,10 +164,6 @@ public class NetworkManager
         
         // 获取我方战车工厂位置，相机移动到此位置
         _ra2Demo.MoveCameraToOurFactory();
-        
-        // 调整相机位置
-        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
-        RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
     }
     
     

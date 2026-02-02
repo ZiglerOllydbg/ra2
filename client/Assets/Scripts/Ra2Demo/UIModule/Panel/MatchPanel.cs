@@ -151,6 +151,7 @@ public class MatchPanel : BasePanel
         // 在创建BattleGame后，立即开始记录命令
         ra2Demo.GetBattleGame().World.CommandManager.StartRecording(System.IO.Path.Combine(Application.persistentDataPath, fileName));
 
+        ra2Demo.MoveCameraToOurFactory();
 
         Frame.DispatchEvent(new SoloGameStartEvent());
 
