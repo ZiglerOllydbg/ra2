@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using ZFrame;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Sync;
+using ZLockstep.Sync.Command;
 
 /// <summary>
 /// Demo面板 - 示例如何在业务层配置路径、名称和深度类型
@@ -237,6 +238,39 @@ public class MatchPanel : BasePanel
         }
         
         zUDebug.Log("命令记录读取完成");
+
+        // 开始回放模式
+        Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+        // 创建BattleGame实例，使用Replay模式
+        ra2Demo.Mode = GameMode.Replay;
+        ra2Demo.SetBattleGame(new BattleGame(ra2Demo.Mode, 20, 0));
+    
+        ra2Demo.GetBattleGame().Init();
+        
+        // 初始化Unity视图层
+        ra2Demo.InitializeUnityView();
+
+        // 全局数据
+        GlobalInfoComponent globalInfoComponent = new(1);
+        ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
+        // 创建世界
+        ra2Demo.GetBattleGame().CreateWorldByConfig();
+
+        // 设置回放数据到战斗游戏中
+        for (int i = 0; i < commandReader.FrameInputs.Count; i++)
+        {
+            for (int j = 0; j < commandReader.FrameInputs[i].data.Count; j++)
+            {
+                ICommand cmd = commandReader.FrameInputs[i].data[j].command;
+                cmd.ExecuteFrame = commandReader.FrameInputs[i].frame;
+                
+                ra2Demo.GetBattleGame().World.CommandManager.SubmitCommand(cmd);
+            }
+        }
+
+        Frame.DispatchEvent(new ReplayGameStartEvent());
+
+        HideButtons();
     }
 
     private bool GetIsLocalNet()

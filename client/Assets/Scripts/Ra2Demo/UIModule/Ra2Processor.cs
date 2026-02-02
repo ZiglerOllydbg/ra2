@@ -81,7 +81,8 @@ public class Ra2Processor : BaseProcessor
             typeof(ShowMessageEvent),
             typeof(SettleEvent),
             typeof(RestartGameEvent),
-            typeof(SoloGameStartEvent)
+            typeof(SoloGameStartEvent),
+            typeof(ReplayGameStartEvent)
         };
     }
 
@@ -139,6 +140,14 @@ public class Ra2Processor : BaseProcessor
 
 
                     
+                    RefreshEconomy();
+                }
+                break;
+            case ReplayGameStartEvent:
+                {
+                    zUDebug.Log("[Ra2Processor]  replay 模式开始游戏");
+                    MatchPanel.Close();
+
                     RefreshEconomy();
                 }
                 break;
