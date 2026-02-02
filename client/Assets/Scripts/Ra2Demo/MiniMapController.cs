@@ -12,7 +12,7 @@ public class MiniMapController : MonoBehaviour
     [SerializeField] private int mapSize = 256; // 小地图纹理大小
     
     [Header("相机设置")]
-    [SerializeField] private float cameraHeight = 100f; // 小地图相机高度
+    [SerializeField] private float cameraHeight = 50f; // 小地图相机高度
     [SerializeField] private float cameraTilt = 90f; // 小地图相机倾斜角度
     
     // 固定的小地图场景范围 (minX, minY, maxX, maxY)
@@ -82,11 +82,11 @@ public class MiniMapController : MonoBehaviour
             miniMapCamera.clearFlags = CameraClearFlags.SolidColor;
             miniMapCamera.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f); // 深灰色背景
             miniMapCamera.orthographic = true;
-            miniMapCamera.orthographicSize = 128f; // 固定场景范围(0-256)的一半
+            miniMapCamera.orthographicSize = 64f; // 固定场景范围(0-128)的一半
             miniMapCamera.cullingMask = ~(1 << 4); // 不渲染UI层
             
             // 设置相机位置和角度（固定视角俯视整个地图区域）
-            miniMapCamera.transform.position = new Vector3(128, cameraHeight, 128); // 地图中心点(128,128)
+            miniMapCamera.transform.position = new Vector3(64, cameraHeight, 64); // 地图中心点(128,128)
             miniMapCamera.transform.eulerAngles = new Vector3(cameraTilt, 0, 0);
         }
     }
