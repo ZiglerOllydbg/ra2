@@ -23,28 +23,28 @@ namespace ZLockstep.Simulation.ECS.Utils
             switch (buildingType)
             {
                 case BuildingType.Base: // 基地
-                    width = 10;
-                    height = 10;
+                    width = 5;
+                    height = 5;
                     break;
                 case BuildingType.Mine: // 矿
                     width = 0;
                     height = 0;
                     break;
                 case BuildingType.Smelter: // 冶金厂
-                    width = 4;
-                    height = 4;
+                    width = 5;
+                    height = 5;
                     break;
                 case BuildingType.PowerPlant: // 电厂
-                    width = 8;
-                    height = 4;
+                    width = 5;
+                    height = 5;
                     break;
                 case BuildingType.Factory: // 坦克工厂
-                    width = 12;
-                    height = 8;
+                    width = 5;
+                    height = 5;
                     break;
                 default:
-                    width = 4;
-                    height = 4;
+                    width = 5;
+                    height = 5;
                     break;
             }
         }

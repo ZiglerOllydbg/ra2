@@ -6,7 +6,7 @@
       "Type": 1,
       "SubType": 1,
       "PrefabId": 1,
-      "Position": "32,0,32",
+      "Position": "10,0,10",
       "Note": "主基地"
     },
     "2": {
@@ -15,7 +15,7 @@
       "Type": 1,
       "SubType": 2,
       "PrefabId": 2,
-      "Position": "16,0,32",
+      "Position": "5,0,5",
       "Note": "金矿"
     },
     "3": {
@@ -24,7 +24,7 @@
       "Type": 1,
       "SubType": 3,
       "PrefabId": 3,
-      "Position": "16,0,32",
+      "Position": "5,0,5",
       "Note": "采矿场"
     },
     "4": {
@@ -33,7 +33,7 @@
       "Type": 1,
       "SubType": 4,
       "PrefabId": 4,
-      "Position": "16,0,25",
+      "Position": "5,0,10",
       "Note": "电厂"
     },
     "5": {
@@ -42,7 +42,7 @@
       "Type": 1,
       "SubType": 5,
       "PrefabId": 5,
-      "Position": "32,0,50",
+      "Position": "10,0,5",
       "Note": "坦克工厂"
     },
     "6": {
@@ -51,7 +51,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "32,0,10",
+      "Position": "16,0,16",
       "Note": "坦克1"
     },
     "7": {
@@ -60,7 +60,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "32,0,15",
+      "Position": "16,0,12",
       "Note": "坦克2"
     },
     "8": {
@@ -69,7 +69,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "32,0,20",
+      "Position": "12,0,16",
       "Note": "坦克3"
     },
     "9": {
@@ -78,7 +78,7 @@
       "Type": 1,
       "SubType": 1,
       "PrefabId": 1,
-      "Position": "96,0,32",
+      "Position": "117,0,117",
       "Note": "主基地"
     },
     "10": {
@@ -87,7 +87,7 @@
       "Type": 1,
       "SubType": 2,
       "PrefabId": 2,
-      "Position": "112,0,32",
+      "Position": "122,0,122",
       "Note": "金矿"
     },
     "11": {
@@ -96,7 +96,7 @@
       "Type": 1,
       "SubType": 3,
       "PrefabId": 3,
-      "Position": "112,0,32",
+      "Position": "122,0,122",
       "Note": "采矿场"
     },
     "12": {
@@ -105,7 +105,7 @@
       "Type": 1,
       "SubType": 4,
       "PrefabId": 4,
-      "Position": "112,0,25",
+      "Position": "122,0,117",
       "Note": "电厂"
     },
     "13": {
@@ -114,7 +114,7 @@
       "Type": 1,
       "SubType": 5,
       "PrefabId": 5,
-      "Position": "96,0,50",
+      "Position": "117,0,122",
       "Note": "坦克工厂"
     },
     "14": {
@@ -123,7 +123,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "96,0,10",
+      "Position": "111,0,111",
       "Note": "坦克"
     },
     "15": {
@@ -132,7 +132,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "96,0,15",
+      "Position": "111,0,115",
       "Note": "坦克"
     },
     "16": {
@@ -141,7 +141,7 @@
       "Type": 2,
       "SubType": 1,
       "PrefabId": 6,
-      "Position": "96,0,20",
+      "Position": "115,0,111",
       "Note": "坦克"
     }
   }
