@@ -93,7 +93,7 @@ namespace Game.Examples
         {
             // 1. 创建256x256地图，每格1.0米
             MapManager = new SimpleMapManager();
-            MapManager.Initialize(256, 256, zfloat.One);
+            MapManager.Initialize(128, 128, zfloat.One);
             zUDebug.Log("[BattleGame] 地图初始化: 256x256格，每格1.0米");
 
             // 2. 设置地图边界为障碍物
