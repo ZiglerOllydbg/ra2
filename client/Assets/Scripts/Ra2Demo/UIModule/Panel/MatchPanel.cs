@@ -114,11 +114,16 @@ public class MatchPanel : BasePanel
     // 5. 按钮点击处理方法
     private void OnSoloButtonClick()
     {
+        // 生成带当前日期时间的文件名
+        string fileName = $"command_record_{System.DateTime.Now:yyyyMMdd_HHmmss}.txt";
+        
         // 可以在这里添加匹配成功的处理逻辑
         Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
         // 创建BattleGame实例
         ra2Demo.Mode = GameMode.Standalone;
         ra2Demo.SetBattleGame(new BattleGame(ra2Demo.Mode, 20, 0));
+        
+
         ra2Demo.GetBattleGame().Init();
         
         // 初始化Unity视图层
@@ -129,6 +134,10 @@ public class MatchPanel : BasePanel
         ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
         // 创建世界
         ra2Demo.GetBattleGame().CreateWorldByConfig();
+
+        // 在创建BattleGame后，立即开始记录命令
+        ra2Demo.GetBattleGame().World.CommandManager.StartRecording(System.IO.Path.Combine(Application.persistentDataPath, fileName));
+
 
         Frame.DispatchEvent(new SoloGameStartEvent());
 

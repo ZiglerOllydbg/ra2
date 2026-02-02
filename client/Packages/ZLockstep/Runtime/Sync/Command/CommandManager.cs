@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ZLockstep.Simulation;
+using Utils;
 
 namespace ZLockstep.Sync.Command
 {
@@ -20,7 +21,10 @@ namespace ZLockstep.Sync.Command
         
         // 已执行的命令历史（用于回放）
         private readonly List<ICommand> _commandHistory = new List<ICommand>();
-        
+
+        // 命令记录器
+        private CommandRecorder _commandRecorder;
+
         /// <summary>
         /// 是否记录命令历史（用于回放）
         /// </summary>
@@ -29,6 +33,7 @@ namespace ZLockstep.Sync.Command
         public CommandManager(zWorld world)
         {
             _world = world;
+            _commandRecorder = new CommandRecorder();
         }
 
         /// <summary>
@@ -50,6 +55,9 @@ namespace ZLockstep.Sync.Command
                 }
                 _futureCommands[command.ExecuteFrame].Add(command);
             }
+
+            // 记录命令到文件
+            _commandRecorder.RecordCommand(_world.Tick, command);
         }
 
         /// <summary>
@@ -61,6 +69,23 @@ namespace ZLockstep.Sync.Command
             {
                 SubmitCommand(command);
             }
+        }
+
+        /// <summary>
+        /// 开始记录命令到文件
+        /// </summary>
+        /// <param name="filePath">记录文件路径</param>
+        public void StartRecording(string filePath)
+        {
+            _commandRecorder.StartRecording(filePath);
+        }
+
+        /// <summary>
+        /// 停止记录命令
+        /// </summary>
+        public void StopRecording()
+        {
+            _commandRecorder.StopRecording();
         }
 
         /// <summary>
@@ -151,4 +176,3 @@ namespace ZLockstep.Sync.Command
         }
     }
 }
-
