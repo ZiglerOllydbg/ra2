@@ -176,7 +176,7 @@ namespace Game.Examples
 
         public void CreateWorldByConfig()
         {
-            List<ConfInitUnits> confs = DataManager.GetAll<ConfInitUnits>();
+            List<ConfInitUnits> confs = ConfigManager.GetAll<ConfInitUnits>();
 
             // 创建一个临时列表来存储创世阶段创建的实体信息
             var createdEntities = new List<UnitCreatedEvent>();

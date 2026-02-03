@@ -278,7 +278,7 @@ namespace ZLockstep.View.Systems
 
             if (evt.ConfID > 0)
             {
-                ConfBuilding confBuilding = DataManager.Get<ConfBuilding>(evt.ConfID);
+                ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(evt.ConfID);
                 if (confBuilding != null)
                 {
                     // 创建建筑模型

@@ -63,7 +63,7 @@ public class MainBuildingSubPanel
         var testData = new List<BuildItemData>();
 
         // 从配置数据中加载所有建筑信息
-        List<ConfBuilding> confBuildings = DataManager.GetAll<ConfBuilding>();
+        List<ConfBuilding> confBuildings = ConfigManager.GetAll<ConfBuilding>();
         foreach (var confBuilding in confBuildings)
         {
             // 跳过主基地和矿源（这些通常不由玩家建造）

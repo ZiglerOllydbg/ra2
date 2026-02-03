@@ -155,7 +155,7 @@ namespace ZLockstep.Sync.Command.Commands
                 return false;
             }
 
-            var confBuilding = DataManager.Get<ConfBuilding>(ConfBuildingID);
+            var confBuilding = ConfigManager.Get<ConfBuilding>(ConfBuildingID);
             if (confBuilding == null)
             {
                 zUDebug.LogError($"[CreateBuildingCommand] 未找到建筑配置信息 {ConfBuildingID}");

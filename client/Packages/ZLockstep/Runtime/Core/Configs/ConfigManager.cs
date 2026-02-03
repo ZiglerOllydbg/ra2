@@ -6,7 +6,7 @@ using UnityEngine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class DataManager
+public class ConfigManager
 {
     // 缓存已加载的数据
     private static Dictionary<string, object> _cachedData = new Dictionary<string, object>();
