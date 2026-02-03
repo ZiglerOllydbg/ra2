@@ -307,6 +307,8 @@ namespace ZLockstep.Sync
         /// </summary>
         public void SubmitCommand(ICommand command)
         {
+            command.CampId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
+
             switch (Mode)
             {
                 case GameMode.Standalone:
@@ -323,8 +325,6 @@ namespace ZLockstep.Sync
                         UnityEngine.Debug.LogError("[Game] 网络模式下FrameSyncManager未初始化！");
                         return;
                     }
-
-                    command.CampId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
 
                     FrameSyncManager.SubmitLocalCommand(command);
                     break;

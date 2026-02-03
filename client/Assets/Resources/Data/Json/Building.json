@@ -3,6 +3,7 @@
     "1": {
       "ID": 1,
       "Type": 1,
+      "Manual": 0,
       "Prefab": "MainBase",
       "Size": 5,
       "Hp": 1000,
@@ -11,11 +12,13 @@
       "ConstructionTime": 0,
       "CostMoney": 0,
       "CostPower": 0,
-      "Note": "主基地"
+      "Name": "主基地",
+      "Description": ""
     },
     "2": {
       "ID": 2,
       "Type": 2,
+      "Manual": 0,
       "Prefab": "OilField",
       "Size": 5,
       "Hp": 0,
@@ -24,11 +27,13 @@
       "ConstructionTime": 0,
       "CostMoney": 0,
       "CostPower": 0,
-      "Note": "金矿"
+      "Name": "金矿",
+      "Description": ""
     },
     "3": {
       "ID": 3,
       "Type": 3,
+      "Manual": 1,
       "Prefab": "Stope",
       "Size": 5,
       "Hp": 400,
@@ -37,11 +42,13 @@
       "ConstructionTime": 5,
       "CostMoney": 800,
       "CostPower": 5,
-      "Note": "采矿场"
+      "Name": "采矿场",
+      "Description": "可采集附近的矿源"
     },
     "4": {
       "ID": 4,
       "Type": 4,
+      "Manual": 1,
       "Prefab": "PowerPlant",
       "Size": 5,
       "Hp": 400,
@@ -50,11 +57,13 @@
       "ConstructionTime": 5,
       "CostMoney": 500,
       "CostPower": 0,
-      "Note": "电厂"
+      "Name": "电厂",
+      "Description": "为基地提供电力支持"
     },
     "5": {
       "ID": 5,
       "Type": 5,
+      "Manual": 1,
       "Prefab": "Barracks",
       "Size": 5,
       "Hp": 500,
@@ -63,11 +72,13 @@
       "ConstructionTime": 8,
       "CostMoney": 1000,
       "CostPower": 10,
-      "Note": "兵营"
+      "Name": "兵营",
+      "Description": "可训练步兵单位"
     },
     "6": {
       "ID": 6,
       "Type": 6,
+      "Manual": 1,
       "Prefab": "VehicleFactory",
       "Size": 5,
       "Hp": 600,
@@ -76,11 +87,13 @@
       "ConstructionTime": 10,
       "CostMoney": 2000,
       "CostPower": 20,
-      "Note": "战车工厂"
+      "Name": "战车工厂",
+      "Description": "可生产装甲单位"
     },
     "7": {
       "ID": 7,
       "Type": 7,
+      "Manual": 0,
       "Prefab": "Tower",
       "Size": 3,
       "Hp": 800,
@@ -89,7 +102,8 @@
       "ConstructionTime": 5,
       "CostMoney": 500,
       "CostPower": 0,
-      "Note": "防御塔"
+      "Name": "防御塔",
+      "Description": "自动攻击范围内的敌人"
     }
   }
 }

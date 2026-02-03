@@ -67,15 +67,15 @@ public class MainBuildingSubPanel
         foreach (var confBuilding in confBuildings)
         {
             // 跳过主基地和矿源（这些通常不由玩家建造）
-            if (confBuilding.Type == 1 || confBuilding.Type == 2)
+            if (confBuilding.Manual == 0)
                 continue;
 
             // 根据配置创建建筑项数据
             var buildItem = new BuildItemData
             {
                 BuildingType = (BuildingType)confBuilding.Type,
-                Name = $"{confBuilding.Note}(${confBuilding.CostMoney})",
-                Description = GetBuildingDescription(confBuilding)
+                Name = $"{confBuilding.Name}(${confBuilding.CostMoney})",
+                Description = confBuilding.Description
             };
             
             testData.Add(buildItem);
@@ -93,54 +93,6 @@ public class MainBuildingSubPanel
         }
         
         RefreshList(testData);
-    }
-    
-    /// <summary>
-    /// 根据建筑配置生成描述信息
-    /// </summary>
-    /// <param name="confBuilding">建筑配置数据</param>
-    /// <returns>建筑描述字符串</returns>
-    private string GetBuildingDescription(ConfBuilding confBuilding)
-    {
-        var descriptions = new List<string>();
-        
-        // 添加基本描述
-        descriptions.Add($"建造时间: {confBuilding.ConstructionTime}秒");
-        
-        // 添加属性描述
-        if (confBuilding.Hp > 0)
-            descriptions.Add($"生命值: {confBuilding.Hp}");
-            
-        if (confBuilding.Atk > 0)
-            descriptions.Add($"攻击力: {confBuilding.Atk}");
-            
-        if (confBuilding.Def > 0)
-            descriptions.Add($"防御力: {confBuilding.Def}");
-            
-        if (confBuilding.CostPower > 0)
-            descriptions.Add($"耗电量: {confBuilding.CostPower}");
-            
-        // 根据建筑类型添加特殊描述
-        switch (confBuilding.Type)
-        {
-            case 3: // 采矿场
-                descriptions.Add("可采集附近的矿源");
-                break;
-            case 4: // 电厂
-                descriptions.Add("为基地提供电力支持");
-                break;
-            case 5: // 兵营
-                descriptions.Add("可训练步兵单位");
-                break;
-            case 6: // 坦克工厂
-                descriptions.Add("可生产装甲单位");
-                break;
-            case 7: // 防御塔
-                descriptions.Add("自动攻击范围内的敌人");
-                break;
-        }
-        
-        return string.Join(", ", descriptions);
     }
     
     /// <summary>
