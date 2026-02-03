@@ -10,6 +10,8 @@ public class BuildingListItem : BaseListItem
 {
     private Image iconImage;
     private TMP_Text buildingNameText;
+    // 描述
+    private TMP_Text descriptionText;
     private Button selectBtn;
     
     /// <summary>
@@ -27,6 +29,7 @@ public class BuildingListItem : BaseListItem
         // 获取子组件引用
         iconImage = __target.transform.Find("Image")?.GetComponent<Image>();
         buildingNameText = __target.transform.Find("BuildingName")?.GetComponent<TMP_Text>();
+        descriptionText = __target.transform.Find("Description")?.GetComponent<TMP_Text>();
         selectBtn = __target.transform.Find("Button")?.GetComponent<Button>();
         selectBtn?.onClick.AddListener(OnSelectClick);
     }
@@ -47,6 +50,7 @@ public class BuildingListItem : BaseListItem
     {
         if (buildingNameText != null && ItemData != null)
             buildingNameText.text = ItemData.Name;
+            descriptionText.text = ItemData.Description;
     }
     
     private void OnSelectClick()

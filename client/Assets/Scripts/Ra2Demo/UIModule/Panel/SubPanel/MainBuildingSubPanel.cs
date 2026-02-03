@@ -60,13 +60,87 @@ public class MainBuildingSubPanel
         }
         itemTemplate?.SetActive(false); // 隐藏模板
 
-        var testData = new List<BuildItemData>
+        var testData = new List<BuildItemData>();
+
+        // 从配置数据中加载所有建筑信息
+        List<ConfBuilding> confBuildings = DataManager.GetAll<ConfBuilding>();
+        foreach (var confBuilding in confBuildings)
         {
-            new() { BuildingType = BuildingType.Smelter, Name = "采矿场($800)", Description = "可以进行采矿" },
-            new() { BuildingType = BuildingType.PowerPlant, Name = "电厂($500)", Description = "可以进行发电" },
-            new() { BuildingType = BuildingType.vehicleFactory, Name = "坦克工厂($1000)", Description = "可以进行建造坦克" },
-        };
+            // 跳过主基地和矿源（这些通常不由玩家建造）
+            if (confBuilding.Type == 1 || confBuilding.Type == 2)
+                continue;
+
+            // 根据配置创建建筑项数据
+            var buildItem = new BuildItemData
+            {
+                BuildingType = (BuildingType)confBuilding.Type,
+                Name = $"{confBuilding.Note}(${confBuilding.CostMoney})",
+                Description = GetBuildingDescription(confBuilding)
+            };
+            
+            testData.Add(buildItem);
+        }
+
+        // 如果配置数据为空或不完整，使用默认数据作为备选
+        if (testData.Count == 0)
+        {
+            testData.AddRange(new List<BuildItemData>
+            {
+                new() { BuildingType = BuildingType.Smelter, Name = "采矿场($800)", Description = "可以进行采矿" },
+                new() { BuildingType = BuildingType.PowerPlant, Name = "电厂($500)", Description = "可以进行发电" },
+                new() { BuildingType = BuildingType.vehicleFactory, Name = "坦克工厂($1000)", Description = "可以进行建造坦克" },
+            });
+        }
+        
         RefreshList(testData);
+    }
+    
+    /// <summary>
+    /// 根据建筑配置生成描述信息
+    /// </summary>
+    /// <param name="confBuilding">建筑配置数据</param>
+    /// <returns>建筑描述字符串</returns>
+    private string GetBuildingDescription(ConfBuilding confBuilding)
+    {
+        var descriptions = new List<string>();
+        
+        // 添加基本描述
+        descriptions.Add($"建造时间: {confBuilding.ConstructionTime}秒");
+        
+        // 添加属性描述
+        if (confBuilding.Hp > 0)
+            descriptions.Add($"生命值: {confBuilding.Hp}");
+            
+        if (confBuilding.Atk > 0)
+            descriptions.Add($"攻击力: {confBuilding.Atk}");
+            
+        if (confBuilding.Def > 0)
+            descriptions.Add($"防御力: {confBuilding.Def}");
+            
+        if (confBuilding.CostPower > 0)
+            descriptions.Add($"耗电量: {confBuilding.CostPower}");
+            
+        // 根据建筑类型添加特殊描述
+        switch (confBuilding.Type)
+        {
+            case 3: // 采矿场
+                descriptions.Add("可采集附近的矿源");
+                break;
+            case 4: // 电厂
+                descriptions.Add("为基地提供电力支持");
+                break;
+            case 5: // 兵营
+                descriptions.Add("可训练步兵单位");
+                break;
+            case 6: // 坦克工厂
+                descriptions.Add("可生产装甲单位");
+                break;
+            case 7: // 防御塔
+                descriptions.Add("自动攻击范围内的敌人");
+                break;
+        }
+        
+        return string.Join(", ", descriptions);
     }
     
     /// <summary>
@@ -137,6 +211,28 @@ public class MainBuildingSubPanel
             Debug.LogWarning("Content 上没有 LayoutGroup 组件，列表项可能会重叠。请添加 VerticalLayoutGroup 或 HorizontalLayoutGroup");
         }
         
+        // 计算单个列表项的高度
+        float itemHeight = 0f;
+        if (itemTemplate != null)
+        {
+            var templateRectTransform = itemTemplate.GetComponent<RectTransform>();
+            if (templateRectTransform != null)
+            {
+                itemHeight = templateRectTransform.rect.height;
+            }
+        }
+        
+        // 获取LayoutGroup的间距设置
+        float spacing = 0f;
+        if (layoutGroup is VerticalLayoutGroup verticalLayout)
+        {
+            spacing = verticalLayout.spacing;
+        }
+        else if (layoutGroup is HorizontalLayoutGroup horizontalLayout)
+        {
+            spacing = horizontalLayout.spacing;
+        }
+        
         foreach (var data in dataList)
         {
             var itemGo = GameObject.Instantiate(itemTemplate, listContent);
@@ -160,6 +256,21 @@ public class MainBuildingSubPanel
             item.SetData(data);
             item.OnItemSelect = OnListItemSelect;
             listItems.Add(item);
+        }
+        
+        // 根据元素数量调整Content容器的高度
+        if (layoutGroup != null && itemHeight > 0f)
+        {
+            var contentRectTransform = listContent as RectTransform;
+            if (contentRectTransform != null)
+            {
+                // 计算总高度：元素数量 × 单个元素高度 + (元素数量-1) × 间距
+                float totalHeight = dataList.Count * itemHeight + Math.Max(0, dataList.Count - 1) * spacing;
+                
+                // 设置Content容器的高度
+                var sizeDelta = contentRectTransform.sizeDelta;
+                contentRectTransform.sizeDelta = new Vector2(sizeDelta.x, totalHeight);
+            }
         }
         
         // 强制刷新布局
