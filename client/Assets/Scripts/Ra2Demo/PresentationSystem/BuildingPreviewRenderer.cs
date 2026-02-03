@@ -209,7 +209,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
         {
             GameObject buildingPrefab = null;
             int confID = (int)buildingToBuild;
-            var confBuilding = DataManager.Get<ConfBuilding>(confID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confID);
             if (confBuilding != null)
             {
                 // 创建建筑模型

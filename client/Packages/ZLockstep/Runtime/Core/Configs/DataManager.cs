@@ -39,6 +39,17 @@ public class DataManager
     }
     
     /// <summary>
+    /// 根据整数ID和类型获取配置数据
+    /// </summary>
+    /// <typeparam name="T">配置类类型</typeparam>
+    /// <param name="id">配置ID</param>
+    /// <returns>配置实例</returns>
+    public static T Get<T>(int id) where T : class
+    {
+        return Get<T>(id.ToString());
+    }
+    
+    /// <summary>
     /// 获取指定类型的所有数据
     /// </summary>
     /// <typeparam name="T">配置类类型</typeparam>

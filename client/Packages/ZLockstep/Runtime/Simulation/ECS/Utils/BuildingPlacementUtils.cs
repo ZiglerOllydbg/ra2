@@ -64,7 +64,7 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return false;
             }
 
-            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID);
             if (confBuilding == null)
             {
                 zUnityEngine.Debug.LogError($"[BuildingPlacementUtils] 无法获取建筑配置信息。ID:{confBuildingID}");

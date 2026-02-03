@@ -60,7 +60,7 @@ namespace ZLockstep.Simulation.ECS
             IFlowFieldMap mapManager = null,
             FlowFieldManager flowFieldManager = null)
         {
-            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID);
             if (confBuilding == null)
             {
                 zUDebug.LogError($"[EntityCreationManager] 创建建筑实体时无法获取建筑配置信息。ID:{confBuildingID}");
@@ -323,7 +323,7 @@ namespace ZLockstep.Simulation.ECS
 
         private static HealthComponent? CreateBuildingHealthComponent(int confBuildingID)
         {
-            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID);
             if (confBuilding == null)
             {
                 zUDebug.LogError($"[EntityCreationManager] 创建建筑时无法获取建筑配置信息。ID:{confBuildingID}");
@@ -342,7 +342,7 @@ namespace ZLockstep.Simulation.ECS
 
         private static AttackComponent? CreateBuildingAttackComponent(int confBuildingID)
         {
-            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID);
             if (confBuilding == null)
             {
                 zUDebug.LogError($"[EntityCreationManager] 创建建筑时无法获取建筑配置信息。ID:{confBuildingID}");
@@ -495,7 +495,7 @@ namespace ZLockstep.Simulation.ECS
         /// <returns>建造时间（秒）</returns>
         private static zfloat GetConstructionTime(int confBuildingID)
         {
-            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID);
             if (confBuilding == null)
             {
                 zUDebug.LogError($"[BuildingPlacementUtils] 获取建筑配置信息失败。ID:{confBuildingID}");
