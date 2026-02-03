@@ -139,7 +139,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 计算电力：初始10电 + 电厂数量*10 - 采矿场数量*5 - 坦克工厂数量*5
             int powerPlants = CountBuildingsForCamp(campId, BuildingType.PowerPlant);
             int smelters = CountBuildingsForCamp(campId, BuildingType.Smelter);
-            int factories = CountBuildingsForCamp(campId, BuildingType.Factory);
+            int factories = CountBuildingsForCamp(campId, BuildingType.vehicleFactory);
             
             int totalPower = 10 + powerPlants * 10 - smelters * 5 - factories * 5;
             

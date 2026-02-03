@@ -19,6 +19,11 @@ namespace ZLockstep.Simulation.Events
         public int UnitType;
 
         /// <summary>
+        /// 配置ID
+        /// </summary>
+        public int ConfID;
+
+        /// <summary>
         /// 创建位置
         /// </summary>
         public zVector3 Position;

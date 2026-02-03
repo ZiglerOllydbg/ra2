@@ -5,6 +5,7 @@
       "Camp": 1,
       "Type": 1,
       "SubType": 1,
+      "ConfID": 1,
       "PrefabId": 1,
       "Position": "10,0,10",
       "Note": "主基地"
@@ -14,6 +15,7 @@
       "Camp": 1,
       "Type": 1,
       "SubType": 2,
+      "ConfID": 2,
       "PrefabId": 2,
       "Position": "5,0,5",
       "Note": "金矿"
@@ -23,6 +25,7 @@
       "Camp": 1,
       "Type": 1,
       "SubType": 3,
+      "ConfID": 3,
       "PrefabId": 3,
       "Position": "5,0,5",
       "Note": "采矿场"
@@ -32,6 +35,7 @@
       "Camp": 1,
       "Type": 1,
       "SubType": 4,
+      "ConfID": 4,
       "PrefabId": 4,
       "Position": "5,0,10",
       "Note": "电厂"
@@ -41,6 +45,7 @@
       "Camp": 1,
       "Type": 1,
       "SubType": 5,
+      "ConfID": 6,
       "PrefabId": 5,
       "Position": "10,0,5",
       "Note": "坦克工厂"
@@ -50,6 +55,7 @@
       "Camp": 1,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "16,0,16",
       "Note": "坦克1"
@@ -59,6 +65,7 @@
       "Camp": 1,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "16,0,12",
       "Note": "坦克2"
@@ -68,6 +75,7 @@
       "Camp": 1,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "12,0,16",
       "Note": "坦克3"
@@ -77,6 +85,7 @@
       "Camp": 2,
       "Type": 1,
       "SubType": 1,
+      "ConfID": 1,
       "PrefabId": 1,
       "Position": "117,0,117",
       "Note": "主基地"
@@ -86,6 +95,7 @@
       "Camp": 2,
       "Type": 1,
       "SubType": 2,
+      "ConfID": 2,
       "PrefabId": 2,
       "Position": "122,0,122",
       "Note": "金矿"
@@ -95,6 +105,7 @@
       "Camp": 2,
       "Type": 1,
       "SubType": 3,
+      "ConfID": 3,
       "PrefabId": 3,
       "Position": "122,0,122",
       "Note": "采矿场"
@@ -104,6 +115,7 @@
       "Camp": 2,
       "Type": 1,
       "SubType": 4,
+      "ConfID": 4,
       "PrefabId": 4,
       "Position": "122,0,117",
       "Note": "电厂"
@@ -113,6 +125,7 @@
       "Camp": 2,
       "Type": 1,
       "SubType": 5,
+      "ConfID": 6,
       "PrefabId": 5,
       "Position": "117,0,122",
       "Note": "坦克工厂"
@@ -122,6 +135,7 @@
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "111,0,111",
       "Note": "坦克"
@@ -131,6 +145,7 @@
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "111,0,115",
       "Note": "坦克"
@@ -140,6 +155,7 @@
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
+      "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "115,0,111",
       "Note": "坦克"

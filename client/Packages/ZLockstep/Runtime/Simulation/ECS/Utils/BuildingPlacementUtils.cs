@@ -38,7 +38,7 @@ namespace ZLockstep.Simulation.ECS.Utils
                     width = 5;
                     height = 5;
                     break;
-                case BuildingType.Factory: // 坦克工厂
+                case BuildingType.vehicleFactory: // 坦克工厂
                     width = 5;
                     height = 5;
                     break;
@@ -56,7 +56,7 @@ namespace ZLockstep.Simulation.ECS.Utils
         /// <param name="position">建筑位置（世界坐标）</param>
         /// <param name="mapManager">地图管理器</param>
         /// <returns>是否可以放置建筑</returns>
-        public static bool CheckBuildingPlacement(BuildingType buildingType, zVector3 position, IFlowFieldMap mapManager)
+        public static bool CheckBuildingPlacement(int confBuildingID, zVector3 position, IFlowFieldMap mapManager)
         {
             if (mapManager == null)
             {
@@ -64,8 +64,15 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return false;
             }
 
-            // 获取建筑尺寸
-            GetBuildingDimensions(buildingType, out int width, out int height);
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            if (confBuilding == null)
+            {
+                zUnityEngine.Debug.LogError($"[BuildingPlacementUtils] 无法获取建筑配置信息。ID:{confBuildingID}");
+                return false;
+            }
+
+            int width = confBuilding.Size;
+            int height = confBuilding.Size;
             
             // 计算建筑占据的矩形区域（以建筑中心为基准）
             int halfWidth = width / 2;
@@ -111,7 +118,7 @@ namespace ZLockstep.Simulation.ECS.Utils
         /// <param name="buildingType">建筑类型</param>
         /// <param name="campId">阵营ID</param>
         /// <returns>是否在限制区域内</returns>
-        public static bool CheckBuildableArea(zWorld world, zVector3 position, BuildingType buildingType, int campId)
+        public static bool CheckBuildableArea(zWorld world, zVector3 position, int campId)
         {
             // 查找指定阵营的基地
             zVector2 mainBasePos = zVector2.zero;

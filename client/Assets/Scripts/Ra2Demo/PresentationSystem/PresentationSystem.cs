@@ -276,23 +276,41 @@ namespace ZLockstep.View.Systems
         {
             GameObject viewObject = null;
 
-            // 尝试获取预制体
-            if (_unitPrefabs.TryGetValue(evt.PrefabId, out var prefab))
+            if (evt.ConfID > 0)
             {
-                // 实例化预制体
-                viewObject = Object.Instantiate(prefab, _viewRoot);
-            }
-            else
-            {
-                // 找不到预制体，根据类型创建默认可视化
-                if (evt.UnitType == (int)UnitType.Projectile) // 100=弹道类型
+                ConfBuilding confBuilding = DataManager.Get<ConfBuilding>(evt.ConfID.ToString());
+                if (confBuilding != null)
                 {
-                    viewObject = CreateDefaultProjectileView(evt);
+                    // 创建建筑模型
+                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
+                    if (buildingPrefab != null)
+                    {
+                        // 创建建筑模型
+                        viewObject = Object.Instantiate(buildingPrefab, _viewRoot);
+                    }
+                }
+            }
+
+            if (viewObject == null)
+            {
+                // 尝试获取预制体
+                if (_unitPrefabs.TryGetValue(evt.PrefabId, out var prefab))
+                {
+                    // 实例化预制体
+                    viewObject = Object.Instantiate(prefab, _viewRoot);
                 }
                 else
                 {
-                    Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={evt.UnitType}, PrefabId={evt.PrefabId}");
-                    return;
+                    // 找不到预制体，根据类型创建默认可视化
+                    if (evt.UnitType == (int)UnitType.Projectile) // 100=弹道类型
+                    {
+                        viewObject = CreateDefaultProjectileView(evt);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={evt.UnitType}, PrefabId={evt.PrefabId}");
+                        return;
+                    }
                 }
             }
 

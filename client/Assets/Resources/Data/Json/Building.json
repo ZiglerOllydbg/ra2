@@ -1,0 +1,95 @@
+{
+  "ConfBuilding": {
+    "1": {
+      "ID": 1,
+      "Type": 1,
+      "Prefab": "MainBase",
+      "Size": 5,
+      "Hp": 1000,
+      "Atk": 0,
+      "Def": 10,
+      "ConstructionTime": 0,
+      "CostMoney": 0,
+      "CostPower": 0,
+      "Note": "主基地"
+    },
+    "2": {
+      "ID": 2,
+      "Type": 2,
+      "Prefab": "OilField",
+      "Size": 5,
+      "Hp": 0,
+      "Atk": 0,
+      "Def": 0,
+      "ConstructionTime": 0,
+      "CostMoney": 0,
+      "CostPower": 0,
+      "Note": "金矿"
+    },
+    "3": {
+      "ID": 3,
+      "Type": 3,
+      "Prefab": "Stope",
+      "Size": 5,
+      "Hp": 400,
+      "Atk": 0,
+      "Def": 5,
+      "ConstructionTime": 5,
+      "CostMoney": 800,
+      "CostPower": 5,
+      "Note": "采矿场"
+    },
+    "4": {
+      "ID": 4,
+      "Type": 4,
+      "Prefab": "PowerPlant",
+      "Size": 5,
+      "Hp": 400,
+      "Atk": 0,
+      "Def": 5,
+      "ConstructionTime": 5,
+      "CostMoney": 500,
+      "CostPower": 0,
+      "Note": "电厂"
+    },
+    "5": {
+      "ID": 5,
+      "Type": 5,
+      "Prefab": "Barracks",
+      "Size": 5,
+      "Hp": 500,
+      "Atk": 0,
+      "Def": 10,
+      "ConstructionTime": 8,
+      "CostMoney": 1000,
+      "CostPower": 10,
+      "Note": "兵营"
+    },
+    "6": {
+      "ID": 6,
+      "Type": 6,
+      "Prefab": "VehicleFactory",
+      "Size": 5,
+      "Hp": 600,
+      "Atk": 0,
+      "Def": 20,
+      "ConstructionTime": 10,
+      "CostMoney": 2000,
+      "CostPower": 20,
+      "Note": "战车工厂"
+    },
+    "7": {
+      "ID": 7,
+      "Type": 7,
+      "Prefab": "Tower",
+      "Size": 3,
+      "Hp": 800,
+      "Atk": 10,
+      "Def": 20,
+      "ConstructionTime": 5,
+      "CostMoney": 500,
+      "CostPower": 0,
+      "Note": "防御塔"
+    }
+  }
+}

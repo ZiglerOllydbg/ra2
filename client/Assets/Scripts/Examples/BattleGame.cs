@@ -190,7 +190,7 @@ namespace Game.Examples
                     var entEvent = EntityCreationManager.CreateBuildingEntity(World, conf.Camp,
                         (BuildingType)conf.SubType,
                         new zVector3(confPos.x, confPos.y, confPos.z),
-                        prefabId: conf.PrefabId, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        confBuildingID: conf.ConfID, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                     if (entEvent.HasValue)
                     {
                         createdEntities.Add(entEvent.Value);
@@ -261,7 +261,7 @@ namespace Game.Examples
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
                             var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, BuildingType.Mine,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                            prefabId:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                            confBuildingID:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
                             {
                                 createdEntities.Add(entityEvent.Value);
@@ -300,7 +300,7 @@ namespace Game.Examples
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId, buildingType,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
-                        prefabId: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
+                        confBuildingID: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)
                         {
                             createdEntities.Add(entityEvent.Value);

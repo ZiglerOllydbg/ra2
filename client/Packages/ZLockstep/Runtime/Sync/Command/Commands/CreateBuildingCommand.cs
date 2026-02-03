@@ -15,7 +15,10 @@ namespace ZLockstep.Sync.Command.Commands
     [CommandType(CommandTypes.BuildStructure)]
     public class CreateBuildingCommand : BaseCommand
     {
-
+        /// <summary>
+        /// 配置表ID
+        /// </summary>
+        public int ConfBuildingID { get; set; }
 
         /// <summary>
         /// 建筑类型
@@ -29,17 +32,12 @@ namespace ZLockstep.Sync.Command.Commands
         public zVector3 Position { get; set; }
 
 
-        /// <summary>
-        /// 预制体ID（用于表现层）
-        /// </summary>
-        public int PrefabId { get; set; }
-
-        public CreateBuildingCommand(int campId, BuildingType buildingType, zVector3 position, int prefabId)
+        public CreateBuildingCommand(int confID, int campId, BuildingType buildingType, zVector3 position)
             : base(campId)
         {
+            ConfBuildingID = confID;
             BuildingType = buildingType;
             Position = position;
-            PrefabId = prefabId;
         }
 
         public override void Execute(zWorld world)
@@ -47,7 +45,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 如果是非采矿场建筑，需要判断在主城的限制区域内
             if (BuildingType != BuildingType.Smelter)
             {
-                if (!BuildingPlacementUtils.CheckBuildableArea(world, Position, BuildingType, CampId))
+                if (!BuildingPlacementUtils.CheckBuildableArea(world, Position, CampId))
                 {
                     UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：超出主城建造范围");
                     world.EventManager.Publish(new MessageEvent($"建造失败：超出主城建造范围"));
@@ -67,7 +65,7 @@ namespace ZLockstep.Sync.Command.Commands
             
             // 阻挡判断
             var mapManager = world.GameInstance.GetMapManager();
-            if (!BuildingPlacementUtils.CheckBuildingPlacement(BuildingType, Position, mapManager))
+            if (!BuildingPlacementUtils.CheckBuildingPlacement(ConfBuildingID, Position, mapManager))
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
                 world.EventManager.Publish(new MessageEvent("无法建造建筑，请检查资源是否充足"));
@@ -87,7 +85,7 @@ namespace ZLockstep.Sync.Command.Commands
                 CampId, 
                 BuildingType, 
                 Position, 
-                PrefabId,
+                ConfBuildingID,
                 world.GameInstance.GetMapManager(),
                 world.GameInstance.GetFlowFieldManager()
             );
@@ -171,7 +169,7 @@ namespace ZLockstep.Sync.Command.Commands
                     costMoney = 800;
                     costPower = 5;
                     break;
-                case BuildingType.Factory: // 坦克工厂
+                case BuildingType.vehicleFactory: // 坦克工厂
                     costMoney = 1000;
                     costPower = 5;
                     break;

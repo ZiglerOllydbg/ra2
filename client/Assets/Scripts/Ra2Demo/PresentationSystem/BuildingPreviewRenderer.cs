@@ -207,13 +207,18 @@ public class BuildingPreviewRenderer : MonoBehaviour
         // 如果还没有创建预览对象，则创建它
         if (previewBuilding == null)
         {
-            int prefabId = BuildingTypeToPrefabId(buildingToBuild);
-
-            // 使用对应的预制体创建预览建筑
-            GameObject prefab = _ra2Demo.unitPrefabs[prefabId];
-            if (prefab != null)
+            GameObject buildingPrefab = null;
+            int confID = (int)buildingToBuild;
+            var confBuilding = DataManager.Get<ConfBuilding>(confID.ToString());
+            if (confBuilding != null)
             {
-                previewBuilding = Instantiate(prefab);
+                // 创建建筑模型
+                buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
+            }
+
+            if (buildingPrefab != null)
+            {
+                previewBuilding = Instantiate(buildingPrefab);
 
                 // 设置为半透明
                 Renderer[] renderers = previewBuilding.GetComponentsInChildren<Renderer>();
@@ -284,7 +289,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
 
                 // 检查建筑是否可以放置在此位置
                 bool canPlace = BuildingPlacementUtils.CheckBuildingPlacement(
-                    buildingToBuild, logicPosition, _ra2Demo.GetBattleGame().MapManager);
+                    (int)buildingToBuild, logicPosition, _ra2Demo.GetBattleGame().MapManager);
 
                 // 如果是非采矿场，需要判断在主城的限制区域内
                 if (canPlace && buildingToBuild != BuildingType.Smelter)
@@ -292,7 +297,7 @@ public class BuildingPreviewRenderer : MonoBehaviour
                     // 获取本地玩家阵营ID
                     int localPlayerCampId = _ra2Demo.GetBattleGame().World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
 
-                    canPlace = BuildingPlacementUtils.CheckBuildableArea(_ra2Demo.GetBattleGame().World, logicPosition, buildingToBuild, localPlayerCampId);
+                    canPlace = BuildingPlacementUtils.CheckBuildableArea(_ra2Demo.GetBattleGame().World, logicPosition, localPlayerCampId);
                 }
                 
                 // 如果是采矿场，需要判断是否在矿源附近
@@ -395,21 +400,6 @@ public class BuildingPreviewRenderer : MonoBehaviour
         return true;
     }
 
-    private int BuildingTypeToPrefabId(BuildingType buildingType)
-    {
-        switch (buildingType)
-        {
-            case BuildingType.Smelter:
-                return 3;
-            case BuildingType.PowerPlant:
-                return 4;
-            case BuildingType.Factory:
-                return 5;
-            default:
-                return -1;
-        }
-    }
-
 
     /// <summary>
     /// 显示可建造区域（主建筑x,y+-16范围）
@@ -506,14 +496,15 @@ public class BuildingPreviewRenderer : MonoBehaviour
         // 转换为逻辑层坐标
         zVector3 logicPosition = placementPosition.ToZVector3();
 
-        int prefabId = BuildingTypeToPrefabId(buildingToBuild);
+        // TODO 未来直接使用配置
+        int confID = (int)buildingToBuild;
 
         // 创建建筑命令（使用CreateBuildingCommand）
         var createBuildingCommand = new ZLockstep.Sync.Command.Commands.CreateBuildingCommand(
+            confID: confID,
             campId: 0,
             buildingType: buildingToBuild,
-            position: logicPosition,
-            prefabId: prefabId
+            position: logicPosition
         )
         {
             Source = ZLockstep.Sync.Command.CommandSource.Local,

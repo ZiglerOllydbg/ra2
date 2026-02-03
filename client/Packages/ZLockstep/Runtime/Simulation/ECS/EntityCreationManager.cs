@@ -13,16 +13,13 @@ namespace ZLockstep.Simulation.ECS
     public enum BuildingType
     {
         None = 0,
-        Base = 1,        // 基地
-
-        Mine = 2,        // 矿
+        Base = 1,       // 基地
+        Mine = 2,       // 矿
         Smelter = 3,    // 冶金厂
-         
-        PowerPlant = 4,   // 电厂
-        Factory = 5,     // 坦克工厂
-
-        // 防御塔
-        Tower = 6,
+        PowerPlant = 4, // 电厂
+        Barracks = 5,   // 兵营
+        vehicleFactory = 6, // 战车工厂
+        Tower = 7,      // 防御塔
     }
 
     /// <summary>
@@ -50,7 +47,7 @@ namespace ZLockstep.Simulation.ECS
         /// <param name="campId">玩家ID</param>
         /// <param name="buildingType">建筑类型</param>
         /// <param name="position">位置</param>
-        /// <param name="prefabId">预制体ID</param>
+        /// <param name="confBuildingID">建筑配置表ID</param>
         /// <param name="mapManager">地图管理器（可选）</param>
         /// <param name="flowFieldManager">流场管理器（可选）</param>
         /// <returns>创建的实体事件</returns>
@@ -59,7 +56,7 @@ namespace ZLockstep.Simulation.ECS
             int campId, 
             BuildingType buildingType, 
             zVector3 position, 
-            int prefabId,
+            int confBuildingID,
             IFlowFieldMap mapManager = null,
             FlowFieldManager flowFieldManager = null)
         {
@@ -136,7 +133,7 @@ namespace ZLockstep.Simulation.ECS
             }
 
             // 11. 如果是工厂建筑，添加生产组件
-            if (buildingType == BuildingType.Factory) // 工厂建筑
+            if (buildingType == BuildingType.vehicleFactory) // 工厂建筑
             {
                 // 支持生产动员兵和坦克
                 var supportedUnitTypes = new HashSet<UnitType> { UnitType.Tank }; // 1=动员兵, 2=坦克
@@ -180,9 +177,10 @@ namespace ZLockstep.Simulation.ECS
             {
                 EntityId = entity.Id,
                 UnitType = (int)buildingType,
+                ConfID = confBuildingID,
                 Position = position,
                 PlayerId = campId,
-                PrefabId = prefabId
+                PrefabId = confBuildingID
             };
 
             UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
@@ -323,7 +321,7 @@ namespace ZLockstep.Simulation.ECS
             {
                 case BuildingType.Base: // 基地
                     return new HealthComponent((zfloat)1000.0f);
-                case BuildingType.Factory: // 坦克工厂
+                case BuildingType.vehicleFactory: // 坦克工厂
                     return new HealthComponent((zfloat)500.0f);
                 case BuildingType.Mine: // 矿场，不可攻击
                     return null;
@@ -491,7 +489,7 @@ namespace ZLockstep.Simulation.ECS
                     return new zfloat(8); // 8秒
                 case BuildingType.PowerPlant: // 电厂
                     return new zfloat(5); // 5秒
-                case BuildingType.Factory: // 坦克工厂
+                case BuildingType.vehicleFactory: // 坦克工厂
                     return new zfloat(10); // 10秒
                 default:
                     return zfloat.Zero; // 瞬间建造

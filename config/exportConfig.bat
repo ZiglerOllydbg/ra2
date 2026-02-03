@@ -1,7 +1,7 @@
 @echo off
 @SET EXCEL_FOLDER=.\excel
 @SET JSON_FOLDER=..\client\Assets\Resources\Data\Json
-@SET C_FILE=..\client\Assets\Scripts\Configs
+@SET C_FILE=..\client\Packages\ZLockstep\Runtime\Configs
 @SET EXE=.\excel2json\excel2json.exe
 
 @ECHO Converting excel files in folder %EXCEL_FOLDER% ...
