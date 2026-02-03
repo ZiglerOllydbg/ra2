@@ -453,11 +453,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: BoundaryMaxX
-      value: 128
+      value: 160
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: BoundaryMaxZ
-      value: 128
+      value: 160
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: BoundaryMinX
@@ -469,11 +469,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: CameraTiltMax
-      value: 85
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: CameraTiltMin
-      value: 80
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowKeysRotate
@@ -490,6 +490,14 @@ PrefabInstance:
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: AllowScreenSideMove
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6772098917482410289, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: m_Lens.FieldOfView
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 6772098917482410289, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: m_Lens.OrthographicSize
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 7208503207582570876, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: m_AnchorMax.y
@@ -514,6 +522,18 @@ PrefabInstance:
     - target: {fileID: 7208503207582570876, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7645114331201778905, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: orthographic
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7645114331201778905, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: field of view
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 7645114331201778905, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: orthographic size
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8944374120070155107, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: m_Name

@@ -186,6 +186,13 @@ namespace Game.Examples
 
                 if (conf.Type == 1)
                 {
+                    var confBuilding = ConfigManager.Get<ConfBuilding>(conf.ConfID);
+                    if (confBuilding == null)
+                    {
+                        zUDebug.LogError($"[BattleGame] 创建建筑时无法获取建筑配置信息。ID:{conf.ConfID}");
+                        continue;
+                    }
+
                     // 建筑
                     var entEvent = EntityCreationManager.CreateBuildingEntity(World, conf.Camp,
                         (BuildingType)conf.SubType,
@@ -196,7 +203,7 @@ namespace Game.Examples
                         createdEntities.Add(entEvent.Value);
                     }
 
-                    if ((BuildingType)conf.SubType == BuildingType.Base)
+                    if (confBuilding.Type == (int)BuildingType.Base)
                     {
                         // 添加经济
                         var ecoEntity = World.EntityManager.CreateEntity();
