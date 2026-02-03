@@ -60,9 +60,15 @@ namespace ZLockstep.Simulation.ECS
             IFlowFieldMap mapManager = null,
             FlowFieldManager flowFieldManager = null)
         {
-            // 根据建筑类型设置宽度和高度
-            // 使用工具类中的方法
-            BuildingPlacementUtils.GetBuildingDimensions(buildingType, out int width, out int height);
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            if (confBuilding == null)
+            {
+                zUDebug.LogError($"[EntityCreationManager] 创建建筑实体时无法获取建筑配置信息。ID:{confBuildingID}");
+                return null;
+            }
+
+            int width = confBuilding.Size;
+            int height = confBuilding.Size;
 
             // 1. 创建建筑实体
             var entity = world.EntityManager.CreateEntity();
@@ -91,14 +97,14 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, campComponent);
 
             // 6. 添加生命值组件
-            var healthComponent = CreateBuildingHealthComponent(buildingType);
+            var healthComponent = CreateBuildingHealthComponent(confBuildingID);
             if (healthComponent.HasValue)
             {
                 world.ComponentManager.AddComponent(entity, healthComponent.Value);
             }
             
             // 7. 如果建筑有攻击能力（如防御塔），添加攻击组件
-            var attackComponent = CreateBuildingAttackComponent(buildingType);
+            var attackComponent = CreateBuildingAttackComponent(confBuildingID);
             if (attackComponent.HasValue)
             {
                 world.ComponentManager.AddComponent(entity, attackComponent.Value);
@@ -165,7 +171,7 @@ namespace ZLockstep.Simulation.ECS
             }
 
             // 14. 添加建造组件（所有建筑都需要建造时间）
-            var constructionTime = GetConstructionTime(buildingType);
+            var constructionTime = GetConstructionTime(confBuildingID);
             if (constructionTime > zfloat.Zero)
             {
                 var buildingConstructionComponent = BuildingConstructionComponent.Create(constructionTime);
@@ -315,41 +321,47 @@ namespace ZLockstep.Simulation.ECS
 
         #region 建筑辅助方法
 
-        private static HealthComponent? CreateBuildingHealthComponent(BuildingType buildingType)
+        private static HealthComponent? CreateBuildingHealthComponent(int confBuildingID)
         {
-            switch (buildingType)
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            if (confBuilding == null)
             {
-                case BuildingType.Base: // 基地
-                    return new HealthComponent((zfloat)1000.0f);
-                case BuildingType.vehicleFactory: // 坦克工厂
-                    return new HealthComponent((zfloat)500.0f);
-                case BuildingType.Mine: // 矿场，不可攻击
-                    return null;
-                case BuildingType.Smelter: // 采矿场
-                    return new HealthComponent((zfloat)400.0f);
-                case BuildingType.PowerPlant: // 电厂
-                    return new HealthComponent((zfloat)300.0f);
-                default:
-                    return null;
+                zUDebug.LogError($"[EntityCreationManager] 创建建筑时无法获取建筑配置信息。ID:{confBuildingID}");
+                return null;
+            }
+
+            if (confBuilding.Hp > 0)
+            {
+                return new HealthComponent((zfloat)confBuilding.Hp);
+            }
+            else
+            {
+                return null;
             }
         }
 
-        private static AttackComponent? CreateBuildingAttackComponent(BuildingType buildingType)
+        private static AttackComponent? CreateBuildingAttackComponent(int confBuildingID)
         {
-            switch (buildingType)
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            if (confBuilding == null)
             {
-                case BuildingType.Tower: // 防御塔
-                    return new AttackComponent
-                    {
-                        Damage = (zfloat)40.0f,
-                        Range = (zfloat)12.0f,
-                        AttackInterval = (zfloat)1.5f,
-                        TimeSinceLastAttack = zfloat.Zero,
-                        TargetEntityId = -1
-                    };
-                default:
-                    return null;
+                zUDebug.LogError($"[EntityCreationManager] 创建建筑时无法获取建筑配置信息。ID:{confBuildingID}");
+                return null;
             }
+
+            if (confBuilding.Type == (int)BuildingType.Tower)
+            {
+                return new AttackComponent
+                {
+                    Damage = (zfloat)confBuilding.Atk,
+                    Range = (zfloat)12.0f,
+                    AttackInterval = (zfloat)1.5f,
+                    TimeSinceLastAttack = zfloat.Zero,
+                    TargetEntityId = -1
+                };
+            }
+
+            return null;
         }
 
         #endregion
@@ -481,19 +493,16 @@ namespace ZLockstep.Simulation.ECS
         /// </summary>
         /// <param name="buildingType">建筑类型</param>
         /// <returns>建造时间（秒）</returns>
-        private static zfloat GetConstructionTime(BuildingType buildingType)
+        private static zfloat GetConstructionTime(int confBuildingID)
         {
-            switch (buildingType)
+            var confBuilding = DataManager.Get<ConfBuilding>(confBuildingID.ToString());
+            if (confBuilding == null)
             {
-                case BuildingType.Smelter: // 采矿场
-                    return new zfloat(8); // 8秒
-                case BuildingType.PowerPlant: // 电厂
-                    return new zfloat(5); // 5秒
-                case BuildingType.vehicleFactory: // 坦克工厂
-                    return new zfloat(10); // 10秒
-                default:
-                    return zfloat.Zero; // 瞬间建造
+                zUDebug.LogError($"[BuildingPlacementUtils] 获取建筑配置信息失败。ID:{confBuildingID}");
+                return zfloat.Zero;
             }
+
+            return (zfloat)confBuilding.ConstructionTime;
         }
         
         #endregion

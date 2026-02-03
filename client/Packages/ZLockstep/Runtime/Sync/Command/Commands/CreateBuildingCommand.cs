@@ -154,29 +154,17 @@ namespace ZLockstep.Sync.Command.Commands
                 UnityEngine.Debug.LogWarning($"[CreateBuildingCommand] 未找到阵营 {CampId} 的经济组件");
                 return false;
             }
+
+            var confBuilding = DataManager.Get<ConfBuilding>(ConfBuildingID.ToString());
+            if (confBuilding == null)
+            {
+                zUDebug.LogError($"[CreateBuildingCommand] 未找到建筑配置信息 {ConfBuildingID}");
+                return false;
+            }
             
             // 根据建筑类型确定所需资源
-            int costMoney = 0;
-            int costPower = 0;
-            
-            switch (BuildingType)
-            {
-                case BuildingType.PowerPlant: // 发电厂
-                    costMoney = 500;
-                    costPower = 0;
-                    break;
-                case BuildingType.Smelter: // 采矿场
-                    costMoney = 800;
-                    costPower = 5;
-                    break;
-                case BuildingType.vehicleFactory: // 坦克工厂
-                    costMoney = 1000;
-                    costPower = 5;
-                    break;
-                default:
-                    // 其他建筑不消耗资源或免费
-                    return true;
-            }
+            int costMoney = confBuilding.CostMoney;
+            int costPower = confBuilding.CostPower;
             
             // 检查是否有足够的资源
             if (economyComponent.Money < costMoney)
