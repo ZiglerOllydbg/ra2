@@ -32,11 +32,14 @@ namespace ZLockstep.Sync.Command.Commands
         public zVector3 Position { get; set; }
 
 
-        public CreateBuildingCommand(int confID, int campId, BuildingType buildingType, zVector3 position)
+        public CreateBuildingCommand(int confID, int campId, zVector3 position)
             : base(campId)
         {
             ConfBuildingID = confID;
-            BuildingType = buildingType;
+            var confBuilding = ConfigManager.Get<ConfBuilding>(ConfBuildingID);
+            BuildingType = confBuilding != null? (BuildingType)confBuilding.Type : BuildingType.None;
+            zUDebug.Log($"[EntityCreationManager] 创建建筑类型{BuildingType} " +
+                $"在位置{Position}");
             Position = position;
         }
 
@@ -83,7 +86,6 @@ namespace ZLockstep.Sync.Command.Commands
             var unitCreatedEvent = EntityCreationManager.CreateBuildingEntity(
                 world, 
                 CampId, 
-                BuildingType, 
                 Position, 
                 ConfBuildingID,
                 world.GameInstance.GetMapManager(),

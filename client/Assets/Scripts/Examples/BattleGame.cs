@@ -195,7 +195,6 @@ namespace Game.Examples
 
                     // 建筑
                     var entEvent = EntityCreationManager.CreateBuildingEntity(World, conf.Camp,
-                        (BuildingType)conf.SubType,
                         new zVector3(confPos.x, confPos.y, confPos.z),
                         confBuildingID: conf.ConfID, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                     if (entEvent.HasValue)
@@ -266,7 +265,7 @@ namespace Game.Examples
                             float y = building["y"]?.ToObject<float>() ?? 0;
 
                             // 根据类型创建建筑实体 (中立建筑使用特殊playerId，比如-1)
-                            var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1, BuildingType.Mine,
+                            var entityEvent = EntityCreationManager.CreateBuildingEntity(World, -1,
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
                             confBuildingID:2, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                             if (entityEvent.HasValue)
@@ -305,7 +304,7 @@ namespace Game.Examples
                         }
 
                         // 根据类型创建建筑实体
-                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId, buildingType,
+                        var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),
                         confBuildingID: 1, mapManager:MapManager, flowFieldManager:FlowFieldManager);
                         if (entityEvent.HasValue)

@@ -503,7 +503,6 @@ public class BuildingPreviewRenderer : MonoBehaviour
         var createBuildingCommand = new ZLockstep.Sync.Command.Commands.CreateBuildingCommand(
             confID: confID,
             campId: 0,
-            buildingType: buildingToBuild,
             position: logicPosition
         )
         {

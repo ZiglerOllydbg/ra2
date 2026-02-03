@@ -54,7 +54,6 @@ namespace ZLockstep.Simulation.ECS
         public static UnitCreatedEvent? CreateBuildingEntity(
             zWorld world, 
             int campId, 
-            BuildingType buildingType, 
             zVector3 position, 
             int confBuildingID,
             IFlowFieldMap mapManager = null,
@@ -66,6 +65,8 @@ namespace ZLockstep.Simulation.ECS
                 zUDebug.LogError($"[EntityCreationManager] 创建建筑实体时无法获取建筑配置信息。ID:{confBuildingID}");
                 return null;
             }
+
+            BuildingType buildingType = (BuildingType)confBuilding.Type;
 
             int width = confBuilding.Size;
             int height = confBuilding.Size;
