@@ -7,6 +7,10 @@ using ZLockstep.Simulation.ECS;
 public class BuildItemData
 {
     /// <summary>
+    /// 配置ID
+    /// </summary>
+    public int ConfBuildingPlaceID;
+    /// <summary>
     /// 建筑名称
     /// </summary>
     public string Name;

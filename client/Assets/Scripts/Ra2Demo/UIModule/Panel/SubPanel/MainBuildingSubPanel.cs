@@ -85,6 +85,7 @@ public class MainBuildingSubPanel
             // 根据配置创建建筑项数据
             var buildItem = new BuildItemData
             {
+                ConfBuildingPlaceID = confBuildingPlace.ID,
                 BuildingType = (BuildingType)confBuilding.Type,
                 Name = $"{confBuilding.Name}(${confBuilding.CostMoney})",
                 Description = confBuilding.Description
@@ -298,7 +299,11 @@ public class MainBuildingSubPanel
     private void OnListItemSelect(BuildingListItem item)
     {
         Debug.Log($"选中了列表项: {item.ItemData?.Name}");
-        Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
+        // Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
+        // TODO: 直接放置
+        
+
+
         Hide();
     }
     
