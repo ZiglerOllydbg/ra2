@@ -1,9 +1,10 @@
 {
-    "name": "Editor",
+    "name": "RTSCameraController.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:eed7b7a136857d849bc262af41fc091d",
-        "GUID:4307f53044263cf4b835bd812fc161a4"
+        "GUID:4307f53044263cf4b835bd812fc161a4",
+        "Unity.TextMeshPro.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
