@@ -8,7 +8,8 @@
       "ConfID": 1,
       "PrefabId": 0.0,
       "Position": "10,0,10",
-      "Note": "主基地"
+      "Note": "主基地",
+      "Enabled": 1
     },
     "2": {
       "ID": 2,
@@ -18,7 +19,8 @@
       "ConfID": 2,
       "PrefabId": 0.0,
       "Position": "5,0,5",
-      "Note": "金矿"
+      "Note": "金矿",
+      "Enabled": 1
     },
     "3": {
       "ID": 3,
@@ -28,7 +30,8 @@
       "ConfID": 3,
       "PrefabId": 0.0,
       "Position": "5,0,5",
-      "Note": "采矿场"
+      "Note": "采矿场",
+      "Enabled": 0
     },
     "4": {
       "ID": 4,
@@ -38,7 +41,8 @@
       "ConfID": 4,
       "PrefabId": 0.0,
       "Position": "5,0,10",
-      "Note": "电厂"
+      "Note": "电厂",
+      "Enabled": 0
     },
     "5": {
       "ID": 5,
@@ -48,7 +52,8 @@
       "ConfID": 5,
       "PrefabId": 0.0,
       "Position": "10,0,5",
-      "Note": "兵营"
+      "Note": "兵营",
+      "Enabled": 0
     },
     "6": {
       "ID": 6,
@@ -58,7 +63,8 @@
       "ConfID": 6,
       "PrefabId": 0.0,
       "Position": "15,0,5",
-      "Note": "坦克工厂"
+      "Note": "坦克工厂",
+      "Enabled": 0
     },
     "7": {
       "ID": 7,
@@ -68,7 +74,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "16,0,16",
-      "Note": "坦克1"
+      "Note": "坦克1",
+      "Enabled": 1
     },
     "8": {
       "ID": 8,
@@ -78,7 +85,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "16,0,12",
-      "Note": "坦克2"
+      "Note": "坦克2",
+      "Enabled": 1
     },
     "9": {
       "ID": 9,
@@ -88,7 +96,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "12,0,16",
-      "Note": "坦克3"
+      "Note": "坦克3",
+      "Enabled": 1
     },
     "10": {
       "ID": 10,
@@ -98,7 +107,8 @@
       "ConfID": 1,
       "PrefabId": 0.0,
       "Position": "117,0,117",
-      "Note": "主基地"
+      "Note": "主基地",
+      "Enabled": 1
     },
     "11": {
       "ID": 11,
@@ -108,7 +118,8 @@
       "ConfID": 2,
       "PrefabId": 0.0,
       "Position": "122,0,122",
-      "Note": "金矿"
+      "Note": "金矿",
+      "Enabled": 1
     },
     "12": {
       "ID": 12,
@@ -118,7 +129,8 @@
       "ConfID": 3,
       "PrefabId": 0.0,
       "Position": "122,0,122",
-      "Note": "采矿场"
+      "Note": "采矿场",
+      "Enabled": 1
     },
     "13": {
       "ID": 13,
@@ -128,7 +140,8 @@
       "ConfID": 4,
       "PrefabId": 0.0,
       "Position": "122,0,117",
-      "Note": "电厂"
+      "Note": "电厂",
+      "Enabled": 1
     },
     "14": {
       "ID": 14,
@@ -138,7 +151,8 @@
       "ConfID": 5,
       "PrefabId": 0.0,
       "Position": "117,0,122",
-      "Note": "兵营"
+      "Note": "兵营",
+      "Enabled": 1
     },
     "15": {
       "ID": 15,
@@ -148,7 +162,8 @@
       "ConfID": 6,
       "PrefabId": 0.0,
       "Position": "112,0,122",
-      "Note": "坦克工厂"
+      "Note": "坦克工厂",
+      "Enabled": 1
     },
     "16": {
       "ID": 16,
@@ -158,7 +173,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "111,0,111",
-      "Note": "坦克"
+      "Note": "坦克",
+      "Enabled": 1
     },
     "17": {
       "ID": 17,
@@ -168,7 +184,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "111,0,115",
-      "Note": "坦克"
+      "Note": "坦克",
+      "Enabled": 1
     },
     "18": {
       "ID": 18,
@@ -178,7 +195,8 @@
       "ConfID": 0.0,
       "PrefabId": 6,
       "Position": "115,0,111",
-      "Note": "坦克"
+      "Note": "坦克",
+      "Enabled": 1
     }
   }
 }

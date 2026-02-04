@@ -16,6 +16,7 @@ public class ConfInitUnits
 	public int PrefabId; // 资源ID-Deprecated
 	public string Position; // 位置
 	public string Note; // 备注
+	public int Enabled; // 是否启动
 }
 
 

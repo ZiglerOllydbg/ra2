@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using ZLockstep.Simulation.ECS;
 using ZFrame;
+using ZLockstep.Simulation.ECS.Components;
 
 /// <summary>
 /// 主面板的子面板控制器 - 封装子面板的UI逻辑和数据
@@ -301,12 +302,146 @@ public class MainBuildingSubPanel
         Debug.Log($"选中了列表项: {item.ItemData?.Name}");
         // Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
         // TODO: 直接放置
-        
 
+        var confBuildingPlace = ConfigManager.Get<ConfBuildingPlace>(item.ItemData.ConfBuildingPlaceID);
+        if (confBuildingPlace == null)
+        {
+            Debug.LogError($"未找到建筑配置: {item.ItemData.ConfBuildingPlaceID}");
+            return;
+        }
+
+        // 1. 根据类型获取已经放置的建筑数量
+        int currentCount = GetBuildingCountByType((BuildingType)confBuildingPlace.Type);
+        Debug.Log($"当前已放置 {item.ItemData.BuildingType} 数量: {currentCount}");
+
+        // 2. 根据配置Count检查数量限制
+        if (currentCount >= confBuildingPlace.Count)
+        {
+            Debug.LogWarning($"建筑数量已达上限: {currentCount}/{confBuildingPlace.Count}");
+            MessageUtils.ShowTips("建筑数量已达上限");
+            // TODO: 可以显示提示信息给用户
+            Hide();
+            return;
+        }
+
+        // 3. 解析配置中的位置信息
+        Vector3[] positions = ParsePositions(confBuildingPlace.Position);
+        if (positions.Length == 0)
+        {
+            Debug.LogError($"配置中的位置信息无效: {confBuildingPlace.Position}");
+            Hide();
+            return;
+        }
+        
+        // 计算下一个可用地点（循环使用配置的位置）
+        int nextPositionIndex = currentCount % positions.Length;
+        Vector3 targetPosition = positions[nextPositionIndex];
+        
+        Debug.Log($"准备在位置 {targetPosition} 放置建筑，索引: {nextPositionIndex}");
+        
+        int buildingID = confBuildingPlace.Type;
+        // 4. 直接调用放置逻辑
+        PlaceBuilding(buildingID, targetPosition);
 
         Hide();
     }
     
+        /// <summary>
+    /// 获取指定类型已放置的建筑数量
+    /// </summary>
+    private int GetBuildingCountByType(BuildingType buildingType)
+    {
+        Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+        var componentManager = ra2Demo.GetBattleGame().World.ComponentManager;
+        int count = 0;
+        
+        int localPlayerCampID = EcsUtils.GetLocalPlayerCampId(ra2Demo.GetBattleGame());
+
+        // 获取所有建筑实体
+        var buildingEntities = componentManager.GetAllEntityIdsWith<BuildingComponent>();
+        
+        foreach (var entityId in buildingEntities)
+        {
+            var entity = new Entity(entityId);
+            
+            // 检查阵营（假设是玩家阵营0）
+            if (!componentManager.HasComponent<CampComponent>(entity))
+                continue;
+                
+            var campComponent = componentManager.GetComponent<CampComponent>(entity);
+            if (campComponent.CampId != localPlayerCampID) // 玩家阵营ID
+                continue;
+            
+            // 检查建筑类型
+            var buildingComponent = componentManager.GetComponent<BuildingComponent>(entity);
+            if ((BuildingType)buildingComponent.BuildingType == buildingType)
+            {
+                // 检查是否已完成建造（排除正在建造中的建筑）
+                if (componentManager.HasComponent<BuildingConstructionComponent>(entity))
+                    continue;
+                    
+                count++;
+            }
+        }
+        
+        return count;
+    }
+
+        /// <summary>
+    /// 解析位置字符串为Vector3数组
+    /// 格式: "110,0,112;112,0,110"
+    /// </summary>
+    private Vector3[] ParsePositions(string positionStr)
+    {
+        if (string.IsNullOrEmpty(positionStr))
+            return new Vector3[0];
+            
+        string[] positionStrings = positionStr.Split(';');
+        List<Vector3> positions = new List<Vector3>();
+        
+        foreach (string posStr in positionStrings)
+        {
+            string[] coords = posStr.Split(',');
+            if (coords.Length == 3)
+            {
+                if (float.TryParse(coords[0], out float x) &&
+                    float.TryParse(coords[1], out float y) &&
+                    float.TryParse(coords[2], out float z))
+                {
+                    positions.Add(new Vector3(x, y, z));
+                }
+            }
+        }
+        
+        return positions.ToArray();
+    }
+    
+    /// <summary>
+    /// 放置建筑的核心逻辑
+    /// </summary>
+    private void PlaceBuilding(int confID, Vector3 logicPosition)
+    {
+        // 创建建筑命令（使用CreateBuildingCommand）
+        var createBuildingCommand = new ZLockstep.Sync.Command.Commands.CreateBuildingCommand(
+            confID: confID,
+            campId: 0,
+            position: new zUnity.zVector3(
+                zfloat.CreateFloat((long)(logicPosition.x * zfloat.SCALE_10000)),
+                zfloat.CreateFloat((long)(logicPosition.y * zfloat.SCALE_10000)),
+                zfloat.CreateFloat((long)(logicPosition.z * zfloat.SCALE_10000))
+            )
+        )
+        {
+            Source = ZLockstep.Sync.Command.CommandSource.Local,
+        };
+
+        // 提交命令到游戏世界
+        Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+        ra2Demo.GetBattleGame().SubmitCommand(createBuildingCommand);
+        
+        Debug.Log($"已提交建筑放置命令，配置ID: {confID}, 位置: {logicPosition}");
+    }
+
     /// <summary>
     /// 销毁时调用，清理事件
     /// </summary>

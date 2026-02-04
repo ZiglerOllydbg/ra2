@@ -20,7 +20,7 @@
       "Type": 2,
       "Manual": 0,
       "Prefab": "OilField",
-      "Size": 5,
+      "Size": 0,
       "Hp": 0,
       "Atk": 0,
       "Def": 0,
@@ -71,7 +71,7 @@
       "Def": 10,
       "ConstructionTime": 8,
       "CostMoney": 1000,
-      "CostPower": 10,
+      "CostPower": 5,
       "Name": "兵营",
       "Description": "可训练步兵单位"
     },
@@ -86,7 +86,7 @@
       "Def": 20,
       "ConstructionTime": 10,
       "CostMoney": 2000,
-      "CostPower": 20,
+      "CostPower": 10,
       "Name": "战车工厂",
       "Description": "可生产装甲单位"
     },
@@ -120,8 +120,8 @@
       "ID": 2,
       "CampID": 1,
       "Type": 4,
-      "Count": 1,
-      "Position": "5,0,10",
+      "Count": 2,
+      "Position": "5,0,10;5,0,15",
       "Name": "电厂",
       "Enabled": 1
     },

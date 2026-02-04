@@ -182,6 +182,8 @@ namespace Game.Examples
             var createdEntities = new List<UnitCreatedEvent>();
             foreach (var conf in confs)
             {
+                if (conf.Enabled == 0) continue;
+
                 var confPos = StringToVector3Converter.StringToZVector3(conf.Position);
 
                 if (conf.Type == 1)
