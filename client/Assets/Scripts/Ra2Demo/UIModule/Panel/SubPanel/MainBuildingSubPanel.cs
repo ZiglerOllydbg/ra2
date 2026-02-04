@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 using System.Collections.Generic;
 using TMPro;
 using ZLockstep.Simulation.ECS;
@@ -29,7 +28,7 @@ public class MainBuildingSubPanel
     /// <summary>
     /// 关闭按钮点击回调（可选，用于通知父面板）
     /// </summary>
-    public Action OnCloseClick;
+    public System.Action OnCloseClick;
     
     public MainBuildingSubPanel(Transform parent)
     {
@@ -62,13 +61,26 @@ public class MainBuildingSubPanel
 
         var testData = new List<BuildItemData>();
 
+        // 可以在这里添加匹配成功的处理逻辑
+        Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+
+        int localPlayerCampID = EcsUtils.GetLocalPlayerCampId(ra2Demo.GetBattleGame());
+
         // 从配置数据中加载所有建筑信息
-        List<ConfBuilding> confBuildings = ConfigManager.GetAll<ConfBuilding>();
-        foreach (var confBuilding in confBuildings)
+        List<ConfBuildingPlace> confBuildingPlaces = ConfigManager.GetAll<ConfBuildingPlace>();
+        foreach (var confBuildingPlace in confBuildingPlaces)
         {
-            // 跳过主基地和矿源（这些通常不由玩家建造）
-            if (confBuilding.Manual == 0)
+            if (confBuildingPlace.Enabled == 0) continue;
+
+            if (confBuildingPlace.CampID != localPlayerCampID) continue;
+
+            // TODO confBuildingPlace.Type = confBuilding.ID，未来需要一张映射表
+            var confBuilding = ConfigManager.Get<ConfBuilding>(confBuildingPlace.Type);
+            if (confBuilding == null)
+            {
+                zUDebug.LogError($"[MainBuildingSubPanel] 创建建筑时无法获取建筑配置信息。ID:{confBuildingPlace.Type}");
                 continue;
+            }
 
             // 根据配置创建建筑项数据
             var buildItem = new BuildItemData
@@ -217,7 +229,7 @@ public class MainBuildingSubPanel
             if (contentRectTransform != null)
             {
                 // 计算总高度：元素数量 × 单个元素高度 + (元素数量-1) × 间距
-                float totalHeight = dataList.Count * itemHeight + Math.Max(0, dataList.Count - 1) * spacing;
+                float totalHeight = dataList.Count * itemHeight + System.Math.Max(0, dataList.Count - 1) * spacing;
                 
                 // 设置Content容器的高度
                 var sizeDelta = contentRectTransform.sizeDelta;

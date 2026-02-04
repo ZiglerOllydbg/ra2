@@ -39,4 +39,19 @@ public static class EcsUtils
         power = economyComponent.Power;
         return true;
     }
+
+    // 获取本地阵营ID
+    public static int GetLocalPlayerCampId(ZLockstep.Sync.Game game)
+    {
+        if (game == null || game.World == null)
+            return -1;
+
+        // 检查是否存在全局信息组件
+        if (!game.World.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
+            return -1;
+
+        // 获取全局信息组件以确定本地玩家阵营ID
+        var globalInfoComponent = game.World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>();
+        return globalInfoComponent.LocalPlayerCampId;
+    }
 }
