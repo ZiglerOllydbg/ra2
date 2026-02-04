@@ -377,8 +377,8 @@ public class MainBuildingSubPanel
             if ((BuildingType)buildingComponent.BuildingType == buildingType)
             {
                 // 检查是否已完成建造（排除正在建造中的建筑）
-                if (componentManager.HasComponent<BuildingConstructionComponent>(entity))
-                    continue;
+                // if (componentManager.HasComponent<BuildingConstructionComponent>(entity))
+                //     continue;
                     
                 count++;
             }
