@@ -168,6 +168,28 @@
     "16": {
       "ID": 16,
       "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0.0,
+      "Position": "109,0,112",
+      "Note": "防御塔",
+      "Enabled": 1
+    },
+    "17": {
+      "ID": 17,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0.0,
+      "Position": "112,0,109",
+      "Note": "防御塔",
+      "Enabled": 1
+    },
+    "18": {
+      "ID": 18,
+      "Camp": 2,
       "Type": 2,
       "SubType": 1,
       "ConfID": 0.0,
@@ -176,8 +198,8 @@
       "Note": "坦克",
       "Enabled": 1
     },
-    "17": {
-      "ID": 17,
+    "19": {
+      "ID": 19,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -187,8 +209,8 @@
       "Note": "坦克",
       "Enabled": 1
     },
-    "18": {
-      "ID": 18,
+    "20": {
+      "ID": 20,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,

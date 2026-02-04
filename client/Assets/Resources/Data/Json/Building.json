@@ -148,9 +148,9 @@
       "CampID": 1,
       "Type": 7,
       "Count": 2,
-      "Position": "13,0,15;15,0,13",
+      "Position": "12,0,15;15,0,12",
       "Name": "防御塔",
-      "Enabled": 0
+      "Enabled": 1
     },
     "6": {
       "ID": 6,
@@ -193,7 +193,7 @@
       "CampID": 2,
       "Type": 7,
       "Count": 2,
-      "Position": "110,0,112;112,0,110",
+      "Position": "109,0,112;112,0,109",
       "Name": "防御塔",
       "Enabled": 0
     }
