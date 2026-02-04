@@ -8,8 +8,9 @@
 
 public class ConfBuilding
 {
-	public const string JsonFileName = "Building";	public int ID; // 编号
-	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔
+	public const string JsonFileName = "Building";
+	public int ID; // 编号
+	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔；
 	public int Manual; // 手动建造
 	public string Prefab; // 资源prefab
 	public int Size; // 占地尺寸（直径）建议奇数
@@ -25,9 +26,10 @@ public class ConfBuilding
 
 public class ConfBuildingPlace
 {
-	public const string JsonFileName = "Building";	public int ID; // 编号
+	public const string JsonFileName = "Building";
+	public int ID; // 编号
 	public int CampID; // 阵营
-	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔
+	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔；
 	public int Count; // 数量
 	public string Position; // 位置
 	public string Name; // 名称
