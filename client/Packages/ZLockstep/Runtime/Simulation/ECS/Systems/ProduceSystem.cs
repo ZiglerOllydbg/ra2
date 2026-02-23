@@ -118,7 +118,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 简单地在工厂位置附近创建单位
             // 在实际实现中，可能需要更复杂的逻辑来确定单位的精确生成位置
             zVector3 spawnPosition = factoryPosition;
-            spawnPosition.z -= (zfloat)10.0f; // 稍微偏移位置
+            spawnPosition.x += (zfloat)10.0f; // 稍微偏移位置
             
             // 使用EntityCreationManager创建单位
             int prefabId = 6; // 默认预制体ID

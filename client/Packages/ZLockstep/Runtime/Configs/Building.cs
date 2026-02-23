@@ -5,9 +5,14 @@
 // 2. 表格约定：第一行是变量名称，第二行是变量类型
 
 // Generate From Building.xlsx
+using UnityEngine.Scripting;
 
+[Preserve]
 public class ConfBuilding
 {
+	public ConfBuilding() {}
+
+	[Preserve]
 	public const string JsonFileName = "Building";
 	public int ID; // 编号
 	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔；
@@ -24,8 +29,12 @@ public class ConfBuilding
 	public string Description; // 描述
 }
 
+[Preserve]
 public class ConfBuildingPlace
 {
+	public ConfBuildingPlace() {}
+
+	[Preserve]
 	public const string JsonFileName = "Building";
 	public int ID; // 编号
 	public int CampID; // 阵营

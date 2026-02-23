@@ -5,9 +5,14 @@
 // 2. 表格约定：第一行是变量名称，第二行是变量类型
 
 // Generate From ExampleData.xlsx
+using UnityEngine.Scripting;
 
+[Preserve]
 public class ConfNPC
 {
+	public ConfNPC() {}
+
+	[Preserve]
 	public const string JsonFileName = "ExampleData";
 	public string ID; // 编号
 	public string Name; // 名称
@@ -20,8 +25,12 @@ public class ConfNPC
 	public string TestJsonObject; // 测试单元格内的Json对象
 }
 
+[Preserve]
 public class ConfItem
 {
+	public ConfItem() {}
+
+	[Preserve]
 	public const string JsonFileName = "ExampleData";
 	public string ID; // 编号
 	public string Name; // 名称

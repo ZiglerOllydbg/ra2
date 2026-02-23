@@ -5,9 +5,14 @@
 // 2. 表格约定：第一行是变量名称，第二行是变量类型
 
 // Generate From InitUnits.xlsx
+using UnityEngine.Scripting;
 
+[Preserve]
 public class ConfInitUnits
 {
+	public ConfInitUnits() {}
+
+	[Preserve]
 	public const string JsonFileName = "InitUnits";
 	public string ID; // 编号
 	public int Camp; // 阵营
