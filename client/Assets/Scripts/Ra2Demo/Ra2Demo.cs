@@ -906,7 +906,7 @@ public class Ra2Demo : MonoBehaviour
                 if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
                 {
                     // 调整目标距离
-                    factoryPosition.y = -50;
+                    factoryPosition.y = 0;
                     RTSCameraTargetController.Instance.CameraTarget.position = factoryPosition;
                     zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
                 }
@@ -915,7 +915,7 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 调整相机位置
-        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, -50, RTSCameraTargetController.Instance.CameraTarget.position.z);
+        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, 0, RTSCameraTargetController.Instance.CameraTarget.position.z);
         RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
 
         zUDebug.Log("[Ra2Demo] 未找到我方工厂");
