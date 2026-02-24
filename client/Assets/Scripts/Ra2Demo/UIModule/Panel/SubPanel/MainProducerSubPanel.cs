@@ -253,7 +253,7 @@ public class MainProducerSubPanel
         switch (unitType)
         {
             case UnitType.Infantry: return "动员兵";
-            case UnitType.Tank: return "坦克($300)";
+            case UnitType.grizzlyTank: return "坦克($300)";
             case UnitType.Harvester: return "矿车";
             default: return $"单位{unitType}";
         }
@@ -267,7 +267,7 @@ public class MainProducerSubPanel
         switch (unitType)
         {
             case UnitType.Infantry: return "基础步兵单位";
-            case UnitType.Tank: return "重装甲战斗单位";
+            case UnitType.grizzlyTank: return "重装甲战斗单位";
             case UnitType.Harvester: return "采集矿物单位";
             default: return $"单位类型{unitType}";
         }

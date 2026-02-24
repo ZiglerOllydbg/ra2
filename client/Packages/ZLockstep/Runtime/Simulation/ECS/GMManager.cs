@@ -177,7 +177,7 @@ public class GMManager
 
         CreateTankCommand createTankCommand = new(
             campId: campId,
-            unitType: UnitType.Tank, // 坦克类型
+            unitType: UnitType.grizzlyTank, // 坦克类型
             position: new zVector3((zfloat)worldPosition.x, (zfloat)worldPosition.y, (zfloat)worldPosition.z),
             prefabId: 6, // 坦克预制体ID
             radius: (zfloat)2,

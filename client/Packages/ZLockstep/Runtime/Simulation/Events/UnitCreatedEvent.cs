@@ -21,7 +21,12 @@ namespace ZLockstep.Simulation.Events
         /// <summary>
         /// 配置ID
         /// </summary>
-        public int ConfID;
+        public int ConfBuildingID;
+
+        /// <summary>
+        /// 单位创建者ID
+        /// </summary>
+        public int ConfUnitID;
 
         /// <summary>
         /// 创建位置

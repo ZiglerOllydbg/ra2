@@ -276,9 +276,9 @@ namespace ZLockstep.View.Systems
         {
             GameObject viewObject = null;
 
-            if (evt.ConfID > 0)
+            if (evt.ConfBuildingID > 0)
             {
-                ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(evt.ConfID);
+                ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(evt.ConfBuildingID);
                 if (confBuilding != null)
                 {
                     // 创建建筑模型
@@ -287,6 +287,20 @@ namespace ZLockstep.View.Systems
                     {
                         // 创建建筑模型
                         viewObject = Object.Instantiate(buildingPrefab, _viewRoot);
+                    }
+                }
+            }
+
+            if (evt.ConfUnitID > 0)
+            {
+                ConfUnit confUnit = ConfigManager.Get<ConfUnit>(evt.ConfUnitID);
+                if (confUnit != null)
+                {
+                    // 创建单位模型
+                    GameObject unitPrefab = ResourceCache.GetPrefab("Prefabs/" + confUnit.Prefab);
+                    if (unitPrefab != null)
+                    {
+                        viewObject = Object.Instantiate(unitPrefab, _viewRoot);
                     }
                 }
             }

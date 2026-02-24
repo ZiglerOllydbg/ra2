@@ -329,7 +329,7 @@ namespace Game.Examples
                         
                         // 使用EntityCreationManager创建单位
                         int prefabId = 6; // 默认预制体ID
-                        var unitEvent = EntityCreationManager.CreateUnitEntity(World, campId, UnitType.Tank, 
+                        var unitEvent = EntityCreationManager.CreateUnitEntity(World, campId, UnitType.grizzlyTank, 
                             new zVector3((zfloat)x, zfloat.Zero, (zfloat)y), prefabId);
                         if (unitEvent.HasValue)
                         {
@@ -357,7 +357,7 @@ namespace Game.Examples
             int prefabId = 6; // 默认预制体ID
             for (int i = 0; i < 10; i++)
             {
-                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 1, UnitType.Tank, 
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 1, UnitType.grizzlyTank, 
                     new zVector3((zfloat)(32 + i), zfloat.Zero, (zfloat)16), prefabId);
                 if (unitEvent.HasValue)
                 {
@@ -373,7 +373,7 @@ namespace Game.Examples
             int prefabId = 6; // 默认预制体ID
             for (int i = 0; i < 10; i++)
             {
-                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.Tank, 
+                var unitEvent = EntityCreationManager.CreateUnitEntity(World, 2, UnitType.grizzlyTank, 
                     new zVector3((zfloat)(50 + i), zfloat.Zero, (zfloat)64), prefabId);
                 if (unitEvent.HasValue)
                 {

@@ -149,7 +149,7 @@ namespace ZLockstep.Sync.Command.Commands
                 case UnitType.Infantry: // 动员兵
                     costMoney = 100;
                     break;
-                case UnitType.Tank: // 坦克
+                case UnitType.grizzlyTank: // 坦克
                     costMoney = 300;
                     break;
                 case UnitType.Harvester: // 矿车
@@ -214,7 +214,7 @@ namespace ZLockstep.Sync.Command.Commands
                 case UnitType.Infantry: // 动员兵
                     refundMoney = 100;
                     break;
-                case UnitType.Tank: // 坦克
+                case UnitType.grizzlyTank: // 坦克
                     refundMoney = 300;
                     break;
                 case UnitType.Harvester: // 矿车

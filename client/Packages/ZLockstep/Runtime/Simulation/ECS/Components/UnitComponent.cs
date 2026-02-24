@@ -56,7 +56,7 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             return new UnitComponent
             {
-                UnitType = UnitType.Tank,
+                UnitType = UnitType.grizzlyTank,
                 MoveSpeed = (zfloat)5.0f,
                 RotateSpeed = (zfloat)120.0f,
                 PlayerId = playerId,

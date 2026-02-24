@@ -1,0 +1,46 @@
+{
+  "ConfUnit": {
+    "1": {
+      "ID": 1,
+      "Type": 1,
+      "Prefab": "Infantry",
+      "Hp": 300,
+      "Atk": 200,
+      "Def": 10,
+      "AtkInterval": 1000,
+      "AtkCount": 1,
+      "Speed": 5,
+      "CostMoney": 100,
+      "Name": "大兵",
+      "Description": "价格便宜，大量士兵可以快速歼灭灰熊坦克"
+    },
+    "2": {
+      "ID": 2,
+      "Type": 2,
+      "Prefab": "BadgerTank",
+      "Hp": 1500,
+      "Atk": 30,
+      "Def": 20,
+      "AtkInterval": 200,
+      "AtkCount": 8,
+      "Speed": 7,
+      "CostMoney": 500,
+      "Name": "獾式坦克",
+      "Description": "范围攻击，适合快速消灭士兵"
+    },
+    "3": {
+      "ID": 3,
+      "Type": 3,
+      "Prefab": "GrizzlyTank",
+      "Hp": 2000,
+      "Atk": 700,
+      "Def": 50,
+      "AtkInterval": 2000,
+      "AtkCount": 1,
+      "Speed": 6,
+      "CostMoney": 800,
+      "Name": "灰熊坦克",
+      "Description": "价格高昂，攻击极高，适合攻击獾式坦克和建筑"
+    }
+  }
+}

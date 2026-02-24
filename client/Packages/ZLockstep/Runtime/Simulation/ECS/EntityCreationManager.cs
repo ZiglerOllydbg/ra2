@@ -27,10 +27,12 @@ namespace ZLockstep.Simulation.ECS
     /// </summary>
     public enum UnitType
     {
-        Tank = 1,        // 坦克
-        Infantry = 2,    // 动员兵
-        Harvester = 3,    // 矿车
+        None = 0,           // 无效
+        Infantry = 1,       // 动员兵
+        badgerTank = 2,     // 獾式坦克
+        grizzlyTank = 3,    // 灰熊坦克
         
+        Harvester = 4,    // 矿车
         Projectile = 100,   // 弹丸
     }
 
@@ -143,7 +145,7 @@ namespace ZLockstep.Simulation.ECS
             if (buildingType == BuildingType.vehicleFactory) // 工厂建筑
             {
                 // 支持生产动员兵和坦克
-                var supportedUnitTypes = new HashSet<UnitType> { UnitType.Tank }; // 1=动员兵, 2=坦克
+                var supportedUnitTypes = new HashSet<UnitType> { UnitType.grizzlyTank }; // 1=动员兵, 2=坦克
                 var produceComponent = ProduceComponent.Create(supportedUnitTypes);
                 world.ComponentManager.AddComponent(entity, produceComponent);
             }
@@ -184,10 +186,9 @@ namespace ZLockstep.Simulation.ECS
             {
                 EntityId = entity.Id,
                 UnitType = (int)buildingType,
-                ConfID = confBuildingID,
+                ConfBuildingID = confBuildingID,
                 Position = position,
-                PlayerId = campId,
-                PrefabId = confBuildingID
+                PlayerId = campId
             };
 
             UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
@@ -213,20 +214,17 @@ namespace ZLockstep.Simulation.ECS
             int prefabId)
         {
             // 根据单位类型确定单位参数
-            zfloat radius = (zfloat)2;
-            zfloat maxSpeed = (zfloat)3.0f;
-            
-            switch (unitType)
+            zfloat radius = (zfloat)1.0f;
+
+            int confUnitID = (int)unitType;
+            ConfUnit confUnit = ConfigManager.Get<ConfUnit>(confUnitID);
+            if (confUnit == null)
             {
-                case UnitType.Tank: // 坦克
-                    radius = (zfloat)2;
-                    maxSpeed = (zfloat)6.0f;
-                    break;
-                default: // 默认为动员兵或其他单位
-                    radius = (zfloat)2;
-                    maxSpeed = (zfloat)3.0f;
-                    break;
+                zUDebug.LogError($"[EntityCreationManager] 创建单位时无法获取单位配置信息。ID:{confUnitID}");
+                return null;
             }
+
+            zfloat maxSpeed = (zfloat)confUnit.Speed;
 
             // 1. 创建单位实体
             var entity = world.EntityManager.CreateEntity();
@@ -244,21 +242,33 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加Unit组件（根据类型）
-            var unitComponent = CreateUnitComponent(unitType, campId);
-            unitComponent.PrefabId = prefabId;
-            unitComponent.MoveSpeed = maxSpeed;
+            CreateUnitComponent(unitType, campId);
+            var unitComponent =  new UnitComponent
+            {
+                UnitType = unitType,
+                MoveSpeed = (zfloat)confUnit.Speed,
+                RotateSpeed = (zfloat)180.0f,
+                PlayerId = campId,
+                SelectionRadius = (zfloat)0.5f,
+                IsSelectable = true,
+                PrefabId = prefabId
+            };
             world.ComponentManager.AddComponent(entity, unitComponent);
 
             // 5. 添加Health组件
-            var healthComponent = CreateUnitHealthComponent(unitType);
+            var healthComponent = new HealthComponent((zfloat)confUnit.Hp);
             world.ComponentManager.AddComponent(entity, healthComponent);
 
             // 6. 如果单位有攻击能力，添加Attack组件
-            var attackComponent = CreateUnitAttackComponent(unitType);
-            if (attackComponent.HasValue)
-            {
-                world.ComponentManager.AddComponent(entity, attackComponent.Value);
-            }
+            var attackComponent = new AttackComponent
+                    {
+                        Damage = (zfloat)confUnit.Atk,
+                        Range = (zfloat)4.0f,
+                        AttackInterval = (zfloat)(confUnit.AtkInterval / 1000.0f),
+                        TimeSinceLastAttack = zfloat.Zero,
+                        TargetEntityId = -1
+                    };
+            world.ComponentManager.AddComponent(entity, attackComponent);
 
             // 7. 添加速度组件
             world.ComponentManager.AddComponent(entity, new VelocityComponent(zVector3.zero));
@@ -269,19 +279,14 @@ namespace ZLockstep.Simulation.ECS
 
             // 9. 添加旋转相关组件
             // 根据单位类型添加不同的载具类型组件
-            VehicleTypeComponent vehicleType;
-            if (unitType == UnitType.Infantry) // 动员兵
+            VehicleTypeComponent vehicleType = new VehicleTypeComponent
             {
-                vehicleType = VehicleTypeComponent.CreateInfantry();
-            }
-            else if (unitType == UnitType.Tank) // 坦克
-            {
-                vehicleType = VehicleTypeComponent.CreateHeavyTank();
-            }
-            else
-            {
-                vehicleType = VehicleTypeComponent.CreateInfantry(); // 默认
-            }
+                Type = VehicleTypeComponent.VehicleType.Infantry,
+                BodyRotationSpeed = new zfloat(360),  // 360度/秒，快速转向
+                InPlaceRotationThreshold = new zfloat(180), // 180度，基本不需要原地转向
+                HasTurret = false,
+                TurretRotationSpeed = zfloat.Zero
+            };
             world.ComponentManager.AddComponent(entity, vehicleType);
 
             // 添加旋转状态组件
@@ -312,7 +317,7 @@ namespace ZLockstep.Simulation.ECS
                 UnitType = (int)unitType,
                 Position = position,
                 PlayerId = campId,
-                PrefabId = prefabId
+                ConfUnitID = confUnitID,
             };
 
             UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了单位类型{unitType} 在位置{position}，Entity ID: {entity.Id}");
@@ -375,27 +380,12 @@ namespace ZLockstep.Simulation.ECS
             {
                 case UnitType.Infantry: // 动员兵
                     return UnitComponent.CreateInfantry(campId);
-                case UnitType.Tank: // 犀牛坦克
+                case UnitType.grizzlyTank: // 犀牛坦克
                     return UnitComponent.CreateTank(campId);
                 case UnitType.Harvester: // 矿车
                     return UnitComponent.CreateHarvester(campId);
                 default:
                     return UnitComponent.CreateInfantry(campId);
-            }
-        }
-
-        private static HealthComponent CreateUnitHealthComponent(UnitType unitType)
-        {
-            switch (unitType)
-            {
-                case UnitType.Infantry: // 动员兵
-                    return new HealthComponent((zfloat)50.0f);
-                case UnitType.Tank: // 犀牛坦克
-                    return new HealthComponent((zfloat)200.0f);
-                case UnitType.Harvester: // 矿车
-                    return new HealthComponent((zfloat)150.0f);
-                default:
-                    return new HealthComponent((zfloat)100.0f);
             }
         }
 
@@ -412,7 +402,7 @@ namespace ZLockstep.Simulation.ECS
                         TimeSinceLastAttack = zfloat.Zero,
                         TargetEntityId = -1
                     };
-                case UnitType.Tank: // 犀牛坦克
+                case UnitType.grizzlyTank: // 犀牛坦克
                     return new AttackComponent
                     {
                         Damage = (zfloat)30.0f,
