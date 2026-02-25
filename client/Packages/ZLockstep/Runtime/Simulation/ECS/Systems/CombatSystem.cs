@@ -169,6 +169,13 @@ namespace ZLockstep.Simulation.ECS.Systems
                                 targetPos = targetTransform.Position;
                             }
                             
+                            // 更新攻击者朝向
+                            zVector3 toTarget = targetTransform.Position - transform.Position;
+                            transform.Rotation = zQuaternion.LookRotation(toTarget.normalized);
+                            ComponentManager.AddComponent(entity, transform);
+
+                            zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
+
                             FireProjectile(entity, target, attack.Damage, transform.Position, targetPos, camp.CampId);
                             attack.TimeSinceLastAttack = zfloat.Zero;
                         }
