@@ -5,7 +5,6 @@ using ZLockstep.Sync.Command.Commands;
 public class GMCommandRunnerEditor : EditorWindow
 {
     private string commandInput = "";
-    private string additionalInput = "";
     
     [MenuItem("Tools/GM Commands")]
     public static void ShowWindow()
@@ -21,9 +20,6 @@ public class GMCommandRunnerEditor : EditorWindow
         
         // 主命令输入
         commandInput = EditorGUILayout.TextField("GM指令:", commandInput);
-        
-        // 附加参数输入
-        additionalInput = EditorGUILayout.TextField("附加参数:", additionalInput);
         
         EditorGUILayout.Space();
         
@@ -52,16 +48,6 @@ public class GMCommandRunnerEditor : EditorWindow
             commandInput = "";
         }
         
-        if (GUILayout.Button("清空参数", GUILayout.Width(80)))
-        {
-            additionalInput = "";
-        }
-        
-        if (GUILayout.Button("清空全部", GUILayout.Width(80)))
-        {
-            commandInput = "";
-            additionalInput = "";
-        }
         EditorGUILayout.EndHorizontal();
         
         EditorGUILayout.Space();
@@ -79,29 +65,17 @@ public class GMCommandRunnerEditor : EditorWindow
         }
 
         Debug.Log($"[GM] 正在执行指令: {commandInput}");
-        if (!string.IsNullOrEmpty(additionalInput))
-        {
-            Debug.Log($"[GM] 附加参数: {additionalInput}");
-        }
 
         // 执行具体的命令逻辑
-        ProcessCommand(commandInput.ToLower(), additionalInput);
+        ProcessCommand(commandInput.ToLower());
     }
 
-    private void ProcessCommand(string cmd, string param)
+    private void ProcessCommand(string cmd)
     {
         switch (cmd)
         {
             case "god":
                 Debug.Log("[GM] 上帝模式已切换 (模拟)");
-                break;
-                
-            case var _ when cmd.StartsWith("spawn"):
-                Debug.Log($"[GM] 尝试生成物体: {cmd}");
-                if (!string.IsNullOrEmpty(param))
-                {
-                    Debug.Log($"[GM] 生成参数: {param}");
-                }
                 break;
                 
             case "clear":
