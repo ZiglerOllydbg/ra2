@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityEngine;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS;
+using ZLockstep.Simulation.ECS.Components;  // 添加这个using语句
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 
@@ -187,5 +188,130 @@ public class GMManager
         _world.GameInstance.SubmitCommand(createTankCommand);
 
         AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {campId}");
+    }
+
+    [GMCommand("setrotation")]
+    private void SetEntityRotation(string[] args)
+    {
+        // 检查参数
+        if (args.Length < 4)
+        {
+            AddLog("Usage: setrotation <entityId> <x> <y> <z>");
+            AddLog("Example: setrotation 1 0 1 0  (face positive Z direction)");
+            AddLog("Example: setrotation 1 1 0 0  (face positive X direction)");
+            return;
+        }
+
+        // 解析参数
+        if (!int.TryParse(args[0], out int entityId))
+        {
+            AddLog("Error: Invalid entity ID");
+            return;
+        }
+
+        if (!float.TryParse(args[1], out float x) ||
+            !float.TryParse(args[2], out float y) ||
+            !float.TryParse(args[3], out float z))
+        {
+            AddLog("Error: Invalid rotation values (must be numbers)");
+            return;
+        }
+
+        // 创建目标方向向量
+        zVector3 targetDirection = new zVector3((zfloat)x, (zfloat)y, (zfloat)z);
+        
+        // 检查向量是否为零向量
+        if (targetDirection.sqrMagnitude < new zfloat(0, 1))
+        {
+            AddLog("Error: Direction vector cannot be zero");
+            return;
+        }
+
+        // 归一化方向向量
+        targetDirection = targetDirection.normalized;
+
+        // 创建实体
+        Entity entity = new Entity(entityId);
+
+        // 检查实体是否存在以及是否有TransformComponent
+        if (!_world.ComponentManager.HasComponent<TransformComponent>(entity))
+        {
+            AddLog($"Error: Entity {entityId} not found or doesn't have TransformComponent");
+            return;
+        }
+
+        // 获取当前的Transform组件
+        var transform = _world.ComponentManager.GetComponent<TransformComponent>(entity);
+
+        // 创建新的朝向四元数
+        // 使用LookRotation创建朝向指定方向的四元数
+        zQuaternion newRotation = zQuaternion.LookRotation(targetDirection);
+
+        // 更新Transform组件
+        transform.Rotation = newRotation;
+        
+        // 保存更新后的组件
+        _world.ComponentManager.AddComponent(entity, transform);
+
+        AddLog($"GM: Set entity {entityId} rotation to direction ({x:F2}, {y:F2}, {z:F2})");
+        AddLog($"New rotation: {newRotation.ToString()}");
+    }
+
+    [GMCommand("setrotationy")]
+    private void SetEntityRotationY(string[] args)
+    {
+        // 更简单的版本：只设置Y轴旋转（绕垂直轴旋转）
+        if (args.Length < 2)
+        {
+            AddLog("Usage: setrotationy <entityId> <angle>");
+            AddLog("Example: setrotationy 1 90  (rotate 90 degrees clockwise)");
+            AddLog("Example: setrotationy 1 -45 (rotate 45 degrees counter-clockwise)");
+            return;
+        }
+
+        // 解析参数
+        if (!int.TryParse(args[0], out int entityId))
+        {
+            AddLog("Error: Invalid entity ID");
+            return;
+        }
+
+        if (!float.TryParse(args[1], out float angle))
+        {
+            AddLog("Error: Invalid angle value (must be a number)");
+            return;
+        }
+
+        // 创建实体
+        Entity entity = new Entity(entityId);
+
+        // 检查实体是否存在以及是否有TransformComponent
+        if (!_world.ComponentManager.HasComponent<TransformComponent>(entity))
+        {
+            AddLog($"Error: Entity {entityId} not found or doesn't have TransformComponent");
+            return;
+        }
+
+        // 获取当前的Transform组件
+        var transform = _world.ComponentManager.GetComponent<TransformComponent>(entity);
+
+        // 创建绕Y轴旋转的四元数
+        // 将角度转换为zfloat格式（放大10000倍）
+        long angleScaled = (long)(angle * 100); // 转换为百分之一度
+        zfloat angleZFloat = zfloat.CreateFloat(angleScaled);
+        
+        zVector3 upAxis = new zVector3(zfloat.Zero, zfloat.One, zfloat.Zero);
+        zQuaternion yRotation = zQuaternion.AngleAxis(angleZFloat, upAxis);
+
+        zUDebug.Log("[攻击朝向调试]oldRotation: " + transform.Rotation.ToString() + ", newRotation: " + yRotation.ToString());
+        // 应用旋转（相对于当前朝向）
+        transform.Rotation = yRotation;
+        transform.Scale = zVector3.one * 2;
+        
+        // 保存更新后的组件
+        _world.ComponentManager.AddComponent(entity, transform);
+
+        AddLog($"GM: Rotated entity {entityId} by {angle:F1} degrees around Y axis");
+        AddLog($"New rotation: {transform.Rotation.ToString()}");
     }
 }
