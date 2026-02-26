@@ -242,7 +242,6 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, camp);
 
             // 4. 添加Unit组件（根据类型）
-            CreateUnitComponent(unitType, campId);
             var unitComponent =  new UnitComponent
             {
                 UnitType = unitType,
@@ -262,7 +261,7 @@ namespace ZLockstep.Simulation.ECS
             // 6. 如果单位有攻击能力，添加Attack组件
             var attackComponent = new AttackComponent
                     {
-                        Damage = (zfloat)confUnit.Atk,
+                        ConfProjectileID = confUnit.ProjectileID,
                         Range = (zfloat)4.0f,
                         AttackInterval = (zfloat)(confUnit.AtkInterval / 1000.0f),
                         TimeSinceLastAttack = zfloat.Zero,
@@ -368,52 +367,6 @@ namespace ZLockstep.Simulation.ECS
             }
 
             return null;
-        }
-
-        #endregion
-
-        #region 单位辅助方法
-
-        private static UnitComponent CreateUnitComponent(UnitType unitType, int campId)
-        {
-            switch (unitType)
-            {
-                case UnitType.Infantry: // 动员兵
-                    return UnitComponent.CreateInfantry(campId);
-                case UnitType.grizzlyTank: // 犀牛坦克
-                    return UnitComponent.CreateTank(campId);
-                case UnitType.Harvester: // 矿车
-                    return UnitComponent.CreateHarvester(campId);
-                default:
-                    return UnitComponent.CreateInfantry(campId);
-            }
-        }
-
-        private static AttackComponent? CreateUnitAttackComponent(UnitType unitType)
-        {
-            switch (unitType)
-            {
-                case UnitType.Infantry: // 动员兵
-                    return new AttackComponent
-                    {
-                        Damage = (zfloat)10.0f,
-                        Range = (zfloat)4.0f,
-                        AttackInterval = (zfloat)1.0f,
-                        TimeSinceLastAttack = zfloat.Zero,
-                        TargetEntityId = -1
-                    };
-                case UnitType.grizzlyTank: // 犀牛坦克
-                    return new AttackComponent
-                    {
-                        Damage = (zfloat)30.0f,
-                        Range = (zfloat)10.0f,
-                        AttackInterval = (zfloat)1.0f,
-                        TimeSinceLastAttack = zfloat.Zero,
-                        TargetEntityId = -1
-                    };
-                default:
-                    return null;
-            }
         }
 
         #endregion

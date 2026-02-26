@@ -20,12 +20,29 @@ public class ConfUnit
 	public int Hp; // 血量
 	public int Atk; // 攻击
 	public int Def; // 防御
+	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
 	public int AtkInterval; // 攻击频率
 	public int AtkCount; // 攻击目标数量
 	public int Speed; // 移动速度
 	public int CostMoney; // 消耗金钱
 	public string Name; // 名称
 	public string Description; // 描述
+}
+
+[Preserve]
+public class ConfProjectile
+{
+	public ConfProjectile() {}
+
+	[Preserve]
+	public const string JsonFileName = "Unit";
+	public int ID; // 编号
+	public int Type; // 子弹类型1=子弹；2=炮弹；
+	public int Speed; // 飞行速度
+	public int IsHoming; // 追踪类型导弹
+	public int Damage; // 伤害
+	public string Prefab; // 资源prefab
+	public string Note; // 备注
 }
 
 

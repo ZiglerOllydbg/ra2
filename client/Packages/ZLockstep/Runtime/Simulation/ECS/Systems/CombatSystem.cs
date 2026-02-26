@@ -176,7 +176,7 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                             zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
 
-                            FireProjectile(entity, target, attack.Damage, transform.Position, targetPos, camp.CampId);
+                            FireProjectile(entity, target, transform.Position, targetPos, camp.CampId, attack.ConfProjectileID);
                             attack.TimeSinceLastAttack = zfloat.Zero;
                         }
                     }
@@ -323,9 +323,15 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <summary>
         /// 发射弹道
         /// </summary>
-        private void FireProjectile(Entity source, Entity target, zfloat damage, 
-            zVector3 sourcePos, zVector3 targetPos, int sourceCampId)
+        private void FireProjectile(Entity source, Entity target, zVector3 sourcePos, zVector3 targetPos, int sourceCampId, int confProjectileId)
         {
+            ConfProjectile confProjectile = ConfigManager.Get<ConfProjectile>(confProjectileId);
+            if (confProjectile == null)
+            {
+                zUDebug.LogError($"[EntityCreationManager] 创建弹道实体时无法获取弹道配置信息。ID:{confProjectileId}");
+                return;
+            }
+
             // 创建弹道实体
             var projectile = World.EntityManager.CreateEntity();
 
@@ -341,11 +347,11 @@ namespace ZLockstep.Simulation.ECS.Systems
             var projComponent = ProjectileComponent.Create(
                 sourceEntityId: source.Id,
                 targetEntityId: target.Id,
-                damage: damage,
-                speed: new zfloat(10), // 弹道速度10米/秒（调慢以便观察）
                 targetPosition: targetPos,
-                isHoming: false, // 追踪型导弹
-                sourceCampId: sourceCampId
+                sourceCampId: sourceCampId,
+                damage: (zfloat)confProjectile.Damage,
+                speed: (zfloat)confProjectile.Speed,
+                isHoming: confProjectile.IsHoming == 1 // 追踪型导弹
             );
             ComponentManager.AddComponent(projectile, projComponent);
 
@@ -370,12 +376,13 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 EntityId = projectile.Id,
                 UnitType = (int)UnitType.Projectile, // 100表示弹道类型
+                ConfProjectileID = confProjectileId,
                 Position = sourcePos,
                 PlayerId = sourceCampId,
                 PrefabId = -1 // 弹道预制体ID
             });
 
-            zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}, 伤害{damage}");
+            zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}");
         }
     }
 }

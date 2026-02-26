@@ -7,6 +7,10 @@ namespace ZLockstep.Simulation.ECS.Components
     public struct AttackComponent : IComponent
     {
         /// <summary>
+        /// 子弹ID
+        /// </summary>
+        public int ConfProjectileID;
+        /// <summary>
         /// 攻击伤害
         /// </summary>
         public zfloat Damage;

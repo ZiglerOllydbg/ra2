@@ -29,6 +29,11 @@ namespace ZLockstep.Simulation.Events
         public int ConfUnitID;
 
         /// <summary>
+        /// 子弹配置ID
+        /// </summary>
+        public int ConfProjectileID;
+
+        /// <summary>
         /// 创建位置
         /// </summary>
         public zVector3 Position;

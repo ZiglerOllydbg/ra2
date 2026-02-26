@@ -7,6 +7,7 @@
       "Hp": 300,
       "Atk": 1,
       "Def": 10,
+      "ProjectileID": 1,
       "AtkInterval": 1000,
       "AtkCount": 1,
       "Speed": 2,
@@ -21,6 +22,7 @@
       "Hp": 1500,
       "Atk": 3,
       "Def": 20,
+      "ProjectileID": 2,
       "AtkInterval": 200,
       "AtkCount": 8,
       "Speed": 2,
@@ -35,12 +37,42 @@
       "Hp": 2000,
       "Atk": 7,
       "Def": 50,
+      "ProjectileID": 3,
       "AtkInterval": 2000,
       "AtkCount": 1,
       "Speed": 2,
       "CostMoney": 800,
       "Name": "灰熊坦克",
       "Description": "价格高昂，攻击极高，适合攻击獾式坦克和建筑"
+    }
+  },
+  "ConfProjectile": {
+    "1": {
+      "ID": 1,
+      "Type": 1,
+      "Speed": 3,
+      "IsHoming": 0,
+      "Damage": 20,
+      "Prefab": "Bullet",
+      "Note": "步枪子弹"
+    },
+    "2": {
+      "ID": 2,
+      "Type": 1,
+      "Speed": 3,
+      "IsHoming": 0,
+      "Damage": 30,
+      "Prefab": "Cartridge",
+      "Note": "机枪子弹"
+    },
+    "3": {
+      "ID": 3,
+      "Type": 2,
+      "Speed": 2,
+      "IsHoming": 0,
+      "Damage": 70,
+      "Prefab": "Shell",
+      "Note": "炮弹"
     }
   }
 }
