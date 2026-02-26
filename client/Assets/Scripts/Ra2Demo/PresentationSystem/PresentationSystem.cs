@@ -305,6 +305,20 @@ namespace ZLockstep.View.Systems
                 }
             }
 
+            if (evt.ConfProjectileID > 0)
+            {
+                ConfProjectile confProjectile = ConfigManager.Get<ConfProjectile>(evt.ConfProjectileID);
+                if (confProjectile != null)
+                {
+                    // 创建弹道模型
+                    GameObject projectilePrefab = ResourceCache.GetPrefab("Prefabs/" + confProjectile.Prefab);
+                    if (projectilePrefab != null)
+                    {
+                        viewObject = Object.Instantiate(projectilePrefab, _viewRoot);
+                    }
+                }
+            }
+
             if (viewObject == null)
             {
                 // 尝试获取预制体

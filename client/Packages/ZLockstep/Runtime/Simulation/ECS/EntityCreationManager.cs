@@ -262,11 +262,12 @@ namespace ZLockstep.Simulation.ECS
             var attackComponent = new AttackComponent
                     {
                         ConfProjectileID = confUnit.ProjectileID,
-                        Range = (zfloat)4.0f,
-                        AttackInterval = (zfloat)(confUnit.AtkInterval / 1000.0f),
+                        Range = (zfloat)confUnit.AtkRange,
+                        AttackInterval = zfloat.CreateFloat(confUnit.AtkInterval),
                         TimeSinceLastAttack = zfloat.Zero,
                         TargetEntityId = -1
                     };
+            zUDebug.Log($"[EntityCreationManager] AttackInterval={attackComponent.AttackInterval}");
             world.ComponentManager.AddComponent(entity, attackComponent);
 
             // 7. 添加速度组件
