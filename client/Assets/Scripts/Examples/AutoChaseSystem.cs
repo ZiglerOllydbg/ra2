@@ -97,17 +97,60 @@ namespace Game.Examples
                     {
                         // 检查目标是否为建筑，如果是则计算边界点
                         zVector2 targetPos;
-                        if (!ComponentManager.HasComponent<BuildingComponent>(target))
+                        if (ComponentManager.HasComponent<BuildingComponent>(target))
+                        {
+                            var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                            targetPos = CalculateOptimizedBuildingTargetPoint(transform.Position, building, attack.Range);
+                            
+                            // 检查当前距离建筑边界点是否超出攻击范围
+                            zfloat currentDistance = (targetPos - new zVector2(transform.Position.x, transform.Position.z)).magnitude;
+                            
+                            // 只有当目标超出攻击范围时才需要移动
+                            if (currentDistance > attack.Range)
+                            {
+                                // 只有在没有移动目标或已到达目标时才设置新目标
+                                if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                                {
+                                    _navSystem.SetMoveTarget(entity, targetPos);
+                                    zUDebug.Log($"[AutoChaseSystem] 追击建筑目标 - 距离: {currentDistance}, 攻击范围: {attack.Range}");
+                                }
+                            }
+                            else
+                            {
+                                zUDebug.Log($"[AutoChaseSystem] 继续追击 - 目标在攻击范围内({currentDistance} <= {attack.Range})，无需移动");
+                                // 目标在攻击范围内，清除移动目标（如果有的话）
+                                if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
+                                {
+                                    ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                }
+                            }
+                        }
+                        else
                         {
                             var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
                             targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
-                            zUDebug.Log("[AutoChaseSystem] 追击目标1：" + targetPos);
-
-                            // 只有在没有移动目标或已到达目标时才设置新目标
-                            if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                            
+                            // 检查当前距离是否超出攻击范围
+                            zfloat currentDistance = (targetPos - new zVector2(transform.Position.x, transform.Position.z)).magnitude;
+                            
+                            // 只有当目标超出攻击范围时才需要移动
+                            if (currentDistance > attack.Range)
                             {
-                                _navSystem.SetMoveTarget(entity, targetPos);
-                                zUDebug.Log("[AutoChaseSystem] 追击目标2：" + targetPos);
+                                // 只有在没有移动目标或已到达目标时才设置新目标
+                                if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                                {
+                                    _navSystem.SetMoveTarget(entity, targetPos);
+                                    zUDebug.Log($"[AutoChaseSystem] 继续追击 - 距离: {currentDistance}, 攻击范围: {attack.Range}");
+                                }
+                            }
+                            else
+                            {
+                                zUDebug.Log($"[AutoChaseSystem] 继续追击 - 目标在攻击范围内({currentDistance} <= {attack.Range})，无需移动");
+                                // 目标在攻击范围内，清除移动目标（如果有的话）
+                                if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
+                                {
+                                    ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                }
                             }
                         }
                     }
@@ -136,10 +179,38 @@ namespace Game.Examples
                             targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
                         }
                         
-                        // 只有在没有移动目标或已到达目标时才设置新目标
-                        if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                        // 检查目标是否在攻击范围内，如果在范围内则不需要移动
+                        zfloat distanceToTarget;
+                        if (ComponentManager.HasComponent<BuildingComponent>(target))
                         {
-                            _navSystem.SetMoveTarget(entity, targetPos);
+                            var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                            zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                            distanceToTarget = (boundaryPoint - new zVector2(transform.Position.x, transform.Position.z)).magnitude;
+                        }
+                        else
+                        {
+                            var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
+                            distanceToTarget = (targetTransform.Position - transform.Position).magnitude;
+                        }
+
+                        // 只有当目标超出攻击范围时才需要移动
+                        if (distanceToTarget > attack.Range)
+                        {
+                            // 只有在没有移动目标或已到达目标时才设置新目标
+                            if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                            {
+                                _navSystem.SetMoveTarget(entity, targetPos);
+                                zUDebug.Log($"[AutoChaseSystem] 目标距离: {distanceToTarget}, 攻击范围: {attack.Range}, 开始追击");
+                            }
+                        }
+                        else
+                        {
+                            zUDebug.Log($"[AutoChaseSystem] 目标在攻击范围内({distanceToTarget} <= {attack.Range})，无需移动");
+                            // 目标在攻击范围内，清除移动目标（如果有的话）
+                            if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
+                            {
+                                ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                            }
                         }
                     }
                 }
