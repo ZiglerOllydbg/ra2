@@ -121,7 +121,10 @@ namespace Game.Examples
                                 // 目标在攻击范围内，清除移动目标（如果有的话）
                                 if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
                                 {
-                                    ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                    if (!ComponentManager.GetComponent<MoveTargetComponent>(entity).UserInput)
+                                    {
+                                        ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                    }
                                 }
                             }
                         }
@@ -139,7 +142,11 @@ namespace Game.Examples
                                 // 只有在没有移动目标或已到达目标时才设置新目标
                                 if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
                                 {
-                                    _navSystem.SetMoveTarget(entity, targetPos);
+                                    MoveTargetComponent moveTargetComponent = ComponentManager.GetComponent<MoveTargetComponent>(entity);
+                                    if (!moveTargetComponent.UserInput)
+                                    {
+                                        _navSystem.SetMoveTarget(entity, targetPos);
+                                    }
                                     zUDebug.Log($"[AutoChaseSystem] 继续追击 - 距离: {currentDistance}, 攻击范围: {attack.Range}");
                                 }
                             }
@@ -149,7 +156,10 @@ namespace Game.Examples
                                 // 目标在攻击范围内，清除移动目标（如果有的话）
                                 if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
                                 {
-                                    ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                    if (!ComponentManager.GetComponent<MoveTargetComponent>(entity).UserInput)
+                                    {
+                                        ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                    }
                                 }
                             }
                         }
@@ -209,7 +219,10 @@ namespace Game.Examples
                             // 目标在攻击范围内，清除移动目标（如果有的话）
                             if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
                             {
-                                ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                if (!ComponentManager.GetComponent<MoveTargetComponent>(entity).UserInput)
+                                {
+                                    ComponentManager.RemoveComponent<MoveTargetComponent>(entity);
+                                }
                             }
                         }
                     }

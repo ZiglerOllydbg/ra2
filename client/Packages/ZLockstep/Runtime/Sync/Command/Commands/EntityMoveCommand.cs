@@ -51,12 +51,12 @@ namespace ZLockstep.Sync.Command.Commands
 
                     if (entities.Count > 1)
                     {
-                        navSystem.SetScatterTargets(entities, TargetPosition);
+                        navSystem.SetScatterTargets(entities, TargetPosition, true);
                         zUDebug.Log($"[StandaloneBattleDemo] 散点移动{entities.Count}个单位到{TargetPosition}");
                     }
                     else
                     {
-                        navSystem.SetMultipleTargets(entities, TargetPosition);
+                        navSystem.SetMultipleTargets(entities, TargetPosition, true);
                         zUDebug.Log($"[StandaloneBattleDemo] 移动{entities.Count}个单位到{TargetPosition}");
                     }
                 }

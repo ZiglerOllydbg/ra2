@@ -112,7 +112,7 @@ namespace ZLockstep.Flow
         /// </summary>
         /// <param name="entity">需要设置目标的实体</param>
         /// <param name="targetPos">目标位置</param>
-        public void SetMoveTarget(Entity entity, zVector2 targetPos)
+        public void SetMoveTarget(Entity entity, zVector2 targetPos, bool userInput = false)
         {
             // 将目标位置对齐到网格中心
             map.WorldToGrid(targetPos, out int targetGridX, out int targetGridY);
@@ -153,6 +153,7 @@ namespace ZLockstep.Flow
 
             // 添加或更新目标组件
             var target = MoveTargetComponent.Create(alignedTargetPos);
+            target.UserInput = userInput;
             ComponentManager.AddComponent(entity, target);
         }
 
@@ -161,11 +162,11 @@ namespace ZLockstep.Flow
         /// </summary>
         /// <param name="entities">需要设置目标的实体列表</param>
         /// <param name="targetPos">目标位置</param>
-        public void SetMultipleTargets(List<Entity> entities, zVector2 targetPos)
+        public void SetMultipleTargets(List<Entity> entities, zVector2 targetPos, bool userInput = false)
         {
             foreach (var entity in entities)
             {
-                SetMoveTarget(entity, targetPos);
+                SetMoveTarget(entity, targetPos, userInput);
             }
         }
 
@@ -181,7 +182,7 @@ namespace ZLockstep.Flow
         /// </summary>
         /// <param name="entities">需要设置目标的实体列表</param>
         /// <param name="groupCenter">编队中心位置</param>
-        public void SetScatterTargets(List<Entity> entities, zVector2 groupCenter)
+        public void SetScatterTargets(List<Entity> entities, zVector2 groupCenter, bool userInput = false)
         {
             if (entities == null || entities.Count == 0)
                 return;
@@ -296,6 +297,7 @@ namespace ZLockstep.Flow
 
                 // 设置个人目标
                 var target = MoveTargetComponent.Create(assigned[e]);
+                target.UserInput = userInput;
                 ComponentManager.AddComponent(e, target);
             }
         }

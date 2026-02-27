@@ -99,6 +99,11 @@ namespace ZLockstep.Flow
         /// </summary>
         public bool HasTarget;
 
+        /// <summary>
+        /// 是否是用户输入的目标
+        /// </summary>
+        public bool UserInput;
+
         public static MoveTargetComponent Create(zVector2 targetPos)
         {
             return new MoveTargetComponent
