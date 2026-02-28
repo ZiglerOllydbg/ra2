@@ -46,9 +46,6 @@ namespace ZLockstep.Simulation.ECS.Systems
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
 
-                // 更新攻击冷却
-                attack.TimeSinceLastAttack += DeltaTime;
-
                 // 1. 检查是否有目标
                 if (attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId))
                 {
@@ -102,6 +99,10 @@ namespace ZLockstep.Simulation.ECS.Systems
                     {
                         distanceSqr = (targetTransform.Position - transform.Position).sqrMagnitude;
                     }
+
+                    // 更新攻击冷却
+                    attack.TimeSinceLastAttack += DeltaTime;
+                    zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
                     
                     zfloat rangeSqr = attack.Range * attack.Range;
 
@@ -176,6 +177,8 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                             zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
 
+                            // 播放音效标记
+                            attack.PlayAttackAudio = true;
                             FireProjectile(entity, target, transform.Position, targetPos, camp.CampId, attack.ConfProjectileID);
                             attack.TimeSinceLastAttack = zfloat.Zero;
                         }

@@ -315,13 +315,15 @@ namespace ZLockstep.View.Systems
                     if (projectilePrefab != null)
                     {
                         viewObject = Object.Instantiate(projectilePrefab, _viewRoot);
+                    }
 
-                        // 获取当前对象的AudioSource，播放音频
-                        AudioSource audioSource = viewObject.GetComponent<AudioSource>();
-                        if (audioSource != null)
-                        {
-                            audioSource.Play();
-                        }
+                    // 获取音频组件，并播放音频
+                    AudioSource audioSource = viewObject.GetComponent<AudioSource>();
+                    if (audioSource != null)
+                    {
+                        AudioClip clip = ResourceCache.GetAudioClip("Audio/" + confProjectile.AudioClip);
+                        audioSource.clip = clip;
+                        audioSource.Play();
                     }
                 }
             }
@@ -657,6 +659,23 @@ namespace ZLockstep.View.Systems
                 {
                     // view.Animator.SetBool("Fire", false);
                 }
+
+                // 获取AudioSource
+                // var audioSource = view.GameObject.GetComponent<AudioSource>();
+                // if (audioSource != null)
+                // {
+                //     if (attack.PlayAttackAudio)
+                //     {
+                //         attack.PlayAttackAudio = false;
+                //         ComponentManager.AddComponent(entity, attack);
+
+                //         // 播放音效
+                //         AudioClip clip = ResourceCache.GetAudioClip("Audio/deafening-cannon-shot");
+                //         audioSource.clip = clip;
+                //         audioSource.Play();
+                //         zUDebug.Log($"[PresentationSystem] 播放攻击音效: {attack.ConfProjectileID}");
+                //     }
+                // }
             }
         }
 

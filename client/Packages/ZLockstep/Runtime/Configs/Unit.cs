@@ -39,10 +39,11 @@ public class ConfProjectile
 	public const string JsonFileName = "Unit";
 	public int ID; // 编号
 	public int Type; // 子弹类型1=子弹；2=炮弹；
-	public int Speed; // 飞行速度
+	public int Speed; // 飞行速度（最大15）
 	public int IsHoming; // 追踪类型导弹
 	public int Damage; // 伤害
 	public string Prefab; // 资源prefab
+	public string AudioClip; // 音频
 	public string Note; // 备注
 }
 

@@ -147,6 +147,8 @@ namespace ZLockstep.Sync
         {
             // 创建唯一的 zWorld
             World = new zWorld();
+            // 修改Unity的固定帧率
+            UnityEngine.Time.fixedDeltaTime = 1f / _frameRate;
             World.Init(_frameRate);
             World.GameInstance = this; // 设置Game实例引用
 

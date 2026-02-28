@@ -260,13 +260,13 @@ namespace ZLockstep.Simulation.ECS
 
             // 6. 如果单位有攻击能力，添加Attack组件
             var attackComponent = new AttackComponent
-                    {
-                        ConfProjectileID = confUnit.ProjectileID,
-                        Range = (zfloat)confUnit.AtkRange,
-                        AttackInterval = zfloat.CreateFloat(confUnit.AtkInterval),
-                        TimeSinceLastAttack = zfloat.Zero,
-                        TargetEntityId = -1
-                    };
+            {
+                ConfProjectileID = confUnit.ProjectileID,
+                Range = (zfloat)confUnit.AtkRange,
+                AttackInterval = zfloat.CreateFloat(confUnit.AtkInterval),
+                TimeSinceLastAttack = zfloat.Zero,
+                TargetEntityId = -1
+            };
             zUDebug.Log($"[EntityCreationManager] AttackInterval={attackComponent.AttackInterval}");
             world.ComponentManager.AddComponent(entity, attackComponent);
 

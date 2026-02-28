@@ -45,6 +45,11 @@ namespace ZLockstep.Simulation.ECS.Components
         /// </summary>
         public bool HasTarget => TargetEntityId >= 0;
 
+        /// <summary>
+        /// 攻击音效
+        /// </summary>
+        public bool PlayAttackAudio;
+
         public static AttackComponent CreateDefault()
         {
             return new AttackComponent
