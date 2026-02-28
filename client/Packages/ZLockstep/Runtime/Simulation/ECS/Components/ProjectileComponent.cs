@@ -23,10 +23,18 @@ namespace ZLockstep.Simulation.ECS.Components
         /// </summary>
         public zfloat Damage;
 
+        // 私有字段存储实际速度值
+        private zfloat _speed;
+
         /// <summary>
         /// 飞行速度（米/秒）
+        /// Setter可设置任意值，Getter最大返回15
         /// </summary>
-        public zfloat Speed;
+        public zfloat Speed
+        {
+            get => _speed > (zfloat)15.0f ? (zfloat)15.0f : _speed;
+            set => _speed = value;
+        }
 
         /// <summary>
         /// 目标位置（用于追踪）
@@ -68,4 +76,3 @@ namespace ZLockstep.Simulation.ECS.Components
         }
     }
 }
-

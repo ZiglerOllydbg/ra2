@@ -315,6 +315,13 @@ namespace ZLockstep.View.Systems
                     if (projectilePrefab != null)
                     {
                         viewObject = Object.Instantiate(projectilePrefab, _viewRoot);
+
+                        // 获取当前对象的AudioSource，播放音频
+                        AudioSource audioSource = viewObject.GetComponent<AudioSource>();
+                        if (audioSource != null)
+                        {
+                            audioSource.Play();
+                        }
                     }
                 }
             }
