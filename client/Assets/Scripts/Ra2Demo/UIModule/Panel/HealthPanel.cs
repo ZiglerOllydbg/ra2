@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.View;
+using ZLib;
 
 /// <summary>
 /// 血量面板 - 显示单位血量信息
@@ -24,6 +25,8 @@ public class HealthPanel : BasePanel
     
     // 存储所有血量条实例的字典，key为实体ID
     private Dictionary<int, HealthBarInstance> healthBars = new Dictionary<int, HealthBarInstance>();
+
+    private int _ticker = 0;
     
     // 血量条实例类
     private class HealthBarInstance
@@ -56,6 +59,10 @@ public class HealthPanel : BasePanel
         {
             redHpPrefab.SetActive(false);
         }
+
+        _ticker = Tick.SetInterval(() => {
+            UpdateAllHealthBars();
+        }, 0.05f);
     }
 
     protected override void AddEvent()
@@ -191,7 +198,7 @@ public class HealthPanel : BasePanel
     private HealthBarInstance CreateHealthBar(int entityId, bool isSelf)
     {
         // 选择对应的预制体
-        GameObject prefab = isSelf ? greenHpPrefab : redHpPrefab;
+        GameObject prefab = isSelf ? redHpPrefab : greenHpPrefab;
         if (prefab == null)
         {
             Debug.LogError($"血量条预制体未找到！isSelf: {isSelf}");
@@ -242,5 +249,9 @@ public class HealthPanel : BasePanel
         base.OnBecameInvisible();
         // 面板隐藏时清理所有血量条
         ClearAllHealthBars();
+
+        // 停止计时器
+        Tick.ClearInterval(_ticker);
+        _ticker = 0;
     }
 }

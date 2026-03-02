@@ -22,7 +22,7 @@ public class ConfUnit
 	public int Def; // 防御
 	public int AtkRange; // 攻击范围
 	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
-	public int AtkInterval; // 攻击频率1000=1秒
+	public int AtkInterval; // 攻击频率10000=1秒
 	public int AtkCount; // 攻击目标数量
 	public int Speed; // 移动速度
 	public int CostMoney; // 消耗金钱

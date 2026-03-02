@@ -291,6 +291,12 @@ namespace ZLockstep.View.Systems
                         // 创建建筑模型
                         viewObject = Object.Instantiate(buildingPrefab, _viewRoot);
                     }
+
+                    if (confBuilding.Hp > 0)
+                    {
+                        // 血条显示
+                        Frame.DispatchEvent(new HealthEvent(evt.EntityId, evt.PlayerId == 1, true));
+                    }
                 }
             }
 

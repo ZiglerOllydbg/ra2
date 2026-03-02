@@ -157,9 +157,6 @@ public class Ra2Processor : BaseProcessor
                     RefreshEconomy();
 
                     HealthPanel.Open();
-                    
-                    // 添加测试血条代码
-                    TestHealthBars();
                 }
                 break;
             case ReplayGameStartEvent:
@@ -171,7 +168,7 @@ public class Ra2Processor : BaseProcessor
                 }
                 break;
             case EconomyEvent e:
-                    RefreshEconomy();
+                RefreshEconomy();
                 break;
             case SelectBuildingEvent e:
                 _ra2Demo.StartBuildingPlacement(e.BuildingType);
@@ -188,6 +185,7 @@ public class Ra2Processor : BaseProcessor
                 break;
             case RestartGameEvent e:
                 _ra2Demo.RestartGame();
+                HealthPanel.Close();
                 MainPanel.Close();
                 SettlePanel.Close();
                 MatchPanel.Open();
@@ -225,32 +223,4 @@ public class Ra2Processor : BaseProcessor
         MainPanel.SetPower(power);
     }
 
-    /// <summary>
-    /// 测试血量条显示功能
-    /// </summary>
-    private void TestHealthBars()
-    {
-        // 延迟一段时间后开始测试，确保游戏初始化完成
-        // Tick.SetTimeout(() => {
-        //     zUDebug.Log("[Ra2Processor] 开始测试血量条显示");
-            
-        //     // 测试己方血条 (ID: 1001, 绿色)
-        //     HealthPanel.UpdateHealth(3, true); // 80%血量
-        //     HealthPanel.ShowHealthBar(3);
-            
-        //     // 测试敌方血条 (ID: 2001, 红色)
-        //     HealthPanel.UpdateHealth(4, false); // 60%血量
-        //     HealthPanel.ShowHealthBar(4);
-            
-        //     // // 测试低血量的己方单位 (ID: 1002, 绿色)
-        //     HealthPanel.UpdateHealth(5, true); // 30%血量
-        //     HealthPanel.ShowHealthBar(5);
-            
-        // }, 1.0f); // 1秒延迟开始测试
-
-        Tick.SetInterval(() => {
-            HealthPanel.UpdateAllHealthBars();
-        }, 0.05f);
-
-    }
 }
