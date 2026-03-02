@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using ZFrame;
 using TMPro;
 using System.Collections.Generic;
+using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Simulation.ECS;
+using ZLockstep.View;
 
 /// <summary>
 /// 血量面板 - 显示单位血量信息
@@ -89,6 +92,45 @@ public class HealthPanel : BasePanel
         if (healthBarInstance.fillImage != null && maxHealth > 0)
         {
             healthBarInstance.fillImage.fillAmount = (float)currentHealth / maxHealth;
+        }
+    }
+
+    /// <summary>
+    /// 更新血量条的位置
+    /// </summary>
+    public void UpdateHealthBarPosition(int entityId)
+    {
+        Ra2Demo ra2Demo = GameObject.FindObjectOfType<Ra2Demo>();
+        if (ra2Demo == null)
+        {
+            return;
+        }
+
+        ComponentManager componentManager = ra2Demo.GetBattleGame().World.ComponentManager;
+
+        Entity entity = new Entity(entityId);
+
+        if (!componentManager.HasComponent<TransformComponent>(entity))
+        {
+            return;
+        }
+
+        var transformComponent = componentManager.GetComponent<TransformComponent>(entity);
+        Vector3 worldPosition = transformComponent.Position.ToVector3();
+
+        // 获取主相机，将 3D 坐标转换为屏幕坐标
+        Camera mainCamera = Camera.main;
+        Vector3 screenPosition = mainCamera.WorldToScreenPoint(worldPosition);
+
+        // 添加向上的偏移量，使血条显示在单位上方
+        float offsetY = 50f; // 向上偏移 50 像素
+
+        if (healthBars.TryGetValue(entityId, out HealthBarInstance healthBarInstance))
+        {
+            if (healthBarInstance.gameObject != null)
+            {
+                healthBarInstance.gameObject.transform.position = new Vector3(screenPosition.x, screenPosition.y + offsetY, 0);
+            }
         }
     }
     

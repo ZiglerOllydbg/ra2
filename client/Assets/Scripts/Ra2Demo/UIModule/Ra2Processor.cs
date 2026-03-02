@@ -194,10 +194,12 @@ public class Ra2Processor : BaseProcessor
                 break;
             case HealthEvent e:
                 {
-                    // 根据IsVisible属性决定是否显示血量面板
+                    // 确保血量面板始终开启
+                    HealthPanel.Open();
+                    
+                    // 根据IsVisible属性决定单个血条的显示/隐藏
                     if (e.IsVisible)
                     {
-                        HealthPanel.Open();
                         // 更新指定实体的血量显示
                         HealthPanel.UpdateHealth(e.Id, e.IsSelf, e.CurrentHealth, e.MaxHealth);
                         HealthPanel.ShowHealthBar(e.Id);
@@ -206,8 +208,6 @@ public class Ra2Processor : BaseProcessor
                     {
                         // 隐藏指定实体的血量条
                         HealthPanel.HideHealthBar(e.Id);
-                        // 如果没有可见的血量条，则关闭面板
-                        // 这里可以根据实际需求决定是否关闭整个面板
                     }
                 }
                 break;
@@ -235,53 +235,27 @@ public class Ra2Processor : BaseProcessor
             zUDebug.Log("[Ra2Processor] 开始测试血量条显示");
             
             // 测试己方血条 (ID: 1001, 绿色)
-            HealthPanel.UpdateHealth(1001, true, 80, 100); // 80%血量
-            HealthPanel.ShowHealthBar(1001);
+            HealthPanel.UpdateHealth(3, true, 80, 100); // 80%血量
+            HealthPanel.ShowHealthBar(3);
             
             // 测试敌方血条 (ID: 2001, 红色)
-            HealthPanel.UpdateHealth(2001, false, 60, 100); // 60%血量
-            HealthPanel.ShowHealthBar(2001);
+            HealthPanel.UpdateHealth(4, false, 60, 100); // 60%血量
+            HealthPanel.ShowHealthBar(4);
             
-            // 测试低血量的己方单位 (ID: 1002, 绿色)
-            HealthPanel.UpdateHealth(1002, true, 30, 100); // 30%血量
-            HealthPanel.ShowHealthBar(1002);
-            
-            // 测试满血的敌方单位 (ID: 2002, 红色)
-            HealthPanel.UpdateHealth(2002, false, 100, 100); // 100%血量
-            HealthPanel.ShowHealthBar(2002);
-            
-            // 测试受伤严重的敌方单位 (ID: 2003, 红色)
-            HealthPanel.UpdateHealth(2003, false, 15, 100); // 15%血量
-            HealthPanel.ShowHealthBar(2003);
-            
-            zUDebug.Log("[Ra2Processor] 血量条测试完成");
-            
-            // 3秒后隐藏部分血条进行测试
-            Tick.SetTimeout(() => {
-                zUDebug.Log("[Ra2Processor] 隐藏部分测试血条");
-                HealthPanel.HideHealthBar(1002); // 隐藏低血量的己方单位
-                HealthPanel.HideHealthBar(2003); // 隐藏受伤严重的敌方单位
-                
-                // 2秒后再次显示这些血条
-                Tick.SetTimeout(() => {
-                    zUDebug.Log("[Ra2Processor] 重新显示隐藏的血条");
-                    HealthPanel.ShowHealthBar(1002);
-                    HealthPanel.ShowHealthBar(2003);
-                    
-                    // 再过2秒更新其中一个血条的血量
-                    Tick.SetTimeout(() => {
-                        zUDebug.Log("[Ra2Processor] 更新血条血量测试");
-                        // 更新己方单位1001的血量到50%
-                        HealthPanel.UpdateHealth(1001, true, 50, 100);
-                        
-                        // 更新敌方单位2001的血量到90%
-                        HealthPanel.UpdateHealth(2001, false, 90, 100);
-                    }, 2.0f);
-                    
-                }, 2.0f);
-                
-            }, 3.0f);
+            // // 测试低血量的己方单位 (ID: 1002, 绿色)
+            HealthPanel.UpdateHealth(5, true, 30, 100); // 30%血量
+            HealthPanel.ShowHealthBar(5);
             
         }, 1.0f); // 1秒延迟开始测试
+
+        Tick.SetInterval(() => {
+            HealthPanel.UpdateHealthBarPosition(3);
+
+            HealthPanel.UpdateHealthBarPosition(4);
+
+            HealthPanel.UpdateHealthBarPosition(5);
+
+        }, 0.05f);
+
     }
 }
