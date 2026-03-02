@@ -213,6 +213,9 @@ namespace ZLockstep.View.Systems
                         // 移除ViewComponent
                         ComponentManager.RemoveComponent<ViewComponent>(entity);
                         Debug.Log($"[PresentationSystem] 实体{entityId}死亡动画播放完毕，已移除视图");
+
+                        // 移除血条
+                        Frame.DispatchEvent(new HealthEvent(entityId, false, false));
                     }
 
                     // 从死亡列表中移除
@@ -303,6 +306,9 @@ namespace ZLockstep.View.Systems
                         viewObject = Object.Instantiate(unitPrefab, _viewRoot);
                     }
                 }
+
+                // 血条显示
+                Frame.DispatchEvent(new HealthEvent(evt.EntityId, evt.PlayerId == 1, true));
             }
 
             if (evt.ConfProjectileID > 0)

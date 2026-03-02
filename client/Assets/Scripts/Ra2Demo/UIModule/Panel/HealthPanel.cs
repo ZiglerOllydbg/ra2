@@ -77,7 +77,7 @@ public class HealthPanel : BasePanel
     /// <param name="isSelf">是否为己方</param>
     /// <param name="currentHealth">当前血量</param>
     /// <param name="maxHealth">最大血量</param>
-    public void UpdateHealth(int entityId, bool isSelf, int currentHealth, int maxHealth)
+    public void UpdateHealth(int entityId, bool isSelf)
     {
         // 查找或创建血量条实例
         HealthBarInstance healthBarInstance;
@@ -89,16 +89,24 @@ public class HealthPanel : BasePanel
         }
         
         // 更新血量显示
-        if (healthBarInstance.fillImage != null && maxHealth > 0)
+        if (healthBarInstance.fillImage != null)
         {
-            healthBarInstance.fillImage.fillAmount = (float)currentHealth / maxHealth;
+            healthBarInstance.fillImage.fillAmount = 1.0f;
+        }
+    }
+
+    public void UpdateAllHealthBars()
+    {
+        foreach (var healthBar in healthBars.Values)
+        {
+            UpdateHealthBar(healthBar.entityId);
         }
     }
 
     /// <summary>
     /// 更新血量条的位置
     /// </summary>
-    public void UpdateHealthBarPosition(int entityId)
+    public void UpdateHealthBar(int entityId)
     {
         Ra2Demo ra2Demo = GameObject.FindObjectOfType<Ra2Demo>();
         if (ra2Demo == null)
@@ -109,7 +117,6 @@ public class HealthPanel : BasePanel
         ComponentManager componentManager = ra2Demo.GetBattleGame().World.ComponentManager;
 
         Entity entity = new Entity(entityId);
-
         if (!componentManager.HasComponent<TransformComponent>(entity))
         {
             return;
@@ -122,14 +129,25 @@ public class HealthPanel : BasePanel
         Camera mainCamera = Camera.main;
         Vector3 screenPosition = mainCamera.WorldToScreenPoint(worldPosition);
 
-        // 添加向上的偏移量，使血条显示在单位上方
-        float offsetY = 50f; // 向上偏移 50 像素
+        // 获取单位血量组件
+        if (!componentManager.HasComponent<HealthComponent>(entity))
+        {
+            return;
+        }
+        var healthComponent = componentManager.GetComponent<HealthComponent>(entity);
 
         if (healthBars.TryGetValue(entityId, out HealthBarInstance healthBarInstance))
         {
             if (healthBarInstance.gameObject != null)
             {
+                // 添加向上的偏移量，使血条显示在单位上方
+                float offsetY = 50f; // 向上偏移 50 像素
                 healthBarInstance.gameObject.transform.position = new Vector3(screenPosition.x, screenPosition.y + offsetY, 0);
+            }
+
+            if (healthBarInstance.fillImage != null)
+            {
+                healthBarInstance.fillImage.fillAmount = healthComponent.HealthPercent.ToFloat();
             }
         }
     }
