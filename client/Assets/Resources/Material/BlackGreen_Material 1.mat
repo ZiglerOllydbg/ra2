@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Green_Material
+  m_Name: BlackGreen_Material 1
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -121,8 +121,8 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.069597736, g: 0.6415094, b: 0.080596074, a: 1}
-    - _Color: {r: 0.069597736, g: 0.6415094, b: 0.080596074, a: 1}
+    - _BaseColor: {r: 0.022427911, g: 0.2264151, b: 0.027726281, a: 1}
+    - _Color: {r: 0.022427911, g: 0.2264151, b: 0.027726281, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []
