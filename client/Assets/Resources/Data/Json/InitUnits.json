@@ -238,8 +238,85 @@
       "SubType": 3,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "16,0,50",
+      "Position": "16,0,42",
       "Note": "坦克",
+      "Enabled": 1
+    },
+    "23": {
+      "ID": 23,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "30,0,40",
+      "Note": "大兵1",
+      "Enabled": 1
+    },
+    "24": {
+      "ID": 24,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "31,0,40",
+      "Note": "大兵2",
+      "Enabled": 1
+    },
+    "25": {
+      "ID": 25,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "32,0,40",
+      "Note": "大兵3",
+      "Enabled": 1
+    },
+    "26": {
+      "ID": 26,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "33,0,40",
+      "Note": "大兵4",
+      "Enabled": 1
+    },
+    "27": {
+      "ID": 27,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "34,0,40",
+      "Note": "大兵5",
+      "Enabled": 1
+    },
+    "28": {
+      "ID": 28,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "35,0,40",
+      "Note": "大兵5",
+      "Enabled": 1
+    },
+    "29": {
+      "ID": 29,
+      "Camp": 2,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "36,0,40",
+      "Note": "大兵5",
       "Enabled": 1
     }
   }
