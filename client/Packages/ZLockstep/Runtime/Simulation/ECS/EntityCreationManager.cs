@@ -264,6 +264,7 @@ namespace ZLockstep.Simulation.ECS
                 ConfProjectileID = confUnit.ProjectileID,
                 Range = (zfloat)confUnit.AtkRange,
                 AttackInterval = zfloat.CreateFloat(confUnit.AtkInterval),
+                MaxTargets = confUnit.AtkCount,
                 TimeSinceLastAttack = zfloat.Zero,
                 TargetEntityId = -1
             };

@@ -7,7 +7,7 @@ namespace ZLockstep.Simulation.ECS.Components
     public struct AttackComponent : IComponent
     {
         /// <summary>
-        /// 子弹ID
+        /// 子弹 ID
         /// </summary>
         public int ConfProjectileID;
         /// <summary>
@@ -31,9 +31,14 @@ namespace ZLockstep.Simulation.ECS.Components
         public zfloat TimeSinceLastAttack;
 
         /// <summary>
-        /// 当前目标实体ID（-1表示无目标）
+        /// 当前目标实体 ID（-1 表示无目标）
         /// </summary>
         public int TargetEntityId;
+
+        /// <summary>
+        /// 最大攻击目标数量
+        /// </summary>
+        public int MaxTargets;
 
         /// <summary>
         /// 能否攻击
@@ -58,9 +63,9 @@ namespace ZLockstep.Simulation.ECS.Components
                 Range = (zfloat)5.0f,
                 AttackInterval = (zfloat)1.0f,
                 TimeSinceLastAttack = zfloat.Zero,
-                TargetEntityId = -1
+                TargetEntityId = -1,
+                MaxTargets = 1
             };
         }
     }
 }
-

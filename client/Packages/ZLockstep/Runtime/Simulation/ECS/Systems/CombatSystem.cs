@@ -2,6 +2,7 @@ using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Simulation.ECS.Utils;
 using zUnity;
+using System;
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -31,20 +32,30 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 var entity = new Entity(entityId);
 
-                // 必须有Transform和Camp组件
-                if (!ComponentManager.HasComponent<TransformComponent>(entity) ||
-                    !ComponentManager.HasComponent<CampComponent>(entity))
-                    continue;
-
                 // 检查攻击者是否还活着（只检查DeathComponent，不检查生命值）
                 if (ComponentManager.HasComponent<DeathComponent>(entity))
                 {
                     continue; // 死亡单位不能攻击
                 }
 
-                var attack = ComponentManager.GetComponent<AttackComponent>(entity);
+                // 必须有Transform和Camp组件
+                if (!ComponentManager.HasComponent<TransformComponent>(entity) ||
+                    !ComponentManager.HasComponent<CampComponent>(entity) ||
+                    !ComponentManager.HasComponent<AttackComponent>(entity)
+                    )
+                    continue;
+                
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
+
+                var attack = ComponentManager.GetComponent<AttackComponent>(entity);
+
+                if (attack.MaxTargets > 1)
+                {
+                    // 多目标攻击
+                    AttackMultiTarget(entity);
+                    continue;
+                }
 
                 // 1. 检查是否有目标
                 if (attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId))
@@ -190,6 +201,261 @@ namespace ZLockstep.Simulation.ECS.Systems
             }
         }
 
+        private void AttackMultiTarget(Entity entity)
+        {
+            // 检查攻击者是否还活着（只检查 DeathComponent，不检查生命值）
+            if (ComponentManager.HasComponent<DeathComponent>(entity))
+            {
+                return; // 死亡单位不能攻击
+            }
+
+            // 必须有 Transform 和 Camp 组件
+            if (!ComponentManager.HasComponent<TransformComponent>(entity) ||
+                !ComponentManager.HasComponent<CampComponent>(entity) ||
+                !ComponentManager.HasComponent<AttackComponent>(entity)
+                )
+                return;
+
+            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+            var camp = ComponentManager.GetComponent<CampComponent>(entity);
+            var attack = ComponentManager.GetComponent<AttackComponent>(entity);
+
+            // 更新攻击冷却
+            attack.TimeSinceLastAttack += DeltaTime;
+            
+            // 搜索多个目标
+            var targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
+            
+            if (targetIds.Count == 0)
+            {
+                // 没有目标，清空炮塔状态
+                if (ComponentManager.HasComponent<TurretComponent>(entity))
+                {
+                    var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                    turret.HasTarget = false;
+                    ComponentManager.AddComponent(entity, turret);
+                }
+                
+                attack.TargetEntityId = -1;
+                ComponentManager.AddComponent(entity, attack);
+                return;
+            }
+            
+            // 如果有目标，使用第一个目标作为主目标（用于炮塔朝向等）
+            int mainTargetId = targetIds[0];
+            attack.TargetEntityId = mainTargetId;
+            
+            Entity mainTarget = new Entity(mainTargetId);
+            
+            if (!ComponentManager.HasComponent<TransformComponent>(mainTarget))
+            {
+                attack.TargetEntityId = -1;
+                
+                // 清空炮塔目标
+                if (ComponentManager.HasComponent<TurretComponent>(entity))
+                {
+                    var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                    turret.HasTarget = false;
+                    ComponentManager.AddComponent(entity, turret);
+                }
+                
+                ComponentManager.AddComponent(entity, attack);
+                return;
+            }
+            
+            // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
+            if (ComponentManager.HasComponent<BuildingComponent>(mainTarget))
+            {
+                int priorityTargetId = FindNearestNonBuildingEnemy(entity, camp, transform.Position, attack.Range);
+                if (priorityTargetId >= 0)
+                {
+                    // 存在可优先攻击的非建筑目标，切换目标
+                    attack.TargetEntityId = priorityTargetId;
+                    mainTarget = new Entity(attack.TargetEntityId);
+                }
+            }
+            
+            var mainTargetTransform = ComponentManager.GetComponent<TransformComponent>(mainTarget);
+            
+            // 计算到主目标的距离（用于判断是否在攻击范围内）
+            zfloat distanceSqr;
+            if (ComponentManager.HasComponent<BuildingComponent>(mainTarget))
+            {
+                var building = ComponentManager.GetComponent<BuildingComponent>(mainTarget);
+                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                distanceSqr = (new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position).sqrMagnitude;
+            }
+            else
+            {
+                distanceSqr = (mainTargetTransform.Position - transform.Position).sqrMagnitude;
+            }
+            
+            zfloat rangeSqr = attack.Range * attack.Range;
+            
+            // 如果超出范围，清空目标
+            if (distanceSqr > rangeSqr)
+            {
+                attack.TargetEntityId = -1;
+                
+                // 清空炮塔目标
+                if (ComponentManager.HasComponent<TurretComponent>(entity))
+                {
+                    var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                    turret.HasTarget = false;
+                    ComponentManager.AddComponent(entity, turret);
+                }
+                
+                ComponentManager.AddComponent(entity, attack);
+                return;
+            }
+            
+            // 在范围内，设置炮塔朝向主目标
+            if (ComponentManager.HasComponent<TurretComponent>(entity))
+            {
+                var turret = ComponentManager.GetComponent<TurretComponent>(entity);
+                turret.HasTarget = true;
+                
+                // 计算朝向主目标的方向（2D）
+                zVector3 toTarget;
+                if (ComponentManager.HasComponent<BuildingComponent>(mainTarget))
+                {
+                    // 如果目标是建筑，朝向建筑边界点
+                    var building = ComponentManager.GetComponent<BuildingComponent>(mainTarget);
+                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                    toTarget = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position;
+                }
+                else
+                {
+                    // 普通目标
+                    toTarget = mainTargetTransform.Position - transform.Position;
+                }
+                
+                zVector2 toTarget2D = new zVector2(toTarget.x, toTarget.z);
+                if (toTarget2D.magnitude > zfloat.Epsilon)
+                {
+                    turret.DesiredTurretDirection = toTarget2D.normalized;
+                }
+                
+                ComponentManager.AddComponent(entity, turret);
+            }
+            
+            // 如果冷却完成，对所有目标发射攻击
+            if (attack.CanAttack)
+            {
+                // 更新攻击者朝向（朝向主目标）
+                zVector3 toMainTarget = mainTargetTransform.Position - transform.Position;
+                transform.Rotation = zQuaternion.LookRotation(toMainTarget.normalized);
+                ComponentManager.AddComponent(entity, transform);
+                
+                // 播放音效标记
+                attack.PlayAttackAudio = true;
+                
+                // 对每个目标发射弹道
+                foreach (var targetId in targetIds)
+                {
+                    Entity target = new Entity(targetId);
+                    
+                    if (!ComponentManager.HasComponent<TransformComponent>(target))
+                        continue;
+                    
+                    var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
+                    
+                    // 确定攻击目标点
+                    zVector3 targetPos;
+                    if (ComponentManager.HasComponent<BuildingComponent>(target))
+                    {
+                        // 如果目标是建筑，攻击建筑边界点
+                        var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                        zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                        targetPos = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y);
+                    }
+                    else
+                    {
+                        // 普通目标
+                        targetPos = targetTransform.Position;
+                    }
+                    
+                    FireProjectile(entity, target, transform.Position, targetPos, camp.CampId, attack.ConfProjectileID);
+                }
+                
+                attack.TimeSinceLastAttack = zfloat.Zero;
+            }
+            
+            // 写回攻击组件
+            ComponentManager.AddComponent(entity, attack);
+        }
+
+        /// <summary>
+        /// 搜索多个敌方单位
+        /// </summary>
+        /// <param name="self">自己</param>
+        /// <param name="selfCamp">自己的阵营</param>
+        /// <param name="position">位置</param>
+        /// <param name="range">范围</param>
+        /// <param name="maxTargets">最大目标数量</param>
+        /// <returns>目标实体 ID 列表</returns>
+        private System.Collections.Generic.List<int> FindMultipleTargets(Entity self, CampComponent selfCamp, zVector3 position, zfloat range, int maxTargets)
+        {
+            var targetIds = new System.Collections.Generic.List<int>();
+            zfloat rangeSqr = range * range;
+
+            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+
+            foreach (var entityId in allEntities)
+            {
+                Entity otherEntity = new Entity(entityId);
+
+                // 跳过自己
+                if (otherEntity.Id == self.Id)
+                    continue;
+
+                // 检查是否为敌人
+                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
+                if (!selfCamp.IsEnemy(otherCamp))
+                    continue;
+
+                // 必须有 Transform 和 Health 组件
+                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
+                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
+                    continue;
+
+                // 检查是否还活着（只检查 DeathComponent）
+                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                    continue;
+
+                // 计算距离
+                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
+                zfloat distSqr;
+                
+                // 如果目标是建筑，计算到建筑边界的距离
+                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
+                {
+                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
+                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
+                        continue; // 建筑不在范围内
+                    
+                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
+                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
+                }
+                else
+                {
+                    distSqr = (otherTransform.Position - position).sqrMagnitude;
+                }
+
+                // 在范围内的目标添加到列表
+                if (distSqr <= rangeSqr)
+                {
+                    targetIds.Add(entityId);
+                    
+                    // 如果已经达到最大目标数，停止搜索
+                    if (targetIds.Count >= maxTargets)
+                        break;
+                }
+            }
+
+            return targetIds;
+        }
+
         /// <summary>
         /// 搜索最近的敌方单位
         /// </summary>
@@ -213,12 +479,12 @@ namespace ZLockstep.Simulation.ECS.Systems
                 if (!selfCamp.IsEnemy(otherCamp))
                     continue;
 
-                // 必须有Transform和Health组件
+                // 必须有 Transform 和 Health 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
                     !ComponentManager.HasComponent<HealthComponent>(otherEntity))
                     continue;
 
-                // 检查是否还活着（只检查DeathComponent）
+                // 检查是否还活着（只检查 DeathComponent）
                 if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
                     continue;
 
