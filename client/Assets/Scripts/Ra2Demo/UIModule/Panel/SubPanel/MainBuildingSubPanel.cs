@@ -5,6 +5,7 @@ using TMPro;
 using ZLockstep.Simulation.ECS;
 using ZFrame;
 using ZLockstep.Simulation.ECS.Components;
+using Utils; // 添加 StringUtils 所在的命名空间
 
 /// <summary>
 /// 主面板的子面板控制器 - 封装子面板的UI逻辑和数据
@@ -325,7 +326,7 @@ public class MainBuildingSubPanel
         }
 
         // 3. 解析配置中的位置信息
-        Vector3[] positions = ParsePositions(confBuildingPlace.Position);
+        Vector3[] positions = StringUtils.ParsePositions(confBuildingPlace.Position);
         if (positions.Length == 0)
         {
             Debug.LogError($"配置中的位置信息无效: {confBuildingPlace.Position}");
@@ -388,35 +389,6 @@ public class MainBuildingSubPanel
     }
 
         /// <summary>
-    /// 解析位置字符串为Vector3数组
-    /// 格式: "110,0,112;112,0,110"
-    /// </summary>
-    private Vector3[] ParsePositions(string positionStr)
-    {
-        if (string.IsNullOrEmpty(positionStr))
-            return new Vector3[0];
-            
-        string[] positionStrings = positionStr.Split(';');
-        List<Vector3> positions = new List<Vector3>();
-        
-        foreach (string posStr in positionStrings)
-        {
-            string[] coords = posStr.Split(',');
-            if (coords.Length == 3)
-            {
-                if (float.TryParse(coords[0], out float x) &&
-                    float.TryParse(coords[1], out float y) &&
-                    float.TryParse(coords[2], out float z))
-                {
-                    positions.Add(new Vector3(x, y, z));
-                }
-            }
-        }
-        
-        return positions.ToArray();
-    }
-    
-    /// <summary>
     /// 放置建筑的核心逻辑
     /// </summary>
     private void PlaceBuilding(int confID, Vector3 logicPosition)

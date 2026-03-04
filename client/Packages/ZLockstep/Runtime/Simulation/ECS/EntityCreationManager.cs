@@ -4,6 +4,7 @@ using ZLockstep.Simulation.Events;
 using ZLockstep.Flow;
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Utils;
+using Utils;
 
 namespace ZLockstep.Simulation.ECS
 {
@@ -146,6 +147,14 @@ namespace ZLockstep.Simulation.ECS
             {
                 // 支持生产动员兵和坦克
                 var supportedUnitTypes = new HashSet<UnitType> { UnitType.grizzlyTank }; // 1=动员兵, 2=坦克
+
+                int[] unitIDs = StringUtils.ParseIntegers(confBuilding.CreateUnits);
+                foreach (var unitID in unitIDs)
+                {
+                    var unitType = (UnitType)unitID;
+                    supportedUnitTypes.Add(unitType);
+                }
+
                 var produceComponent = ProduceComponent.Create(supportedUnitTypes);
                 world.ComponentManager.AddComponent(entity, produceComponent);
             }

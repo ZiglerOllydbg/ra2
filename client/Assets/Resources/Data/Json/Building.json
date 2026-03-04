@@ -12,6 +12,7 @@
       "ConstructionTime": 0,
       "CostMoney": 0,
       "CostPower": 0,
+      "CreateUnits": 0.0,
       "Name": "主基地",
       "Description": ""
     },
@@ -27,6 +28,7 @@
       "ConstructionTime": 0,
       "CostMoney": 0,
       "CostPower": 0,
+      "CreateUnits": 0.0,
       "Name": "金矿",
       "Description": ""
     },
@@ -42,6 +44,7 @@
       "ConstructionTime": 5,
       "CostMoney": 800,
       "CostPower": 5,
+      "CreateUnits": 0.0,
       "Name": "采矿场",
       "Description": "可采集附近的矿源"
     },
@@ -57,6 +60,7 @@
       "ConstructionTime": 5,
       "CostMoney": 500,
       "CostPower": 0,
+      "CreateUnits": 0.0,
       "Name": "电厂",
       "Description": "为基地提供电力支持"
     },
@@ -72,6 +76,7 @@
       "ConstructionTime": 8,
       "CostMoney": 1000,
       "CostPower": 5,
+      "CreateUnits": 1,
       "Name": "兵营",
       "Description": "可训练步兵单位"
     },
@@ -87,6 +92,7 @@
       "ConstructionTime": 10,
       "CostMoney": 2000,
       "CostPower": 10,
+      "CreateUnits": "2,3",
       "Name": "战车工厂",
       "Description": "可生产装甲单位"
     },
@@ -102,6 +108,7 @@
       "ConstructionTime": 5,
       "CostMoney": 500,
       "CostPower": 0,
+      "CreateUnits": 0.0,
       "Name": "防御塔",
       "Description": "自动攻击范围内的敌人"
     }

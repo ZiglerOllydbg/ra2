@@ -25,6 +25,7 @@ public class ConfBuilding
 	public int ConstructionTime; // 建造时间（秒）
 	public int CostMoney; // 消耗金钱
 	public int CostPower; // 消耗电量
+	public string CreateUnits; // 可以建造的单位列表
 	public string Name; // 名称
 	public string Description; // 描述
 }
