@@ -142,24 +142,30 @@ namespace ZLockstep.Simulation.ECS
                 world.ComponentManager.AddComponent(entity, new MainBaseComponent());
             }
 
-            // 11. 如果是工厂建筑，添加生产组件
-            if (buildingType == BuildingType.vehicleFactory) // 工厂建筑
+            if (confBuilding.CreateUnitIDList.Length > 0)
             {
                 // 支持生产动员兵和坦克
-                var supportedUnitTypes = new HashSet<UnitType> { UnitType.grizzlyTank }; // 1=动员兵, 2=坦克
+                var supportedUnitTypes = new HashSet<UnitType>(); // 2=獾式坦克, 2=灰熊坦克
 
-                int[] unitIDs = StringUtils.ParseIntegers(confBuilding.CreateUnits);
+                int[] unitIDs = StringUtils.ParseIntegers(confBuilding.CreateUnitIDList);
                 foreach (var unitID in unitIDs)
                 {
+                    if (unitID <= 0) 
+                        continue;
+
                     var unitType = (UnitType)unitID;
                     supportedUnitTypes.Add(unitType);
                 }
 
-                var produceComponent = ProduceComponent.Create(supportedUnitTypes);
-                world.ComponentManager.AddComponent(entity, produceComponent);
+                if (supportedUnitTypes.Count > 0)
+                {
+                    var produceComponent = ProduceComponent.Create(supportedUnitTypes);
+                    world.ComponentManager.AddComponent(entity, produceComponent);
+                }
             }
+
             // 12. 如果是矿源，添加矿源组件
-            else if (buildingType == BuildingType.Mine) // 矿源
+            if (buildingType == BuildingType.Mine) // 矿源
             {
                 // 添加矿源组件，初始资源5000
                 var mineComponent = MineComponent.CreateDefault();
