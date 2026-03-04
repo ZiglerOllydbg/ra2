@@ -11,6 +11,7 @@ public class ProducerListItem : BaseListItem
     private Image iconImage;
     private TMP_Text producerNameText;
     private TMP_Text factoryNameText;
+    private TMP_Text descriptionText;
     private Button addBtn;
     private Button subBtn;
     
@@ -35,6 +36,8 @@ public class ProducerListItem : BaseListItem
         iconImage = __target.transform.Find("Image")?.GetComponent<Image>();
         producerNameText = __target.transform.Find("ProducerName")?.GetComponent<TMP_Text>();
         factoryNameText = __target.transform.Find("FactoryName")?.GetComponent<TMP_Text>();
+        descriptionText = __target.transform.Find("Description")?.GetComponent<TMP_Text>();
+
         addBtn = __target.transform.Find("AddBtn")?.GetComponent<Button>();
         subBtn = __target.transform.Find("SubBtn")?.GetComponent<Button>();
         addBtn?.onClick.AddListener(OnAddClick);
@@ -60,6 +63,9 @@ public class ProducerListItem : BaseListItem
             
         if (factoryNameText != null && ItemData != null)
             factoryNameText.text = ItemData.BelongFactory;
+
+        if (descriptionText != null && ItemData != null)
+            descriptionText.text = ItemData.Description;
     }
     
     private void OnAddClick()

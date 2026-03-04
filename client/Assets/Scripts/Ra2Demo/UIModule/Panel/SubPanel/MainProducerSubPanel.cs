@@ -143,6 +143,13 @@ public class MainProducerSubPanel
             // 为每个支持的单位类型创建一个ProducerItemData
             foreach (var unitType in produceComponent.SupportedUnitTypes)
             {
+                ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
+                if (confUnit == null)
+                {
+                    Debug.LogError($"Invalid unit type: {unitType}");
+                    continue;
+                }
+
                 // 获取当前生产数量
                 int currentProduceCount = 0;
                 if (produceComponent.ProduceNumbers.ContainsKey(unitType))
@@ -158,7 +165,7 @@ public class MainProducerSubPanel
                 }
                 
                 // 构造带生产数量和进度的名称
-                string displayName = GetUnitTypeName(unitType);
+                string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
                     displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
@@ -167,8 +174,8 @@ public class MainProducerSubPanel
                 var itemData = new ProducerItemData
                 {
                     Name = displayName,
-                    BelongFactory = "坦克工厂" + entity.Id,
-                    Description = GetUnitTypeDescription(unitType),
+                    BelongFactory = "" + entity.Id,
+                    Description = confUnit.Description,
                     UnitType = unitType,
                     FactoryEntityId = entity.Id,
                 };
@@ -206,7 +213,14 @@ public class MainProducerSubPanel
             {
                 if (itemIndex >= listItems.Count)
                     return; // 避免索引越界
-                
+
+                ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
+                if (confUnit == null)
+                {
+                    Debug.LogError($"Invalid unit type: {unitType}");
+                    continue;
+                }
+
                 // 获取当前生产数量
                 int currentProduceCount = 0;
                 if (produceComponent.ProduceNumbers.ContainsKey(unitType))
@@ -222,7 +236,7 @@ public class MainProducerSubPanel
                 }
                 
                 // 构造带生产数量和进度的名称
-                string displayName = GetUnitTypeName(unitType);
+                string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
                     displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
@@ -231,8 +245,8 @@ public class MainProducerSubPanel
                 var itemData = new ProducerItemData
                 {
                     Name = displayName,
-                    BelongFactory = "坦克工厂" + entity.Id,
-                    Description = GetUnitTypeDescription(unitType),
+                    BelongFactory = "" + entity.Id,
+                    Description = confUnit.Description,
                     UnitType = unitType,
                     FactoryEntityId = entity.Id,
                 };
@@ -244,34 +258,7 @@ public class MainProducerSubPanel
         }
 
     }
-    
-    /// <summary>
-    /// 获取单位类型名称
-    /// </summary>
-    private string GetUnitTypeName(UnitType unitType)
-    {
-        switch (unitType)
-        {
-            case UnitType.Infantry: return "动员兵";
-            case UnitType.grizzlyTank: return "坦克($300)";
-            case UnitType.Harvester: return "矿车";
-            default: return $"单位{unitType}";
-        }
-    }
-    
-    /// <summary>
-    /// 获取单位类型描述
-    /// </summary>
-    private string GetUnitTypeDescription(UnitType unitType)
-    {
-        switch (unitType)
-        {
-            case UnitType.Infantry: return "基础步兵单位";
-            case UnitType.grizzlyTank: return "重装甲战斗单位";
-            case UnitType.Harvester: return "采集矿物单位";
-            default: return $"单位类型{unitType}";
-        }
-    }
+
     
     /// <summary>
     /// 隐藏子面板
