@@ -520,5 +520,19 @@ public class MainPanel : BasePanel
     {
         Debug.Log("Setting按钮被点击了！");
         ShowMessage("打开设置面板");
+
+        // TODO 查找gameobject：BGM，获取组件：AudioSource，播放音乐，或者暂停音乐
+        AudioSource audioSource = GameObject.Find("BGM").GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            if (audioSource.isPlaying)
+            {
+                audioSource.Pause();
+            }
+            else
+            {
+                audioSource.Play();
+            }
+        }
     }
 }
