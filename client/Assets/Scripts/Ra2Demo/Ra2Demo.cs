@@ -64,6 +64,10 @@ public class Ra2Demo : MonoBehaviour
 
          // 相机移动相关的常量
     private const float JOYSTICK_CAMERA_MOVE_SPEED = 0.02f;  // 虚拟摇杆相机移动速度
+    private const float CAMERA_MOVE_ZONE_WIDTH_RATIO = 0.33f;  // 相机移动区域宽度比例（左侧 1/3 屏幕）
+    
+    // 相机移动状态字段
+    private bool isCameraMoving = false; // 是否正在移动相机
 
     // 添加建造功能相关字段
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
@@ -272,8 +276,30 @@ public class Ra2Demo : MonoBehaviour
         isPressing = true;
         pressStartPosition = GetCurrentInputPosition();
 
-        // 开始框选
-        StartSelectionBox(pressStartPosition);
+        zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}, ScreenWidth: {Screen.width}, CameraMoveThreshold: {Screen.width * CAMERA_MOVE_ZONE_WIDTH_RATIO}");
+
+        // 判断是否在相机移动区域（左侧 1/4 屏幕）
+        if (pressStartPosition.x < Screen.width * CAMERA_MOVE_ZONE_WIDTH_RATIO)
+        {
+            // 进入相机移动模式
+            isCameraMoving = true;
+            isSelecting = false;
+            
+            // 记录相机初始位置
+            if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
+            {
+                m_CameraInitialPosition = RTSCameraTargetController.Instance.CameraTarget.position;
+            }
+            
+            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{m_CameraInitialPosition}");
+        }
+        else
+        {
+            // 选择模式：开始框选
+            isCameraMoving = false;
+            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入选择模式，起始位置：{pressStartPosition}");
+            StartSelectionBox(pressStartPosition);
+        }
     }
 
     private void OnDrag(InputAction.CallbackContext context)
@@ -289,15 +315,51 @@ public class Ra2Demo : MonoBehaviour
         {
             float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
             
-            // zUDebug.Log($"[StandaloneBattleDemo] OnDrag - Position: {currentDragPosition}, Distance: {dragDistance}");
-            
-            // 如果拖拽距离超过阈值，认为是有效拖拽
-            if (dragDistance > DRAG_THRESHOLD)
+            // 如果是相机移动模式
+            if (isCameraMoving)
             {
-                // 这里可以处理拖拽逻辑
-                // zUDebug.Log($"[StandaloneBattleDemo] Drag in progress - Distance: {dragDistance}");
-                UpdateSelectionBox(currentPosition);
+                // 详细记录相机移动信息
+                zUDebug.Log($"[StandaloneBattleDemo] OnDrag [相机移动] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
+                // 直接移动相机，不需要阈值判断
+                MoveCameraByDrag(currentPosition);
             }
+            else
+            {
+                // 选择模式：只有当拖拽距离超过阈值时才认为是有效框选
+                if (dragDistance > DRAG_THRESHOLD)
+                {
+                    zUDebug.Log($"[StandaloneBattleDemo] OnDrag [框选] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
+                    UpdateSelectionBox(currentPosition);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 根据拖拽偏移移动相机
+    /// </summary>
+    /// <param name="currentScreenPos">当前屏幕位置</param>
+    private void MoveCameraByDrag(Vector2 currentScreenPos)
+    {
+        if (RTSCameraTargetController.Instance != null && _mainCamera != null)
+        {
+            // 计算从起始位置的偏移量（屏幕像素）
+            Vector2 screenDelta = currentScreenPos - pressStartPosition;
+            
+            // 获取相机到地面的距离
+            float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
+            
+            // 将屏幕像素偏移转换为世界坐标偏移（考虑相机高度）
+            // 使用简单的比例关系：屏幕像素 -> 世界单位
+            float worldUnitsPerPixel = 0.1f; // 调整转换系数
+            Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
+            
+            // 直接叠加到初始位置
+            Vector3 newPosition = m_CameraInitialPosition + worldDelta;
+            RTSCameraTargetController.Instance.CameraTarget.position = newPosition;
+            
+            // 调试日志
+            zUDebug.Log($"[StandaloneBattleDemo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
         }
     }
 
@@ -315,22 +377,32 @@ public class Ra2Demo : MonoBehaviour
         {
             float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
             
-            if (totalDragDistance > DRAG_THRESHOLD)
+            // 如果是相机移动模式
+            if (isCameraMoving)
             {
-                zUDebug.Log($"[StandaloneBattleDemo] Drag ended - Total distance: {totalDragDistance}");
-                // 这里可以处理拖拽结束后的逻辑
-                EndSelectionBox();
+                zUDebug.Log($"[StandaloneBattleDemo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
+                // 重置相机移动状态
+                isCameraMoving = false;
             }
             else
             {
-                zUDebug.Log($"[StandaloneBattleDemo] Click detected (not drag) - Distance: {totalDragDistance}");
-                // 如果拖拽距离小于阈值，可能是一次点击
-                SendMoveCommandForSelectedUnit(currentPosition);
+                // 选择模式：判断是框选还是点击
+                if (totalDragDistance > DRAG_THRESHOLD)
+                {
+                    zUDebug.Log($"[StandaloneBattleDemo] >>> 框选结束 - TotalDistance: {totalDragDistance:F2}");
+                    EndSelectionBox();
+                }
+                else
+                {
+                    zUDebug.Log($"[StandaloneBattleDemo] >>> 点击检测 (非拖拽) - Distance: {totalDragDistance:F2}");
+                    SendMoveCommandForSelectedUnit(currentPosition);
+                }
             }
         }
         
         // 重置拖拽状态
         isPressing = false;
+        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 重置拖拽状态，isPressing=false");
     }
 
     private Vector2 GetCurrentInputPosition()
