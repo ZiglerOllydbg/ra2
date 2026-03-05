@@ -56,8 +56,11 @@ public class MainPanel : BasePanel
     // 小地图子面板
     private MiniMapSubPanel miniMapSubPanel;
 
-    // 新增：热键快捷栏子面板
+    // 热键快捷栏子面板
     private HotKeySubPanel hotKeySubPanel;
+
+    // 设置子面板
+    private SettingSubPanel settingSubPanel;
 
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -124,6 +127,11 @@ public class MainPanel : BasePanel
         // 初始化热键快捷栏子面板
         hotKeySubPanel = new HotKeySubPanel(PanelObject.transform);
         hotKeySubPanel.Show(new HotKeyPanelData() { HotKeys = new string[] { "1", "2", "3", "4" } });
+        
+        // 初始化设置子面板
+        settingSubPanel = new SettingSubPanel(PanelObject.transform);
+        settingSubPanel.OnCloseClick = OnSubPanelClosed;
+        settingSubPanel.Hide();
     }
 
     /// <summary>
@@ -241,6 +249,10 @@ public class MainPanel : BasePanel
         producerSubPanel?.Destroy();
         producerSubPanel = null;
 
+        // 清理设置子面板
+        settingSubPanel?.Destroy();
+        settingSubPanel = null;
+
         // 停止正在进行的消息显示定时器
         if (messageTimerId != 0)
         {
@@ -255,7 +267,7 @@ public class MainPanel : BasePanel
             miniMapRefreshTimerId = 0;
         }
 
-        // 新增：销毁热键快捷栏子面板
+        // 销毁热键快捷栏子面板
         hotKeySubPanel?.Destroy();
         hotKeySubPanel = null;
     }
@@ -514,25 +526,30 @@ public class MainPanel : BasePanel
     }
     
     /// <summary>
-    /// Setting按钮点击处理
+    /// Setting 按钮点击处理 - 打开/关闭设置面板
     /// </summary>
     private void OnSettingButtonClick()
     {
-        Debug.Log("Setting按钮被点击了！");
-        ShowMessage("打开设置面板");
+        Debug.Log("Setting 按钮被点击了！");
+        
+        // 关闭其他子面板
+        buildingSubPanel.Hide();
+        producerSubPanel.Hide();
 
-        // TODO 查找gameobject：BGM，获取组件：AudioSource，播放音乐，或者暂停音乐
-        AudioSource audioSource = GameObject.Find("BGM").GetComponent<AudioSource>();
-        if (audioSource != null)
+        if (settingSubPanel.IsVisiable())
         {
-            if (audioSource.isPlaying)
+            settingSubPanel.Hide();
+        }
+        else
+        {
+            // 创建子面板数据
+            var subPanelData = new SubPanelData
             {
-                audioSource.Pause();
-            }
-            else
-            {
-                audioSource.Play();
-            }
+                Title = "设置菜单",
+                Content = "调节游戏音量和画面设置"
+            };
+            // 显示子面板
+            settingSubPanel.Show(subPanelData);
         }
     }
 }
