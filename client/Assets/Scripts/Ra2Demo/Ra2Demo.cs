@@ -57,6 +57,10 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 pressStartPosition; // 按下时的起始位置
     private Vector2 currentPosition; // 当前位置
     private const float DRAG_THRESHOLD = 5f; // 拖拽阈值，像素单位
+    
+    // 单位移动模式相关字段
+    private bool isUnitMoveMode = false; // 是否处于单位移动模式
+    private const float UNIT_SELECTION_RADIUS = 5f; // 单位选择半径（米）
 
     /**************************************
      * UI部分
@@ -276,12 +280,73 @@ public class Ra2Demo : MonoBehaviour
         isPressing = true;
         pressStartPosition = GetCurrentInputPosition();
 
-        zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}, ScreenWidth: {Screen.width}, CameraMoveThreshold: {Screen.width * CAMERA_MOVE_ZONE_WIDTH_RATIO}");
+        zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}");
 
-        // 判断是否在相机移动区域（左侧 1/4 屏幕）
-        if (pressStartPosition.x < Screen.width * CAMERA_MOVE_ZONE_WIDTH_RATIO)
+        // 尝试获取点击位置的世界坐标
+        Vector3 worldPosition = Vector3.zero;
+        bool hasGroundPosition = TryGetGroundPosition(pressStartPosition, out worldPosition);
+
+        // 检测 5 米范围内是否有单位（只检测本地玩家的单位）
+        bool hasUnitInRange = false;
+        if (hasGroundPosition && _game != null && _game.World != null)
         {
-            // 进入相机移动模式
+            // 清空之前的选择
+            ClearAllOutlines();
+            
+            var entities = _game.World.ComponentManager
+                .GetAllEntityIdsWith<TransformComponent>();
+
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 检查实体是否包含 LocalPlayerComponent（只有本地玩家单位才能被选择）
+                if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                {
+                    continue;
+                }
+
+                if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+                {
+                    continue; // 跳过非单位实体
+                }
+
+                var transform = _game.World.ComponentManager
+                    .GetComponent<TransformComponent>(entity);
+
+                // 计算与点击位置的距离
+                Vector3 unitWorldPosition = transform.Position.ToVector3();
+                float distance = Vector3.Distance(unitWorldPosition, worldPosition);
+
+                if (distance <= UNIT_SELECTION_RADIUS)
+                {
+                    hasUnitInRange = true;
+                    
+                    // 添加到选中列表
+                    selectedEntityIds.Add(entityId);
+                    
+                    // 启用轮廓显示
+                    EnableOutlineForEntity(entityId);
+                    
+                    zUDebug.Log($"[StandaloneBattleDemo] 检测到单位在范围内：EntityId={entityId}, Distance={distance:F2}m");
+                }
+            }
+        }
+
+        // 根据是否有单位在范围内决定模式
+        if (hasUnitInRange)
+        {
+            // 进入单位移动模式
+            isUnitMoveMode = true;
+            isCameraMoving = false;
+            isSelecting = false;
+            
+            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
+        }
+        else
+        {
+            // 进入相机移动模式（不再判断 1/4 屏幕范围）
+            isUnitMoveMode = false;
             isCameraMoving = true;
             isSelecting = false;
             
@@ -292,13 +357,6 @@ public class Ra2Demo : MonoBehaviour
             }
             
             zUDebug.Log($"[StandaloneBattleDemo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{m_CameraInitialPosition}");
-        }
-        else
-        {
-            // 选择模式：开始框选
-            isCameraMoving = false;
-            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入选择模式，起始位置：{pressStartPosition}");
-            StartSelectionBox(pressStartPosition);
         }
     }
 
@@ -315,8 +373,13 @@ public class Ra2Demo : MonoBehaviour
         {
             float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
             
+            // 如果是单位移动模式
+            if (isUnitMoveMode)
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] OnDrag [单位移动模式] - 忽略拖拽，等待释放");
+            }
             // 如果是相机移动模式
-            if (isCameraMoving)
+            else if (isCameraMoving)
             {
                 // 详细记录相机移动信息
                 zUDebug.Log($"[StandaloneBattleDemo] OnDrag [相机移动] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
@@ -377,8 +440,35 @@ public class Ra2Demo : MonoBehaviour
         {
             float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
             
+            // 如果是单位移动模式
+            if (isUnitMoveMode)
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+                
+                // 获取目标位置并发送移动命令
+                if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
+                {
+                    zUDebug.Log($"[StandaloneBattleDemo] >>> 目标位置：{targetWorldPosition}");
+                    
+                    // 使用当前选中的单位列表发送移动命令
+                    if (selectedEntityIds.Count > 0)
+                    {
+                        SendMoveCommand(selectedEntityIds, targetWorldPosition);
+                    }
+                    else
+                    {
+                        zUDebug.LogWarning("[StandaloneBattleDemo] >>> 没有找到可移动的单位");
+                    }
+                }
+                
+                // 清空选中单位列表
+                ClearAllOutlines();
+                
+                // 重置单位移动模式
+                isUnitMoveMode = false;
+            }
             // 如果是相机移动模式
-            if (isCameraMoving)
+            else if (isCameraMoving)
             {
                 zUDebug.Log($"[StandaloneBattleDemo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
                 // 重置相机移动状态
@@ -744,7 +834,67 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 发送移动命令给选中的单位
+    /// 发送移动命令给指定的单位
+    /// </summary>
+    private void SendMoveCommand(List<int> entityIds, Vector3 targetWorldPosition)
+    {
+        if (entityIds.Count == 0)
+        {
+            Debug.Log("[Test] 没有要移动的单位");
+            return;
+        }
+
+        if (_game == null || _game.World == null)
+            return;
+
+        // 验证单位是否有效
+        List<int> validEntityIds = new List<int>();
+        foreach (int entityId in entityIds)
+        {
+            var entity = new Entity(entityId);
+            if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+            {
+                Debug.Log($"[Test] 单位 {entityId} 已不存在");
+                DisableOutlineForEntity(entityId);
+                continue;
+            }
+
+            // 判断拥有 LocalPlayerComponent 就是当前玩家的单位
+            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+            {
+                Debug.Log($"[Test] 单位 {entityId} 不属于当前玩家");
+                DisableOutlineForEntity(entityId);
+                continue;
+            }
+
+            validEntityIds.Add(entityId);
+        }
+
+        if (validEntityIds.Count == 0)
+        {
+            Debug.Log("[Test] 没有有效的选中单位");
+            return;
+        }
+
+        zfloat x = zfloat.CreateFloat((long)(targetWorldPosition.x * zfloat.SCALE_10000));
+        zfloat z = zfloat.CreateFloat((long)(targetWorldPosition.z * zfloat.SCALE_10000));
+
+        // 创建移动命令
+        var moveCommand = new EntityMoveCommand(
+            campId: 0,
+            entityIds: validEntityIds.ToArray(),
+            targetPosition: new zVector2(x, z)
+        )
+        {
+            Source = CommandSource.Local
+        };
+
+        _game.SubmitCommand(moveCommand);
+        Debug.Log($"[Test] 发送移动命令：{validEntityIds.Count}个单位 → {targetWorldPosition}");
+    }
+
+    /// <summary>
+    /// 发送移动命令给选中的单位（保留原有方法以兼容框选后的移动）
     /// </summary>
     private void SendMoveCommandForSelectedUnit(Vector2 screenPosition)
     {
@@ -761,55 +911,8 @@ public class Ra2Demo : MonoBehaviour
         if (!TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
             return;
 
-        // 检查选中的单位是否仍然有效且属于当前玩家
-        List<int> validEntityIds = new List<int>();
-        foreach (int entityId in selectedEntityIds)
-        {
-            var entity = new Entity(entityId);
-            if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
-            {
-                Debug.Log($"[Test] 选中的单位 {entityId} 已不存在");
-                // 禁用该单位的OutlineComponent
-                DisableOutlineForEntity(entityId);
-                continue;
-            }
-
-            // 判断拥有LocalPlayerComponent就是当前玩家的单位
-            if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
-            {
-                Debug.Log($"[Test] 选中的单位 {entityId} 不属于当前玩家");
-                // 禁用该单位的OutlineComponent
-                DisableOutlineForEntity(entityId);
-                continue;
-            }
-
-            validEntityIds.Add(entityId);
-        }
-
-        // 更新选中单位列表，移除无效单位
-        selectedEntityIds = new List<int>(validEntityIds);
-
-        if (validEntityIds.Count == 0)
-        {
-            Debug.Log("[Test] 没有有效的选中单位");
-            return;
-        }
-
-        zfloat x = zfloat.CreateFloat((long)(worldPosition.x * zfloat.SCALE_10000));
-        zfloat z = zfloat.CreateFloat((long)(worldPosition.z * zfloat.SCALE_10000));
-
-        // 创建移动命令
-        var moveCommand = new EntityMoveCommand(
-            campId: 0,
-            entityIds: validEntityIds.ToArray(),
-            targetPosition: new zVector2(x, z)
-        )
-        {
-            Source = CommandSource.Local
-        };
-
-        _game.SubmitCommand(moveCommand);
-        // Debug.Log($"[Test] 发送移动命令: {validEntityIds.Count}个单位 → {worldPosition}");
+        // 使用新的 SendMoveCommand 方法
+        SendMoveCommand(selectedEntityIds, worldPosition);
     }
 
     private void OnGUI()
