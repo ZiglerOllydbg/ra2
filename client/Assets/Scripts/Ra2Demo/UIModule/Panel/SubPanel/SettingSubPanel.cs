@@ -25,6 +25,8 @@ public class SettingSubPanel
     
     // 直接引用 UI 元素（不使用模板）
     private Slider musicSlider;
+    // 背景音乐音量文本显示
+    private TMP_Text musicValueText;
     // 背景音乐 AudioSource 引用
     private AudioSource bgmAudioSource;
     
@@ -40,7 +42,10 @@ public class SettingSubPanel
         closeBtn?.onClick.AddListener(OnClose);
         
         // 获取音乐 Slider
-        musicSlider = root.transform.Find("Scroll View/Viewport/Content/Music")?.GetComponent<Slider>();
+        musicSlider = root.transform.Find("Scroll View/Viewport/Content/Music/Slider")?.GetComponent<Slider>();
+        
+        // 获取音乐音量文本
+        musicValueText = root.transform.Find("Scroll View/Viewport/Content/Music/Title")?.GetComponent<TMP_Text>();
 
         if (musicSlider != null)
         {
@@ -48,6 +53,9 @@ public class SettingSubPanel
             float musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.5f);
             musicSlider.value = musicVolume; // 转换为 0-100 范围
             zUDebug.Log($"[SettingSubPanel] 背景音乐音量已设置为：{musicVolume * 100:F0}%");
+            
+            // 更新文本显示
+            UpdateMusicValueText(musicVolume);
             
             // 添加值变化监听
             musicSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
@@ -119,6 +127,17 @@ public class SettingSubPanel
     }
     
     /// <summary>
+    /// 更新音乐音量文本显示
+    /// </summary>
+    private void UpdateMusicValueText(float value)
+    {
+        if (musicValueText != null)
+        {
+            musicValueText.text = $"背景音乐 {value * 100:F0}%";
+        }
+    }
+    
+    /// <summary>
     /// 音乐音量变化处理
     /// </summary>
     private void OnMusicVolumeChanged(float value)
@@ -132,6 +151,9 @@ public class SettingSubPanel
         {
             bgmAudioSource.volume = value;
         }
+        
+        // 更新文本显示
+        UpdateMusicValueText(value);
         
         Debug.Log($"[SettingSubPanel] 背景音乐音量已设置为：{value * 100:F0}%");
     }
