@@ -355,7 +355,7 @@ public class Ra2Demo : MonoBehaviour
             isSelecting = false;
             
             // 创建并显示选择框资源实例，传入世界坐标位置
-            CreateAndShowSelectionBox(worldPosition);
+            // CreateAndShowSelectionBox(worldPosition);
             
             zUDebug.Log($"[StandaloneBattleDemo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
         }
@@ -467,7 +467,7 @@ public class Ra2Demo : MonoBehaviour
                 zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
                 
                 // 隐藏选择框实例
-                HideSelectionBox();
+                // HideSelectionBox();
                 
                 // 获取目标位置并发送移动命令
                 if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
