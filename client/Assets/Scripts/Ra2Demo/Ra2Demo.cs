@@ -66,9 +66,13 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
     private Vector2 dragCurrentScreenPos; // 拖拽当前屏幕位置（用于绘制虚线）
     private bool shouldDrawDragLine = false; // 是否应该绘制拖拽虚线
+    
+    // 选择框资源管理字段
+    private GameObject selectionBoxInstance = null; // 选择框资源实例
+    private const string SELECTION_BOX_PREFAB_PATH = "Prefabs/Ring"; // 选择框预制体路径（需要根据实际资源调整）
 
     /**************************************
-     * UI部分
+     * UI 部分
      *************************************/
 
          // 相机移动相关的常量
@@ -350,6 +354,9 @@ public class Ra2Demo : MonoBehaviour
             isCameraMoving = false;
             isSelecting = false;
             
+            // 创建并显示选择框资源实例，传入世界坐标位置
+            CreateAndShowSelectionBox(worldPosition);
+            
             zUDebug.Log($"[StandaloneBattleDemo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
         }
         else
@@ -458,6 +465,9 @@ public class Ra2Demo : MonoBehaviour
             if (isUnitMoveMode)
             {
                 zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+                
+                // 隐藏选择框实例
+                HideSelectionBox();
                 
                 // 获取目标位置并发送移动命令
                 if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
@@ -1286,9 +1296,9 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 为指定实体禁用OutlineComponent
+    /// 为指定实体禁用 OutlineComponent
     /// </summary>
-    /// <param name="entityId">实体ID</param>
+    /// <param name="entityId">实体 ID</param>
     public void DisableOutlineForEntity(int entityId)
     {
         if (_game == null || _game.World == null || _presentationSystem == null)
@@ -1307,6 +1317,51 @@ public class Ra2Demo : MonoBehaviour
                     outlineComponent.HideCircle();
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// 创建并显示选择框资源实例
+    /// </summary>
+    /// <param name="worldPosition">世界坐标位置（只更新 X 和 Z 轴）</param>
+    private void CreateAndShowSelectionBox(Vector3 worldPosition)
+    {
+        worldPosition.y = 0.1f;
+
+        // 如果已有实例，先隐藏它
+        if (selectionBoxInstance != null)
+        {
+            selectionBoxInstance.transform.position = worldPosition;
+            
+            selectionBoxInstance.SetActive(true);
+            zUDebug.Log($"[StandaloneBattleDemo] 选择框已重新激活并更新位置：{worldPosition}");
+            return;
+        }
+
+        // 实例化选择框预制体
+        selectionBoxInstance = ResourceCache.InstantiatePrefab(SELECTION_BOX_PREFAB_PATH);
+        
+        if (selectionBoxInstance != null)
+        {
+            selectionBoxInstance.transform.position = worldPosition;
+            
+            zUDebug.Log($"[StandaloneBattleDemo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
+        }
+        else
+        {
+            zUDebug.LogWarning($"[StandaloneBattleDemo] 选择框创建失败，请检查资源路径：{SELECTION_BOX_PREFAB_PATH}");
+        }
+    }
+
+    /// <summary>
+    /// 隐藏选择框资源实例
+    /// </summary>
+    private void HideSelectionBox()
+    {
+        if (selectionBoxInstance != null)
+        {
+            selectionBoxInstance.SetActive(false);
+            zUDebug.Log("[StandaloneBattleDemo] 选择框已隐藏");
         }
     }
 
