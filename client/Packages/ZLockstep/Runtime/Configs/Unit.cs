@@ -26,6 +26,7 @@ public class ConfUnit
 	public int AtkCount; // 攻击目标数量
 	public int Speed; // 移动速度
 	public int CostMoney; // 消耗金钱
+	public int ProduceTime; // 生产时间（毫秒）
 	public string Name; // 名称
 	public string Description; // 描述
 }

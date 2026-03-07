@@ -468,6 +468,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: AllowKeysMove
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5433303005404259550, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: CameraTiltMax
       value: 45
       objectReference: {fileID: 0}
