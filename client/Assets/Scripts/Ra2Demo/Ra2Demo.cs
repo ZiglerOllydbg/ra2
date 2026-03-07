@@ -61,6 +61,11 @@ public class Ra2Demo : MonoBehaviour
     // 单位移动模式相关字段
     private bool isUnitMoveMode = false; // 是否处于单位移动模式
     private const float UNIT_SELECTION_RADIUS = 5f; // 单位选择半径（米）
+    
+    // 虚线绘制相关字段
+    private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
+    private Vector2 dragCurrentScreenPos; // 拖拽当前屏幕位置（用于绘制虚线）
+    private bool shouldDrawDragLine = false; // 是否应该绘制拖拽虚线
 
     /**************************************
      * UI部分
@@ -279,6 +284,10 @@ public class Ra2Demo : MonoBehaviour
         // 记录按下状态和起始位置，支持鼠标和触摸
         isPressing = true;
         pressStartPosition = GetCurrentInputPosition();
+        
+        // 记录拖拽起始屏幕位置（用于绘制虚线）
+        dragStartScreenPos = pressStartPosition;
+        shouldDrawDragLine = false; // 初始不绘制虚线
 
         zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}");
 
@@ -367,6 +376,9 @@ public class Ra2Demo : MonoBehaviour
         }
 
         currentPosition = context.ReadValue<Vector2>();
+        
+        // 更新当前屏幕位置（用于绘制虚线）
+        dragCurrentScreenPos = currentPosition;
 
         // 仅在按下状态下处理拖拽
         if (isPressing)
@@ -377,6 +389,9 @@ public class Ra2Demo : MonoBehaviour
             if (isUnitMoveMode)
             {
                 zUDebug.Log($"[StandaloneBattleDemo] OnDrag [单位移动模式] - 忽略拖拽，等待释放");
+                
+                // 启用虚线绘制标志
+                shouldDrawDragLine = true;
             }
             // 如果是相机移动模式
             else if (isCameraMoving)
@@ -434,6 +449,9 @@ public class Ra2Demo : MonoBehaviour
 
         zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
         currentPosition = GetCurrentInputPosition();
+        
+        // 重置虚线绘制标志
+        shouldDrawDragLine = false;
 
         // 检查是否之前处于按下状态（即发生了拖拽）
         if (isPressing)
@@ -924,6 +942,9 @@ public class Ra2Demo : MonoBehaviour
 
         // 绘制框选区域
         DrawSelectionBox();
+        
+        // 绘制拖拽虚线（单位移动模式）
+        DrawDragLine();
 
         DrawGMConsole();
     }
@@ -1002,6 +1023,104 @@ public class Ra2Demo : MonoBehaviour
             GUI.Box(selectionRect, "", selectionStyle);
             GUI.color = oldColor;
         }
+    }
+
+    /// <summary>
+    /// 绘制拖拽虚线（单位移动模式下从起点到目标点）
+    /// </summary>
+    private void DrawDragLine()
+    {
+        // 只有在单位移动模式且需要绘制虚线时才绘制
+        if (!shouldDrawDragLine || !isUnitMoveMode)
+        {
+            return;
+        }
+
+        // 计算线段长度和角度
+        Vector2 delta = dragCurrentScreenPos - dragStartScreenPos;
+        float length = delta.magnitude;
+        float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+
+        // 保存当前 GUI 颜色和矩阵
+        Color oldColor = GUI.color;
+        Matrix4x4 oldMatrix = GUI.matrix;
+
+        // 虚线参数
+        float dashLength = 10f; // 每段虚线长度
+        float gapLength = 5f;   // 虚线间隔
+        float totalDashGap = dashLength + gapLength;
+        int dashCount = Mathf.FloorToInt(length / totalDashGap);
+
+        // 计算方向向量
+        Vector2 direction = delta.normalized;
+
+        // 绘制多段绿色虚线
+        for (int i = 0; i < dashCount; i++)
+        {
+            float startDist = i * totalDashGap;
+            
+            // 计算当前虚线段的起始位置
+            Vector2 startPos = dragStartScreenPos + direction * startDist;
+            
+            // 计算当前虚线段的结束位置
+            Vector2 endPos = startPos + direction * dashLength;
+
+            // 转换为 GUI 坐标（Y 轴翻转）
+            float guiStartX = startPos.x;
+            float guiStartY = Screen.height - startPos.y;
+            float guiEndXLocal = endPos.x;
+            float guiEndYLocal = Screen.height - endPos.y;
+
+            // 绘制当前虚线段（使用绿色）
+            Color lineColor = new Color(0.0f, 1.0f, 0.0f, 0.8f); // 绿色虚线
+            DrawLine(new Vector2(guiStartX, guiStartY), new Vector2(guiEndXLocal, guiEndYLocal), lineColor, 2f);
+        }
+
+        // 恢复 GUI 状态
+        GUI.color = oldColor;
+        GUI.matrix = oldMatrix;
+
+        // 绘制目标点圆圈（绿色）
+        float circleRadius = 8f;
+        float guiEndX = dragCurrentScreenPos.x;
+        float guiEndY = Screen.height - dragCurrentScreenPos.y;
+        
+        Rect targetCircleRect = new Rect(
+            guiEndX - circleRadius, 
+            guiEndY - circleRadius, 
+            circleRadius * 2, 
+            circleRadius * 2
+        );
+        
+        Color circleColor = new Color(0.0f, 1.0f, 0.0f, 0.8f); // 绿色圆圈
+        GUI.color = circleColor;
+        GUI.DrawTexture(targetCircleRect, Texture2D.whiteTexture);
+        
+        // 恢复颜色
+        GUI.color = oldColor;
+    }
+
+    /// <summary>
+    /// 绘制两点之间的线段
+    /// </summary>
+    private void DrawLine(Vector2 start, Vector2 end, Color color, float thickness)
+    {
+        Color oldColor = GUI.color;
+        GUI.color = color;
+        
+        Vector2 delta = end - start;
+        float length = delta.magnitude;
+        float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+
+        // 旋转矩形来匹配线的方向
+        Matrix4x4 oldMatrix = GUI.matrix;
+        GUIUtility.RotateAroundPivot(angle, start);
+        
+        Rect rect = new Rect(start.x, start.y, length, thickness);
+        GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        
+        GUI.matrix = oldMatrix;
+        GUI.color = oldColor;
     }
 
     /// <summary>
