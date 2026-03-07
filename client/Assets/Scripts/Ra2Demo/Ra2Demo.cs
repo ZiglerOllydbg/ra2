@@ -443,10 +443,6 @@ public class Ra2Demo : MonoBehaviour
 
     private void OnRelease(InputAction.CallbackContext context)
     {
-        if (EventSystem.current.IsPointerOverGameObject()) {
-            return;
-        }
-
         zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
         currentPosition = GetCurrentInputPosition();
         
