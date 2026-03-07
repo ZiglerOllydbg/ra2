@@ -29,7 +29,7 @@
       "CostMoney": 0,
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
-      "Name": "金矿",
+      "Name": "油田",
       "Description": ""
     },
     "3": {
@@ -45,8 +45,8 @@
       "CostMoney": 800,
       "CostPower": 5,
       "CreateUnitIDList": 0.0,
-      "Name": "采矿场",
-      "Description": "可采集附近的矿源"
+      "Name": "油井",
+      "Description": "金钱的来源"
     },
     "4": {
       "ID": 4,
@@ -57,7 +57,7 @@
       "Hp": 400,
       "Atk": 0,
       "Def": 5,
-      "ConstructionTime": 5,
+      "ConstructionTime": 8,
       "CostMoney": 500,
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
@@ -73,7 +73,7 @@
       "Hp": 500,
       "Atk": 0,
       "Def": 10,
-      "ConstructionTime": 8,
+      "ConstructionTime": 4,
       "CostMoney": 1000,
       "CostPower": 5,
       "CreateUnitIDList": 1,
@@ -89,7 +89,7 @@
       "Hp": 600,
       "Atk": 0,
       "Def": 20,
-      "ConstructionTime": 10,
+      "ConstructionTime": 20,
       "CostMoney": 2000,
       "CostPower": 10,
       "CreateUnitIDList": "2,3",

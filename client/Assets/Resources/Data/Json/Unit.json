@@ -13,6 +13,7 @@
       "AtkCount": 1,
       "Speed": 5,
       "CostMoney": 100,
+      "ProduceTime": 1800,
       "Name": "大兵",
       "Description": "价格便宜，大量士兵可以快速歼灭灰熊坦克"
     },
@@ -29,6 +30,7 @@
       "AtkCount": 8,
       "Speed": 5,
       "CostMoney": 500,
+      "ProduceTime": 7000,
       "Name": "獾式坦克",
       "Description": "范围攻击，适合快速消灭士兵"
     },
@@ -45,6 +47,7 @@
       "AtkCount": 1,
       "Speed": 5,
       "CostMoney": 800,
+      "ProduceTime": 7000,
       "Name": "灰熊坦克",
       "Description": "价格高昂，攻击极高，适合攻击獾式坦克和建筑"
     }
