@@ -75,42 +75,38 @@ namespace ZLockstep.Simulation.ECS.Systems
                 return;
             }
 
-            // 获取本地玩家阵营ID
+            // 获取本地玩家阵营 ID
             int localPlayerCampId = ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
             
             // 获取所有参与游戏的阵营
             var campIds = GetAllCampIds();
             
-            // 查找各阵营的主建筑状态
-            var baseStatus = new Dictionary<int, bool>(); // true表示主建筑存活，false表示被摧毁
-            foreach (var campId in campIds)
-            {
-                bool isBaseAlive = IsCampBaseAlive(campId);
-                baseStatus[campId] = isBaseAlive;
-            }
-            
-            // 检查本地玩家是否失败（自己的主建筑被摧毁）
-            if (!baseStatus.ContainsKey(localPlayerCampId) || !baseStatus[localPlayerCampId])
+            // 检查本地玩家是否失败（自己的所有建筑都被摧毁）
+            bool hasAliveBuilding = HasAnyAliveBuilding(localPlayerCampId);
+            if (!hasAliveBuilding)
             {
                 // 本地玩家失败
                 var gameOverEvent = new GameOverEvent
                 {
                     IsVictory = false,
-                    WinningCampId = GetFirstAliveEnemyCamp(baseStatus, localPlayerCampId)
+                    WinningCampId = GetFirstAliveCamp(campIds, localPlayerCampId)
                 };
                 EventManager.Publish(gameOverEvent);
                 _gameOver = true;
                 return;
             }
             
-            // 检查本地玩家是否胜利（所有敌方主建筑都被摧毁）
+            // 检查本地玩家是否胜利（所有敌方都没有任何建筑存活）
             bool allEnemiesDefeated = true;
-            foreach (var kvp in baseStatus)
+            foreach (var campId in campIds)
             {
-                if (kvp.Key != localPlayerCampId && kvp.Value)
+                if (campId != localPlayerCampId)
                 {
-                    allEnemiesDefeated = false;
-                    break;
+                    if (HasAnyAliveBuilding(campId))
+                    {
+                        allEnemiesDefeated = false;
+                        break;
+                    }
                 }
             }
             
@@ -128,9 +124,73 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
         
         /// <summary>
-        /// 获取所有参与游戏的阵营ID
+        /// 检查指定阵营是否有任何存活的建筑
         /// </summary>
-        /// <returns>阵营ID列表</returns>
+        /// <param name="campId">阵营 ID</param>
+        /// <returns>true表示至少有一个建筑存活，false表示所有建筑都被摧毁</returns>
+        private bool HasAnyAliveBuilding(int campId)
+        {
+            // 查找该阵营的所有建筑
+            var buildingEntities = ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
+            
+            foreach (var entityId in buildingEntities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 检查是否属于指定阵营
+                if (!ComponentManager.HasComponent<CampComponent>(entity))
+                    continue;
+                    
+                var camp = ComponentManager.GetComponent<CampComponent>(entity);
+                if (camp.CampId != campId)
+                    continue;
+                
+                // 检查建筑是否被标记为死亡
+                if (ComponentManager.HasComponent<DeathComponent>(entity))
+                    continue;
+                    
+                // 检查建筑血量
+                if (ComponentManager.HasComponent<HealthComponent>(entity))
+                {
+                    var health = ComponentManager.GetComponent<HealthComponent>(entity);
+                    if (health.CurrentHealth <= zfloat.Zero)
+                        continue;
+                } else
+                {
+                    // 没有血量的油田
+                    continue;
+                }
+                
+                // 找到一个存活的建筑
+                return true;
+            }
+            
+            // 没有任何存活的建筑
+            return false;
+        }
+        
+        /// <summary>
+        /// 获取第一个存活的阵营ID（除了本地玩家阵营）
+        /// </summary>
+        /// <param name="campIds">所有阵营ID列表</param>
+        /// <param name="localPlayerCampId">本地玩家阵营ID</param>
+        /// <returns>第一个存活的阵营ID，如果没有则返回-1</returns>
+        private int GetFirstAliveCamp(List<int> campIds, int localPlayerCampId)
+        {
+            foreach (var campId in campIds)
+            {
+                if (campId != localPlayerCampId && HasAnyAliveBuilding(campId))
+                {
+                    return campId;
+                }
+            }
+            return -1;
+        }
+        
+        /// <summary>
+        /// 获取所有参与游戏的阵营 ID
+        /// </summary>
+        /// <returns>阵营 ID 列表</returns>
         private List<int> GetAllCampIds()
         {
             var campIds = new List<int>();
@@ -149,53 +209,5 @@ namespace ZLockstep.Simulation.ECS.Systems
             return campIds;
         }
         
-        /// <summary>
-        /// 检查指定阵营的主建筑是否存活
-        /// </summary>
-        /// <param name="campId">阵营ID</param>
-        /// <returns>true表示主建筑存活，false表示被摧毁</returns>
-        private bool IsCampBaseAlive(int campId)
-        {
-            // 查找该阵营的主建筑（使用MainBase组件优化查找）
-            var (mainBaseComponent, buildingEntity) = ComponentManager.GetComponentWithCondition<MainBaseComponent>(
-                e => ComponentManager.HasComponent<CampComponent>(e) && 
-                     ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
-            
-            // 如果找不到主建筑，认为已被摧毁
-            if (buildingEntity.Id == -1)
-                return false;
-                
-            // 检查主建筑是否被标记为死亡
-            if (ComponentManager.HasComponent<DeathComponent>(buildingEntity))
-                return false;
-                
-            // 检查主建筑血量
-            if (ComponentManager.HasComponent<HealthComponent>(buildingEntity))
-            {
-                var health = ComponentManager.GetComponent<HealthComponent>(buildingEntity);
-                if (health.CurrentHealth <= zfloat.Zero)
-                    return false;
-            }
-            
-            return true;
-        }
-        
-        /// <summary>
-        /// 获取第一个存活的敌方阵营ID
-        /// </summary>
-        /// <param name="baseStatus">各阵营主建筑状态</param>
-        /// <param name="localPlayerCampId">本地玩家阵营ID</param>
-        /// <returns>第一个存活的敌方阵营ID，如果没有则返回-1</returns>
-        private int GetFirstAliveEnemyCamp(Dictionary<int, bool> baseStatus, int localPlayerCampId)
-        {
-            foreach (var kvp in baseStatus)
-            {
-                if (kvp.Key != localPlayerCampId && kvp.Value)
-                {
-                    return kvp.Key;
-                }
-            }
-            return -1;
-        }
     }
 }
