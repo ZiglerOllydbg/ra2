@@ -1360,6 +1360,16 @@ public class Ra2Demo : MonoBehaviour
         if (selectionBoxInstance != null)
         {
             selectionBoxInstance.transform.position = worldPosition;
+            // 如果unitSelectionRadius==15，设置size*3，否则默认尺寸
+            if (unitSelectionRadius == 15)
+            {
+                selectionBoxInstance.transform.localScale = new Vector3(3, 1, 3);
+            }
+            else
+            {
+                selectionBoxInstance.transform.localScale = new Vector3(1, 1, 1);
+            }
+            
             
             // 恢复透明度为完全不透明
             var renderer = selectionBoxInstance.GetComponentInChildren<Renderer>();
