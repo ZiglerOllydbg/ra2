@@ -1370,7 +1370,6 @@ public class Ra2Demo : MonoBehaviour
                 selectionBoxInstance.transform.localScale = new Vector3(1, 1, 1);
             }
             
-            
             // 恢复透明度为完全不透明
             var renderer = selectionBoxInstance.GetComponentInChildren<Renderer>();
             if (renderer != null)
