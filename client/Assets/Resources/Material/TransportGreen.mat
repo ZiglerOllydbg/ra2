@@ -10,7 +10,6 @@ Material:
   m_Name: TransportGreen
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_ValidKeywords:
-  - _ALPHATEST_ON
   - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -83,7 +82,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaClip: 1
+    - _AlphaClip: 0
     - _Blend: 0
     - _BumpScale: 1
     - _ClearCoatMask: 0
@@ -110,8 +109,8 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.08788714, g: 0.745283, b: 0.14154126, a: 0.5882353}
-    - _Color: {r: 0.08788714, g: 0.745283, b: 0.14154126, a: 0.5882353}
+    - _BaseColor: {r: 0.04160734, g: 0.5188679, b: 0.075529866, a: 0.6}
+    - _Color: {r: 0.04160734, g: 0.5188679, b: 0.075529866, a: 0.6}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []

@@ -14,6 +14,7 @@ using ZFrame;
 using System;
 using Unity.VisualScripting;
 using UnityEngine.EventSystems;
+using ZLib;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -89,6 +90,11 @@ public class Ra2Demo : MonoBehaviour
     // 选择框资源管理字段
     private GameObject selectionBoxInstance = null; // 选择框资源实例
     private const string SELECTION_BOX_PREFAB_PATH = "Prefabs/Ring"; // 选择框预制体路径（需要根据实际资源调整）
+    
+    // 淡出效果相关字段
+    private bool isFadingOut = false; // 是否正在淡出
+    private float fadeOutStartTime = 0f; // 淡出开始时间
+    private const float FADE_OUT_DURATION = 0.3f; // 淡出持续时间（秒）
 
     /**************************************
      * UI 部分
@@ -374,7 +380,7 @@ public class Ra2Demo : MonoBehaviour
             isSelecting = false;
             
             // 创建并显示选择框资源实例，传入世界坐标位置
-            // CreateAndShowSelectionBox(worldPosition);
+            CreateAndShowSelectionBox(worldPosition);
             
             zUDebug.Log($"[StandaloneBattleDemo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
         }
@@ -486,7 +492,7 @@ public class Ra2Demo : MonoBehaviour
                 zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
                 
                 // 隐藏选择框实例
-                // HideSelectionBox();
+                HideSelectionBox();
                 
                 // 获取目标位置并发送移动命令
                 if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
@@ -874,6 +880,9 @@ public class Ra2Demo : MonoBehaviour
         UpdateBuildingPreview();
 
         UpdateCameraMovement();
+        
+        // 更新淡出效果
+        UpdateFadeOut();
     }
 
     /// <summary>
@@ -1352,23 +1361,97 @@ public class Ra2Demo : MonoBehaviour
         {
             selectionBoxInstance.transform.position = worldPosition;
             
+            // 恢复透明度为完全不透明
+            var renderer = selectionBoxInstance.GetComponentInChildren<Renderer>();
+            if (renderer != null)
+            {
+                Material material = renderer.material;
+                Color color = material.color;
+                material.color = new Color(color.r, color.g, color.b, 0.5f);
+            }
+            
             selectionBoxInstance.SetActive(true);
             zUDebug.Log($"[StandaloneBattleDemo] 选择框已重新激活并更新位置：{worldPosition}");
-            return;
-        }
-
-        // 实例化选择框预制体
-        selectionBoxInstance = ResourceCache.InstantiatePrefab(SELECTION_BOX_PREFAB_PATH);
-        
-        if (selectionBoxInstance != null)
-        {
-            selectionBoxInstance.transform.position = worldPosition;
-            
-            zUDebug.Log($"[StandaloneBattleDemo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
         }
         else
         {
-            zUDebug.LogWarning($"[StandaloneBattleDemo] 选择框创建失败，请检查资源路径：{SELECTION_BOX_PREFAB_PATH}");
+            // 实例化选择框预制体
+            selectionBoxInstance = ResourceCache.InstantiatePrefab(SELECTION_BOX_PREFAB_PATH);
+            
+            if (selectionBoxInstance != null)
+            {
+                selectionBoxInstance.transform.position = worldPosition;
+                
+                zUDebug.Log($"[StandaloneBattleDemo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
+            }
+            else
+            {
+                zUDebug.LogWarning($"[StandaloneBattleDemo] 选择框创建失败，请检查资源路径：{SELECTION_BOX_PREFAB_PATH}");
+                return;
+            }
+        }
+
+        // 设置淡出定时器：0.5 秒后开始淡出
+        fadeOutStartTime = Time.time + 0.3f;
+        isFadingOut = true;
+    }
+
+    /// <summary>
+    /// 淡出选择框（在 Update 中调用）
+    /// </summary>
+    private void UpdateFadeOut()
+    {
+        if (!isFadingOut || selectionBoxInstance == null)
+            return;
+
+        // 检查是否到了开始淡出的时间
+        if (Time.time < fadeOutStartTime)
+            return;
+
+        // 获取 Renderer 组件
+        var renderer = selectionBoxInstance.GetComponentInChildren<Renderer>();
+
+        if (renderer != null)
+        {
+            float elapsed = Time.time - fadeOutStartTime;
+            
+            if (elapsed >= FADE_OUT_DURATION)
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] 选择框淡出完成：{elapsed} / {FADE_OUT_DURATION}");
+                // 淡出完成，隐藏对象
+                HideSelectionBox();
+                isFadingOut = false;
+                
+                // 恢复原始颜色（下次使用时正常显示）
+                Material resetMaterial = selectionBoxInstance.GetComponentInChildren<Renderer>()?.material;
+                if (resetMaterial != null)
+                {
+                    Color originalColor = resetMaterial.color;
+                    resetMaterial.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
+                }
+            }
+            else
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] 选择框淡出中：{elapsed} / {FADE_OUT_DURATION}");
+                // 计算透明度（线性插值）
+                float t = elapsed / FADE_OUT_DURATION;
+                Material material = renderer.material;
+                Color originalColor = material.color;
+                
+                // 设置新的透明度
+                material.color = new Color(
+                    originalColor.r,
+                    originalColor.g,
+                    originalColor.b,
+                    Mathf.Lerp(0.5f, 0f, t)
+                );
+            }
+        }
+        else
+        {
+            // 如果没有 Renderer，直接隐藏
+            HideSelectionBox();
+            isFadingOut = false;
         }
     }
 
