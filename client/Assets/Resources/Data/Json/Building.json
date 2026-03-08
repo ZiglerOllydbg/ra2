@@ -74,11 +74,11 @@
       "Atk": 0,
       "Def": 10,
       "ConstructionTime": 4,
-      "CostMoney": 1000,
+      "CostMoney": 500,
       "CostPower": 5,
       "CreateUnitIDList": 1,
       "Name": "兵营",
-      "Description": "可训练步兵单位"
+      "Description": "可生产步兵单位"
     },
     "6": {
       "ID": 6,
@@ -94,7 +94,7 @@
       "CostPower": 10,
       "CreateUnitIDList": "2,3",
       "Name": "战车工厂",
-      "Description": "可生产装甲单位"
+      "Description": "可生产坦克单位"
     },
     "7": {
       "ID": 7,
@@ -109,7 +109,7 @@
       "CostMoney": 500,
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
-      "Name": "防御塔",
+      "Name": "碉堡",
       "Description": "自动攻击范围内的敌人"
     }
   },
