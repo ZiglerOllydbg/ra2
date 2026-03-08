@@ -7,7 +7,7 @@
       "SubType": 0.0,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "10,0,10",
+      "Position": "15,0,15",
       "Note": "主基地",
       "Enabled": 1
     },
@@ -73,7 +73,7 @@
       "SubType": 1,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "16,0,16",
+      "Position": "20,0,20",
       "Note": "坦克1",
       "Enabled": 1
     },
@@ -84,7 +84,7 @@
       "SubType": 2,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "16,0,12",
+      "Position": "20,0,18",
       "Note": "坦克2",
       "Enabled": 1
     },
@@ -95,7 +95,7 @@
       "SubType": 3,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "12,0,16",
+      "Position": "18,0,20",
       "Note": "坦克3",
       "Enabled": 1
     },
