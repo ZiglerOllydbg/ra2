@@ -27,6 +27,9 @@ public class MainPanel : BasePanel
     private Button buildBtn;
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
+    
+    // 选择半径切换按钮
+    private Button selectionRadiusBtn;
 
     // 确认和取消
     private Button confirmOkBtn;
@@ -80,7 +83,20 @@ public class MainPanel : BasePanel
         buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
         producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>(); // 新增生产按钮
-
+        
+        // 获取选择半径切换按钮
+        selectionRadiusBtn = PanelObject.transform.Find("SelectionRadiusBtn")?.GetComponent<Button>();
+        
+        // 初始化按钮文本为默认值
+        if (selectionRadiusBtn != null)
+        {
+            TMP_Text radiusBtnText = selectionRadiusBtn.GetComponentInChildren<TMP_Text>();
+            if (radiusBtnText != null)
+            {
+                radiusBtnText.text = "移动选择小部队";
+            }
+        }
+        
         confirmOkBtn = PanelObject.transform.Find("Confirm/OK")?.GetComponent<Button>();
         confirmCancelBtn = PanelObject.transform.Find("Confirm/Cancel")?.GetComponent<Button>();
         HideConfirm();
@@ -189,6 +205,12 @@ public class MainPanel : BasePanel
             producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
 
+        // 选择半径切换按钮事件监听
+        if (selectionRadiusBtn != null)
+        {
+            selectionRadiusBtn.onClick.AddListener(OnSelectionRadiusButtonClick);
+        }
+
         if (confirmOkBtn != null)
         {
             confirmOkBtn.onClick.AddListener(OnConfirmOkClick);
@@ -225,6 +247,12 @@ public class MainPanel : BasePanel
         if (producerBtn != null)
         {
             producerBtn.onClick.RemoveListener(OnProducerButtonClick);
+        }
+
+        // 移除选择半径切换按钮事件监听
+        if (selectionRadiusBtn != null)
+        {
+            selectionRadiusBtn.onClick.RemoveListener(OnSelectionRadiusButtonClick);
         }
 
         if (confirmOkBtn != null)
@@ -550,6 +578,38 @@ public class MainPanel : BasePanel
             };
             // 显示子面板
             settingSubPanel.Show(subPanelData);
+        }
+    }
+    
+    /// <summary>
+    /// 选择半径切换按钮点击处理 - 切换小部队/大部队选择模式
+    /// </summary>
+    private void OnSelectionRadiusButtonClick()
+    {
+        if (selectionRadiusBtn == null) return;
+        
+        TMP_Text buttonText = selectionRadiusBtn.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            // 根据当前文本切换选择半径
+            if (buttonText.text == "移动选择小部队")
+            {
+                // 切换到大部队模式（15 米）
+                Ra2Demo.SetUnitSelectionRadius(15f);
+                buttonText.text = "移动选择大部队";
+                ShowMessage("切换到移动选择大部队模式（15 米）");
+            }
+            else
+            {
+                // 切换到小部队模式（5 米）
+                Ra2Demo.SetUnitSelectionRadius(5f);
+                buttonText.text = "移动选择小部队";
+                ShowMessage("切换到移动选择小部队模式（5 米）");
+            }
+        }
+        else
+        {
+            zUDebug.LogError("[MainPanel] Can't find selection radius button text component!");
         }
     }
 }

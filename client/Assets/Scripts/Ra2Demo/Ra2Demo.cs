@@ -60,7 +60,26 @@ public class Ra2Demo : MonoBehaviour
     
     // 单位移动模式相关字段
     private bool isUnitMoveMode = false; // 是否处于单位移动模式
-    private const float UNIT_SELECTION_RADIUS = 5f; // 单位选择半径（米）
+    private float unitSelectionRadius = 5f; // 单位选择半径（米）
+    
+    /// <summary>
+    /// 设置单位选择半径
+    /// </summary>
+    /// <param name="radius">选择半径（米）</param>
+    public void SetUnitSelectionRadius(float radius)
+    {
+        unitSelectionRadius = radius;
+        zUDebug.Log($"[Ra2Demo] 单位选择半径已设置为：{radius}m");
+    }
+    
+    /// <summary>
+    /// 获取当前单位选择半径
+    /// </summary>
+    /// <returns>选择半径（米）</returns>
+    public float GetUnitSelectionRadius()
+    {
+        return unitSelectionRadius;
+    }
     
     // 虚线绘制相关字段
     private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
@@ -331,7 +350,7 @@ public class Ra2Demo : MonoBehaviour
                 Vector3 unitWorldPosition = transform.Position.ToVector3();
                 float distance = Vector3.Distance(unitWorldPosition, worldPosition);
 
-                if (distance <= UNIT_SELECTION_RADIUS)
+                if (distance <= unitSelectionRadius)
                 {
                     hasUnitInRange = true;
                     
