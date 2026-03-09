@@ -167,7 +167,7 @@ namespace ZLockstep.Simulation.ECS
             // 12. 如果是矿源，添加矿源组件
             if (buildingType == BuildingType.Mine) // 矿源
             {
-                // 添加矿源组件，初始资源5000
+                // 添加矿源组件，初始资源20000
                 var mineComponent = MineComponent.CreateDefault();
                 world.ComponentManager.AddComponent(entity, mineComponent);
             }
