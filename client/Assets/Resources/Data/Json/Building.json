@@ -128,7 +128,7 @@
       "CampID": 1,
       "Type": 4,
       "Count": 2,
-      "Position": "5,0,10;5,0,15",
+      "Position": "5,0,15;5,0,25",
       "Name": "电厂",
       "Enabled": 1
     },
@@ -137,7 +137,7 @@
       "CampID": 1,
       "Type": 5,
       "Count": 1,
-      "Position": "10,0,5",
+      "Position": "15,0,5",
       "Name": "兵营",
       "Enabled": 1
     },
@@ -146,7 +146,7 @@
       "CampID": 1,
       "Type": 6,
       "Count": 1,
-      "Position": "15,0,5",
+      "Position": "25,0,5",
       "Name": "坦克工厂",
       "Enabled": 1
     },
@@ -154,8 +154,8 @@
       "ID": 5,
       "CampID": 1,
       "Type": 7,
-      "Count": 2,
-      "Position": "12,0,18;18,0,12",
+      "Count": 5,
+      "Position": "15,0,22;22,0,15;10,0,30;30,0,10;10,0,10",
       "Name": "防御塔",
       "Enabled": 1
     },

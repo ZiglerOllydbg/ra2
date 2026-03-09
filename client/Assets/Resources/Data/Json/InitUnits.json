@@ -40,7 +40,7 @@
       "SubType": 0.0,
       "ConfID": 4,
       "PrefabId": 0,
-      "Position": "5,0,10",
+      "Position": "5,0,15",
       "Note": "电厂",
       "Enabled": 0
     },
@@ -51,7 +51,7 @@
       "SubType": 0.0,
       "ConfID": 5,
       "PrefabId": 0,
-      "Position": "10,0,5",
+      "Position": "15,0,5",
       "Note": "兵营",
       "Enabled": 0
     },
@@ -62,7 +62,7 @@
       "SubType": 0.0,
       "ConfID": 6,
       "PrefabId": 0,
-      "Position": "15,0,5",
+      "Position": "20,0,5",
       "Note": "坦克工厂",
       "Enabled": 0
     },
@@ -227,7 +227,7 @@
       "SubType": 3,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "16,0,40",
+      "Position": "20,0,45",
       "Note": "坦克",
       "Enabled": 1
     },
@@ -238,7 +238,7 @@
       "SubType": 3,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "16,0,42",
+      "Position": "20,0,48",
       "Note": "坦克",
       "Enabled": 1
     },
