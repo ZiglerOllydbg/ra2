@@ -63,7 +63,7 @@ public class Ra2Demo : MonoBehaviour
     private bool isUnitMoveMode = false; // 是否处于单位移动模式
     private float unitSelectionRadius = 5f; // 单位选择半径（米）
 
-    private float tapSelectRadius = 3f; // 单击时点击的半径（米）
+    private float tapSelectRadius = 5f; // 单击时点击的半径（米）
     
     /// <summary>
     /// 设置单位选择半径
