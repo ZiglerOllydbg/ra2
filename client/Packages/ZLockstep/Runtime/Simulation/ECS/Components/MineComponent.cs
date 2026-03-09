@@ -24,12 +24,12 @@ namespace ZLockstep.Simulation.ECS.Components
         }
 
         /// <summary>
-        /// 创建默认矿源组件（5000资源）
+        /// 创建默认矿源组件（20000资源）
         /// </summary>
         /// <returns>矿源组件</returns>
         public static MineComponent CreateDefault()
         {
-            return new MineComponent(5000);
+            return new MineComponent(20000);
         }
 
         /// <summary>
