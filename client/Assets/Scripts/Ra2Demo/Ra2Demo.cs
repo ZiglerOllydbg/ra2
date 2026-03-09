@@ -62,6 +62,8 @@ public class Ra2Demo : MonoBehaviour
     // 单位移动模式相关字段
     private bool isUnitMoveMode = false; // 是否处于单位移动模式
     private float unitSelectionRadius = 5f; // 单位选择半径（米）
+
+    private float tapSelectRadius = 3f; // 单击时点击的半径（米）
     
     /// <summary>
     /// 设置单位选择半径
@@ -324,9 +326,43 @@ public class Ra2Demo : MonoBehaviour
         Vector3 worldPosition = Vector3.zero;
         bool hasGroundPosition = TryGetGroundPosition(pressStartPosition, out worldPosition);
 
-        // 检测 5 米范围内是否有单位（只检测本地玩家的单位）
         bool hasUnitInRange = false;
         if (hasGroundPosition && _game != null && _game.World != null)
+        {
+            var entities = _game.World.ComponentManager
+                .GetAllEntityIdsWith<TransformComponent>();
+
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 检查实体是否包含 LocalPlayerComponent（只有本地玩家单位才能被选择）
+                if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
+                {
+                    continue;
+                }
+
+                if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+                {
+                    continue; // 跳过非单位实体
+                }
+
+                var transform = _game.World.ComponentManager
+                    .GetComponent<TransformComponent>(entity);
+
+                // 计算与点击位置的距离
+                Vector3 unitWorldPosition = transform.Position.ToVector3();
+                float distance = Vector3.Distance(unitWorldPosition, worldPosition);
+
+                if (distance <= tapSelectRadius)
+                {
+                    hasUnitInRange = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasUnitInRange)
         {
             // 清空之前的选择
             ClearAllOutlines();
@@ -358,8 +394,6 @@ public class Ra2Demo : MonoBehaviour
 
                 if (distance <= unitSelectionRadius)
                 {
-                    hasUnitInRange = true;
-                    
                     // 添加到选中列表
                     selectedEntityIds.Add(entityId);
                     
@@ -372,7 +406,7 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 根据是否有单位在范围内决定模式
-        if (hasUnitInRange)
+        if (hasUnitInRange && selectedEntityIds.Count > 0)
         {
             // 进入单位移动模式
             isUnitMoveMode = true;
