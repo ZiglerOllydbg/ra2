@@ -375,6 +375,7 @@ namespace ZLockstep.Simulation.ECS
             {
                 return new AttackComponent
                 {
+                    MaxTargets = 4,
                     ConfProjectileID = 2, // FIXME: 碉堡的子弹
                     Damage = (zfloat)confBuilding.Atk,
                     Range = (zfloat)12.0f,

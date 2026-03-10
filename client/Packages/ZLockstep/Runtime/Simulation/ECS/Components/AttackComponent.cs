@@ -7,18 +7,24 @@ namespace ZLockstep.Simulation.ECS.Components
     public struct AttackComponent : IComponent
     {
         /// <summary>
-        /// 子弹 ID
+        /// 最大攻击目标数量
         /// </summary>
-        public int ConfProjectileID;
-        /// <summary>
-        /// 攻击伤害
-        /// </summary>
-        public zfloat Damage;
+        public int MaxTargets;
 
         /// <summary>
         /// 攻击范围
         /// </summary>
         public zfloat Range;
+
+        /// <summary>
+        /// 子弹 ID
+        /// </summary>
+        public int ConfProjectileID;
+
+        /// <summary>
+        /// 攻击伤害
+        /// </summary>
+        public zfloat Damage;
 
         /// <summary>
         /// 攻击间隔（秒）
@@ -34,11 +40,6 @@ namespace ZLockstep.Simulation.ECS.Components
         /// 当前目标实体 ID（-1 表示无目标）
         /// </summary>
         public int TargetEntityId;
-
-        /// <summary>
-        /// 最大攻击目标数量
-        /// </summary>
-        public int MaxTargets;
 
         /// <summary>
         /// 能否攻击
