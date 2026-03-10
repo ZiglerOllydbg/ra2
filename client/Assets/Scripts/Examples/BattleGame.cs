@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.Events;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Sync.Command;
+using ZLockstep.Simulation.ECS.Systems.AI;
 
 namespace Game.Examples
 {
@@ -39,11 +40,6 @@ namespace Game.Examples
         /// 导航系统
         /// </summary>
         public FlowFieldNavigationSystem NavSystem { get; private set; }
-
-        /// <summary>
-        /// AI系统
-        /// </summary>
-        public SimpleAISystem AISystem { get; private set; }
 
         public BattleGame(GameMode mode = GameMode.Standalone, int frameRate = 30, int localPlayerId = 0)
             : base(mode, frameRate, localPlayerId)
@@ -158,7 +154,8 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new DeathRemovalSystem());
 
             // 注册AI系统
-            AISystem = new SimpleAISystem();
+            // AISystem = new SimpleAISystem();
+            FirstAISystem AISystem = new FirstAISystem();
             World.SystemManager.RegisterSystem(AISystem);
             AISystem.Initialize(NavSystem);
 
