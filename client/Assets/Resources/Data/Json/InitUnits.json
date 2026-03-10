@@ -240,7 +240,7 @@
       "PrefabId": 0,
       "Position": "111,0,111",
       "Note": "坦克",
-      "Enabled": 0
+      "Enabled": 1
     },
     "108": {
       "ID": 108,
@@ -251,7 +251,7 @@
       "PrefabId": 0,
       "Position": "111,0,115",
       "Note": "坦克",
-      "Enabled": 0
+      "Enabled": 1
     },
     "109": {
       "ID": 109,
@@ -262,7 +262,7 @@
       "PrefabId": 0,
       "Position": "115,0,111",
       "Note": "坦克",
-      "Enabled": 0
+      "Enabled": 1
     },
     "110": {
       "ID": 110,

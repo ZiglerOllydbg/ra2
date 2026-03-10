@@ -20,12 +20,12 @@ namespace Game.Examples
         /// <summary>
         /// AI阵营ID
         /// </summary>
-        private const int AI_CAMP_ID = 1;
+        private const int AI_CAMP_ID = 2;
 
         /// <summary>
         /// 玩家阵营ID
         /// </summary>
-        private const int PLAYER_CAMP_ID = 0;
+        private const int PLAYER_CAMP_ID = 1;
 
         /// <summary>
         /// 重新评估目标的间隔（秒）
@@ -109,7 +109,7 @@ namespace Game.Examples
                 var building = ComponentManager.GetComponent<BuildingComponent>(entity);
 
                 // 找到玩家的基地（BuildingType=0）
-                if (camp.CampId == PLAYER_CAMP_ID && building.BuildingType == 0)
+                if (camp.CampId == PLAYER_CAMP_ID && building.BuildingType == (int)BuildingType.Base)
                 {
                     if (ComponentManager.HasComponent<TransformComponent>(entity))
                     {
