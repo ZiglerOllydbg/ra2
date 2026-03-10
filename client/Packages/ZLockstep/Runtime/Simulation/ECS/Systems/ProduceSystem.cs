@@ -105,7 +105,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <param name="factoryPosition">工厂位置</param>
         private void CreateUnit(zWorld world, Entity factoryEntity, UnitType unitType, zVector3 factoryPosition)
         {
-            // 获取阵营组件以确定玩家ID
+            // 获取阵营组件以确定玩家 ID
             if (!ComponentManager.HasComponent<CampComponent>(factoryEntity))
             {
                 UnityEngine.Debug.LogWarning($"[ProduceSystem] 工厂实体 {factoryEntity.Id} 没有阵营组件");
@@ -115,13 +115,34 @@ namespace ZLockstep.Simulation.ECS.Systems
             var campComponent = ComponentManager.GetComponent<CampComponent>(factoryEntity);
             int playerId = campComponent.CampId;
             
-            // 简单地在工厂位置附近创建单位
-            // 在实际实现中，可能需要更复杂的逻辑来确定单位的精确生成位置
+            // 从 ConfCamp 配置表中读取生产出生点
             zVector3 spawnPosition = factoryPosition;
-            spawnPosition.x += (zfloat)5.0f; // 稍微偏移位置
+           List<ConfCamp> confCamps = ConfigManager.GetAll<ConfCamp>();
+            foreach (var confCamp in confCamps)
+            {
+                if (confCamp.ID == playerId)
+                {
+                    if (unitType == UnitType.Infantry)
+                    {
+                        // 解析生产位置字符串（格式："x,y,z"）
+                        if (!string.IsNullOrEmpty(confCamp.BarracksPosition))
+                        {
+                            spawnPosition = StringToVector3Converter.StringToZVector3(confCamp.BarracksPosition);
+                        }
+                    } 
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(confCamp.VehicleFactoryPosition))
+                        {
+                            spawnPosition = StringToVector3Converter.StringToZVector3(confCamp.VehicleFactoryPosition);
+                        }    
+                    }
+                    break;
+                }
+            }
             
-            // 使用EntityCreationManager创建单位
-            int prefabId = 6; // 默认预制体ID
+            // 使用 EntityCreationManager 创建单位
+            int prefabId = 6; // 默认预制体 ID
             
             var unitEvent = EntityCreationManager.CreateUnitEntity(World, playerId, unitType, spawnPosition, prefabId);
             
