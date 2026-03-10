@@ -117,7 +117,7 @@
       "SubType": 0.0,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "110,0,103",
+      "Position": "105,0,105",
       "Note": "防御塔1",
       "Enabled": 1
     },
@@ -128,7 +128,7 @@
       "SubType": 0.0,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "103,0,110",
+      "Position": "115,0,105",
       "Note": "防御塔2",
       "Enabled": 1
     },
@@ -139,7 +139,7 @@
       "SubType": 0.0,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "95,0,115",
+      "Position": "105,0,115",
       "Note": "防御塔3",
       "Enabled": 1
     },
@@ -150,19 +150,8 @@
       "SubType": 0.0,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "115,0,95",
-      "Note": "防御塔4",
-      "Enabled": 1
-    },
-    "15": {
-      "ID": 15,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 7,
-      "PrefabId": 0,
       "Position": "115,0,115",
-      "Note": "防御塔5",
+      "Note": "防御塔4",
       "Enabled": 1
     },
     "101": {

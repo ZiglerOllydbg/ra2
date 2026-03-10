@@ -1,0 +1,14 @@
+{
+  "ConfCamp": {
+    "1": {
+      "ID": 1,
+      "BarracksPosition": "10,0,30",
+      "VehicleFactoryPosition": "30,0,10"
+    },
+    "2": {
+      "ID": 2,
+      "BarracksPosition": "115,0,95",
+      "VehicleFactoryPosition": "95,0,115"
+    }
+  }
+}
