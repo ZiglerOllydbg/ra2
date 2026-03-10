@@ -25,6 +25,149 @@
     "3": {
       "ID": 3,
       "Camp": 1,
+      "Type": 2,
+      "SubType": 1,
+      "ConfID": 0.0,
+      "PrefabId": 0,
+      "Position": "20,0,20",
+      "Note": "士兵",
+      "Enabled": 1
+    },
+    "4": {
+      "ID": 4,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 1,
+      "PrefabId": 0,
+      "Position": "110,0,110",
+      "Note": "主基地",
+      "Enabled": 1
+    },
+    "5": {
+      "ID": 5,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 2,
+      "PrefabId": 0,
+      "Position": "120,0,120",
+      "Note": "金矿",
+      "Enabled": 1
+    },
+    "6": {
+      "ID": 6,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 3,
+      "PrefabId": 0,
+      "Position": "120,0,120",
+      "Note": "采矿场",
+      "Enabled": 1
+    },
+    "7": {
+      "ID": 7,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 4,
+      "PrefabId": 0,
+      "Position": "120,0,110",
+      "Note": "电厂",
+      "Enabled": 1
+    },
+    "8": {
+      "ID": 8,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 4,
+      "PrefabId": 0,
+      "Position": "120,0,100",
+      "Note": "电厂",
+      "Enabled": 1
+    },
+    "9": {
+      "ID": 9,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 5,
+      "PrefabId": 0,
+      "Position": "110,0,120",
+      "Note": "兵营",
+      "Enabled": 1
+    },
+    "10": {
+      "ID": 10,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 6,
+      "PrefabId": 0,
+      "Position": "100,0,120",
+      "Note": "坦克工厂",
+      "Enabled": 1
+    },
+    "11": {
+      "ID": 11,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0,
+      "Position": "110,0,103",
+      "Note": "防御塔1",
+      "Enabled": 1
+    },
+    "12": {
+      "ID": 12,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0,
+      "Position": "103,0,110",
+      "Note": "防御塔2",
+      "Enabled": 1
+    },
+    "13": {
+      "ID": 13,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0,
+      "Position": "95,0,115",
+      "Note": "防御塔3",
+      "Enabled": 1
+    },
+    "14": {
+      "ID": 14,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0,
+      "Position": "115,0,95",
+      "Note": "防御塔4",
+      "Enabled": 1
+    },
+    "15": {
+      "ID": 15,
+      "Camp": 2,
+      "Type": 1,
+      "SubType": 0.0,
+      "ConfID": 7,
+      "PrefabId": 0,
+      "Position": "115,0,115",
+      "Note": "防御塔5",
+      "Enabled": 1
+    },
+    "101": {
+      "ID": 101,
+      "Camp": 1,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 3,
@@ -33,8 +176,8 @@
       "Note": "采矿场",
       "Enabled": 0
     },
-    "4": {
-      "ID": 4,
+    "102": {
+      "ID": 102,
       "Camp": 1,
       "Type": 1,
       "SubType": 0.0,
@@ -44,8 +187,8 @@
       "Note": "电厂",
       "Enabled": 0
     },
-    "5": {
-      "ID": 5,
+    "103": {
+      "ID": 103,
       "Camp": 1,
       "Type": 1,
       "SubType": 0.0,
@@ -55,8 +198,8 @@
       "Note": "兵营",
       "Enabled": 0
     },
-    "6": {
-      "ID": 6,
+    "104": {
+      "ID": 104,
       "Camp": 1,
       "Type": 1,
       "SubType": 0.0,
@@ -66,19 +209,8 @@
       "Note": "坦克工厂",
       "Enabled": 0
     },
-    "7": {
-      "ID": 7,
-      "Camp": 1,
-      "Type": 2,
-      "SubType": 1,
-      "ConfID": 0.0,
-      "PrefabId": 0,
-      "Position": "20,0,20",
-      "Note": "坦克1",
-      "Enabled": 1
-    },
-    "8": {
-      "ID": 8,
+    "105": {
+      "ID": 105,
       "Camp": 1,
       "Type": 2,
       "SubType": 2,
@@ -86,10 +218,10 @@
       "PrefabId": 0,
       "Position": "20,0,18",
       "Note": "坦克2",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "9": {
-      "ID": 9,
+    "106": {
+      "ID": 106,
       "Camp": 1,
       "Type": 2,
       "SubType": 3,
@@ -97,98 +229,10 @@
       "PrefabId": 0,
       "Position": "18,0,20",
       "Note": "坦克3",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "10": {
-      "ID": 10,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 1,
-      "PrefabId": 0,
-      "Position": "117,0,117",
-      "Note": "主基地",
-      "Enabled": 1
-    },
-    "11": {
-      "ID": 11,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 2,
-      "PrefabId": 0,
-      "Position": "122,0,122",
-      "Note": "金矿",
-      "Enabled": 1
-    },
-    "12": {
-      "ID": 12,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 3,
-      "PrefabId": 0,
-      "Position": "122,0,122",
-      "Note": "采矿场",
-      "Enabled": 1
-    },
-    "13": {
-      "ID": 13,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 4,
-      "PrefabId": 0,
-      "Position": "122,0,117",
-      "Note": "电厂",
-      "Enabled": 1
-    },
-    "14": {
-      "ID": 14,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 5,
-      "PrefabId": 0,
-      "Position": "117,0,122",
-      "Note": "兵营",
-      "Enabled": 1
-    },
-    "15": {
-      "ID": 15,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 6,
-      "PrefabId": 0,
-      "Position": "112,0,122",
-      "Note": "坦克工厂",
-      "Enabled": 1
-    },
-    "16": {
-      "ID": 16,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 7,
-      "PrefabId": 0,
-      "Position": "109,0,112",
-      "Note": "防御塔",
-      "Enabled": 1
-    },
-    "17": {
-      "ID": 17,
-      "Camp": 2,
-      "Type": 1,
-      "SubType": 0.0,
-      "ConfID": 7,
-      "PrefabId": 0,
-      "Position": "112,0,109",
-      "Note": "防御塔",
-      "Enabled": 1
-    },
-    "18": {
-      "ID": 18,
+    "107": {
+      "ID": 107,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -196,10 +240,10 @@
       "PrefabId": 0,
       "Position": "111,0,111",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "19": {
-      "ID": 19,
+    "108": {
+      "ID": 108,
       "Camp": 2,
       "Type": 2,
       "SubType": 2,
@@ -207,10 +251,10 @@
       "PrefabId": 0,
       "Position": "111,0,115",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "20": {
-      "ID": 20,
+    "109": {
+      "ID": 109,
       "Camp": 2,
       "Type": 2,
       "SubType": 3,
@@ -218,10 +262,10 @@
       "PrefabId": 0,
       "Position": "115,0,111",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "21": {
-      "ID": 21,
+    "110": {
+      "ID": 110,
       "Camp": 2,
       "Type": 2,
       "SubType": 3,
@@ -229,10 +273,10 @@
       "PrefabId": 0,
       "Position": "20,0,45",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "22": {
-      "ID": 22,
+    "111": {
+      "ID": 111,
       "Camp": 2,
       "Type": 2,
       "SubType": 3,
@@ -240,10 +284,10 @@
       "PrefabId": 0,
       "Position": "20,0,48",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "23": {
-      "ID": 23,
+    "112": {
+      "ID": 112,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -251,10 +295,10 @@
       "PrefabId": 0,
       "Position": "30,0,40",
       "Note": "大兵1",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "24": {
-      "ID": 24,
+    "113": {
+      "ID": 113,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -262,10 +306,10 @@
       "PrefabId": 0,
       "Position": "31,0,40",
       "Note": "大兵2",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "25": {
-      "ID": 25,
+    "114": {
+      "ID": 114,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -273,10 +317,10 @@
       "PrefabId": 0,
       "Position": "32,0,40",
       "Note": "大兵3",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "26": {
-      "ID": 26,
+    "115": {
+      "ID": 115,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -284,10 +328,10 @@
       "PrefabId": 0,
       "Position": "33,0,40",
       "Note": "大兵4",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "27": {
-      "ID": 27,
+    "116": {
+      "ID": 116,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -295,10 +339,10 @@
       "PrefabId": 0,
       "Position": "34,0,40",
       "Note": "大兵5",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "28": {
-      "ID": 28,
+    "117": {
+      "ID": 117,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -306,10 +350,10 @@
       "PrefabId": 0,
       "Position": "35,0,40",
       "Note": "大兵5",
-      "Enabled": 1
+      "Enabled": 0
     },
-    "29": {
-      "ID": 29,
+    "118": {
+      "ID": 118,
       "Camp": 2,
       "Type": 2,
       "SubType": 1,
@@ -317,7 +361,7 @@
       "PrefabId": 0,
       "Position": "36,0,40",
       "Note": "大兵5",
-      "Enabled": 1
+      "Enabled": 0
     }
   }
 }
