@@ -78,7 +78,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// <summary>
         /// 每次生产数量
         /// </summary>
-        private const int UNITS_PER_PRODUCTION = 8;
+        private const int UNITS_PER_PRODUCTION = 10;
 
         private List<int> offensebarracksIds = new List<int>();
 
