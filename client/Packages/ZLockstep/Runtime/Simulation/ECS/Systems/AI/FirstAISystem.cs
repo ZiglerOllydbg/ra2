@@ -52,11 +52,6 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         private zVector2 _playerBasePosition = zVector2.zero;
 
         /// <summary>
-        /// 是否已找到玩家基地
-        /// </summary>
-        private bool _hasFoundPlayerBase = false;
-
-        /// <summary>
         /// 初始化AI系统
         /// </summary>
         public void Initialize(FlowFieldNavigationSystem navSystem)
@@ -75,15 +70,10 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
             // 更新评估计时器
             _timeSinceLastEvaluation += DeltaTime;
 
-            // 如果还没找到玩家基地，尝试查找
-            if (!_hasFoundPlayerBase)
-            {
-                FindPlayerBase();
-            }
-
             // 定期重新评估AI单位的行为
             if (_timeSinceLastEvaluation >= _evaluationInterval)
             {
+                FindPlayerBuilding();
                 EvaluateAIUnits();
                 _timeSinceLastEvaluation = zfloat.Zero;
             }
@@ -92,7 +82,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// <summary>
         /// 查找玩家基地位置
         /// </summary>
-        private void FindPlayerBase()
+        private void FindPlayerBuilding()
         {
             var buildings = ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
 
@@ -103,20 +93,19 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                 // 检查是否有Camp组件
                 if (!ComponentManager.HasComponent<CampComponent>(entity))
                     continue;
-
+                
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
                 var building = ComponentManager.GetComponent<BuildingComponent>(entity);
 
-                // 找到玩家的基地（BuildingType=0）
-                if (camp.CampId == PLAYER_CAMP_ID && building.BuildingType == (int)BuildingType.Base)
+                // 找到玩家的建筑
+                if (camp.CampId == PLAYER_CAMP_ID && ComponentManager.HasComponent<HealthComponent>(entity))
                 {
                     if (ComponentManager.HasComponent<TransformComponent>(entity))
                     {
                         var transform = ComponentManager.GetComponent<TransformComponent>(entity);
                         _playerBasePosition = new zVector2(transform.Position.x, transform.Position.z);
-                        _hasFoundPlayerBase = true;
 
-                        zUDebug.Log($"[SimpleAISystem] 找到玩家基地位置: {_playerBasePosition}");
+                        zUDebug.Log($"[SimpleAISystem] 找到玩家建筑 {building.BuildingType} 位置: {_playerBasePosition}");
                         return;
                     }
                 }
@@ -128,9 +117,6 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// </summary>
         private void EvaluateAIUnits()
         {
-            if (!_hasFoundPlayerBase)
-                return;
-
             var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
             int chaseCount = 0;
             int moveToBaseCount = 0;

@@ -375,6 +375,7 @@ namespace ZLockstep.Simulation.ECS
             {
                 return new AttackComponent
                 {
+                    ConfProjectileID = 2, // FIXME: 碉堡的子弹
                     Damage = (zfloat)confBuilding.Atk,
                     Range = (zfloat)12.0f,
                     AttackInterval = (zfloat)1.5f,
