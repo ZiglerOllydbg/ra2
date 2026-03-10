@@ -309,7 +309,10 @@ namespace ZLockstep.Sync
         /// </summary>
         public void SubmitCommand(ICommand command)
         {
-            command.CampId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
+            if (command.CampId == 0)
+            {
+                command.CampId = World.ComponentManager.GetGlobalComponent<GlobalInfoComponent>().LocalPlayerCampId;
+            }
 
             switch (Mode)
             {

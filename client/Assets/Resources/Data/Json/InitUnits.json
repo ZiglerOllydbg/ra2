@@ -31,7 +31,7 @@
       "PrefabId": 0,
       "Position": "20,0,20",
       "Note": "士兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "4": {
       "ID": 4,
@@ -238,9 +238,9 @@
       "SubType": 1,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "111,0,111",
+      "Position": "100,0,105",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
     "108": {
       "ID": 108,
@@ -249,9 +249,9 @@
       "SubType": 2,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "111,0,115",
+      "Position": "105,0,100",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
     "109": {
       "ID": 109,
@@ -260,9 +260,9 @@
       "SubType": 3,
       "ConfID": 0.0,
       "PrefabId": 0,
-      "Position": "115,0,111",
+      "Position": "100,0,100",
       "Note": "坦克",
-      "Enabled": 1
+      "Enabled": 0
     },
     "110": {
       "ID": 110,

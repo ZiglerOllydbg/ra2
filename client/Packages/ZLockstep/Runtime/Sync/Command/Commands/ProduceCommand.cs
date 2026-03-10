@@ -142,23 +142,14 @@ namespace ZLockstep.Sync.Command.Commands
             }
             
             // 根据单位类型确定所需资源
-            int costMoney = 0;
-            
-            switch (UnitType)
+            ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)UnitType);
+            if (confUnit == null)
             {
-                case UnitType.Infantry: // 动员兵
-                    costMoney = 100;
-                    break;
-                case UnitType.grizzlyTank: // 坦克
-                    costMoney = 300;
-                    break;
-                case UnitType.Harvester: // 矿车
-                    costMoney = 500;
-                    break;
-                default:
-                    // 其他单位类型不消耗资源或免费
-                    return true;
+                zUDebug.LogError($"[ProduceCommand] 创建单位时无法获取单位配置信息。ID:{confUnit}");
+                return false;
             }
+
+            int costMoney = confUnit.CostMoney;
             
             // 检查是否有足够的资源
             if (economyComponent.Money < costMoney)
@@ -207,23 +198,14 @@ namespace ZLockstep.Sync.Command.Commands
             }
             
             // 根据单位类型确定返还资源
-            int refundMoney = 0;
-            
-            switch (UnitType)
+            ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)UnitType);
+            if (confUnit == null)
             {
-                case UnitType.Infantry: // 动员兵
-                    refundMoney = 100;
-                    break;
-                case UnitType.grizzlyTank: // 坦克
-                    refundMoney = 300;
-                    break;
-                case UnitType.Harvester: // 矿车
-                    refundMoney = 500;
-                    break;
-                default:
-                    // 其他单位类型不消耗资源或免费
-                    return;
+                zUDebug.LogError($"[ProduceCommand] 创建单位时无法获取单位配置信息。ID:{confUnit}");
+                return;
             }
+
+            int refundMoney = confUnit.CostMoney;
             
             // 返还资源
             int oldMoney = economyComponent.Money;

@@ -27,7 +27,7 @@
       "AtkRange": 10,
       "ProjectileID": 2,
       "AtkInterval": 2000,
-      "AtkCount": 8,
+      "AtkCount": 5,
       "Speed": 5,
       "CostMoney": 500,
       "ProduceTime": 7000,
