@@ -6,7 +6,7 @@
       "Manual": 0,
       "Prefab": "MainBase",
       "Size": 5,
-      "Hp": 0,
+      "Hp": 3000,
       "Atk": 0,
       "Def": 10,
       "ConstructionTime": 0,
@@ -128,7 +128,7 @@
       "CampID": 1,
       "Type": 4,
       "Count": 2,
-      "Position": "5,0,15;5,0,25",
+      "Position": "5,0,15;15,0,5",
       "Name": "电厂",
       "Enabled": 1
     },
@@ -137,7 +137,7 @@
       "CampID": 1,
       "Type": 5,
       "Count": 1,
-      "Position": "15,0,5",
+      "Position": "5,0,25",
       "Name": "兵营",
       "Enabled": 1
     },
@@ -161,6 +161,15 @@
     },
     "6": {
       "ID": 6,
+      "CampID": 1,
+      "Type": 1,
+      "Count": 1,
+      "Position": "15,0,15",
+      "Name": "主基地",
+      "Enabled": 1
+    },
+    "100": {
+      "ID": 100,
       "CampID": 2,
       "Type": 3,
       "Count": 1,
@@ -168,8 +177,8 @@
       "Name": "采矿场",
       "Enabled": 1
     },
-    "7": {
-      "ID": 7,
+    "101": {
+      "ID": 101,
       "CampID": 2,
       "Type": 4,
       "Count": 1,
@@ -177,8 +186,8 @@
       "Name": "电厂",
       "Enabled": 1
     },
-    "8": {
-      "ID": 8,
+    "102": {
+      "ID": 102,
       "CampID": 2,
       "Type": 5,
       "Count": 1,
@@ -186,8 +195,8 @@
       "Name": "兵营",
       "Enabled": 1
     },
-    "9": {
-      "ID": 9,
+    "103": {
+      "ID": 103,
       "CampID": 2,
       "Type": 6,
       "Count": 1,
@@ -195,8 +204,8 @@
       "Name": "坦克工厂",
       "Enabled": 1
     },
-    "10": {
-      "ID": 10,
+    "104": {
+      "ID": 104,
       "CampID": 2,
       "Type": 7,
       "Count": 2,

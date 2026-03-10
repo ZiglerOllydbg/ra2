@@ -84,7 +84,7 @@
       "SubType": 0.0,
       "ConfID": 4,
       "PrefabId": 0,
-      "Position": "120,0,100",
+      "Position": "110,0,120",
       "Note": "电厂",
       "Enabled": 1
     },
@@ -95,7 +95,7 @@
       "SubType": 0.0,
       "ConfID": 5,
       "PrefabId": 0,
-      "Position": "110,0,120",
+      "Position": "120,0,100",
       "Note": "兵营",
       "Enabled": 1
     },
