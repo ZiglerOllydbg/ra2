@@ -78,7 +78,9 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// <summary>
         /// 每次生产数量
         /// </summary>
-        private const int UNITS_PER_PRODUCTION = 10;
+        private const int UNITS_PER_PRODUCTION = 8;
+
+        private List<int> offensebarracksIds = new List<int>();
 
         /// <summary>
         /// 初始化AI系统
@@ -114,6 +116,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
             if (_timeSinceLastProduction >= _productionInterval)
             {
                 ProduceInfantryPeriodically();
+                EvaluateAIOffense();
                 _timeSinceLastProduction = zfloat.Zero;
             }
         }
@@ -199,16 +202,47 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                     }
                     else
                     {
-                        // 没有找到玩家单位，移动到玩家基地
-                        _navSystem.SetMoveTarget(entity, _playerBasePosition);
-                        moveToBaseCount++;
+                        if (offensebarracksIds.Contains(entityId))
+                        {
+                            // 没有找到玩家单位，移动到玩家基地
+                            _navSystem.SetMoveTarget(entity, _playerBasePosition);
+                            moveToBaseCount++;
+                        }
                     }
                 }
             }
 
             if (chaseCount > 0 || moveToBaseCount > 0)
             {
-                zUDebug.Log($"[SimpleAISystem] 追击玩家单位: {chaseCount}，移动到基地: {moveToBaseCount}");
+                zUDebug.Log($"[SimpleAISystem] 追击玩家单位数量: {chaseCount}，移动到基地单位数量: {moveToBaseCount}");
+            }
+        }
+
+        /// <summary>
+        /// 评估所有AI单位的行为
+        /// </summary>
+        private void EvaluateAIOffense()
+        {
+            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+            foreach (var entityId in allEntities)
+            {
+                Entity entity = new Entity(entityId);
+
+                var camp = ComponentManager.GetComponent<CampComponent>(entity);
+
+                // 只处理AI阵营的单位
+                if (camp.CampId != AI_CAMP_ID)
+                    continue;
+
+                // 必须是可移动单位（有FlowFieldNavigatorComponent）
+                if (!ComponentManager.HasComponent<FlowFieldNavigatorComponent>(entity))
+                    continue;
+
+                // 必须有Transform组件
+                if (!ComponentManager.HasComponent<TransformComponent>(entity))
+                    continue;
+
+                offensebarracksIds.Add(entityId);
             }
         }
 

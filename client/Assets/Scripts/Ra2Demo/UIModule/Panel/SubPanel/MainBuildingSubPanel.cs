@@ -321,7 +321,7 @@ public class MainBuildingSubPanel
             Debug.LogWarning($"建筑数量已达上限: {currentCount}/{confBuildingPlace.Count}");
             MessageUtils.ShowTips("建筑数量已达上限");
             // TODO: 可以显示提示信息给用户
-            Hide();
+            // Hide();
             return;
         }
 
@@ -330,7 +330,7 @@ public class MainBuildingSubPanel
         if (positions.Length == 0)
         {
             Debug.LogError($"配置中的位置信息无效: {confBuildingPlace.Position}");
-            Hide();
+            // Hide();
             return;
         }
         
@@ -344,7 +344,7 @@ public class MainBuildingSubPanel
         // 4. 直接调用放置逻辑
         PlaceBuilding(buildingID, targetPosition);
 
-        Hide();
+        // Hide();
     }
     
         /// <summary>
