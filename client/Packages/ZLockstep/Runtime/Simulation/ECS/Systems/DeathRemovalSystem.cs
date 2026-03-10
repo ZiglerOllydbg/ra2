@@ -35,6 +35,9 @@ namespace ZLockstep.Simulation.ECS.Systems
                         flowFieldSystem?.RemoveNavigator(entity);
                         ComponentManager.RemoveComponent<FlowFieldNavigatorComponent>(entity);
                     }
+
+                    // 移除建筑的阻挡
+                    RemoveBuildingObstruction(entity);
                     
                     // 销毁实体
                     World.EntityManager.DestroyEntity(entity);
@@ -48,5 +51,44 @@ namespace ZLockstep.Simulation.ECS.Systems
             return ComponentManager.HasComponent<ViewComponent>(entity);
         }
 
+        /// <summary>
+        /// 移除建筑的阻挡（将建筑占据的格子标记为可行走）
+        /// </summary>
+        private void RemoveBuildingObstruction(Entity entity)
+        {
+            // 检查实体是否是建筑
+            if (!ComponentManager.HasComponent<BuildingComponent>(entity))
+            {
+                return;
+            }
+
+            var building = ComponentManager.GetComponent<BuildingComponent>(entity);
+            
+            // 获取 MapManager
+            var mapManager = World.GameInstance?.GetMapManager();
+            if (mapManager == null)
+            {
+                zUDebug.LogWarning($"[DeathRemovalSystem] 无法获取 MapManager，无法移除建筑阻挡");
+                return;
+            }
+
+            // 计算建筑占据的区域范围
+            int minX = building.GridX - building.Width / 2;
+            int maxX = building.GridX + building.Width / 2;
+            int minY = building.GridY - building.Height / 2;
+            int maxY = building.GridY + building.Height / 2;
+
+            // 将建筑占据的区域标记为可行走
+            mapManager.SetWalkableRect(minX, minY, maxX, maxY, true);
+            
+            // 标记流场为脏（需要重新计算）
+            var flowFieldManager = World.GameInstance?.GetFlowFieldManager();
+            if (flowFieldManager != null)
+            {
+                flowFieldManager.MarkRegionDirty(minX, minY, maxX, maxY);
+            }
+
+            zUDebug.Log($"[DeathRemovalSystem] 已移除建筑{entity.Id}的阻挡区域：[{minX},{minY}] 到 [{maxX},{maxY}]");
+        }
     }
 }
