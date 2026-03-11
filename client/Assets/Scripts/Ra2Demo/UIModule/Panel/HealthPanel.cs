@@ -156,6 +156,16 @@ public class HealthPanel : BasePanel
             {
                 healthBarInstance.fillImage.fillAmount = healthComponent.HealthPercent.ToFloat();
             }
+
+            // 满血不显示，只有掉血才显示
+            if (healthComponent.HealthPercent.ToFloat() >= 1.0f || healthComponent.HealthPercent.ToFloat() <= 0.0f)
+            {
+                HideHealthBar(entityId);
+            }
+            else
+            {
+                ShowHealthBar(entityId);
+            }
         }
     }
     
