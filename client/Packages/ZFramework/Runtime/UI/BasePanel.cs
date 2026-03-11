@@ -433,10 +433,20 @@ public abstract class BasePanel
             BeginOpen();
         }
 
-        // TODO 可以修复加载UIPrefab适配问题：调整尺寸和位置
-        rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 1920);
-        rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1080);
-        rectTransform.anchoredPosition = new Vector2(1920/2, 1080/2);
+        // 修复加载 UIPrefab 适配问题：调整尺寸和描点位置
+        Transform parent = this.PanelObject.transform.parent;
+        if (parent != null)
+        {
+            RectTransform parentRect = parent.GetComponent<RectTransform>();
+            if (parentRect != null)
+            {
+                // 设置与父对象相同的尺寸
+                rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, parentRect.rect.width);
+                rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, parentRect.rect.height);
+                // 设置中心点为锚点位置（anchoredPosition 为 0 表示与锚点对齐）
+                rectTransform.anchoredPosition = new Vector2(parentRect.rect.width / 2, parentRect.rect.height / 2);
+            }
+        }
     }
 
     /// <summary>
