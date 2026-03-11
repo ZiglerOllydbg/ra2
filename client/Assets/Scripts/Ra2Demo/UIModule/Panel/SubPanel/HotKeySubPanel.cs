@@ -163,7 +163,7 @@ public class HotKeySubPanel
     {
         Data = data;
         UpdateUI();
-        SetActive(true);
+        // SetActive(true);
     }
 
     /// <summary>
