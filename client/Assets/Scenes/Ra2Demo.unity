@@ -605,6 +605,10 @@ PrefabInstance:
       propertyPath: orthographic size
       value: 20
       objectReference: {fileID: 0}
+    - target: {fileID: 7868710867384565575, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
+      propertyPath: m_NoiseProfile
+      value: 
+      objectReference: {fileID: 11400000, guid: 69ce8388f6785dd4c8c39915efece2f4, type: 2}
     - target: {fileID: 8944374120070155107, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
       propertyPath: m_Name
       value: RTSCameraController_NewInputSystem
@@ -625,7 +629,8 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 64
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7868710867384565575, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 91f977ea227a9da45b0920057cd51ea3, type: 3}
 --- !u!1 &812412501
 GameObject:
