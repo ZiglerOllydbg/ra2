@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
@@ -407,7 +407,7 @@ public abstract class BasePanel
         this.PanelObject = _go;
 
         var rectTransform = this.PanelObject?.GetComponent<RectTransform>();
-        // if (rectTransform) //发现有部分UI会自动修改这里的数据，强制纠正过来了。
+        // if (rectTransform) //发现有部分 UI 会自动修改这里的数据，强制纠正过来了。
         // {
         //     rectTransform.offsetMax = Vector2.zero;
         //     rectTransform.offsetMin = Vector2.zero;
@@ -432,6 +432,11 @@ public abstract class BasePanel
             // 正常打开流程
             BeginOpen();
         }
+
+        // TODO 可以修复加载UIPrefab适配问题：调整尺寸和位置
+        rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 1920);
+        rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 1080);
+        rectTransform.anchoredPosition = new Vector2(1920/2, 1080/2);
     }
 
     /// <summary>
