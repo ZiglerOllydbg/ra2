@@ -42,6 +42,11 @@ namespace ZLockstep.Simulation.ECS.Components
         public int TargetEntityId;
 
         /// <summary>
+        /// 上次查找目标的时间（用于限制查找频率）
+        /// </summary>
+        public zfloat TimeSinceLastTargetSearch;
+
+        /// <summary>
         /// 能否攻击
         /// </summary>
         public bool CanAttack => TimeSinceLastAttack >= AttackInterval;
@@ -64,6 +69,7 @@ namespace ZLockstep.Simulation.ECS.Components
                 Range = (zfloat)5.0f,
                 AttackInterval = (zfloat)1.0f,
                 TimeSinceLastAttack = zfloat.Zero,
+                TimeSinceLastTargetSearch = zfloat.Zero,
                 TargetEntityId = -1,
                 MaxTargets = 1
             };

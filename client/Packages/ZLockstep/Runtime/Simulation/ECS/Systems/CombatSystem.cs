@@ -11,10 +11,15 @@ namespace ZLockstep.Simulation.ECS.Systems
     /// 处理单位和建筑的战斗逻辑
     /// 1. 自动搜索攻击范围内的敌方单位
     /// 2. 更新攻击冷却
-    /// 3. 发射弹道（创建Projectile Entity）
+    /// 3. 发射弹道（创建 Projectile Entity）
     /// </summary>
     public class CombatSystem : BaseSystem
     {
+        /// <summary>
+        /// 目标查找最小间隔时间（秒）
+        /// </summary>
+        private static readonly zfloat TARGET_SEARCH_INTERVAL = (zfloat)1.0f;
+
         public override void Update()
         {
             // 处理所有有攻击能力的实体
@@ -57,11 +62,20 @@ namespace ZLockstep.Simulation.ECS.Systems
                     continue;
                 }
 
-                // 1. 检查是否有目标
-                if (attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId))
+                // 1. 检查是否有目标，如果超过查找间隔时间则重新查找
+                bool shouldSearchTarget = attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId);
+                
+                // 即使有目标，也要定期检查是否有更优目标（但受间隔限制）
+                if (!shouldSearchTarget && attack.TimeSinceLastTargetSearch >= TARGET_SEARCH_INTERVAL)
+                {
+                    shouldSearchTarget = true;
+                }
+                
+                if (shouldSearchTarget)
                 {
                     // 搜索新目标
                     attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
+                    attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
                 }
 
                 // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标
@@ -113,6 +127,7 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                     // 更新攻击冷却
                     attack.TimeSinceLastAttack += DeltaTime;
+                    attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
                     zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
                     
                     zfloat rangeSqr = attack.Range * attack.Range;
@@ -222,9 +237,24 @@ namespace ZLockstep.Simulation.ECS.Systems
 
             // 更新攻击冷却
             attack.TimeSinceLastAttack += DeltaTime;
+            attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
             
-            // 搜索多个目标
-            var targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
+            // 搜索多个目标（受间隔限制）
+            System.Collections.Generic.List<int> targetIds;
+            if (attack.TimeSinceLastTargetSearch >= TARGET_SEARCH_INTERVAL || attack.TargetEntityId < 0)
+            {
+                targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
+                attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
+            }
+            else
+            {
+                // 如果还在冷却时间内，使用当前目标
+                targetIds = new System.Collections.Generic.List<int>();
+                if (attack.TargetEntityId >= 0)
+                {
+                    targetIds.Add(attack.TargetEntityId);
+                }
+            }
             
             if (targetIds.Count == 0)
             {
