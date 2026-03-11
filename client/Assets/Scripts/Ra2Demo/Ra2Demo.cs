@@ -911,9 +911,9 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 更新建筑预览
-        UpdateBuildingPreview();
+        // UpdateBuildingPreview();
 
-        UpdateCameraMovement();
+        // UpdateCameraMovement();
         
         // 更新淡出效果
         UpdateFadeOut();
