@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ZLockstep.Flow;
+using ZLockstep.Simulation;
 using zUnity;
 
 namespace ZLockstep.RVO
@@ -65,7 +66,7 @@ namespace ZLockstep.RVO
         /// <summary>
         /// 速度计算的时间间隔（秒），默认 0.5 秒计算一次
         /// </summary>
-        private zfloat velocityCalculationInterval = new zfloat(0, 5000); // 0.5 秒
+        private zfloat velocityCalculationInterval = new zfloat(0, 1000); // 0.1 秒
         
         /// <summary>
         /// 上次速度计算的累计时间
@@ -343,296 +344,66 @@ namespace ZLockstep.RVO
         }
 
         /// <summary>
-        /// 计算单个智能体的新速度（ORCA算法核心实现）
+        /// 计算单个智能体的新速度（简化版本）
         /// 
-        /// 该方法实现了最优互惠碰撞避免(Optimal Reciprocal Collision Avoidance)算法的核心逻辑。
-        /// 对于目标智能体，遍历所有其他智能体并构建相应的ORCA约束线，最终通过线性规划求解最优速度。
+        /// 简化策略：
+        /// 1. 当没有碰撞风险时，直接使用期望速度
+        /// 2. 仅在检测到碰撞风险时进行简单的速度调整
+        /// 3. 移除复杂的线性规划求解过程
         /// 
-        /// 算法流程：
-        /// 1. 遍历所有其他智能体，计算相对位置和相对速度
-        /// 2. 根据距离关系判断是否会发生碰撞
-        /// 3. 对每种情况（无碰撞、未来会碰撞、已碰撞）分别计算ORCA约束线
-        /// 4. 调用线性规划求解器在所有约束线下找到最接近期望速度的可行速度
-        /// 
-        /// 特殊处理：
-        /// - 区分三种情况：安全距离外、未来会碰撞、已经重叠
-        /// - 对不同情况采用不同的几何计算方法构建约束线
-        /// - 防止数值不稳定性的边界条件检查
+        /// 性能优化：
+        /// - 提前退出：无碰撞风险时立即返回
+        /// - 避免复杂计算：不使用 ORCA 线和线性规划
+        /// - 基于距离的简单避让：只考虑最近的威胁
         /// </summary>
         /// <param name="agent">需要计算新速度的目标智能体</param>
         private void ComputeNewVelocity(RVO2Agent agent)
         {
-            // 构建ORCA线
-            List<ORCALine> orcaLines = new List<ORCALine>();
-
-            // 对每个其他智能体创建ORCA线
+            // 默认直接使用期望速度
+            zVector2 newVelocity = agent.prefVelocity;
+            
+            // 检查是否有碰撞风险
+            zfloat minSafeDistance = agent.radius * 2; // 最小安全距离
+            
             foreach (var other in agents.Values)
             {
                 if (other.id == agent.id)
                     continue;
-
+                
                 zVector2 relativePosition = other.position - agent.position;
-                zVector2 relativeVelocity = agent.velocity - other.velocity;
                 zfloat distSq = relativePosition.sqrMagnitude;
                 zfloat combinedRadius = agent.radius + other.radius;
                 zfloat combinedRadiusSq = combinedRadius * combinedRadius;
-
-                ORCALine line;
-                zVector2 u;
-
-                if (distSq > combinedRadiusSq)
+                
+                // 如果距离过近，需要避让
+                if (distSq < combinedRadiusSq * 4) // 在 2 倍半径范围内
                 {
-                    // 没有碰撞
-                    zVector2 w = relativeVelocity - relativePosition / agent.timeHorizon;
-                    zfloat wLengthSq = w.sqrMagnitude;
-                    zfloat dotProduct1 = zVector2.Dot(w, relativePosition);
-
-                    if (dotProduct1 < zfloat.Zero && dotProduct1 * dotProduct1 > combinedRadiusSq * wLengthSq)
-                    {
-                        // 投影到截断圆
-                        zfloat wLength = zMathf.Sqrt(wLengthSq);
-                        if (wLength < new zfloat(0, 1000)) // 0.001
-                        {
-                            zUDebug.LogWarning($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到截断圆时，w长度为零");
-                            continue; // 跳过这个障碍物
-                        }
-                        zVector2 unitW = w / wLength;
-
-                        line.direction = new zVector2(unitW.y, -unitW.x);
-                        u = unitW * (combinedRadius / agent.timeHorizon - wLength);
-                        
-                        // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到截断圆，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
-                    }
-                    else
-                    {
-                        // 投影到腿部
-                        zfloat leg = zMathf.Sqrt(distSq - combinedRadiusSq);
-                        if (Det(relativePosition, w) > zfloat.Zero)
-                        {
-                            line.direction = new zVector2(
-                                relativePosition.x * leg - relativePosition.y * combinedRadius,
-                                relativePosition.x * combinedRadius + relativePosition.y * leg
-                            ) / distSq;
-                        }
-                        else
-                        {
-                            line.direction = -new zVector2(
-                                relativePosition.x * leg + relativePosition.y * combinedRadius,
-                                -relativePosition.x * combinedRadius + relativePosition.y * leg
-                            ) / distSq;
-                        }
-
-                        zfloat dotProduct2 = zVector2.Dot(relativeVelocity, line.direction);
-                        u = line.direction * dotProduct2 - relativeVelocity;
-                        
-                        // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到腿部，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
-                    }
-                }
-                else
-                {
-                    // 发生碰撞，需要立即避开
-                    zfloat invTimeStep = zfloat.One / timeStep;
-                    zVector2 w = relativeVelocity - relativePosition * invTimeStep;
-                    zfloat wLength = w.magnitude;
+                    zfloat dist = zMathf.Sqrt(distSq);
                     
                     // 防止除以零
-                    if (wLength < new zfloat(0, 1000)) // 0.001
+                    if (dist > new zfloat(0, 1000)) // 0.001
                     {
-                        zUDebug.LogWarning($"[RVO2] 智能体 {agent.id} 与 {other.id} 距离过近且相对速度太小，跳过避障计算");
-                        continue; // 跳过这个障碍物
+                        // 计算避让方向（垂直于相对位置）
+                        zVector2 avoidDirection = new zVector2(-relativePosition.y, relativePosition.x) / dist;
+                        
+                        // 避让强度与距离成反比
+                        zfloat avoidanceStrength = (combinedRadius * 2 - dist) / (combinedRadius * 2);
+                        avoidanceStrength = zMathf.Max(zfloat.Zero, zMathf.Min(avoidanceStrength, zfloat.One));
+                        
+                        // 应用避让速度
+                        zfloat avoidSpeed = agent.maxSpeed * avoidanceStrength;
+                        newVelocity += avoidDirection * avoidSpeed;
+                        
+                        // 限制最大速度
+                        if (newVelocity.magnitude > agent.maxSpeed)
+                        {
+                            newVelocity = newVelocity.normalized * agent.maxSpeed;
+                        }
                     }
-                    
-                    zVector2 unitW = w / wLength;
-
-                    line.direction = new zVector2(unitW.y, -unitW.x);
-                    u = unitW * (combinedRadius * invTimeStep - wLength);
-                    
-                    // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 已发生碰撞，需要立即避开，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
                 }
-
-                line.point = agent.velocity + u * zfloat.Half;
-                orcaLines.Add(line);
             }
-
-            // 使用线性规划找到最优速度
-            zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
             
-            // 移除速度平滑，直接使用计算出的新速度
             agent.newVelocity = newVelocity;
-        }
-
-        /// <summary>
-        /// 二维线性规划求解器，在ORCA线约束下寻找最接近期望速度的可行速度
-        /// 
-        /// 这是一个专门针对RVO2设计的二维线性规划算法实现，用于在多个半平面约束下
-        /// 寻找最接近给定期望速度的解向量。算法采用迭代投影方法处理约束冲突。
-        /// 
-        /// 算法步骤：
-        /// 1. 首先检查期望速度是否已在可行域内，如果是则直接返回
-        /// 2. 否则逐个检查约束线，当发现违反约束时进行投影修正
-        /// 3. 投影后验证是否满足之前的所有约束，如不满足则寻找约束线交点
-        /// 4. 最终结果需满足最大速度限制
-        /// 
-        /// 数值稳定性处理：
-        /// - 添加epsilon级别数值误差容忍
-        /// - 防止零向量归一化等可能导致的除零异常
-        /// - 处理约束线近似平行的特殊情况
-        /// </summary>
-        /// <param name="lines">ORCA约束线集合，每个线代表一个速度空间中的半平面约束</param>
-        /// <param name="maxSpeed">速度大小上限，确保结果向量的模长不超过此值</param>
-        /// <param name="optVelocity">期望速度向量，算法目标是在约束下尽可能接近此向量</param>
-        /// <returns>满足所有约束条件的最优速度向量</returns>
-        private zVector2 LinearProgram2(List<ORCALine> lines, zfloat maxSpeed, zVector2 optVelocity)
-        {
-            zfloat optMagnitude = optVelocity.magnitude;
-            if (optMagnitude > maxSpeed)
-            {
-                // 防止除以零
-                if (optMagnitude > new zfloat(0, 1000)) // 0.001
-                {
-                    optVelocity = optVelocity.normalized * maxSpeed;
-                }
-                else
-                {
-                    optVelocity = zVector2.zero;
-                }
-            }
-
-            // 检查期望速度是否满足所有约束
-            bool satisfiesAll = true;
-            for (int i = 0; i < lines.Count; i++)
-            {
-                if (Det(lines[i].direction, lines[i].point - optVelocity) > zfloat.Zero)
-                {
-                    satisfiesAll = false;
-                    break;
-                }
-            }
-
-            if (satisfiesAll)
-            {
-                return optVelocity;
-            }
-
-            // 需要投影到可行域
-            zVector2 result = optVelocity;
-            
-            for (int i = 0; i < lines.Count; i++)
-            {
-                if (Det(lines[i].direction, lines[i].point - result) > zfloat.Zero)
-                {
-                    // 投影到线上
-                    zVector2 tempResult = Project(lines[i], result);
-                    
-                    // 检查是否满足之前的约束
-                    bool feasible = true;
-                    for (int j = 0; j < i; j++)
-                    {
-                        if (Det(lines[j].direction, lines[j].point - tempResult) > zfloat.Zero)
-                        {
-                            feasible = false;
-                            break;
-                        }
-                    }
-
-                    if (feasible)
-                    {
-                        result = tempResult;
-                    }
-                    else
-                    {
-                        // 需要在两条线的交点处
-                        // 添加边界检查，防止访问lines[i-1]时数组越界
-                        if (i > 0)
-                        {
-                            zfloat determinant = Det(lines[i].direction, lines[i - 1].direction);
-                            
-                            if (zMathf.Abs(determinant) > zfloat.Epsilon)
-                            {
-                                zVector2 delta = lines[i].point - lines[i - 1].point;
-                                zfloat t = Det(delta, lines[i - 1].direction) / determinant;
-                                result = lines[i].point + lines[i].direction * t;
-                            }
-                            else
-                            {
-                                // 线几乎平行，使用当前结果
-                                result = lines[i].point;
-                            }
-                        }
-                        else
-                        {
-                            // 只有一条线且不可行，使用当前线上的点
-                            result = lines[i].point;
-                        }
-                    }
-                }
-            }
-
-            // 限制在最大速度内
-            zfloat resultMagnitude = result.magnitude;
-            if (resultMagnitude > maxSpeed)
-            {
-                // 防止除以零
-                if (resultMagnitude > new zfloat(0, 1000)) // 0.001
-                {
-                    result = result.normalized * maxSpeed;
-                }
-                else
-                {
-                    result = zVector2.zero;
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// 计算两个二维向量的行列式值（等价于叉积的z分量）
-        /// 
-        /// 在二维向量空间中，两个向量a(x1,y1)和b(x2,y2)的行列式定义为：
-        /// det(a,b) = x1*y2 - y1*x2
-        /// 
-        /// 几何意义：
-        /// - 绝对值等于由两向量构成的平行四边形面积
-        /// - 符号表示从a到b的旋转方向（正数为逆时针，负数为顺时针）
-        /// - 零值表示两向量共线
-        /// 
-        /// 在RVO2算法中的应用：
-        /// - 判断点相对于直线的位置关系
-        /// - 确定向量间的相对方向
-        /// - 计算几何约束的有效性
-        /// </summary>
-        /// <param name="a">第一个二维向量</param>
-        /// <param name="b">第二个二维向量</param>
-        /// <returns>两向量的行列式值</returns>
-        private zfloat Det(zVector2 a, zVector2 b)
-        {
-            return a.x * b.y - a.y * b.x;
-        }
-
-        /// <summary>
-        /// 将速度向量投影到指定的ORCA约束线上
-        /// 
-        /// 执行正交投影运算，将给定的速度向量投影到ORCA线所代表的约束边界上。
-        /// 这是线性规划求解过程中的基本几何操作。
-        /// 
-        /// 投影原理：
-        /// 给定线上的点P和方向向量D，以及待投影点V，
-        /// 投影点 = P + D * dot(V-P, D)
-        /// 其中dot表示向量点积运算
-        /// 
-        /// 应用场景：
-        /// - 当速度向量违反某条约束线时，将其"推回"到约束边界
-        /// - 寻找满足多个约束的最佳折衷解
-        /// </summary>
-        /// <param name="line">目标ORCA约束线</param>
-        /// <param name="velocity">需要投影的速度向量</param>
-        /// <returns>投影后的新速度向量</returns>
-        private zVector2 Project(ORCALine line, zVector2 velocity)
-        {
-            zVector2 delta = velocity - line.point;
-            zfloat dotProduct = zVector2.Dot(delta, line.direction);
-            return line.point + line.direction * dotProduct;
         }
 
         /// <summary>
@@ -749,6 +520,30 @@ namespace ZLockstep.RVO
             }
             return stationaryAgents;
         }
+
+        /// <summary>
+        /// 计算两个二维向量的行列式值（等价于叉积的 z 分量）
+        /// 
+        /// 在二维向量空间中，两个向量 a(x1,y1) 和 b(x2,y2) 的行列式定义为：
+        /// det(a,b) = x1*y2 - y1*x2
+        /// 
+        /// 几何意义：
+        /// - 绝对值等于由两向量构成的平行四边形面积
+        /// - 符号表示从 a 到 b 的旋转方向（正数为逆时针，负数为顺时针）
+        /// - 零值表示两向量共线
+        /// 
+        /// 在 RVO2 算法中的应用：
+        /// - 判断点相对于直线的位置关系
+        /// - 确定向量间的相对方向
+        /// - 计算几何约束的有效性
+        /// </summary>
+        /// <param name="a">第一个二维向量</param>
+        /// <param name="b">第二个二维向量</param>
+        /// <returns>两向量的行列式值</returns>
+        private zfloat Det(zVector2 a, zVector2 b)
+        {
+            return a.x * b.y - a.y * b.x;
+        }
     }
 
     /// <summary>
@@ -807,26 +602,4 @@ namespace ZLockstep.RVO
         public bool wasStationary;
     }
 
-    /// <summary>
-    /// ORCA线 (Optimal Reciprocal Collision Avoidance Line)
-    /// 
-    /// 表示速度空间中的半平面约束，是ORCA算法的基本构成单元。
-    /// 每条ORCA线定义了一个允许的安全速度区域边界。
-    /// 
-    /// 几何含义：
-    /// - point: 约束线上的基准点，通常位于速度空间中某个特定位置
-    /// - direction: 约束线的方向向量，单位长度，与约束边界平行
-    /// - 有效区域: 从point出发，垂直于direction方向的半无限区域
-    /// 
-    /// 在RVO2中，每个邻近的智能体会产生一条或若干条ORCA线，
-    /// 所有这些线的交集构成了当前智能体的合法速度选择空间。
-    /// </summary>
-    public struct ORCALine
-    {
-        /// <summary>线上的一个点</summary>
-        public zVector2 point;
-
-        /// <summary>线的方向（单位向量）</summary>
-        public zVector2 direction;
-    }
 }
