@@ -23,8 +23,11 @@ public class HealthPanel : BasePanel
     private GameObject greenHpPrefab;
     private GameObject redHpPrefab;
     
-    // 存储所有血量条实例的字典，key为实体ID
+    // 存储所有血量条实例的字典，key 为实体 ID
     private Dictionary<int, HealthBarInstance> healthBars = new Dictionary<int, HealthBarInstance>();
+    
+    // 血条永久显示开关（从 PlayerPrefs 读取）
+    private bool showHealthBarAlways = false;
     
     // 血量条实例类
     private class HealthBarInstance
@@ -58,18 +61,18 @@ public class HealthPanel : BasePanel
             redHpPrefab.SetActive(false);
         }
 
+        // 加载血条永久显示设置
+        showHealthBarAlways = PlayerPrefs.GetInt("ShowHealthBar", 0) == 1;
     }
 
     protected override void AddEvent()
     {
         base.AddEvent();
-        // 可以在这里添加事件监听
     }
 
     protected override void RemoveEvent()
     {
         base.RemoveEvent();
-        // 可以在这里移除事件监听
     }
     
     /// <summary>
@@ -152,14 +155,31 @@ public class HealthPanel : BasePanel
                 healthBarInstance.fillImage.fillAmount = healthComponent.HealthPercent.ToFloat();
             }
 
-            // 满血不显示，只有掉血才显示
-            if (healthComponent.HealthPercent.ToFloat() >= 1.0f || healthComponent.HealthPercent.ToFloat() <= 0.0f)
+            // 根据永久显示设置决定是否显示血条
+            float healthPercent = healthComponent.HealthPercent.ToFloat();
+            if (showHealthBarAlways)
             {
-                HideHealthBar(entityId);
+                // 永久显示模式：只要血量大于 0 就显示
+                if (healthPercent > 0.0f)
+                {
+                    ShowHealthBar(entityId);
+                }
+                else
+                {
+                    HideHealthBar(entityId);
+                }
             }
             else
             {
-                ShowHealthBar(entityId);
+                // 默认模式：满血（>=100%）或死亡（<=0%）时不显示
+                if (healthPercent >= 1.0f || healthPercent <= 0.0f)
+                {
+                    HideHealthBar(entityId);
+                }
+                else
+                {
+                    ShowHealthBar(entityId);
+                }
             }
         }
     }
@@ -167,7 +187,7 @@ public class HealthPanel : BasePanel
     /// <summary>
     /// 隐藏指定实体的血量条
     /// </summary>
-    /// <param name="entityId">实体ID</param>
+    /// <param name="entityId">实体 ID</param>
     public void HideHealthBar(int entityId)
     {
         if (healthBars.TryGetValue(entityId, out HealthBarInstance healthBarInstance))
@@ -178,7 +198,7 @@ public class HealthPanel : BasePanel
             }
         }
     }
-    
+
     /// <summary>
     /// 显示指定实体的血量条
     /// </summary>
@@ -255,5 +275,17 @@ public class HealthPanel : BasePanel
         // 面板隐藏时清理所有血量条
         ClearAllHealthBars();
 
+    }
+
+    /// <summary>
+    /// 血条设置变更事件处理（由 Ra2Processor 调用）
+    /// </summary>
+    internal void OnHealthBarSettingChanged(HealthBarSettingChangedEvent e)
+    {
+        showHealthBarAlways = e.ShowAlways;
+        Debug.Log($"[HealthPanel] 血条永久显示设置已更新为：{(e.ShowAlways ? "开启" : "关闭")}");
+        
+        // 立即刷新所有现有血量条的显示状态
+        UpdateAllHealthBars();
     }
 }

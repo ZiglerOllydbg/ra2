@@ -29,7 +29,9 @@ public class SettingSubPanel
     private TMP_Text musicValueText;
     // 背景音乐 AudioSource 引用
     private AudioSource bgmAudioSource;
-    
+    // 血条永久显示 Toggle
+    private Toggle healthBarToggle;
+
     public SettingSubPanel(Transform parent)
     {
         root = parent.Find("Setting")?.gameObject;
@@ -75,6 +77,19 @@ public class SettingSubPanel
                     bgmAudioSource.Play();
                 }
             }
+        }
+        
+        // 获取血条永久显示 Toggle
+        healthBarToggle = root.transform.Find("Scroll View/Viewport/Content/HealthBar/Toggle")?.GetComponent<Toggle>();
+        
+        if (healthBarToggle != null)
+        {
+            // 加载保存的血条显示设置，默认为 false（不永久显示）
+            bool showHealthBar = PlayerPrefs.GetInt("ShowHealthBar", 0) == 1;
+            healthBarToggle.isOn = showHealthBar;
+            
+            // 添加值变化监听
+            healthBarToggle.onValueChanged.AddListener(OnHealthBarToggleChanged);
         }
     }
     
@@ -159,6 +174,21 @@ public class SettingSubPanel
     }
     
     /// <summary>
+    /// 血条永久显示开关变化处理
+    /// </summary>
+    private void OnHealthBarToggleChanged(bool isOn)
+    {
+        // 保存到 PlayerPrefs（1 表示开启，0 表示关闭）
+        PlayerPrefs.SetInt("ShowHealthBar", isOn ? 1 : 0);
+        PlayerPrefs.Save();
+        
+        Debug.Log($"[SettingSubPanel] 血条永久显示已{(isOn ? "开启" : "关闭")}");
+        
+        // 发送事件通知血量面板更新设置
+        Frame.DispatchEvent(new HealthBarSettingChangedEvent(isOn));
+    }
+    
+    /// <summary>
     /// 销毁时调用，清理事件
     /// </summary>
     public void Destroy()
@@ -169,6 +199,11 @@ public class SettingSubPanel
         if (musicSlider != null)
         {
             musicSlider.onValueChanged.RemoveListener(OnMusicVolumeChanged);
+        }
+        
+        if (healthBarToggle != null)
+        {
+            healthBarToggle.onValueChanged.RemoveListener(OnHealthBarToggleChanged);
         }
     }
 }

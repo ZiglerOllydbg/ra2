@@ -14,3 +14,16 @@ public class HealthEvent : ModuleEvent
     }
 
 }
+
+/// <summary>
+/// 血条显示设置变更事件
+/// </summary>
+public class HealthBarSettingChangedEvent : ModuleEvent
+{
+    public bool ShowAlways { get; private set; }
+
+    public HealthBarSettingChangedEvent(bool showAlways) : base()
+    {
+        ShowAlways = showAlways;
+    }
+}

@@ -99,7 +99,8 @@ public class Ra2Processor : BaseProcessor
             typeof(SoloGameStartEvent),
             typeof(ReplayGameStartEvent),
             typeof(HealthEvent),
-            typeof(HealthPanelLateUpdateEvent)
+            typeof(HealthPanelLateUpdateEvent),
+            typeof(HealthBarSettingChangedEvent)
         };
     }
 
@@ -214,6 +215,12 @@ public class Ra2Processor : BaseProcessor
                 {
                     // 在 LateUpdate 中更新所有血量条的位置和血量值
                     HealthPanel.UpdateAllHealthBars();
+                }
+                break;
+            case HealthBarSettingChangedEvent e:
+                {
+                    // 转发血条设置变更事件到 HealthPanel
+                    HealthPanel.OnHealthBarSettingChanged(e);
                 }
                 break;
         }
