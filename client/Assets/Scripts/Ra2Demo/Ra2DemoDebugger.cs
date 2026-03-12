@@ -6,6 +6,9 @@ using ZLockstep.View;
 using Game.Examples;
 using ZLockstep.Simulation;
 using UnityEngine.InputSystem;
+using System.Linq;
+using System.Collections.Generic;
+using ZFrame;
 
 /// <summary>
 /// 调试可视化类，负责处理Ra2Demo中的OnGUI和OnDrawGizmos调试功能
@@ -356,6 +359,10 @@ public class Ra2DemoDebugger : MonoBehaviour
         {
             DrawDebugUI(game);
         }
+        else if (type == 2)
+        {
+            DrawUnitStatisticsPanel(game);
+        }
     }
 
     /// <summary>
@@ -397,6 +404,32 @@ public class Ra2DemoDebugger : MonoBehaviour
         DrawDebugToggles(toggleStyle);
         
         DrawDebugInfoLabels(game, labelStyle);
+        
+        GUILayout.EndArea();
+    }
+
+    /// <summary>
+    /// 绘制单位统计信息面板（独立面板，type==2 时显示）
+    /// </summary>
+    private void DrawUnitStatisticsPanel(BattleGame game)
+    {
+        Rect statsRect = new Rect(20, 500, 300, 400);
+        
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.fontSize = 18;
+        labelStyle.normal.textColor = Color.cyan;
+        
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.fontSize = 20;
+        titleStyle.normal.textColor = Color.yellow;
+        titleStyle.fontStyle = FontStyle.Bold;
+        
+        GUILayout.BeginArea(statsRect);
+        
+        GUILayout.Label("=== 单位统计面板 ===", titleStyle);
+        GUILayout.Space(15);
+        
+        DrawUnitStatistics(game, labelStyle);
         
         GUILayout.EndArea();
     }
@@ -464,6 +497,93 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     /// <summary>
+    /// 绘制单位统计信息（每种 Unit 类型的数量）
+    /// </summary>
+    private void DrawUnitStatistics(BattleGame game, GUIStyle labelStyle)
+    {
+        if (game == null || game.World == null)
+            return;
+
+        // 统计每种 UnitType 的数量
+        Dictionary<UnitType, int> unitTypeCounts = new Dictionary<UnitType, int>();
+
+        var entities = game.World.ComponentManager.GetAllEntityIdsWith<TransformComponent>();
+
+        foreach (var entityId in entities)
+        {
+            var entity = new Entity(entityId);
+            
+            // 检查是否有 UnitComponent
+            if (!game.World.ComponentManager.HasComponent<UnitComponent>(entity))
+                continue;
+
+            var unitComponent = game.World.ComponentManager.GetComponent<UnitComponent>(entity);
+            UnitType unitType = unitComponent.UnitType;
+
+            if (unitTypeCounts.ContainsKey(unitType))
+            {
+                unitTypeCounts[unitType]++;
+            }
+            else
+            {
+                unitTypeCounts[unitType] = 1;
+            }
+        }
+
+        // 绘制统计信息
+        GUILayout.Space(10);
+        GUILayout.Label("=== 单位统计 ===", labelStyle);
+        
+        foreach (var kvp in unitTypeCounts)
+        {
+            string unitName = GetUnitTypeName(kvp.Key);
+            GUILayout.Label($"{unitName}: {kvp.Value}", labelStyle);
+        }
+
+        // 显示总数
+        int totalCount = unitTypeCounts.Values.Sum();
+        GUILayout.Label($"单位总数：{totalCount}", labelStyle);
+    }
+
+    /// <summary>
+    /// 获取 UnitType 的中文名称（从 ConfUnit 配置表读取）
+    /// </summary>
+    private string GetUnitTypeName(UnitType unitType)
+    {
+        if (unitType == UnitType.None)
+            return "无效单位";
+        
+        // 根据 UnitType 查找对应的 ConfUnitID
+        // 需要遍历配置表找到匹配的 Type
+        var allUnits = ConfigManager.GetAll<ConfUnit>();
+        foreach (var confUnit in allUnits)
+        {
+            // 匹配单位类型
+            if ((int)unitType == confUnit.Type)
+            {
+                return confUnit.Name;
+            }
+        }
+        
+        // 如果配置表中找不到，返回默认名称
+        switch (unitType)
+        {
+            case UnitType.Infantry:
+                return "动员兵";
+            case UnitType.badgerTank:
+                return "獾式坦克";
+            case UnitType.grizzlyTank:
+                return "灰熊坦克";
+            case UnitType.Harvester:
+                return "矿车";
+            case UnitType.Projectile:
+                return "弹丸";
+            default:
+                return $"未知类型 ({unitType})";
+        }
+    }
+
+    /// <summary>
     /// 绘制帮助信息面板
     /// </summary>
     private void DrawHelpInfo()
@@ -489,7 +609,10 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Space(5);
         
         GUILayout.Label("调试类型切换:", labelStyle);
-        GUILayout.Label("按 ` 键循环切换：帮助 -> 调试 UI -> 关闭", labelStyle);
+        GUILayout.Label("按 ` 键循环切换以下模式:", labelStyle);
+        GUILayout.Label("  Type 0 - 帮助信息", labelStyle);
+        GUILayout.Label("  Type 1 - 调试 UI (开关控制)", labelStyle);
+        GUILayout.Label("  Type 2 - 单位统计面板", labelStyle);
         GUILayout.Space(5);
         
         GUILayout.EndArea();
