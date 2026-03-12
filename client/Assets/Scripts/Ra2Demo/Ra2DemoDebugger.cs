@@ -5,6 +5,7 @@ using zUnity;
 using ZLockstep.View;
 using Game.Examples;
 using ZLockstep.Simulation;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// 调试可视化类，负责处理Ra2Demo中的OnGUI和OnDrawGizmos调试功能
@@ -325,6 +326,12 @@ public class Ra2DemoDebugger : MonoBehaviour
         Gizmos.DrawLine(end, end + left);
     }
 
+    private void Update()
+    {
+        // 处理快捷键输入
+        HandleDebugUIHotkey();
+    }
+
     private void OnGUI()
     {
         // 仅在编辑器状态下显示调试 UI
@@ -339,8 +346,30 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (game == null)
             return;
 
-        DrawDebugUI(game);
+        // 根据开关状态决定是否绘制
+        int type = _DebugType % 3;
+        if (type == 1)
+        {
+            DrawDebugUI(game);
+        }
     }
+
+    /// <summary>
+    /// 处理调试 UI 的快捷键 (` 键)
+    /// </summary>
+    private void HandleDebugUIHotkey()
+    {
+        // 只在按键按下的瞬间触发 (从 false 变为 true) 
+        if (Keyboard.current.backquoteKey.wasPressedThisFrame)
+        {
+            _showDebugUI = !_showDebugUI;
+            _DebugType += 1;
+            Debug.Log($"[Ra2DemoDebugger] Debug UI 显示状态：{_showDebugUI}");
+        }
+    }
+
+    private bool _showDebugUI = true; // ` 开关控制
+    private int _DebugType = 0;
 
     /// <summary>
     /// 绘制调试 UI 面板
