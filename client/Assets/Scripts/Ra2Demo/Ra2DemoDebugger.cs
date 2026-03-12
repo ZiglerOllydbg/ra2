@@ -327,11 +327,11 @@ public class Ra2DemoDebugger : MonoBehaviour
 
     private void OnGUI()
     {
-        // 仅在编辑器状态下显示调试UI
+        // 仅在编辑器状态下显示调试 UI
         if (!Application.isEditor)
             return;
             
-        // 如果Ra2Demo不存在或游戏尚未准备好，则不显示调试UI
+        // 如果 Ra2Demo 不存在或游戏尚未准备好，则不显示调试 UI
         if (_demo == null)
             return;
 
@@ -339,6 +339,15 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (game == null)
             return;
 
+        DrawDebugUI(game);
+    }
+
+    /// <summary>
+    /// 绘制调试 UI 面板
+    /// </summary>
+    private void DrawDebugUI(BattleGame game)
+    {
+        Rect toggleRect = new Rect(20, 500, 200, 350);
         // 显示调试显示开关
         GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
         toggleStyle.fontSize = 16;
@@ -350,52 +359,75 @@ public class Ra2DemoDebugger : MonoBehaviour
         labelStyle.fontSize = 16;
         labelStyle.normal.textColor = Color.yellow;
         
-        Rect toggleRect = new Rect(20, 500, 200, 350);
         GUILayout.BeginArea(toggleRect);
+        
+        DrawDebugToggles(toggleStyle);
+        
+        DrawDebugInfoLabels(game, labelStyle);
+        
+        GUILayout.EndArea();
+    }
+
+    /// <summary>
+    /// 绘制调试开关控件
+    /// </summary>
+    private void DrawDebugToggles(GUIStyle toggleStyle)
+    {
         showUnits = GUILayout.Toggle(showUnits, "显示单位", toggleStyle);
-        showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示RVO智能体", toggleStyle);
+        showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示 RVO 智能体", toggleStyle);
         
         showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
         showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
         showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
         showSimulationInfo = GUILayout.Toggle(showSimulationInfo, "显示仿真信息", toggleStyle);
+    }
 
+    /// <summary>
+    /// 绘制调试信息标签（流场数量、RVO 智能体数量、仿真信息等）
+    /// </summary>
+    private void DrawDebugInfoLabels(BattleGame game, GUIStyle labelStyle)
+    {
         // 显示流场数量
         if (showFlowField && game.FlowFieldManager != null)
         {
             int flowFieldCount = game.FlowFieldManager.GetActiveFieldCount();
-            GUILayout.Label($"流场数量: {flowFieldCount}", labelStyle);
+            GUILayout.Label($"流场数量：{flowFieldCount}", labelStyle);
         }
         
-        // 显示RVO agents数量
+        // 显示 RVO agents 数量
         if (showRVOAgents && game.RvoSimulator != null)
         {
             int rvoAgentCount = game.RvoSimulator.GetNumAgents();
-            GUILayout.Label($"RVO智能体数量: {rvoAgentCount}", labelStyle);
+            GUILayout.Label($"RVO 智能体数量：{rvoAgentCount}", labelStyle);
         }
 
-        // 显示仿真信息（包括zTime帧率）
+        // 显示仿真信息（包括 zTime 帧率）
         if (showSimulationInfo && game.World != null && game.World.TimeManager != null)
         {
-            var timeManager = game.World.TimeManager;
-            
-            // 计算zTime的FPS
-            _zTimeAccumulatedTime += (float)timeManager.DeltaTime;
-            _zTimeAccumulatedTicks++;
-            
-            if (_zTimeAccumulatedTime >= 0.5f) // 每0.5秒更新一次FPS显示
-            {
-                _zTimeFps = _zTimeAccumulatedTicks / _zTimeAccumulatedTime;
-                _zTimeAccumulatedTime = 0f;
-                _zTimeAccumulatedTicks = 0;
-            }
-            
-            GUILayout.Label($"zTime Tick: {timeManager.Tick}", labelStyle);
-            GUILayout.Label($"zTime 时间: {(float)timeManager.Time:F2}s", labelStyle);
-            GUILayout.Label($"zTime DeltaTime: {(float)timeManager.DeltaTime:F3}s", labelStyle);
-            GUILayout.Label($"zTime FPS: {_zTimeFps:F1}", labelStyle);
+            DrawSimulationInfo(game.World.TimeManager, labelStyle);
+        }
+    }
+
+    /// <summary>
+    /// 绘制仿真信息（zTime Tick、时间、DeltaTim e、FPS 等）
+    /// </summary>
+    private void DrawSimulationInfo(ZLockstep.Simulation.TimeManager timeManager, GUIStyle labelStyle)
+    {
+        // 计算 zTime 的 FPS
+        _zTimeAccumulatedTime += (float)timeManager.DeltaTime;
+        _zTimeAccumulatedTicks++;
+        
+        if (_zTimeAccumulatedTime >= 0.5f) // 每 0.5 秒更新一次 FPS 显示
+        {
+            _zTimeFps = _zTimeAccumulatedTicks / _zTimeAccumulatedTime;
+            _zTimeAccumulatedTime = 0f;
+            _zTimeAccumulatedTicks = 0;
         }
         
-        GUILayout.EndArea();
+        GUILayout.Label($"zTime Tick: {timeManager.Tick}", labelStyle);
+        GUILayout.Label($"zTime 时间：{(float)timeManager.Time:F2}s", labelStyle);
+        GUILayout.Label($"zTime DeltaTime: {(float)timeManager.DeltaTime:F3}s", labelStyle);
+        GUILayout.Label($"zTime FPS: {_zTimeFps:F1}", labelStyle);
     }
+
 }
