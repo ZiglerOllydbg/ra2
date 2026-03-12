@@ -336,11 +336,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     private void OnGUI()
-    {
-        // 仅在编辑器状态下显示调试 UI
-        if (!Application.isEditor)
-            return;
-            
+    { 
         // 如果 Ra2Demo 不存在或游戏尚未准备好，则不显示调试 UI
         if (_demo == null)
             return;
@@ -353,10 +349,16 @@ public class Ra2DemoDebugger : MonoBehaviour
         int type = _DebugType % 3;
         if (type == 0)
         {
+            // 仅在编辑器状态下显示调试 UI
+            if (!Application.isEditor)
+                return;
             DrawHelpInfo();
         }
         else if (type == 1)
         {
+            // 仅在编辑器状态下显示调试 UI
+            if (!Application.isEditor)
+                return;
             DrawDebugUI(game);
         }
         else if (type == 2)
@@ -381,6 +383,11 @@ public class Ra2DemoDebugger : MonoBehaviour
 
     private bool _showDebugUI = true; // ` 开关控制
     private int _DebugType = 0;
+
+    public void SetDebugType(int type)
+    {
+        _DebugType = type;
+    }
 
     /// <summary>
     /// 绘制调试 UI 面板

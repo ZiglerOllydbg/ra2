@@ -31,6 +31,10 @@ public class SettingSubPanel
     private AudioSource bgmAudioSource;
     // 血条永久显示 Toggle
     private Toggle healthBarToggle;
+    // 单位统计按钮
+    private Button unitStatsBtn;
+    // 关闭调试按钮
+    private Button closeDebugBtn;
 
     public SettingSubPanel(Transform parent)
     {
@@ -90,6 +94,24 @@ public class SettingSubPanel
             
             // 添加值变化监听
             healthBarToggle.onValueChanged.AddListener(OnHealthBarToggleChanged);
+        }
+        
+        // 获取单位统计按钮
+        unitStatsBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/UnitStatsBtn")?.GetComponent<Button>();
+        
+        if (unitStatsBtn != null)
+        {
+            // 添加点击监听
+            unitStatsBtn.onClick.AddListener(OnUnitStatsBtnClick);
+        }
+        
+        // 获取关闭调试按钮
+        closeDebugBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/Close")?.GetComponent<Button>();
+        
+        if (closeDebugBtn != null)
+        {
+            // 添加点击监听
+            closeDebugBtn.onClick.AddListener(OnCloseDebugBtnClick);
         }
     }
     
@@ -189,6 +211,34 @@ public class SettingSubPanel
     }
     
     /// <summary>
+    /// 单位统计按钮点击处理
+    /// </summary>
+    private void OnUnitStatsBtnClick()
+    {
+        // 查找 Ra2DemoDebugger 组件并调用 SetDebugType(2)
+        Ra2DemoDebugger debugger = Object.FindObjectOfType<Ra2DemoDebugger>();
+        if (debugger != null)
+        {
+            debugger.SetDebugType(2);
+            Debug.Log("[SettingSubPanel] 已切换到单位统计面板");
+        }
+    }
+    
+    /// <summary>
+    /// 关闭调试按钮点击处理
+    /// </summary>
+    private void OnCloseDebugBtnClick()
+    {
+        // 查找 Ra2DemoDebugger 组件并调用 SetDebugType(0)
+        Ra2DemoDebugger debugger = Object.FindObjectOfType<Ra2DemoDebugger>();
+        if (debugger != null)
+        {
+            debugger.SetDebugType(0);
+            Debug.Log("[SettingSubPanel] 已关闭调试界面");
+        }
+    }
+    
+    /// <summary>
     /// 销毁时调用，清理事件
     /// </summary>
     public void Destroy()
@@ -204,6 +254,16 @@ public class SettingSubPanel
         if (healthBarToggle != null)
         {
             healthBarToggle.onValueChanged.RemoveListener(OnHealthBarToggleChanged);
+        }
+        
+        if (unitStatsBtn != null)
+        {
+            unitStatsBtn.onClick.RemoveListener(OnUnitStatsBtnClick);
+        }
+        
+        if (closeDebugBtn != null)
+        {
+            closeDebugBtn.onClick.RemoveListener(OnCloseDebugBtnClick);
         }
     }
 }
