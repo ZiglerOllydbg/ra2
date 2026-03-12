@@ -348,7 +348,11 @@ public class Ra2DemoDebugger : MonoBehaviour
 
         // 根据开关状态决定是否绘制
         int type = _DebugType % 3;
-        if (type == 1)
+        if (type == 0)
+        {
+            DrawHelpInfo();
+        }
+        else if (type == 1)
         {
             DrawDebugUI(game);
         }
@@ -457,6 +461,38 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Label($"zTime 时间：{(float)timeManager.Time:F2}s", labelStyle);
         GUILayout.Label($"zTime DeltaTime: {(float)timeManager.DeltaTime:F3}s", labelStyle);
         GUILayout.Label($"zTime FPS: {_zTimeFps:F1}", labelStyle);
+    }
+
+    /// <summary>
+    /// 绘制帮助信息面板
+    /// </summary>
+    private void DrawHelpInfo()
+    {
+        Rect helpRect = new Rect(20, 500, 400, 350);
+        
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.fontSize = 16;
+        labelStyle.normal.textColor = Color.white;
+        
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.fontSize = 18;
+        titleStyle.normal.textColor = Color.yellow;
+        titleStyle.fontStyle = FontStyle.Bold;
+        
+        GUILayout.BeginArea(helpRect);
+        
+        GUILayout.Label("=== 调试控制台帮助 ===", titleStyle);
+        GUILayout.Space(10);
+        
+        GUILayout.Label("快捷键说明:", labelStyle);
+        GUILayout.Label("` 键 - 切换调试 UI 显示/隐藏", labelStyle);
+        GUILayout.Space(5);
+        
+        GUILayout.Label("调试类型切换:", labelStyle);
+        GUILayout.Label("按 ` 键循环切换：帮助 -> 调试 UI -> 关闭", labelStyle);
+        GUILayout.Space(5);
+        
+        GUILayout.EndArea();
     }
 
 }
