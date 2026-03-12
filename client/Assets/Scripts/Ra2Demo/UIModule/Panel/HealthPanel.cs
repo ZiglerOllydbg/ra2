@@ -25,8 +25,6 @@ public class HealthPanel : BasePanel
     
     // 存储所有血量条实例的字典，key为实体ID
     private Dictionary<int, HealthBarInstance> healthBars = new Dictionary<int, HealthBarInstance>();
-
-    private int _ticker = 0;
     
     // 血量条实例类
     private class HealthBarInstance
@@ -60,9 +58,6 @@ public class HealthPanel : BasePanel
             redHpPrefab.SetActive(false);
         }
 
-        _ticker = Tick.SetInterval(() => {
-            UpdateAllHealthBars();
-        }, 0.05f);
     }
 
     protected override void AddEvent()
@@ -260,8 +255,5 @@ public class HealthPanel : BasePanel
         // 面板隐藏时清理所有血量条
         ClearAllHealthBars();
 
-        // 停止计时器
-        Tick.ClearInterval(_ticker);
-        _ticker = 0;
     }
 }

@@ -847,8 +847,14 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 放置建筑
+    /// LateUpdate - 在每帧的 LateUpdate 中更新血量条位置
     /// </summary>
+    private void LateUpdate()
+    {
+        // 触发 HealthPanel 的 LateUpdate 事件
+        Frame.DispatchEvent(new HealthPanelLateUpdateEvent());
+    }
+
     /// <summary>
     /// 放置建筑
     /// </summary>

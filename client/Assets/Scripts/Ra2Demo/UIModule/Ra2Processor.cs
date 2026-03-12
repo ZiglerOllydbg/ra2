@@ -98,7 +98,8 @@ public class Ra2Processor : BaseProcessor
             typeof(RestartGameEvent),
             typeof(SoloGameStartEvent),
             typeof(ReplayGameStartEvent),
-            typeof(HealthEvent)
+            typeof(HealthEvent),
+            typeof(HealthPanelLateUpdateEvent)
         };
     }
 
@@ -195,7 +196,7 @@ public class Ra2Processor : BaseProcessor
                     // 确保血量面板始终开启
                     HealthPanel.Open();
                     
-                    // 根据IsVisible属性决定单个血条的显示/隐藏
+                    // 根据 IsVisible 属性决定单个血条的显示/隐藏
                     if (e.IsVisible)
                     {
                         // 更新指定实体的血量显示
@@ -207,6 +208,12 @@ public class Ra2Processor : BaseProcessor
                         // 隐藏指定实体的血量条
                         HealthPanel.HideHealthBar(e.Id);
                     }
+                }
+                break;
+            case HealthPanelLateUpdateEvent:
+                {
+                    // 在 LateUpdate 中更新所有血量条的位置和血量值
+                    HealthPanel.UpdateAllHealthBars();
                 }
                 break;
         }
