@@ -347,23 +347,23 @@ public class Ra2DemoDebugger : MonoBehaviour
 
         // 根据开关状态决定是否绘制
         int type = _DebugType % 3;
-        if (type == 0)
+        if (type == 1)
         {
             // 仅在编辑器状态下显示调试 UI
             if (!Application.isEditor)
                 return;
             DrawHelpInfo();
         }
-        else if (type == 1)
+        else if (type == 2)
+        {
+            DrawUnitStatisticsPanel(game);
+        }
+        else if (type == 3)
         {
             // 仅在编辑器状态下显示调试 UI
             if (!Application.isEditor)
                 return;
             DrawDebugUI(game);
-        }
-        else if (type == 2)
-        {
-            DrawUnitStatisticsPanel(game);
         }
     }
 
