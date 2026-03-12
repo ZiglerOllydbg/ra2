@@ -63,19 +63,22 @@ namespace ZLockstep.Simulation.ECS.Systems
                 }
 
                 // 1. 检查是否有目标，如果超过查找间隔时间则重新查找
-                bool shouldSearchTarget = attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId);
-                
-                // 即使有目标，也要定期检查是否有更优目标（但受间隔限制）
-                if (!shouldSearchTarget && attack.TimeSinceLastTargetSearch >= TARGET_SEARCH_INTERVAL)
+                if (attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId))
                 {
-                    shouldSearchTarget = true;
-                }
-                
-                if (shouldSearchTarget)
-                {
-                    // 搜索新目标
-                    attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
-                    attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
+                    bool shouldSearchTarget = false;
+                    // 即使有目标，也要定期检查是否有更优目标（但受间隔限制）
+                    zfloat offset = zfloat.CreateFloat(entityId % 20);
+                    if (!shouldSearchTarget && attack.TimeSinceLastTargetSearch + offset >= TARGET_SEARCH_INTERVAL)
+                    {
+                        shouldSearchTarget = true;
+                    }
+
+                    if (shouldSearchTarget)
+                    {
+                        // 搜索新目标
+                        attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
+                        attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
+                    }
                 }
 
                 // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标

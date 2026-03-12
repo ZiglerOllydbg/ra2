@@ -48,13 +48,13 @@ MonoBehaviour:
     PreloadWXFont: 0
     disableMultiTouch: 0
   CompileOptions:
-    DevelopBuild: 0
+    DevelopBuild: 1
     AutoProfile: 0
     ScriptOnly: 0
     Il2CppOptimizeSize: 1
     profilingFuncs: 1
     Webgl2: 1
-    fbslim: 0
+    fbslim: 1
     DeleteStreamingAssets: 1
     ProfilingMemory: 0
     CleanBuild: 0
