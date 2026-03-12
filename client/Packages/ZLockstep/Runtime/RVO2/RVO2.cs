@@ -33,12 +33,12 @@ namespace ZLockstep.RVO
     public class RVO2Simulator
     {
         /// <summary>
-        /// 所有智能体列表
+        /// 所有智能体字典，使用 ID 作为键，实现 O(1) 查找
         /// </summary>
-        private List<RVO2Agent> agents = new List<RVO2Agent>();
+        private Dictionary<int, RVO2Agent> agents = new Dictionary<int, RVO2Agent>();
         
         /// <summary>
-        /// 用于生成唯一ID的计数器
+        /// 用于生成唯一 ID 的计数器
         /// </summary>
         private int nextAgentId = 0;
 
@@ -48,12 +48,6 @@ namespace ZLockstep.RVO
         private zfloat timeStep = zfloat.Zero;
 
         /// <summary>
-        /// 速度平滑因子，用于减少震荡
-        /// 0表示完全使用新速度，1表示完全保持当前速度
-        /// </summary>
-        private zfloat velocitySmoothingFactor = new zfloat(0, 2000); // 0.2
-
-        /// <summary>
         /// 默认的时间范围参数
         /// </summary>
         public zfloat defaultTimeHorizon = new zfloat(2);
@@ -61,7 +55,7 @@ namespace ZLockstep.RVO
         /// <summary>
         /// 静止检测阈值
         /// </summary>
-        private zfloat stationaryThreshold = new zfloat(0, 100); // 0.01单位
+        private zfloat stationaryThreshold = new zfloat(0, 100); // 0.01 单位
         
         /// <summary>
         /// 静止判定帧数
@@ -79,7 +73,8 @@ namespace ZLockstep.RVO
         /// <param name="smoothingFactor">平滑因子，0表示无平滑，1表示完全保持当前速度</param>
         public void SetVelocitySmoothingFactor(zfloat smoothingFactor)
         {
-            velocitySmoothingFactor = smoothingFactor;
+            // 保留方法以维持接口兼容性，但实际不再使用平滑功能
+            // 如果需要启用平滑，可以设置一个标志位
         }
         
         /// <summary>
@@ -131,9 +126,7 @@ namespace ZLockstep.RVO
             agent.stationaryFrames = 0;
             agent.isStationary = false;
 
-            agents.Add(agent);
-            // 按照agent.id进行升序排列
-            agents.Sort((a, b) => a.id.CompareTo(b.id));
+            agents.Add(agent.id, agent);
             return agent.id;
         }
 
@@ -156,13 +149,9 @@ namespace ZLockstep.RVO
         /// <param name="prefVelocity">期望速度向量，表示理想状态下智能体希望达到的速度</param>
         public void SetAgentPrefVelocity(int agentId, zVector2 prefVelocity)
         {
-            for (int i = 0; i < agents.Count; i++)
+            if (agents.TryGetValue(agentId, out RVO2Agent agent))
             {
-                if (agents[i].id == agentId)
-                {
-                    agents[i].prefVelocity = prefVelocity;
-                    return;
-                }
+                agent.prefVelocity = prefVelocity;
             }
         }
 
@@ -185,13 +174,9 @@ namespace ZLockstep.RVO
         /// <param name="position">新的位置坐标</param>
         public void SetAgentPosition(int agentId, zVector2 position)
         {
-            for (int i = 0; i < agents.Count; i++)
+            if (agents.TryGetValue(agentId, out RVO2Agent agent))
             {
-                if (agents[i].id == agentId)
-                {
-                    agents[i].position = position;
-                    return;
-                }
+                agent.position = position;
             }
         }
 
@@ -214,12 +199,9 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前位置坐标，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentPosition(int agentId)
         {
-            for (int i = 0; i < agents.Count; i++)
+            if (agents.TryGetValue(agentId, out RVO2Agent agent))
             {
-                if (agents[i].id == agentId)
-                {
-                    return agents[i].position;
-                }
+                return agent.position;
             }
             return zVector2.zero;
         }
@@ -243,12 +225,9 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前实际速度向量，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentVelocity(int agentId)
         {
-            for (int i = 0; i < agents.Count; i++)
+            if (agents.TryGetValue(agentId, out RVO2Agent agent))
             {
-                if (agents[i].id == agentId)
-                {
-                    return agents[i].velocity;
-                }
+                return agent.velocity;
             }
             return zVector2.zero;
         }
@@ -277,66 +256,63 @@ namespace ZLockstep.RVO
 
             timeStep = deltaTime;
 
-            // 阶段1：为每个智能体计算新速度（存储到newVelocity，不修改velocity）
-            // 这样保证所有智能体计算时看到的是同一时刻的状态，保持ORCA算法的对称性
-            for (int i = 0; i < agents.Count; i++)
+            // 阶段 1：为每个智能体计算新速度（存储到 newVelocity，不修改 velocity）
+            // 这样保证所有智能体计算时看到的是同一时刻的状态，保持 ORCA 算法的对称性
+            foreach (var agent in agents.Values)
             {
-                ComputeNewVelocity(agents[i]);
+                ComputeNewVelocity(agent);
             }
 
-            // 阶段2：统一应用新速度并更新位置
-            for (int i = 0; i < agents.Count; i++)
+            // 阶段 2：统一应用新速度并更新位置
+            foreach (var agent in agents.Values)
             {
-                // 更新静止状态
-                bool wasStationary = agents[i].isStationary;
-                UpdateStationaryState(agents[i]);
-                bool isStationary = agents[i].isStationary;
+                // 简化的静止状态检测：仅当期望速度为零且速度幅值很小时才标记为静止
+                UpdateStationaryState(agent);
                 
                 // 如果智能体开始移动，立即移除其动态障碍物
-                if (wasStationary && !isStationary && flowFieldManager != null)
+                if (agent.wasStationary && !agent.isStationary && flowFieldManager != null)
                 {
-                    // 通过ID精确移除动态障碍物
                     var map = flowFieldManager.GetMap();
                     if (map is SimpleMapManager simpleMap)
                     {
-                        simpleMap.RemoveDynamicObstacle(agents[i].id);
+                        simpleMap.RemoveDynamicObstacle(agent.id);
                     }
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 // 如果智能体变为静止，通知流场管理器需要更新动态障碍物
-                else if (!wasStationary && isStationary && flowFieldManager != null)
+                else if (!agent.wasStationary && agent.isStationary && flowFieldManager != null)
                 {
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 
-                agents[i].velocity = agents[i].newVelocity;
-                agents[i].position += agents[i].velocity * deltaTime;
+                agent.velocity = agent.newVelocity;
+                agent.position += agent.velocity * deltaTime;
             }
         }
 
         /// <summary>
-        /// 更新智能体的静止状态
+        /// 更新智能体的静止状态（简化版本）
+        /// 直接通过速度幅值判断，避免距离计算
         /// </summary>
         /// <param name="agent">需要更新状态的智能体</param>
         private void UpdateStationaryState(RVO2Agent agent)
         {
-            zfloat moveDistance = (agent.position - agent.lastPosition).magnitude;
+            // 保存上一帧的静止状态
+            agent.wasStationary = agent.isStationary;
             
-            if (moveDistance < stationaryThreshold && agent.prefVelocity == zVector2.zero)
+            // 简化：直接通过速度幅值判断静止状态
+            bool isMoving = agent.newVelocity.sqrMagnitude > stationaryThreshold * stationaryThreshold;
+            
+            if (!isMoving && agent.prefVelocity == zVector2.zero)
             {
                 agent.stationaryFrames++;
-                if (agent.stationaryFrames >= stationaryFrameThreshold)
-                {
-                    agent.isStationary = true;
-                }
+                agent.isStationary = (agent.stationaryFrames >= stationaryFrameThreshold);
             }
             else
             {
                 agent.stationaryFrames = 0;
                 agent.isStationary = false;
             }
-            
-            agent.lastPosition = agent.position;
         }
 
         /// <summary>
@@ -359,18 +335,15 @@ namespace ZLockstep.RVO
         /// <param name="agent">需要计算新速度的目标智能体</param>
         private void ComputeNewVelocity(RVO2Agent agent)
         {
-            // zUDebug.Log($"[RVO2] 开始计算智能体 {agent.id} 的新速度，期望速度: {agent.prefVelocity}, 当前速度: {agent.velocity}");
-
             // 构建ORCA线
             List<ORCALine> orcaLines = new List<ORCALine>();
 
             // 对每个其他智能体创建ORCA线
-            for (int i = 0; i < agents.Count; i++)
+            foreach (var other in agents.Values)
             {
-                if (agents[i].id == agent.id)
+                if (other.id == agent.id)
                     continue;
 
-                RVO2Agent other = agents[i];
                 zVector2 relativePosition = other.position - agent.position;
                 zVector2 relativeVelocity = agent.velocity - other.velocity;
                 zfloat distSq = relativePosition.sqrMagnitude;
@@ -456,16 +429,8 @@ namespace ZLockstep.RVO
 
             // 使用线性规划找到最优速度
             zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
-            // zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
             
-            // 应用速度平滑以减少震荡
-            if (agent.velocity != zVector2.zero && newVelocity != zVector2.zero)
-            {
-                newVelocity = zVector2.Lerp(newVelocity, agent.velocity, velocitySmoothingFactor);
-            }
-            
-            // 存储到newVelocity字段，而不是直接修改velocity
-            // 这样保证所有智能体在计算时看到的是同一时刻的velocity状态
+            // 移除速度平滑，直接使用计算出的新速度
             agent.newVelocity = newVelocity;
         }
 
@@ -661,17 +626,7 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要移除的智能体ID</param>
         public void RemoveAgent(int agentId)
         {
-            int index = -1;
-            for (int i = 0; i < agents.Count; i++)
-            {
-                if (agents[i].id == agentId)
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index >= 0)
+            if (agents.ContainsKey(agentId))
             {
                 // 移除动态障碍物
                 if (flowFieldManager != null)
@@ -684,7 +639,7 @@ namespace ZLockstep.RVO
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 
-                agents.RemoveAt(index);
+                agents.Remove(agentId);
             }
         }
         
@@ -697,14 +652,10 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要重置的智能体ID</param>
         public void ResetAgentStationaryState(int agentId)
         {
-            for (int i = 0; i < agents.Count; i++)
+            if (agents.TryGetValue(agentId, out RVO2Agent agent))
             {
-                if (agents[i].id == agentId)
-                {
-                    agents[i].stationaryFrames = 0;
-                    agents[i].isStationary = false;
-                    break;
-                }
+                agent.stationaryFrames = 0;
+                agent.isStationary = false;
             }
         }
         
@@ -750,9 +701,9 @@ namespace ZLockstep.RVO
         /// 注意：不要修改返回的列表，因为它直接引用内部数据结构。
         /// </summary>
         /// <returns>所有智能体的只读列表</returns>
-        public IReadOnlyList<RVO2Agent> GetAgents()
+        public List<RVO2Agent> GetAgents()
         {
-            return agents.AsReadOnly();
+            return new List<RVO2Agent>(agents.Values);
         }
         
         /// <summary>
@@ -762,7 +713,7 @@ namespace ZLockstep.RVO
         public List<RVO2Agent> GetStationaryAgents()
         {
             List<RVO2Agent> stationaryAgents = new List<RVO2Agent>();
-            foreach (var agent in agents)
+            foreach (var agent in agents.Values)
             {
                 if (agent.isStationary)
                 {
@@ -824,6 +775,9 @@ namespace ZLockstep.RVO
         
         /// <summary>是否为静止状态</summary>
         public bool isStationary;
+        
+        /// <summary>上一帧的静止状态（用于状态转换检测）</summary>
+        public bool wasStationary;
     }
 
     /// <summary>

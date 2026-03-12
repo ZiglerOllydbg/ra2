@@ -81,6 +81,8 @@ namespace ZLockstep.Simulation.ECS.Systems
                     }
                 }
 
+                attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
+
                 // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标
                 if (attack.TargetEntityId >= 0)
                 {
@@ -130,7 +132,7 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                     // 更新攻击冷却
                     attack.TimeSinceLastAttack += DeltaTime;
-                    attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
+                    
                     zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
                     
                     zfloat rangeSqr = attack.Range * attack.Range;
