@@ -63,6 +63,16 @@ namespace ZLockstep.RVO
         private int stationaryFrameThreshold = 30;
         
         /// <summary>
+        /// 速度计算的时间间隔（秒），默认 0.5 秒计算一次
+        /// </summary>
+        private zfloat velocityCalculationInterval = new zfloat(0, 5000); // 0.5 秒
+        
+        /// <summary>
+        /// 上次速度计算的累计时间
+        /// </summary>
+        private zfloat lastVelocityCalculationTime = zfloat.Zero;
+        
+        /// <summary>
         /// 流场管理器引用，用于通知动态障碍物变化
         /// </summary>
         private FlowFieldManager flowFieldManager;
@@ -84,6 +94,15 @@ namespace ZLockstep.RVO
         public void SetFlowFieldManager(FlowFieldManager manager)
         {
             flowFieldManager = manager;
+        }
+        
+        /// <summary>
+        /// 设置速度计算的时间间隔
+        /// </summary>
+        /// <param name="intervalSeconds">间隔时间（秒），例如 0.5 表示每 0.5 秒计算一次</param>
+        public void SetVelocityCalculationInterval(zfloat intervalSeconds)
+        {
+            velocityCalculationInterval = intervalSeconds;
         }
 
         /// <summary>
@@ -258,9 +277,17 @@ namespace ZLockstep.RVO
 
             // 阶段 1：为每个智能体计算新速度（存储到 newVelocity，不修改 velocity）
             // 这样保证所有智能体计算时看到的是同一时刻的状态，保持 ORCA 算法的对称性
-            foreach (var agent in agents.Values)
+            // 使用节流控制：只在达到指定时间间隔时才重新计算速度
+            lastVelocityCalculationTime += deltaTime;
+            bool shouldCalculateVelocity = lastVelocityCalculationTime >= velocityCalculationInterval;
+            
+            if (shouldCalculateVelocity)
             {
-                ComputeNewVelocity(agent);
+                foreach (var agent in agents.Values)
+                {
+                    ComputeNewVelocity(agent);
+                }
+                lastVelocityCalculationTime = zfloat.Zero;
             }
 
             // 阶段 2：统一应用新速度并更新位置

@@ -48,7 +48,7 @@ MonoBehaviour:
     PreloadWXFont: 0
     disableMultiTouch: 0
   CompileOptions:
-    DevelopBuild: 1
+    DevelopBuild: 0
     AutoProfile: 0
     ScriptOnly: 0
     Il2CppOptimizeSize: 1
