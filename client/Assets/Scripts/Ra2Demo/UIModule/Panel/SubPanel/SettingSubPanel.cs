@@ -106,7 +106,7 @@ public class SettingSubPanel
         }
         
         // 获取关闭调试按钮
-        closeDebugBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/Close")?.GetComponent<Button>();
+        closeDebugBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/CloseBtn")?.GetComponent<Button>();
         
         if (closeDebugBtn != null)
         {
