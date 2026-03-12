@@ -112,11 +112,6 @@ public class Ra2Demo : MonoBehaviour
     // 添加建造功能相关字段
     private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
 
-    // GM相关
-    private bool _isConsoleVisible = false;
-    private string _inputFieldGM = "";
-    private Vector2 _scrollPosition;
-
     // 选择模式/（相机）移动模式
     public bool IsSelectMode { get; set; } = true;
 
@@ -898,29 +893,12 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        // 通过按 "~" 键呼出/关闭控制台
-        if (Keyboard.current.backquoteKey.wasPressedThisFrame)
-        {
-            _isConsoleVisible = !_isConsoleVisible;
-        }
-
-        // 如果控制台可见，确保输入字段获得焦点
-        if (_isConsoleVisible)
-        {
-            GUI.FocusControl("InputField");
-        }
-
         // 表现系统：插值更新
         if (_presentationSystem != null)
         {
             _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
         }
 
-        // 更新建筑预览
-        // UpdateBuildingPreview();
-
-        // UpdateCameraMovement();
-        
         // 更新淡出效果
         UpdateFadeOut();
     }
@@ -1009,18 +987,11 @@ public class Ra2Demo : MonoBehaviour
 
     private void OnGUI()
     {
-        GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
-        buttonStyle.fontSize = 24;
-        buttonStyle.fixedHeight = 60;
-        buttonStyle.fixedWidth = 200;
-
         // 绘制框选区域
         DrawSelectionBox();
         
         // 绘制拖拽虚线（单位移动模式）
         DrawDragLine();
-
-        DrawGMConsole();
     }
 
     /// <summary>
@@ -1037,7 +1008,6 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     public void RestartGame()
     {
-
         // 清空选中单位列表
         ClearAllOutlines(); // 清除所有单位的描边
 
@@ -1198,62 +1168,10 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 绘制GM控制台
-    /// </summary>
-    private void DrawGMConsole()
-    {
-        if (!_isConsoleVisible) return;
-
-        // 设置更暗的背景色
-        Color backgroundColor = new Color(0f, 0f, 0f, 0.95f);
-        Color oldBackgroundColor = GUI.backgroundColor;
-        GUI.backgroundColor = backgroundColor;
-
-        // 简易的IMGUI控制台界面
-        GUILayout.Window(0, new Rect(0, 0, Screen.width, Screen.height * 0.3f), DrawGMConsoleWindow, "GM Console");
-
-        GUI.backgroundColor = oldBackgroundColor;
-    }
-
-    private void DrawGMConsoleWindow(int windowID)
-    {
-        // 日志显示区域（可滚动）
-        _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-
-        var logHistory = _game.World.GMManager.LogHistory;
-        foreach (var log in logHistory)
-        {
-            GUILayout.Label(log);
-        }
-        GUILayout.EndScrollView();
-
-        GUILayout.BeginHorizontal();
-        // 输入框
-        GUI.SetNextControlName("InputField");
-        _inputFieldGM = GUILayout.TextField(_inputFieldGM, GUILayout.ExpandWidth(true));
-        // 确保输入框获得焦点
-        if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
-        {
-            _game.SubmitCommand(new GMCommand(_inputFieldGM));
-            Event.current.Use(); // 防止重复处理
-        }
-        GUILayout.FlexibleSpace();
-        // 执行按钮
-        if (GUILayout.Button("Execute", GUILayout.Width(60)))
-        {
-            _game.SubmitCommand(new GMCommand(_inputFieldGM));
-        }
-        GUILayout.EndHorizontal();
-        GUI.FocusControl("InputField");
-    }
-
-    /// <summary>
     /// 移动相机到我方工厂位置
     /// </summary>
     public void MoveCameraToOurFactory()
     {
-
-
         if (_game == null || _game.World == null)
             return;
 
