@@ -5,7 +5,8 @@ using TMPro;
 using ZLockstep.Simulation.ECS;
 using ZFrame;
 using ZLockstep.Simulation.ECS.Components;
-using Utils; // 添加 StringUtils 所在的命名空间
+using Utils;
+using PostHogUnity; // 添加 StringUtils 所在的命名空间
 
 /// <summary>
 /// 主面板的子面板控制器 - 封装子面板的UI逻辑和数据
@@ -348,6 +349,13 @@ public class MainBuildingSubPanel
         {
             Hide();
         }
+
+        // PostHog 埋点，记录放置的什么建筑
+        PostHog.Capture("PlaceBuilding", new Dictionary<string, object>
+        {
+            {"BuildingID", buildingID},
+            {"BuildingType", item.ItemData.Name}
+        });
     }
     
         /// <summary>
