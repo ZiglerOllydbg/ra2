@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
 using TMPro;
+using System.Collections.Generic;
+using PostHogUnity;
 
 /// <summary>
 /// 结算面板 - 显示游戏胜负结果
@@ -29,7 +31,7 @@ public class SettlePanel : BasePanel
     {
         base.OnBecameVisible();
         
-        // 获取面板中的UI组件引用
+        // 获取面板中的 UI 组件引用
         resultText = PanelObject.transform.Find("Result/Text")?.GetComponent<TMP_Text>();
         okBtn = PanelObject.transform.Find("Result/OKBtn")?.GetComponent<Button>();
     }
@@ -66,6 +68,27 @@ public class SettlePanel : BasePanel
         {
             resultText.text = isVictory ? "胜利!" : "失败!";
             resultText.color = isVictory ? Color.green : Color.red;
+
+            // 上报游戏结果到 PostHog
+            ReportGameResult(isVictory);
+        }
+    }
+    
+    /// <summary>
+    /// 上报游戏结果到 PostHog
+    /// </summary>
+    /// <param name="isVictory">是否胜利</param>
+    private void ReportGameResult(bool isVictory)
+    {
+        if (PostHog.IsInitialized)
+        {
+            var properties = new Dictionary<string, object>
+            {
+                { "result", isVictory ? "victory" : "defeat" },
+                { "timestamp", System.DateTime.UtcNow.ToString("o") }
+            };
+            
+            PostHog.Capture("game_result", properties);
         }
     }
     
