@@ -7,6 +7,7 @@ using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZFrame;
 using ZLib;
+using PostHogUnity;
 
 /// <summary>
 /// 主面板的生产子面板控制器 - 封装子面板的UI逻辑和数据
@@ -29,6 +30,9 @@ public class MainProducerSubPanel
     // 定时刷新相关
     private int refreshTimerId = -1;
     private const float REFRESH_INTERVAL = 0.1f; // 每秒刷新一次
+    
+    // 添加生产记录追踪 - 记录用户在当前会话中的增减操作
+    private Dictionary<string, int> productionRecords = new Dictionary<string, int>();
     
     /// <summary>
     /// 绑定的数据
@@ -90,6 +94,9 @@ public class MainProducerSubPanel
         
         // 启动定时刷新
         StartAutoRefresh();
+        
+        // 清空之前的记录（打开面板时重置）
+        productionRecords.Clear();
     }
 
     private void StartAutoRefresh()
@@ -265,9 +272,51 @@ public class MainProducerSubPanel
     /// </summary>
     public void Hide()
     {
+        // 关闭面板时发送 PostHog 记录
+        SendProductionRecordToPostHog();
+        
         SetActive(false);
         // 停止定时刷新
         StopAutoRefresh();
+    }
+
+    /// <summary>
+    /// 发送生产记录到 PostHog
+    /// </summary>
+    private void SendProductionRecordToPostHog()
+    {
+        if (productionRecords.Count == 0)
+        {
+            Debug.Log("[生产记录] 没有生产记录，跳过上报");
+            return;
+        }
+
+        // 构建事件属性
+        var properties = new Dictionary<string, object>();
+        
+        // 添加每种生产类型的详细数据
+        foreach (var kvp in productionRecords)
+        {
+            if (kvp.Value != 0) // 只上报有变化的记录
+            {
+                properties[$"{kvp.Key}"] = kvp.Value;
+            }
+        }
+        
+        // 发送事件到 PostHog
+        try
+        {
+            PostHog.Capture("producer_units", properties);
+            Debug.Log($"[生产记录] 已发送 PostHog 事件：producer_units");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[生产记录] 发送 PostHog 事件失败：{ex.Message}");
+        }
+
+        // 清空记录
+        productionRecords.Clear();
+        Debug.Log("[生产记录] 已清空生产记录");
     }
 
     public bool IsVisiable()
@@ -416,6 +465,20 @@ public class MainProducerSubPanel
     private void OnListItemAdd(ProducerListItem item)
     {
         Debug.Log($"请求添加生产项: {item.ItemData?.Name}");
+        
+        // 记录添加操作
+        if (item.ItemData != null && game != null)
+        {
+            string key = $"{item.ItemData.UnitType}";
+            if (!productionRecords.ContainsKey(key))
+            {
+                productionRecords[key] = 0;
+            }
+            productionRecords[key]++;
+            
+            Debug.Log($"[生产记录] 添加: {key}, 当前数量={productionRecords[key]}");
+        }
+        
         // 实现添加逻辑，例如发送命令增加单位生产
         if (item.ItemData != null && game != null)
         {
@@ -429,6 +492,20 @@ public class MainProducerSubPanel
     private void OnListItemSub(ProducerListItem item)
     {
         Debug.Log($"请求减少生产项: {item.ItemData?.Name}");
+        
+        // 记录减少操作
+        if (item.ItemData != null && game != null)
+        {
+            string key = $"{item.ItemData.UnitType}";
+            if (!productionRecords.ContainsKey(key))
+            {
+                productionRecords[key] = 0;
+            }
+            productionRecords[key]--;
+            
+            Debug.Log($"[生产记录] 减少: {key}, 当前数量={productionRecords[key]}");
+        }
+        
         // 实现减少逻辑，例如发送命令减少单位生产
         if (item.ItemData != null && game != null)
         {
@@ -474,5 +551,8 @@ public class MainProducerSubPanel
         
         // 清理列表
         ClearList();
+        
+        // 清空生产记录
+        productionRecords.Clear();
     }
 }
