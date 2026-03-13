@@ -4,6 +4,7 @@ using ZFrame;
 using TMPro;
 using System.Collections.Generic;
 using PostHogUnity;
+using ZLockstep.View;
 
 /// <summary>
 /// 结算面板 - 显示游戏胜负结果
@@ -82,9 +83,14 @@ public class SettlePanel : BasePanel
     {
         if (PostHog.IsInitialized)
         {
+            Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
+            zfloat time = ra2Demo.GetBattleGame().World.TimeManager.Time;
+            float second = time.ToFloat();
+
             var properties = new Dictionary<string, object>
             {
                 { "result", isVictory ? "victory" : "defeat" },
+                { "game_duration_second", second },
                 { "timestamp", System.DateTime.UtcNow.ToString("o") }
             };
             
