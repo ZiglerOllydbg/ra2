@@ -16,6 +16,7 @@ using Unity.VisualScripting;
 using UnityEngine.EventSystems;
 using ZLib;
 using PostHogUnity;
+using WeChatWASM;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -157,7 +158,7 @@ public class Ra2Demo : MonoBehaviour
         _presentationSystem.SetGame(_game);
         _game.World.SystemManager.RegisterSystem(_presentationSystem);
 
-        Debug.Log("[StandaloneBattleDemo] 视图系统初始化完成");
+        zUDebug.Log("[StandaloneBattleDemo] 视图系统初始化完成");
     }
 
     /// <summary>
@@ -192,6 +193,8 @@ public class Ra2Demo : MonoBehaviour
 
     private void Start()
     {
+        InitWX();
+
         PostHog.Setup(
             new PostHogConfig
             {
@@ -219,6 +222,48 @@ public class Ra2Demo : MonoBehaviour
 
         // 初始化建筑预览渲染器
         InitializeBuildingPreviewRenderer();
+    }
+
+    private void InitWX()
+    {
+        WX.InitSDK(code =>
+        {
+            zUDebug.Log("[Ra2Demo] 微信初始化成功！" + code);
+
+            // TODO 注册微信登录
+            LoginOption info = new LoginOption();
+            info.complete = (aa) =>{ 
+                zUDebug.Log("__OnLogin complete登陆完成!查看errMsg：" + aa.errMsg);
+            };
+            info.fail = (aa) =>
+            {
+                zUDebug.Log("__OnLogin fail登陆失败!查看errno：" + aa.errno + ", 描述：" + aa.errMsg);
+            };
+            info.success = (aa) =>
+            {
+                //登录成功处理
+                zUDebug.Log("__OnLogin success登陆成功!查看Code：" + aa.code);
+            };
+            WX.Login(info);
+
+            //登录成功...这完成后，跳到下一步，《二、查看授权》
+            WX.GetUserInfo(new GetUserInfoOption()
+            {
+                complete = (aa) =>
+                {
+                    zUDebug.Log("__OnGetUserInfo complete获取用户信息完成!查看errMsg：" + aa.errMsg);
+                },
+                fail = (aa) =>
+                {
+                    zUDebug.Log("__OnGetUserInfo fail获取用户信息失败!查看errno：" + aa.errMsg);
+                },
+                success = (aa) =>
+                {
+                    //获取用户信息成功处理
+                    zUDebug.Log("__OnGetUserInfo success获取用户信息成功!查看nickName：" + aa.userInfo.nickName + ", avatarUrl：" + aa.userInfo.avatarUrl);
+                }
+            });
+        });
     }
 
     /// <summary>
