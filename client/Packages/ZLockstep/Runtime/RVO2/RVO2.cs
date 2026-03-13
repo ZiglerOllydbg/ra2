@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using ZLockstep.Flow;
-using ZLockstep.Simulation;
 using zUnity;
 
 namespace ZLockstep.RVO
@@ -34,12 +33,12 @@ namespace ZLockstep.RVO
     public class RVO2Simulator
     {
         /// <summary>
-        /// 所有智能体字典，使用 ID 作为键，实现 O(1) 查找
+        /// 所有智能体列表
         /// </summary>
-        private Dictionary<int, RVO2Agent> agents = new Dictionary<int, RVO2Agent>();
+        private List<RVO2Agent> agents = new List<RVO2Agent>();
         
         /// <summary>
-        /// 用于生成唯一 ID 的计数器
+        /// 用于生成唯一ID的计数器
         /// </summary>
         private int nextAgentId = 0;
 
@@ -49,6 +48,12 @@ namespace ZLockstep.RVO
         private zfloat timeStep = zfloat.Zero;
 
         /// <summary>
+        /// 速度平滑因子，用于减少震荡
+        /// 0表示完全使用新速度，1表示完全保持当前速度
+        /// </summary>
+        private zfloat velocitySmoothingFactor = new zfloat(0, 2000); // 0.2
+
+        /// <summary>
         /// 默认的时间范围参数
         /// </summary>
         public zfloat defaultTimeHorizon = new zfloat(2);
@@ -56,22 +61,12 @@ namespace ZLockstep.RVO
         /// <summary>
         /// 静止检测阈值
         /// </summary>
-        private zfloat stationaryThreshold = new zfloat(0, 100); // 0.01 单位
+        private zfloat stationaryThreshold = new zfloat(0, 100); // 0.01单位
         
         /// <summary>
         /// 静止判定帧数
         /// </summary>
         private int stationaryFrameThreshold = 30;
-        
-        /// <summary>
-        /// 速度计算的时间间隔（秒），默认 0.5 秒计算一次
-        /// </summary>
-        private zfloat velocityCalculationInterval = new zfloat(0, 1000); // 0.1 秒
-        
-        /// <summary>
-        /// 上次速度计算的累计时间
-        /// </summary>
-        private zfloat lastVelocityCalculationTime = zfloat.Zero;
         
         /// <summary>
         /// 流场管理器引用，用于通知动态障碍物变化
@@ -84,8 +79,7 @@ namespace ZLockstep.RVO
         /// <param name="smoothingFactor">平滑因子，0表示无平滑，1表示完全保持当前速度</param>
         public void SetVelocitySmoothingFactor(zfloat smoothingFactor)
         {
-            // 保留方法以维持接口兼容性，但实际不再使用平滑功能
-            // 如果需要启用平滑，可以设置一个标志位
+            velocitySmoothingFactor = smoothingFactor;
         }
         
         /// <summary>
@@ -95,15 +89,6 @@ namespace ZLockstep.RVO
         public void SetFlowFieldManager(FlowFieldManager manager)
         {
             flowFieldManager = manager;
-        }
-        
-        /// <summary>
-        /// 设置速度计算的时间间隔
-        /// </summary>
-        /// <param name="intervalSeconds">间隔时间（秒），例如 0.5 表示每 0.5 秒计算一次</param>
-        public void SetVelocityCalculationInterval(zfloat intervalSeconds)
-        {
-            velocityCalculationInterval = intervalSeconds;
         }
 
         /// <summary>
@@ -146,7 +131,9 @@ namespace ZLockstep.RVO
             agent.stationaryFrames = 0;
             agent.isStationary = false;
 
-            agents.Add(agent.id, agent);
+            agents.Add(agent);
+            // 按照agent.id进行升序排列
+            agents.Sort((a, b) => a.id.CompareTo(b.id));
             return agent.id;
         }
 
@@ -169,9 +156,13 @@ namespace ZLockstep.RVO
         /// <param name="prefVelocity">期望速度向量，表示理想状态下智能体希望达到的速度</param>
         public void SetAgentPrefVelocity(int agentId, zVector2 prefVelocity)
         {
-            if (agents.TryGetValue(agentId, out RVO2Agent agent))
+            for (int i = 0; i < agents.Count; i++)
             {
-                agent.prefVelocity = prefVelocity;
+                if (agents[i].id == agentId)
+                {
+                    agents[i].prefVelocity = prefVelocity;
+                    return;
+                }
             }
         }
 
@@ -194,9 +185,13 @@ namespace ZLockstep.RVO
         /// <param name="position">新的位置坐标</param>
         public void SetAgentPosition(int agentId, zVector2 position)
         {
-            if (agents.TryGetValue(agentId, out RVO2Agent agent))
+            for (int i = 0; i < agents.Count; i++)
             {
-                agent.position = position;
+                if (agents[i].id == agentId)
+                {
+                    agents[i].position = position;
+                    return;
+                }
             }
         }
 
@@ -219,9 +214,12 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前位置坐标，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentPosition(int agentId)
         {
-            if (agents.TryGetValue(agentId, out RVO2Agent agent))
+            for (int i = 0; i < agents.Count; i++)
             {
-                return agent.position;
+                if (agents[i].id == agentId)
+                {
+                    return agents[i].position;
+                }
             }
             return zVector2.zero;
         }
@@ -245,9 +243,12 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前实际速度向量，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentVelocity(int agentId)
         {
-            if (agents.TryGetValue(agentId, out RVO2Agent agent))
+            for (int i = 0; i < agents.Count; i++)
             {
-                return agent.velocity;
+                if (agents[i].id == agentId)
+                {
+                    return agents[i].velocity;
+                }
             }
             return zVector2.zero;
         }
@@ -276,134 +277,365 @@ namespace ZLockstep.RVO
 
             timeStep = deltaTime;
 
-            // 阶段 1：为每个智能体计算新速度（存储到 newVelocity，不修改 velocity）
-            // 这样保证所有智能体计算时看到的是同一时刻的状态，保持 ORCA 算法的对称性
-            // 使用节流控制：只在达到指定时间间隔时才重新计算速度
-            lastVelocityCalculationTime += deltaTime;
-            bool shouldCalculateVelocity = lastVelocityCalculationTime >= velocityCalculationInterval;
-            
-            if (shouldCalculateVelocity)
+            // 阶段1：为每个智能体计算新速度（存储到newVelocity，不修改velocity）
+            // 这样保证所有智能体计算时看到的是同一时刻的状态，保持ORCA算法的对称性
+            for (int i = 0; i < agents.Count; i++)
             {
-                foreach (var agent in agents.Values)
-                {
-                    ComputeNewVelocity(agent);
-                }
-                lastVelocityCalculationTime = zfloat.Zero;
+                ComputeNewVelocity(agents[i]);
             }
 
-            // 阶段 2：统一应用新速度并更新位置
-            foreach (var agent in agents.Values)
+            // 阶段2：统一应用新速度并更新位置
+            for (int i = 0; i < agents.Count; i++)
             {
-                // 简化的静止状态检测：仅当期望速度为零且速度幅值很小时才标记为静止
-                UpdateStationaryState(agent);
+                // 更新静止状态
+                bool wasStationary = agents[i].isStationary;
+                UpdateStationaryState(agents[i]);
+                bool isStationary = agents[i].isStationary;
                 
                 // 如果智能体开始移动，立即移除其动态障碍物
-                if (agent.wasStationary && !agent.isStationary && flowFieldManager != null)
+                if (wasStationary && !isStationary && flowFieldManager != null)
                 {
+                    // 通过ID精确移除动态障碍物
                     var map = flowFieldManager.GetMap();
                     if (map is SimpleMapManager simpleMap)
                     {
-                        simpleMap.RemoveDynamicObstacle(agent.id);
+                        simpleMap.RemoveDynamicObstacle(agents[i].id);
                     }
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 // 如果智能体变为静止，通知流场管理器需要更新动态障碍物
-                else if (!agent.wasStationary && agent.isStationary && flowFieldManager != null)
+                else if (!wasStationary && isStationary && flowFieldManager != null)
                 {
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 
-                agent.velocity = agent.newVelocity;
-                agent.position += agent.velocity * deltaTime;
+                agents[i].velocity = agents[i].newVelocity;
+                agents[i].position += agents[i].velocity * deltaTime;
             }
         }
 
         /// <summary>
-        /// 更新智能体的静止状态（简化版本）
-        /// 直接通过速度幅值判断，避免距离计算
+        /// 更新智能体的静止状态
         /// </summary>
         /// <param name="agent">需要更新状态的智能体</param>
         private void UpdateStationaryState(RVO2Agent agent)
         {
-            // 保存上一帧的静止状态
-            agent.wasStationary = agent.isStationary;
+            zfloat moveDistance = (agent.position - agent.lastPosition).magnitude;
             
-            // 简化：直接通过速度幅值判断静止状态
-            bool isMoving = agent.newVelocity.sqrMagnitude > stationaryThreshold * stationaryThreshold;
-            
-            if (!isMoving && agent.prefVelocity == zVector2.zero)
+            if (moveDistance < stationaryThreshold && agent.prefVelocity == zVector2.zero)
             {
                 agent.stationaryFrames++;
-                agent.isStationary = (agent.stationaryFrames >= stationaryFrameThreshold);
+                if (agent.stationaryFrames >= stationaryFrameThreshold)
+                {
+                    agent.isStationary = true;
+                }
             }
             else
             {
                 agent.stationaryFrames = 0;
                 agent.isStationary = false;
             }
+            
+            agent.lastPosition = agent.position;
         }
 
         /// <summary>
-        /// 计算单个智能体的新速度（简化版本）
+        /// 计算单个智能体的新速度（ORCA算法核心实现）
         /// 
-        /// 简化策略：
-        /// 1. 当没有碰撞风险时，直接使用期望速度
-        /// 2. 仅在检测到碰撞风险时进行简单的速度调整
-        /// 3. 移除复杂的线性规划求解过程
+        /// 该方法实现了最优互惠碰撞避免(Optimal Reciprocal Collision Avoidance)算法的核心逻辑。
+        /// 对于目标智能体，遍历所有其他智能体并构建相应的ORCA约束线，最终通过线性规划求解最优速度。
         /// 
-        /// 性能优化：
-        /// - 提前退出：无碰撞风险时立即返回
-        /// - 避免复杂计算：不使用 ORCA 线和线性规划
-        /// - 基于距离的简单避让：只考虑最近的威胁
+        /// 算法流程：
+        /// 1. 遍历所有其他智能体，计算相对位置和相对速度
+        /// 2. 根据距离关系判断是否会发生碰撞
+        /// 3. 对每种情况（无碰撞、未来会碰撞、已碰撞）分别计算ORCA约束线
+        /// 4. 调用线性规划求解器在所有约束线下找到最接近期望速度的可行速度
+        /// 
+        /// 特殊处理：
+        /// - 区分三种情况：安全距离外、未来会碰撞、已经重叠
+        /// - 对不同情况采用不同的几何计算方法构建约束线
+        /// - 防止数值不稳定性的边界条件检查
         /// </summary>
         /// <param name="agent">需要计算新速度的目标智能体</param>
         private void ComputeNewVelocity(RVO2Agent agent)
         {
-            // 默认直接使用期望速度
-            zVector2 newVelocity = agent.prefVelocity;
-            
-            // 检查是否有碰撞风险
-            zfloat minSafeDistance = agent.radius * 2; // 最小安全距离
-            
-            foreach (var other in agents.Values)
+            // zUDebug.Log($"[RVO2] 开始计算智能体 {agent.id} 的新速度，期望速度: {agent.prefVelocity}, 当前速度: {agent.velocity}");
+
+            // 构建ORCA线
+            List<ORCALine> orcaLines = new List<ORCALine>();
+
+            // 对每个其他智能体创建ORCA线
+            for (int i = 0; i < agents.Count; i++)
             {
-                if (other.id == agent.id)
+                if (agents[i].id == agent.id)
                     continue;
-                
+
+                RVO2Agent other = agents[i];
                 zVector2 relativePosition = other.position - agent.position;
+                zVector2 relativeVelocity = agent.velocity - other.velocity;
                 zfloat distSq = relativePosition.sqrMagnitude;
                 zfloat combinedRadius = agent.radius + other.radius;
                 zfloat combinedRadiusSq = combinedRadius * combinedRadius;
-                
-                // 如果距离过近，需要避让
-                if (distSq < combinedRadiusSq * 4) // 在 2 倍半径范围内
+
+                ORCALine line;
+                zVector2 u;
+
+                if (distSq > combinedRadiusSq)
                 {
-                    zfloat dist = zMathf.Sqrt(distSq);
+                    // 没有碰撞
+                    zVector2 w = relativeVelocity - relativePosition / agent.timeHorizon;
+                    zfloat wLengthSq = w.sqrMagnitude;
+                    zfloat dotProduct1 = zVector2.Dot(w, relativePosition);
+
+                    if (dotProduct1 < zfloat.Zero && dotProduct1 * dotProduct1 > combinedRadiusSq * wLengthSq)
+                    {
+                        // 投影到截断圆
+                        zfloat wLength = zMathf.Sqrt(wLengthSq);
+                        zVector2 unitW = w / wLength;
+
+                        line.direction = new zVector2(unitW.y, -unitW.x);
+                        u = unitW * (combinedRadius / agent.timeHorizon - wLength);
+                        
+                        // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到截断圆，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
+                    }
+                    else
+                    {
+                        // 投影到腿部
+                        zfloat leg = zMathf.Sqrt(distSq - combinedRadiusSq);
+                        if (Det(relativePosition, w) > zfloat.Zero)
+                        {
+                            line.direction = new zVector2(
+                                relativePosition.x * leg - relativePosition.y * combinedRadius,
+                                relativePosition.x * combinedRadius + relativePosition.y * leg
+                            ) / distSq;
+                        }
+                        else
+                        {
+                            line.direction = -new zVector2(
+                                relativePosition.x * leg + relativePosition.y * combinedRadius,
+                                -relativePosition.x * combinedRadius + relativePosition.y * leg
+                            ) / distSq;
+                        }
+
+                        zfloat dotProduct2 = zVector2.Dot(relativeVelocity, line.direction);
+                        u = line.direction * dotProduct2 - relativeVelocity;
+                        
+                        // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 投影到腿部，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
+                    }
+                }
+                else
+                {
+                    // 发生碰撞，需要立即避开
+                    zfloat invTimeStep = zfloat.One / timeStep;
+                    zVector2 w = relativeVelocity - relativePosition * invTimeStep;
+                    zfloat wLength = w.magnitude;
                     
                     // 防止除以零
-                    if (dist > new zfloat(0, 1000)) // 0.001
+                    if (wLength < new zfloat(0, 1000)) // 0.001
                     {
-                        // 计算避让方向（垂直于相对位置）
-                        zVector2 avoidDirection = new zVector2(-relativePosition.y, relativePosition.x) / dist;
-                        
-                        // 避让强度与距离成反比
-                        zfloat avoidanceStrength = (combinedRadius * 2 - dist) / (combinedRadius * 2);
-                        avoidanceStrength = zMathf.Max(zfloat.Zero, zMathf.Min(avoidanceStrength, zfloat.One));
-                        
-                        // 应用避让速度
-                        zfloat avoidSpeed = agent.maxSpeed * avoidanceStrength;
-                        newVelocity += avoidDirection * avoidSpeed;
-                        
-                        // 限制最大速度
-                        if (newVelocity.magnitude > agent.maxSpeed)
+                        zUDebug.LogWarning($"[RVO2] 智能体 {agent.id} 与 {other.id} 距离过近且相对速度太小，跳过避障计算");
+                        continue; // 跳过这个障碍物
+                    }
+                    
+                    zVector2 unitW = w / wLength;
+
+                    line.direction = new zVector2(unitW.y, -unitW.x);
+                    u = unitW * (combinedRadius * invTimeStep - wLength);
+                    
+                    // zUDebug.Log($"[RVO2] 智能体 {agent.id} 与 {other.id} 已发生碰撞，需要立即避开，距离平方: {distSq}, 组合半径平方: {combinedRadiusSq}");
+                }
+
+                line.point = agent.velocity + u * zfloat.Half;
+                orcaLines.Add(line);
+            }
+
+            // 使用线性规划找到最优速度
+            zVector2 newVelocity = LinearProgram2(orcaLines, agent.maxSpeed, agent.prefVelocity);
+            // zUDebug.Log($"[RVO2] 智能体 {agent.id} 线性规划完成，新速度: {newVelocity}, 最大速度: {agent.maxSpeed}");
+            
+            // 应用速度平滑以减少震荡
+            if (agent.velocity != zVector2.zero && newVelocity != zVector2.zero)
+            {
+                newVelocity = zVector2.Lerp(newVelocity, agent.velocity, velocitySmoothingFactor);
+            }
+            
+            // 存储到newVelocity字段，而不是直接修改velocity
+            // 这样保证所有智能体在计算时看到的是同一时刻的velocity状态
+            agent.newVelocity = newVelocity;
+        }
+
+        /// <summary>
+        /// 二维线性规划求解器，在ORCA线约束下寻找最接近期望速度的可行速度
+        /// 
+        /// 这是一个专门针对RVO2设计的二维线性规划算法实现，用于在多个半平面约束下
+        /// 寻找最接近给定期望速度的解向量。算法采用迭代投影方法处理约束冲突。
+        /// 
+        /// 算法步骤：
+        /// 1. 首先检查期望速度是否已在可行域内，如果是则直接返回
+        /// 2. 否则逐个检查约束线，当发现违反约束时进行投影修正
+        /// 3. 投影后验证是否满足之前的所有约束，如不满足则寻找约束线交点
+        /// 4. 最终结果需满足最大速度限制
+        /// 
+        /// 数值稳定性处理：
+        /// - 添加epsilon级别数值误差容忍
+        /// - 防止零向量归一化等可能导致的除零异常
+        /// - 处理约束线近似平行的特殊情况
+        /// </summary>
+        /// <param name="lines">ORCA约束线集合，每个线代表一个速度空间中的半平面约束</param>
+        /// <param name="maxSpeed">速度大小上限，确保结果向量的模长不超过此值</param>
+        /// <param name="optVelocity">期望速度向量，算法目标是在约束下尽可能接近此向量</param>
+        /// <returns>满足所有约束条件的最优速度向量</returns>
+        private zVector2 LinearProgram2(List<ORCALine> lines, zfloat maxSpeed, zVector2 optVelocity)
+        {
+            zfloat optMagnitude = optVelocity.magnitude;
+            if (optMagnitude > maxSpeed)
+            {
+                // 防止除以零
+                if (optMagnitude > new zfloat(0, 1000)) // 0.001
+                {
+                    optVelocity = optVelocity.normalized * maxSpeed;
+                }
+                else
+                {
+                    optVelocity = zVector2.zero;
+                }
+            }
+
+            // 检查期望速度是否满足所有约束
+            bool satisfiesAll = true;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (Det(lines[i].direction, lines[i].point - optVelocity) > zfloat.Zero)
+                {
+                    satisfiesAll = false;
+                    break;
+                }
+            }
+
+            if (satisfiesAll)
+            {
+                return optVelocity;
+            }
+
+            // 需要投影到可行域
+            zVector2 result = optVelocity;
+            
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (Det(lines[i].direction, lines[i].point - result) > zfloat.Zero)
+                {
+                    // 投影到线上
+                    zVector2 tempResult = Project(lines[i], result);
+                    
+                    // 检查是否满足之前的约束
+                    bool feasible = true;
+                    for (int j = 0; j < i; j++)
+                    {
+                        if (Det(lines[j].direction, lines[j].point - tempResult) > zfloat.Zero)
                         {
-                            newVelocity = newVelocity.normalized * agent.maxSpeed;
+                            feasible = false;
+                            break;
+                        }
+                    }
+
+                    if (feasible)
+                    {
+                        result = tempResult;
+                    }
+                    else
+                    {
+                        // 需要在两条线的交点处
+                        // 添加边界检查，防止访问lines[i-1]时数组越界
+                        if (i > 0)
+                        {
+                            zfloat determinant = Det(lines[i].direction, lines[i - 1].direction);
+                            
+                            if (zMathf.Abs(determinant) > zfloat.Epsilon)
+                            {
+                                zVector2 delta = lines[i].point - lines[i - 1].point;
+                                zfloat t = Det(delta, lines[i - 1].direction) / determinant;
+                                result = lines[i].point + lines[i].direction * t;
+                            }
+                            else
+                            {
+                                // 线几乎平行，使用当前结果
+                                result = lines[i].point;
+                            }
+                        }
+                        else
+                        {
+                            // 只有一条线且不可行，使用当前线上的点
+                            result = lines[i].point;
                         }
                     }
                 }
             }
-            
-            agent.newVelocity = newVelocity;
+
+            // 限制在最大速度内
+            zfloat resultMagnitude = result.magnitude;
+            if (resultMagnitude > maxSpeed)
+            {
+                // 防止除以零
+                if (resultMagnitude > new zfloat(0, 1000)) // 0.001
+                {
+                    result = result.normalized * maxSpeed;
+                }
+                else
+                {
+                    result = zVector2.zero;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 计算两个二维向量的行列式值（等价于叉积的z分量）
+        /// 
+        /// 在二维向量空间中，两个向量a(x1,y1)和b(x2,y2)的行列式定义为：
+        /// det(a,b) = x1*y2 - y1*x2
+        /// 
+        /// 几何意义：
+        /// - 绝对值等于由两向量构成的平行四边形面积
+        /// - 符号表示从a到b的旋转方向（正数为逆时针，负数为顺时针）
+        /// - 零值表示两向量共线
+        /// 
+        /// 在RVO2算法中的应用：
+        /// - 判断点相对于直线的位置关系
+        /// - 确定向量间的相对方向
+        /// - 计算几何约束的有效性
+        /// </summary>
+        /// <param name="a">第一个二维向量</param>
+        /// <param name="b">第二个二维向量</param>
+        /// <returns>两向量的行列式值</returns>
+        private zfloat Det(zVector2 a, zVector2 b)
+        {
+            return a.x * b.y - a.y * b.x;
+        }
+
+        /// <summary>
+        /// 将速度向量投影到指定的ORCA约束线上
+        /// 
+        /// 执行正交投影运算，将给定的速度向量投影到ORCA线所代表的约束边界上。
+        /// 这是线性规划求解过程中的基本几何操作。
+        /// 
+        /// 投影原理：
+        /// 给定线上的点P和方向向量D，以及待投影点V，
+        /// 投影点 = P + D * dot(V-P, D)
+        /// 其中dot表示向量点积运算
+        /// 
+        /// 应用场景：
+        /// - 当速度向量违反某条约束线时，将其"推回"到约束边界
+        /// - 寻找满足多个约束的最佳折衷解
+        /// </summary>
+        /// <param name="line">目标ORCA约束线</param>
+        /// <param name="velocity">需要投影的速度向量</param>
+        /// <returns>投影后的新速度向量</returns>
+        private zVector2 Project(ORCALine line, zVector2 velocity)
+        {
+            zVector2 delta = velocity - line.point;
+            zfloat dotProduct = zVector2.Dot(delta, line.direction);
+            return line.point + line.direction * dotProduct;
         }
 
         /// <summary>
@@ -424,7 +656,17 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要移除的智能体ID</param>
         public void RemoveAgent(int agentId)
         {
-            if (agents.ContainsKey(agentId))
+            int index = -1;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                if (agents[i].id == agentId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index >= 0)
             {
                 // 移除动态障碍物
                 if (flowFieldManager != null)
@@ -437,7 +679,7 @@ namespace ZLockstep.RVO
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 
-                agents.Remove(agentId);
+                agents.RemoveAt(index);
             }
         }
         
@@ -450,10 +692,14 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要重置的智能体ID</param>
         public void ResetAgentStationaryState(int agentId)
         {
-            if (agents.TryGetValue(agentId, out RVO2Agent agent))
+            for (int i = 0; i < agents.Count; i++)
             {
-                agent.stationaryFrames = 0;
-                agent.isStationary = false;
+                if (agents[i].id == agentId)
+                {
+                    agents[i].stationaryFrames = 0;
+                    agents[i].isStationary = false;
+                    break;
+                }
             }
         }
         
@@ -499,9 +745,9 @@ namespace ZLockstep.RVO
         /// 注意：不要修改返回的列表，因为它直接引用内部数据结构。
         /// </summary>
         /// <returns>所有智能体的只读列表</returns>
-        public List<RVO2Agent> GetAgents()
+        public IReadOnlyList<RVO2Agent> GetAgents()
         {
-            return new List<RVO2Agent>(agents.Values);
+            return agents.AsReadOnly();
         }
         
         /// <summary>
@@ -511,7 +757,7 @@ namespace ZLockstep.RVO
         public List<RVO2Agent> GetStationaryAgents()
         {
             List<RVO2Agent> stationaryAgents = new List<RVO2Agent>();
-            foreach (var agent in agents.Values)
+            foreach (var agent in agents)
             {
                 if (agent.isStationary)
                 {
@@ -519,30 +765,6 @@ namespace ZLockstep.RVO
                 }
             }
             return stationaryAgents;
-        }
-
-        /// <summary>
-        /// 计算两个二维向量的行列式值（等价于叉积的 z 分量）
-        /// 
-        /// 在二维向量空间中，两个向量 a(x1,y1) 和 b(x2,y2) 的行列式定义为：
-        /// det(a,b) = x1*y2 - y1*x2
-        /// 
-        /// 几何意义：
-        /// - 绝对值等于由两向量构成的平行四边形面积
-        /// - 符号表示从 a 到 b 的旋转方向（正数为逆时针，负数为顺时针）
-        /// - 零值表示两向量共线
-        /// 
-        /// 在 RVO2 算法中的应用：
-        /// - 判断点相对于直线的位置关系
-        /// - 确定向量间的相对方向
-        /// - 计算几何约束的有效性
-        /// </summary>
-        /// <param name="a">第一个二维向量</param>
-        /// <param name="b">第二个二维向量</param>
-        /// <returns>两向量的行列式值</returns>
-        private zfloat Det(zVector2 a, zVector2 b)
-        {
-            return a.x * b.y - a.y * b.x;
         }
     }
 
@@ -597,9 +819,28 @@ namespace ZLockstep.RVO
         
         /// <summary>是否为静止状态</summary>
         public bool isStationary;
-        
-        /// <summary>上一帧的静止状态（用于状态转换检测）</summary>
-        public bool wasStationary;
     }
 
+    /// <summary>
+    /// ORCA线 (Optimal Reciprocal Collision Avoidance Line)
+    /// 
+    /// 表示速度空间中的半平面约束，是ORCA算法的基本构成单元。
+    /// 每条ORCA线定义了一个允许的安全速度区域边界。
+    /// 
+    /// 几何含义：
+    /// - point: 约束线上的基准点，通常位于速度空间中某个特定位置
+    /// - direction: 约束线的方向向量，单位长度，与约束边界平行
+    /// - 有效区域: 从point出发，垂直于direction方向的半无限区域
+    /// 
+    /// 在RVO2中，每个邻近的智能体会产生一条或若干条ORCA线，
+    /// 所有这些线的交集构成了当前智能体的合法速度选择空间。
+    /// </summary>
+    public struct ORCALine
+    {
+        /// <summary>线上的一个点</summary>
+        public zVector2 point;
+
+        /// <summary>线的方向（单位向量）</summary>
+        public zVector2 direction;
+    }
 }
