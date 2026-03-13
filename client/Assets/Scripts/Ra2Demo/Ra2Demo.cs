@@ -556,6 +556,20 @@ public class Ra2Demo : MonoBehaviour
                     {
                         zUDebug.LogWarning("[StandaloneBattleDemo] >>> 没有找到可移动的单位");
                     }
+
+                    String entityIds = "";
+                    foreach (var entityId in selectedEntityIds)
+                    {
+                        entityIds += entityId + ",";
+                    }
+
+                    // TODO PostHog记录移动，包括currentPosition和targetWorldPosition
+                    PostHog.Capture("move_to_target", new Dictionary<string, object>()
+                    {
+                        {"entityIds", entityIds},
+                        {"pressStartPosition", pressStartPosition},
+                        {"targetPosition", currentPosition},
+                    });
                 }
                 
                 // 清空选中单位列表
