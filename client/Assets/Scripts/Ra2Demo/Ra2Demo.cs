@@ -15,6 +15,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEngine.EventSystems;
 using ZLib;
+using PostHogUnity;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -191,6 +192,24 @@ public class Ra2Demo : MonoBehaviour
 
     private void Start()
     {
+        PostHog.Setup(
+            new PostHogConfig
+            {
+                ApiKey = "phc_MCpygzl60lEcEwRKwIo2H7D5iVu6vtB7kHrtJCMgvEw",
+                Host = "https://us.i.posthog.com",
+                LogLevel = PostHogLogLevel.Debug, // Set to Warning or Error in production
+            }
+        );
+
+        // Capture a simple event
+        PostHog.Capture("app_started");
+
+        // Capture an event with properties
+        PostHog.Capture(
+            "level_started",
+            new Dictionary<string, object> { { "level_id", 1 }, { "difficulty", "normal" } }
+        );
+
         frame = new Frame();
 
         NetworkManager.Instance.SetRa2Demo(this);

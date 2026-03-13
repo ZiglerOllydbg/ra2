@@ -1,6 +1,7 @@
 using Game.Examples;
 using Game.RA2.Client;
 using Newtonsoft.Json.Linq;
+using PostHogUnity;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
@@ -127,6 +128,9 @@ public class MatchPanel : BasePanel
     // 5. 按钮点击处理方法
     private void OnSoloButtonClick()
     {
+        // Capture a simple event
+        PostHog.Capture("click_solo_match");
+
         // 生成带当前日期时间的文件名
         string fileName = $"command_record_{System.DateTime.Now:yyyyMMdd_HHmmss}.txt";
         
@@ -161,6 +165,9 @@ public class MatchPanel : BasePanel
     // Replay按钮点击处理方法
     private void OnReplayButtonClick()
     {
+        // Capture a simple event
+        PostHog.Capture("click_replay");
+
         zUDebug.Log("Replay按钮被点击了！");
         
         // 获取最近一次录制的命令文件路径
@@ -281,6 +288,9 @@ public class MatchPanel : BasePanel
 
     private void OnDuoButtonClick()
     {
+        // Capture a simple event
+        PostHog.Capture("click_duo_match");
+
         bool isLocalNet = GetIsLocalNet();
         NetworkManager.Instance.ConnectToServer(RoomType.DUO, isLocalNet);
         HideButtons();

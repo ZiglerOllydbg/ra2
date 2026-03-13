@@ -12,6 +12,13 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.posthog.unity": {
+      "version": "https://github.com/PostHog/posthog-unity.git?path=com.posthog.unity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "45de44c7f8231fce9ca1436a06019d5e3acfb919"
+    },
     "com.unity.burst": {
       "version": "1.8.18",
       "depth": 1,
