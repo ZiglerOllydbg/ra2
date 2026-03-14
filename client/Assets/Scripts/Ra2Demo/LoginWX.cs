@@ -26,27 +26,16 @@ public class LoginWX : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // if (!Application.isEditor)
-        // {
-        //     // 初始化微信SDK
-        //     WX.InitSDK((code) =>
-        //     {
-        //         Debug.Log("init WXSDK code: " + code);
-        //         // 加载用户信息
-        //         this.LoaderWXMess();
-        //     });
-        // }
-    }
-
-    public void Login()
-    {
-        // 初始化微信SDK
-        WX.InitSDK((code) =>
+        if (!Application.isEditor)
         {
-            Debug.Log("init WXSDK code: " + code);
-            // 加载用户信息
-            this.LoaderWXMess();
-        });
+            // 初始化微信SDK
+            WX.InitSDK((code) =>
+            {
+                Debug.Log("init WXSDK code: " + code);
+                // 加载用户信息
+                this.LoaderWXMess();
+            });
+        }
     }
 
     /// <summary>
