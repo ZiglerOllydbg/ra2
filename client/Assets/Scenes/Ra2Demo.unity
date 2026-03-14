@@ -643,6 +643,7 @@ GameObject:
   - component: {fileID: 812412503}
   - component: {fileID: 812412504}
   - component: {fileID: 812412505}
+  - component: {fileID: 812412506}
   m_Layer: 0
   m_Name: TestManager
   m_TagString: Untagged
@@ -712,6 +713,19 @@ MonoBehaviour:
   showObstacles: 0
   showFlowField: 0
   showSimulationInfo: 0
+--- !u!114 &812412506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812412501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af3152b91131e2e4a9794087c170be44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  avatarTexture: {fileID: 2800000, guid: 7d296fea5847ce24b953728808003a28, type: 3}
 --- !u!1 &1104682289
 GameObject:
   m_ObjectHideFlags: 0
