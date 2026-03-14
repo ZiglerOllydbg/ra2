@@ -244,6 +244,7 @@ public class Ra2Processor : BaseProcessor
                     zUDebug.Log($"[Ra2Processor] 更新用户信息为：{e.Nickname}");
                     MatchPanel.HideLoginPanel();
                     MatchPanel.SetPlayerName(e.Nickname);
+                    MatchPanel.SetHeadImg(e.AvatarUrl);
                 }
                 break;
         }

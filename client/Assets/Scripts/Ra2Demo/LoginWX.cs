@@ -215,48 +215,10 @@ public class LoginWX : MonoBehaviour
     /// <param name="nickName"></param>
     private void ShowUserInfo(string avatarUrl, string nickName)
     {
-        Frame.DispatchEvent(new UpdateUserInfoEvent(nickName));
-
-        StartCoroutine(LoadAvatar(avatarUrl));
-        showNickname(nickName);
+        Frame.DispatchEvent(new UpdateUserInfoEvent(nickName, avatarUrl));
     }
 
-    /// <summary>
-    /// 展示用户头像
-    /// ps: 测试用
-    /// </summary>
-    /// <param name="url"></param>
-    /// <returns></returns>
-    IEnumerator LoadAvatar(string url)
-    {
-        // 加载头像图片
-        UnityWebRequest request = new UnityWebRequest(url);
-        DownloadHandlerTexture texture = new DownloadHandlerTexture(true);
-        request.downloadHandler = texture;
-        yield return request.SendWebRequest();
-        if (string.IsNullOrEmpty(request.error))
-        {
-            avatarTexture = texture.texture;
-        }
 
-        Sprite sprite = Sprite.Create(avatarTexture, new Rect(0, 0, avatarTexture.width, avatarTexture.height), new Vector2(0.5f, 0.5f));
-        // 场景中图片对象名称为Avatar
-        Image tempImage = GameObject.Find("Avatar").GetComponent<Image>();
-
-        tempImage.sprite = sprite;
-    }
-
-    /// <summary>
-    /// 展示用户昵称
-    /// ps: 测试用
-    /// </summary>
-    /// <param name="name"></param>
-    void showNickname(string name)
-    {
-    	// 场景中文本对象名称为Nickname
-        Text nickname = GameObject.Find("Nickname").GetComponent<Text>();
-        nickname.text = name;
-    }
 
     /// <summary>
     /// 将UserInfo对象转为WXUserInfo

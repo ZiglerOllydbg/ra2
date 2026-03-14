@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PostHogUnity;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using ZFrame;
 using ZLockstep.Simulation.ECS.Components;
@@ -32,6 +33,7 @@ public class MatchPanel : BasePanel
     private Transform _loginGroup;
     private Button _loginButton;
     private TMP_Text _nameText;
+    private RawImage _headImg;
     
     public MatchPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -48,6 +50,7 @@ public class MatchPanel : BasePanel
         _matchingGroup = PanelObject.transform.Find("Matching");
         _loginGroup = PanelObject.transform.Find("Match/Login");
         _nameText = PanelObject.transform.Find("Match/Nickname")?.GetComponent<TMP_Text>();
+        _headImg = PanelObject.transform.Find("Match/HeadImg")?.GetComponent<RawImage>();
         
         // 从 PanelObject 获取按钮组件
         _soloButton = PanelObject.transform.Find("Match/SOLO")?.GetComponent<Button>();
@@ -84,6 +87,48 @@ public class MatchPanel : BasePanel
         {
             Debug.LogWarning("[MatchPanel] _nameText 组件未找到，无法设置玩家名称");
         }
+    }
+
+    // 设置玩家头像显示
+    public void SetHeadImg(string avatarUrl)
+    {
+        if (_headImg != null)
+        {
+            LoadAvatarTexture(avatarUrl);
+            Debug.Log($"[MatchPanel] 开始加载玩家头像：{avatarUrl}");
+        }
+        else
+        {
+            Debug.LogWarning("[MatchPanel] _headImg 组件未找到，无法设置玩家头像");
+        }
+    }
+
+    // 异步加载头像纹理
+    private void LoadAvatarTexture(string url)
+    {
+        var www = UnityWebRequestTexture.GetTexture(url);
+        var operation = www.SendWebRequest();
+        
+        // 使用 completed 回调处理完成事件
+        operation.completed += (AsyncOperation op) =>
+        {
+            if (www.result == UnityWebRequest.Result.ConnectionError || 
+                www.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.LogError($"[MatchPanel] 加载头像失败：{www.error}");
+            }
+            else
+            {
+                Texture2D texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                if (texture != null && _headImg != null)
+                {
+                    _headImg.texture = texture;
+                    Debug.Log($"[MatchPanel] 头像加载成功，尺寸：{texture.width}x{texture.height}");
+                }
+            }
+            
+            www.Dispose();
+        };
     }
 
     // 3. 在 AddEvent 中添加按钮事件（面板显示时自动调用）
@@ -413,7 +458,7 @@ public class MatchPanel : BasePanel
         
         if (Application.isEditor)
         {
-            Frame.DispatchEvent(new UpdateUserInfoEvent("Unity用户"));
+            Frame.DispatchEvent(new UpdateUserInfoEvent("Unity用户", "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132"));
         }
         else
         {

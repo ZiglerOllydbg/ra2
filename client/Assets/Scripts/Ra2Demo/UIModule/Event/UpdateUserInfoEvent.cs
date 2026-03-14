@@ -9,8 +9,11 @@ public class UpdateUserInfoEvent : ModuleEvent
 {
     public string Nickname;
 
-    public UpdateUserInfoEvent(string nickname) : base()
+    public string AvatarUrl;
+
+    public UpdateUserInfoEvent(string nickname, string avatarUrl) : base()
     {
         Nickname = nickname;
+        AvatarUrl = avatarUrl;
     }
 }
