@@ -190,6 +190,7 @@ public class Ra2Demo : MonoBehaviour
     }
 
     private Frame frame;
+
     private void Start()
     {
         PostHog.Setup(
@@ -289,35 +290,6 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 _currentInputVector = Vector2.zero;
     private bool _isMoving = false;
     
-    private void UpdateCameraMovement()
-    {
-        // 在Update中处理相机移动，仅当处于移动状态时
-        if (_isMoving && RTSCameraTargetController.Instance != null && _mainCamera != null && _currentInputVector != Vector2.zero)
-        {
-            // 获取相机到地面的距离
-            float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
-            
-            // 计算移动速度，与相机高度成比例
-            float moveSpeed = cameraHeight * JOYSTICK_CAMERA_MOVE_SPEED;
-            
-            // 计算世界坐标偏移量
-            Vector3 worldDelta = new Vector3(-_currentInputVector.x * moveSpeed, 0, -_currentInputVector.y * moveSpeed);
-            
-            // 转换为相对于相机朝向的移动方向
-            Vector3 forward = _mainCamera.transform.forward;
-            Vector3 right = _mainCamera.transform.right;
-            forward.y = 0;
-            right.y = 0;
-            forward.Normalize();
-            right.Normalize();
-            
-            Vector3 relativeDelta = forward * worldDelta.z + right * worldDelta.x;
-            
-            // 更新相机位置
-            RTSCameraTargetController.Instance.CameraTarget.position += relativeDelta;
-        }
-    }
-
     private void OnPress(InputAction.CallbackContext context)
     {
         if (EventSystem.current.IsPointerOverGameObject()) {

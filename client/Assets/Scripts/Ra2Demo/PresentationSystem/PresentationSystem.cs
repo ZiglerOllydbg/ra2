@@ -369,18 +369,6 @@ namespace ZLockstep.View.Systems
             viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
             viewObject.transform.position = evt.Position.ToVector3();
 
-            // 检查实体是否是正在建造的建筑
-            // 如果是，则在上方额外显示预制体ID 8（建造模型）
-            if (_game != null && _game.World != null)
-            {
-                var entity = new Entity(evt.EntityId);
-                if (_game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
-                {
-                    // 在当前预制体上方显示建造模型
-                    ShowConstructionModel(viewObject, entity);
-                }
-            }
-
             // 添加描边组件（默认不启用）
             try 
             {
@@ -471,14 +459,6 @@ namespace ZLockstep.View.Systems
             viewObject.transform.position = transform.Position.ToVector3();
             viewObject.transform.rotation = transform.Rotation.ToQuaternion();
             viewObject.transform.localScale = transform.Scale.ToVector3();
-
-            // 检查实体是否是正在建造的建筑
-            // 如果是，则在上方额外显示预制体ID 8（建造模型）
-            if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
-            {
-                // 在当前预制体上方显示建造模型
-                ShowConstructionModel(viewObject, entity);
-            }
 
             // 添加描边组件（默认不启用）
             try 
@@ -582,20 +562,7 @@ namespace ZLockstep.View.Systems
             // 检查是否是正在建造的建筑
             if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
             {
-                // 确保建造模型存在
-                if (!_constructionModels.ContainsKey(entity.Id))
-                {
-                    ShowConstructionModel(view.GameObject, entity);
-                }
-                else
-                {
-                    // 更新建造模型的位置
-                    var constructionModel = _constructionModels[entity.Id];
-                    if (constructionModel != null)
-                    {
-                        constructionModel.transform.position = logicTransform.Position.ToVector3() + Vector3.up * 2; // 在上方显示
-                    }
-                }
+                // TODO 正在建造中的建筑...
             }
             else
             {
