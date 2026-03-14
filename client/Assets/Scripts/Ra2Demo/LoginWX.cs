@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using PostHogUnity;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -176,7 +178,6 @@ public class LoginWX : MonoBehaviour
             else
             {
                 Debug.Log("用户拒绝获取个人信息");
-                Frame.DispatchEvent(new LoginPanelVisibilityEvent(false));
             }
             // 最后隐藏授权区域，防止阻塞游戏继续
             btn.Hide();

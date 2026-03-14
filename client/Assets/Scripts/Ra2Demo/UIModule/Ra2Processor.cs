@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PostHogUnity;
 using ZFrame;
 using ZLib;
 using ZLockstep.Simulation.ECS.Components; // 添加这个 using 语句以使用 Tick
@@ -245,6 +246,13 @@ public class Ra2Processor : BaseProcessor
                     MatchPanel.HideLoginPanel();
                     MatchPanel.SetPlayerName(e.Nickname);
                     MatchPanel.SetHeadImg(e.AvatarUrl);
+
+                    // TODO PostHog 上报用户信息
+                    PostHog.IdentifyAsync(e.Nickname, new Dictionary<string, object>()
+                    {
+                        { "avatarUrl", e.AvatarUrl },
+                        { "nickName", e.Nickname }
+                    });
                 }
                 break;
         }

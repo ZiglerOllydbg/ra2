@@ -458,7 +458,10 @@ public class MatchPanel : BasePanel
         
         if (Application.isEditor)
         {
-            Frame.DispatchEvent(new UpdateUserInfoEvent("Unity用户", "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132"));
+            string nickName = "Unity用户";
+            string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
+
+            Frame.DispatchEvent(new UpdateUserInfoEvent(nickName, avatarUrl));
         }
         else
         {
