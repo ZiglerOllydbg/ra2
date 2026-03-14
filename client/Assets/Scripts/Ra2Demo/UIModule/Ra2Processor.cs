@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using ZFrame;
 using ZLib;
-using ZLockstep.Simulation.ECS.Components; // 添加这个using语句以使用Tick
+using ZLockstep.Simulation.ECS.Components; // 添加这个 using 语句以使用 Tick
 
 public class Ra2Processor : BaseProcessor
 {
@@ -100,7 +100,8 @@ public class Ra2Processor : BaseProcessor
             typeof(ReplayGameStartEvent),
             typeof(HealthEvent),
             typeof(HealthPanelLateUpdateEvent),
-            typeof(HealthBarSettingChangedEvent)
+            typeof(HealthBarSettingChangedEvent),
+            typeof(LoginPanelVisibilityEvent)
         };
     }
 
@@ -221,6 +222,20 @@ public class Ra2Processor : BaseProcessor
                 {
                     // 转发血条设置变更事件到 HealthPanel
                     HealthPanel.OnHealthBarSettingChanged(e);
+                }
+                break;
+            case LoginPanelVisibilityEvent e:
+                {
+                    if (e.IsVisible)
+                    {
+                        zUDebug.Log("[Ra2Processor] 显示登录面板（通过参数控制）");
+                        MatchPanel.ShowLoginPanel();
+                    }
+                    else
+                    {
+                        zUDebug.Log("[Ra2Processor] 隐藏登录面板（通过参数控制）");
+                        MatchPanel.HideLoginPanel();
+                    }
                 }
                 break;
         }

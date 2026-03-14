@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using WeChatWASM;
+using ZFrame;
 
 public class LoginWX : MonoBehaviour
 {
@@ -172,6 +173,7 @@ public class LoginWX : MonoBehaviour
             else
             {
                 Debug.Log("用户拒绝获取个人信息");
+                Frame.DispatchEvent(new LoginPanelVisibilityEvent(false));
             }
             // 最后隐藏授权区域，防止阻塞游戏继续
             btn.Hide();
@@ -210,6 +212,8 @@ public class LoginWX : MonoBehaviour
     /// <param name="nickName"></param>
     private void ShowUserInfo(string avatarUrl, string nickName)
     {
+        Frame.DispatchEvent(new LoginPanelVisibilityEvent(true));
+
         StartCoroutine(LoadAvatar(avatarUrl));
         showNickname(nickName);
     }

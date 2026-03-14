@@ -2,6 +2,7 @@ using Game.Examples;
 using Game.RA2.Client;
 using Newtonsoft.Json.Linq;
 using PostHogUnity;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using ZFrame;
@@ -10,17 +11,17 @@ using ZLockstep.Sync;
 using ZLockstep.Sync.Command;
 
 /// <summary>
-/// Demo面板 - 示例如何在业务层配置路径、名称和深度类型
+/// Demo 面板 - 示例如何在业务层配置路径、名称和深度类型
 /// </summary>
 [UIModel(
     panelID = "MatchPanel",
     panelPath = "MatchPanel",
-    panelName = "Match面板",
+    panelName = "Match 面板",
     panelUIDepthType = ClientUIDepthTypeID.GameMid
 )]
 public class MatchPanel : BasePanel
 {
-    // 1. 声明UI组件引用
+    // 1. 声明 UI 组件引用
     private Button _soloButton;
     private Button _duoButton;
     private Button _quadButton;
@@ -28,6 +29,9 @@ public class MatchPanel : BasePanel
     private Toggle _useLocalNetToggle;
     private Transform _matchGroup;
     private Transform _matchingGroup;
+    private Transform _loginGroup;
+    private Button _loginButton;
+    private TMP_Text _nameText;
     
     public MatchPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
@@ -39,29 +43,36 @@ public class MatchPanel : BasePanel
     {
         base.OnBecameVisible();
         
-        // 获取Match按钮组和Matching组容器
+        // 获取 Match 按钮组和 Matching 组容器
         _matchGroup = PanelObject.transform.Find("Match");
         _matchingGroup = PanelObject.transform.Find("Matching");
+        _loginGroup = PanelObject.transform.Find("Login");
+        _nameText = PanelObject.transform.Find("Info/Money/Value")?.GetComponent<TMP_Text>();
         
-        // 从PanelObject获取按钮组件
+        // 从 PanelObject 获取按钮组件
         _soloButton = PanelObject.transform.Find("Match/SOLO")?.GetComponent<Button>();
         _duoButton = PanelObject.transform.Find("Match/DUO")?.GetComponent<Button>();
         _quadButton = PanelObject.transform.Find("Match/QUAD")?.GetComponent<Button>();
         _replayButton = PanelObject.transform.Find("Match/REPLAY")?.GetComponent<Button>();
         
-        // 获取UseLocalNet Toggle组件
+        // 获取 UseLocalNet Toggle 组件
         _useLocalNetToggle = PanelObject.transform.Find("Match/UseLocalNet")?.GetComponent<Toggle>();
         
-        // 加载保存的UseLocalNet选项
+        // 获取 Login 按钮组件
+        _loginButton = PanelObject.transform.Find("Match/Login/LoginBtn")?.GetComponent<Button>();
+        
+        // 加载保存的 UseLocalNet 选项
         LoadUseLocalNetOption();
 
-        // 显示Match按钮组
+        // 显示 Match 按钮组
         _matchGroup.gameObject.SetActive(true);
         // 隐藏匹配中界面
         _matchingGroup.gameObject.SetActive(false);
+        // 隐藏 Login 面板
+        HideLoginPanel();
     }
 
-    // 3. 在AddEvent中添加按钮事件（面板显示时自动调用）
+    // 3. 在 AddEvent 中添加按钮事件（面板显示时自动调用）
     protected override void AddEvent()
     {
         base.AddEvent();
@@ -86,14 +97,20 @@ public class MatchPanel : BasePanel
             _replayButton.onClick.AddListener(OnReplayButtonClick);
         }
 
-        // 为UseLocalNet Toggle添加值变化监听
+        // 为 UseLocalNet Toggle 添加值变化监听
         if (_useLocalNetToggle != null)
         {
             _useLocalNetToggle.onValueChanged.AddListener(OnUseLocalNetValueChanged);
         }
+        
+        // 为 Login 按钮添加点击事件监听
+        if (_loginButton != null)
+        {
+            _loginButton.onClick.AddListener(OnLoginButtonClick);
+        }
     }
 
-    // 4. 在RemoveEvent中移除按钮事件（面板关闭时自动调用）
+    // 4. 在 RemoveEvent 中移除按钮事件（面板关闭时自动调用）
     protected override void RemoveEvent()
     {
         base.RemoveEvent();
@@ -118,10 +135,16 @@ public class MatchPanel : BasePanel
             _replayButton.onClick.RemoveListener(OnReplayButtonClick);
         }
 
-        // 移除UseLocalNet Toggle的值变化监听
+        // 移除 UseLocalNet Toggle 的值变化监听
         if (_useLocalNetToggle != null)
         {
             _useLocalNetToggle.onValueChanged.RemoveListener(OnUseLocalNetValueChanged);
+        }
+        
+        // 移除 Login 按钮的点击事件监听
+        if (_loginButton != null)
+        {
+            _loginButton.onClick.RemoveListener(OnLoginButtonClick);
         }
     }
 
@@ -347,5 +370,31 @@ public class MatchPanel : BasePanel
         {
             _matchingGroup.gameObject.SetActive(false);
         }
+    }
+    
+    // 显示 Login 面板
+    public void ShowLoginPanel()
+    {
+        if (_loginGroup != null)
+        {
+            _loginGroup.gameObject.SetActive(true);
+            Debug.Log("[MatchPanel] Login 面板已显示");
+        }
+    }
+    
+    // 隐藏 Login 面板
+    public void HideLoginPanel()
+    {
+        if (_loginGroup != null)
+        {
+            _loginGroup.gameObject.SetActive(false);
+            Debug.Log("[MatchPanel] Login 面板已隐藏");
+        }
+    }
+    
+    // Login 按钮点击处理方法
+    private void OnLoginButtonClick()
+    {
+        Debug.Log("[MatchPanel] Login 按钮被点击");
     }
 }
