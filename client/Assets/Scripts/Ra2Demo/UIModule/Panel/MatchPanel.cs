@@ -46,8 +46,8 @@ public class MatchPanel : BasePanel
         // 获取 Match 按钮组和 Matching 组容器
         _matchGroup = PanelObject.transform.Find("Match");
         _matchingGroup = PanelObject.transform.Find("Matching");
-        _loginGroup = PanelObject.transform.Find("Login");
-        _nameText = PanelObject.transform.Find("Info/Money/Value")?.GetComponent<TMP_Text>();
+        _loginGroup = PanelObject.transform.Find("Match/Login");
+        _nameText = PanelObject.transform.Find("Match/Nickname")?.GetComponent<TMP_Text>();
         
         // 从 PanelObject 获取按钮组件
         _soloButton = PanelObject.transform.Find("Match/SOLO")?.GetComponent<Button>();
@@ -69,7 +69,21 @@ public class MatchPanel : BasePanel
         // 隐藏匹配中界面
         _matchingGroup.gameObject.SetActive(false);
         // 隐藏 Login 面板
-        HideLoginPanel();
+        ShowLoginPanel();
+    }
+
+    // 设置玩家名称显示
+    public void SetPlayerName(string name)
+    {
+        if (_nameText != null)
+        {
+            _nameText.text = name;
+            Debug.Log($"[MatchPanel] 玩家名称已设置为：{name}");
+        }
+        else
+        {
+            Debug.LogWarning("[MatchPanel] _nameText 组件未找到，无法设置玩家名称");
+        }
     }
 
     // 3. 在 AddEvent 中添加按钮事件（面板显示时自动调用）
@@ -396,5 +410,23 @@ public class MatchPanel : BasePanel
     private void OnLoginButtonClick()
     {
         Debug.Log("[MatchPanel] Login 按钮被点击");
+        
+        if (Application.isEditor)
+        {
+            Frame.DispatchEvent(new UpdateUserInfoEvent("Unity用户"));
+        }
+        else
+        {
+            // 微信环境登录
+            LoginWX loginWX = Object.FindObjectOfType<LoginWX>();
+            if (loginWX != null)
+            {
+                loginWX.LoaderWXMess();
+            }
+            else 
+            {
+                Debug.LogError("[MatchPanel] 未找到 LoginWX 组件");
+            }
+        }
     }
 }

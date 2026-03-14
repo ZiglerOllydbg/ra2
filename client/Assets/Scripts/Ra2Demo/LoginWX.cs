@@ -26,6 +26,20 @@ public class LoginWX : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // if (!Application.isEditor)
+        // {
+        //     // 初始化微信SDK
+        //     WX.InitSDK((code) =>
+        //     {
+        //         Debug.Log("init WXSDK code: " + code);
+        //         // 加载用户信息
+        //         this.LoaderWXMess();
+        //     });
+        // }
+    }
+
+    public void Login()
+    {
         // 初始化微信SDK
         WX.InitSDK((code) =>
         {
@@ -212,7 +226,7 @@ public class LoginWX : MonoBehaviour
     /// <param name="nickName"></param>
     private void ShowUserInfo(string avatarUrl, string nickName)
     {
-        Frame.DispatchEvent(new LoginPanelVisibilityEvent(true));
+        Frame.DispatchEvent(new UpdateUserInfoEvent(nickName));
 
         StartCoroutine(LoadAvatar(avatarUrl));
         showNickname(nickName);

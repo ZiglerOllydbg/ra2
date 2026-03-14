@@ -190,7 +190,6 @@ public class Ra2Demo : MonoBehaviour
     }
 
     private Frame frame;
-
     private void Start()
     {
         PostHog.Setup(
