@@ -604,6 +604,12 @@ namespace ZLockstep.View.Systems
                             
                             // 更新 Transform 缓存
                             view.Transform = view.GameObject.transform;
+
+                            int campId = ComponentManager.GetComponent<CampComponent>(entity).CampId;
+
+
+                            var indicator = view.GameObject.AddComponent<PlayerUnitIndicator>();
+                            indicator.Initialize(campId);
                         }
 
                         view.BuildingOK = true;
