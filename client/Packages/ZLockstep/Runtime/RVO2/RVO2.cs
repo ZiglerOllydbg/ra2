@@ -192,9 +192,9 @@ namespace ZLockstep.RVO
         private List<RVO2Agent> agents = new List<RVO2Agent>();
         
         /// <summary>
-        /// ID 到索引的映射，用于 O(1) 复杂度的智能体查找
+        /// ID 到智能体的映射，用于 O(1) 复杂度的智能体查找
         /// </summary>
-        private Dictionary<int, int> idToIndexMap = new Dictionary<int, int>();
+        private Dictionary<int, RVO2Agent> idToAgentMap = new Dictionary<int, RVO2Agent>();
         
         /// <summary>
         /// KD-tree 用于加速空间邻近查询
@@ -322,7 +322,7 @@ namespace ZLockstep.RVO
             agent.isStationary = false;
 
             agents.Add(agent);
-            idToIndexMap[agent.id] = agents.Count - 1;
+            idToAgentMap[agent.id] = agent;
             
             // 如果 KD-tree 已初始化，添加到树中
             if (agentKDTree != null)
@@ -352,9 +352,9 @@ namespace ZLockstep.RVO
         /// <param name="prefVelocity">期望速度向量，表示理想状态下智能体希望达到的速度</param>
         public void SetAgentPrefVelocity(int agentId, zVector2 prefVelocity)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                agents[index].prefVelocity = prefVelocity;
+                agent.prefVelocity = prefVelocity;
             }
         }
 
@@ -377,9 +377,9 @@ namespace ZLockstep.RVO
         /// <param name="position">新的位置坐标</param>
         public void SetAgentPosition(int agentId, zVector2 position)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                agents[index].position = position;
+                agent.position = position;
                 
                 // 位置改变后需要重建 KD-tree
                 if (agentKDTree != null)
@@ -408,9 +408,9 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前位置坐标，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentPosition(int agentId)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                return agents[index].position;
+                return agent.position;
             }
             return zVector2.zero;
         }
@@ -434,9 +434,9 @@ namespace ZLockstep.RVO
         /// <returns>智能体当前实际速度向量，如果未找到对应智能体则返回零向量</returns>
         public zVector2 GetAgentVelocity(int agentId)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                return agents[index].velocity;
+                return agent.velocity;
             }
             return zVector2.zero;
         }
@@ -944,10 +944,8 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要移除的智能体 ID</param>
         public void RemoveAgent(int agentId)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                var agent = agents[index];
-                
                 // 移除动态障碍物
                 if (flowFieldManager != null)
                 {
@@ -959,8 +957,8 @@ namespace ZLockstep.RVO
                     flowFieldManager.MarkDynamicObstaclesNeedUpdate();
                 }
                 
-                agents.RemoveAt(index);
-                idToIndexMap.Remove(agentId);
+                agents.Remove(agent);
+                idToAgentMap.Remove(agentId);
                 
                 // 从 KD-tree 中移除
                 if (agentKDTree != null)
@@ -979,10 +977,10 @@ namespace ZLockstep.RVO
         /// <param name="agentId">要重置的智能体 ID</param>
         public void ResetAgentStationaryState(int agentId)
         {
-            if (idToIndexMap.TryGetValue(agentId, out int index))
+            if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                agents[index].stationaryFrames = 0;
-                agents[index].isStationary = false;
+                agent.stationaryFrames = 0;
+                agent.isStationary = false;
             }
         }
         
@@ -1019,7 +1017,7 @@ namespace ZLockstep.RVO
         public void Clear()
         {
             agents.Clear();
-            idToIndexMap.Clear();
+            idToAgentMap.Clear();
             if (agentKDTree != null)
             {
                 agentKDTree.Clear();
