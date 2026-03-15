@@ -30,8 +30,6 @@ public class MatchPanel : BasePanel
     private Toggle _useLocalNetToggle;
     private Transform _matchGroup;
     private Transform _matchingGroup;
-    private Transform _loginGroup;
-    private Button _loginButton;
     private TMP_Text _nameText;
     private RawImage _headImg;
     
@@ -48,7 +46,6 @@ public class MatchPanel : BasePanel
         // 获取 Match 按钮组和 Matching 组容器
         _matchGroup = PanelObject.transform.Find("Match");
         _matchingGroup = PanelObject.transform.Find("Matching");
-        _loginGroup = PanelObject.transform.Find("Match/Login");
         _nameText = PanelObject.transform.Find("Match/Nickname")?.GetComponent<TMP_Text>();
         _headImg = PanelObject.transform.Find("Match/HeadImg")?.GetComponent<RawImage>();
         
@@ -61,8 +58,6 @@ public class MatchPanel : BasePanel
         // 获取 UseLocalNet Toggle 组件
         _useLocalNetToggle = PanelObject.transform.Find("Match/UseLocalNet")?.GetComponent<Toggle>();
         
-        // 获取 Login 按钮组件
-        _loginButton = PanelObject.transform.Find("Match/Login/LoginBtn")?.GetComponent<Button>();
         
         // 加载保存的 UseLocalNet 选项
         LoadUseLocalNetOption();
@@ -71,8 +66,6 @@ public class MatchPanel : BasePanel
         _matchGroup.gameObject.SetActive(true);
         // 隐藏匹配中界面
         _matchingGroup.gameObject.SetActive(false);
-        // 隐藏 Login 面板
-        HideLoginPanel();
     }
 
     // 设置玩家名称显示
@@ -162,11 +155,6 @@ public class MatchPanel : BasePanel
             _useLocalNetToggle.onValueChanged.AddListener(OnUseLocalNetValueChanged);
         }
         
-        // 为 Login 按钮添加点击事件监听
-        if (_loginButton != null)
-        {
-            _loginButton.onClick.AddListener(OnLoginButtonClick);
-        }
     }
 
     // 4. 在 RemoveEvent 中移除按钮事件（面板关闭时自动调用）
@@ -200,11 +188,6 @@ public class MatchPanel : BasePanel
             _useLocalNetToggle.onValueChanged.RemoveListener(OnUseLocalNetValueChanged);
         }
         
-        // 移除 Login 按钮的点击事件监听
-        if (_loginButton != null)
-        {
-            _loginButton.onClick.RemoveListener(OnLoginButtonClick);
-        }
     }
 
     // 5. 按钮点击处理方法
@@ -431,50 +414,4 @@ public class MatchPanel : BasePanel
         }
     }
     
-    // 显示 Login 面板
-    public void ShowLoginPanel()
-    {
-        if (_loginGroup != null)
-        {
-            _loginGroup.gameObject.SetActive(true);
-            Debug.Log("[MatchPanel] Login 面板已显示");
-        }
-    }
-    
-    // 隐藏 Login 面板
-    public void HideLoginPanel()
-    {
-        if (_loginGroup != null)
-        {
-            _loginGroup.gameObject.SetActive(false);
-            Debug.Log("[MatchPanel] Login 面板已隐藏");
-        }
-    }
-    
-    // Login 按钮点击处理方法
-    private void OnLoginButtonClick()
-    {
-        Debug.Log("[MatchPanel] Login 按钮被点击");
-        
-        if (Application.isEditor)
-        {
-            string nickName = "Unity用户";
-            string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
-
-            Frame.DispatchEvent(new UpdateUserInfoEvent(nickName, avatarUrl));
-        }
-        else
-        {
-            // 微信环境登录
-            LoginWX loginWX = Object.FindObjectOfType<LoginWX>();
-            if (loginWX != null)
-            {
-                loginWX.LoaderWXMess();
-            }
-            else 
-            {
-                Debug.LogError("[MatchPanel] 未找到 LoginWX 组件");
-            }
-        }
-    }
 }

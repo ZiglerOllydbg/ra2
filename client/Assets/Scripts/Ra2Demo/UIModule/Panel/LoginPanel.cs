@@ -82,7 +82,7 @@ public class LoginPanel : BasePanel
             string nickName = "Unity用户";
             string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
 
-            Frame.DispatchEvent(new UpdateUserInfoEvent(nickName, avatarUrl));
+            Frame.DispatchEvent(new LoginEvent(nickName, avatarUrl));
         }
         else
         {

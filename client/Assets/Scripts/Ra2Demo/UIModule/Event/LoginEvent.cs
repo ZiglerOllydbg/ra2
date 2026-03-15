@@ -5,13 +5,13 @@ using ZFrame;
 /// 使用方法：
 /// Frame.DispatchEvent(new UpdateUserInfoEvent("Nickname"));
 /// </summary>
-public class UpdateUserInfoEvent : ModuleEvent
+public class LoginEvent : ModuleEvent
 {
     public string Nickname;
 
     public string AvatarUrl;
 
-    public UpdateUserInfoEvent(string nickname, string avatarUrl) : base()
+    public LoginEvent(string nickname, string avatarUrl) : base()
     {
         Nickname = nickname;
         AvatarUrl = avatarUrl;

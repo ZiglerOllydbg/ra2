@@ -116,8 +116,7 @@ public class Ra2Processor : BaseProcessor
             typeof(HealthEvent),
             typeof(HealthPanelLateUpdateEvent),
             typeof(HealthBarSettingChangedEvent),
-            typeof(LoginPanelVisibilityEvent),
-            typeof(UpdateUserInfoEvent)
+            typeof(LoginEvent)
         };
     }
 
@@ -240,21 +239,7 @@ public class Ra2Processor : BaseProcessor
                     HealthPanel.OnHealthBarSettingChanged(e);
                 }
                 break;
-            case LoginPanelVisibilityEvent e:
-                {
-                    if (e.IsVisible)
-                    {
-                        zUDebug.Log("[Ra2Processor] 显示登录面板（通过参数控制）");
-                        MatchPanel.ShowLoginPanel();
-                    }
-                    else
-                    {
-                        zUDebug.Log("[Ra2Processor] 隐藏登录面板（通过参数控制）");
-                        MatchPanel.HideLoginPanel();
-                    }
-                }
-                break;
-            case UpdateUserInfoEvent e:
+            case LoginEvent e:
                 {
                     zUDebug.Log($"[Ra2Processor] 更新用户信息为：{e.Nickname}");
                     LoginPanel.Close();

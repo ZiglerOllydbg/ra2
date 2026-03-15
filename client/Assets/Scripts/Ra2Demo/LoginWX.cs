@@ -216,7 +216,7 @@ public class LoginWX : MonoBehaviour
     /// <param name="nickName"></param>
     private void ShowUserInfo(string avatarUrl, string nickName)
     {
-        Frame.DispatchEvent(new UpdateUserInfoEvent(nickName, avatarUrl));
+        Frame.DispatchEvent(new LoginEvent(nickName, avatarUrl));
     }
 
 
