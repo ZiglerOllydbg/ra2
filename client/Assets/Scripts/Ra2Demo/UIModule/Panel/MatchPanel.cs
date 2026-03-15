@@ -72,7 +72,7 @@ public class MatchPanel : BasePanel
         // 隐藏匹配中界面
         _matchingGroup.gameObject.SetActive(false);
         // 隐藏 Login 面板
-        ShowLoginPanel();
+        HideLoginPanel();
     }
 
     // 设置玩家名称显示

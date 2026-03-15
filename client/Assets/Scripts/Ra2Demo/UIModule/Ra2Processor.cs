@@ -74,10 +74,24 @@ public class Ra2Processor : BaseProcessor
         {
             if (_healthPanel == null)
             {
-                // 使用字符串ID，业务层可以定义自己的枚举并通过ToString()转换
+                // 使用字符串 ID，业务层可以定义自己的枚举并通过 ToString() 转换
                 _healthPanel = _healthPanel.New<HealthPanel>(this, "HealthPanel");
             }
             return _healthPanel;
+        }
+    }
+
+    // 登录面板
+    private LoginPanel _loginPanel;
+    public LoginPanel LoginPanel
+    {
+        get
+        {
+            if (_loginPanel == null)
+            {
+                _loginPanel = _loginPanel.New<LoginPanel>(this, "LoginPanel");
+            }
+            return _loginPanel;
         }
     }
 
@@ -119,7 +133,7 @@ public class Ra2Processor : BaseProcessor
                 {
                     _ra2Demo = e.Ra2Demo;
                     // MainPanel.Open();
-                    MatchPanel.Open();
+                    LoginPanel.Open();
                 }
                 break;
             case MatchedEvent e:
@@ -243,7 +257,8 @@ public class Ra2Processor : BaseProcessor
             case UpdateUserInfoEvent e:
                 {
                     zUDebug.Log($"[Ra2Processor] 更新用户信息为：{e.Nickname}");
-                    MatchPanel.HideLoginPanel();
+                    LoginPanel.Close();
+                    MatchPanel.Open();
                     MatchPanel.SetPlayerName(e.Nickname);
                     MatchPanel.SetHeadImg(e.AvatarUrl);
 
