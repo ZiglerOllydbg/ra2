@@ -285,7 +285,7 @@ namespace ZLockstep.View.Systems
                 if (confBuilding != null)
                 {
                     // 创建建筑模型
-                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/Building");
+                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.BuildPrefab);
                     if (buildingPrefab != null)
                     {
                         // 创建建筑模型

@@ -253,7 +253,7 @@ Transform:
   m_GameObject: {fileID: 3895326092544463566}
   m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1603182189201168027}
@@ -375,7 +375,7 @@ GameObject:
   - component: {fileID: 8994536783689913891}
   - component: {fileID: 5803913011814570761}
   m_Layer: 0
-  m_Name: Building
+  m_Name: TowerBuilding
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
