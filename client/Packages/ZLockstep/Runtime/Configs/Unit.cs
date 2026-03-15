@@ -17,6 +17,7 @@ public class ConfUnit
 	public int ID; // 编号
 	public int Type; // 建筑类型：1=大兵；2=獾式坦克；3=灰熊坦克；
 	public string Prefab; // 资源prefab
+	public string Icon; // 图标
 	public int Hp; // 血量
 	public int Atk; // 攻击
 	public int Def; // 防御

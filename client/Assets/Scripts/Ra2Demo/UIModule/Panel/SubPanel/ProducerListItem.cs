@@ -59,13 +59,17 @@ public class ProducerListItem : BaseListItem
     public override void UpdateData()
     {
         if (producerNameText != null && ItemData != null)
+        {
             producerNameText.text = ItemData.Name;
-            
-        if (factoryNameText != null && ItemData != null)
             factoryNameText.text = ItemData.BelongFactory;
-
-        if (descriptionText != null && ItemData != null)
             descriptionText.text = ItemData.Description;
+
+            ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)ItemData.UnitType);
+            if (confUnit != null)
+            {
+                iconImage.sprite = ResourceCache.GetSprite(confUnit.Icon);
+            }
+        }
     }
     
     private void OnAddClick()
