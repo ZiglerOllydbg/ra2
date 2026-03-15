@@ -285,7 +285,7 @@ namespace ZLockstep.View.Systems
                 if (confBuilding != null)
                 {
                     // 创建建筑模型
-                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
+                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/Building");
                     if (buildingPrefab != null)
                     {
                         // 创建建筑模型
@@ -566,28 +566,50 @@ namespace ZLockstep.View.Systems
             }
             else
             {
-                view.GameObject.SetActive(true);
+                if (ComponentManager.HasComponent<BuildingComponent>(entity))
+                {
+                    var buildingComponent = ComponentManager.GetComponent<BuildingComponent>(entity);
+                    if (!view.BuildingOK)
+                    {
+                        ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
+                        if (confBuilding == null)
+                        {
+                            Debug.LogWarning($"[PresentationSystem] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
+                            return;
+                        }
 
-                // if (ComponentManager.HasComponent<BuildingComponent>(entity))
-                // {
-                //     var buildingComponent = ComponentManager.GetComponent<BuildingComponent>(entity);
-                //     if (view.GameObject == null)
-                //     {
-                //         ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
-                //         if (confBuilding == null)
-                //         {
-                //             Debug.LogWarning($"[PresentationSystem] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
-                //             return;
-                //         }
+                        // 移除旧建筑模型（保存位置信息）
+                        Vector3 oldPosition = Vector3.zero;
+                        Quaternion oldRotation = Quaternion.identity;
+                        
+                        if (view.GameObject != null)
+                        {
+                            // 保存旧模型的位置和旋转
+                            oldPosition = view.Transform.position;
+                            oldRotation = view.Transform.rotation;
+                            
+                            Object.Destroy(view.GameObject);
+                            view.GameObject = null;
+                        }
 
-                //         GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
-                //         if (buildingPrefab != null)
-                //         {
-                //             // 创建建筑模型
-                //             view.GameObject = Object.Instantiate(buildingPrefab, _viewRoot);
-                //         }
-                //     }
-                // }
+                        GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
+                        if (buildingPrefab != null)
+                        {
+                            // 创建建筑模型
+                            view.GameObject = Object.Instantiate(buildingPrefab, _viewRoot);
+                            
+                            // 应用旧模型的位置和旋转
+                            view.GameObject.transform.position = oldPosition;
+                            view.GameObject.transform.rotation = oldRotation;
+                            
+                            // 更新 Transform 缓存
+                            view.Transform = view.GameObject.transform;
+                        }
+
+                        view.BuildingOK = true;
+                        ComponentManager.AddComponent(entity, view);
+                    }
+                }
                 
             }
 

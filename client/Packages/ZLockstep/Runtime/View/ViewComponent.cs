@@ -15,6 +15,8 @@ namespace ZLockstep.View
         /// </summary>
         public GameObject GameObject;
 
+        public bool BuildingOK;
+
         /// <summary>
         /// Transform缓存（性能优化）
         /// </summary>
@@ -55,6 +57,7 @@ namespace ZLockstep.View
             var view = new ViewComponent
             {
                 GameObject = gameObject,
+                BuildingOK = false,
                 Transform = gameObject.transform,
                 Animator = gameObject.GetComponent<Animator>(),
                 Renderer = gameObject.GetComponent<Renderer>(),
