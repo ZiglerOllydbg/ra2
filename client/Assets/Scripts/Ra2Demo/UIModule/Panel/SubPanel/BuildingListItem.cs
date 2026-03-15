@@ -49,8 +49,16 @@ public class BuildingListItem : BaseListItem
     public override void UpdateData()
     {
         if (buildingNameText != null && ItemData != null)
+        {
             buildingNameText.text = ItemData.Name;
             descriptionText.text = ItemData.Description;
+
+            ConfBuildingPlace confBuildingPlace = ConfigManager.Get<ConfBuildingPlace>(ItemData.ConfBuildingPlaceID);
+            if (confBuildingPlace != null)
+            {
+                iconImage.sprite = ResourceCache.GetSprite(confBuildingPlace.Icon);
+            }
+        }
     }
     
     private void OnSelectClick()

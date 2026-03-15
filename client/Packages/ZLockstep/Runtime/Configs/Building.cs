@@ -40,6 +40,7 @@ public class ConfBuildingPlace
 	public int ID; // 编号
 	public int CampID; // 阵营
 	public int Type; // 建筑类型：1=主基地；2=矿源；3=采矿场；4=电厂；5=兵营；6=坦克工厂；7=防御塔；
+	public string Icon; // 图标
 	public int Count; // 数量
 	public string Position; // 位置
 	public string Name; // 名称

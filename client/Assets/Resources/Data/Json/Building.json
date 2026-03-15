@@ -114,104 +114,125 @@
     }
   },
   "ConfBuildingPlace": {
-    "1": {
-      "ID": 1,
+    "10": {
+      "ID": 10,
       "CampID": 1,
       "Type": 3,
+      "Icon": "Images/Stope",
       "Count": 1,
       "Position": "5,0,5",
-      "Name": "采矿场",
+      "Name": "油井",
       "Enabled": 1
     },
-    "2": {
-      "ID": 2,
+    "11": {
+      "ID": 11,
       "CampID": 1,
       "Type": 4,
+      "Icon": "Images/PowerPlant",
       "Count": 2,
       "Position": "5,0,15;15,0,5",
       "Name": "电厂",
       "Enabled": 1
     },
-    "3": {
-      "ID": 3,
+    "12": {
+      "ID": 12,
       "CampID": 1,
       "Type": 5,
+      "Icon": "Images/Barracks",
       "Count": 1,
       "Position": "5,0,25",
       "Name": "兵营",
       "Enabled": 1
     },
-    "4": {
-      "ID": 4,
+    "13": {
+      "ID": 13,
       "CampID": 1,
       "Type": 6,
+      "Icon": "Images/VehicleFactory",
       "Count": 1,
       "Position": "25,0,5",
       "Name": "坦克工厂",
       "Enabled": 1
     },
-    "5": {
-      "ID": 5,
+    "14": {
+      "ID": 14,
       "CampID": 1,
       "Type": 7,
+      "Icon": "Images/Tower",
       "Count": 4,
       "Position": "20,0,20;10,0,20;20,0,10;10,0,10",
       "Name": "防御塔",
       "Enabled": 1
     },
-    "6": {
-      "ID": 6,
+    "15": {
+      "ID": 15,
       "CampID": 1,
       "Type": 1,
+      "Icon": "Images/MainBase",
       "Count": 1,
       "Position": "15,0,15",
       "Name": "主基地",
       "Enabled": 1
     },
-    "100": {
-      "ID": 100,
+    "20": {
+      "ID": 20,
       "CampID": 2,
       "Type": 3,
+      "Icon": "Images/Stope",
       "Count": 1,
       "Position": "122,0,122",
-      "Name": "采矿场",
+      "Name": "油井",
       "Enabled": 1
     },
-    "101": {
-      "ID": 101,
+    "21": {
+      "ID": 21,
       "CampID": 2,
       "Type": 4,
+      "Icon": "Images/PowerPlant",
       "Count": 1,
       "Position": "122,0,117",
       "Name": "电厂",
       "Enabled": 1
     },
-    "102": {
-      "ID": 102,
+    "22": {
+      "ID": 22,
       "CampID": 2,
       "Type": 5,
+      "Icon": "Images/Barracks",
       "Count": 1,
       "Position": "117,0,122",
       "Name": "兵营",
       "Enabled": 1
     },
-    "103": {
-      "ID": 103,
+    "23": {
+      "ID": 23,
       "CampID": 2,
       "Type": 6,
+      "Icon": "Images/VehicleFactory",
       "Count": 1,
       "Position": "112,0,122",
       "Name": "坦克工厂",
       "Enabled": 1
     },
-    "104": {
-      "ID": 104,
+    "24": {
+      "ID": 24,
       "CampID": 2,
       "Type": 7,
+      "Icon": "Images/Tower",
       "Count": 2,
       "Position": "109,0,112;112,0,109",
       "Name": "防御塔",
-      "Enabled": 0
+      "Enabled": 1
+    },
+    "25": {
+      "ID": 25,
+      "CampID": 2,
+      "Type": 1,
+      "Icon": "Images/MainBase",
+      "Count": 1,
+      "Position": "15,0,15",
+      "Name": "主基地",
+      "Enabled": 1
     }
   }
 }
