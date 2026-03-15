@@ -35,7 +35,7 @@
     },
     "4": {
       "ID": 4,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 1,
@@ -46,7 +46,7 @@
     },
     "5": {
       "ID": 5,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 2,
@@ -57,7 +57,7 @@
     },
     "6": {
       "ID": 6,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 3,
@@ -68,7 +68,7 @@
     },
     "7": {
       "ID": 7,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 4,
@@ -79,7 +79,7 @@
     },
     "8": {
       "ID": 8,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 4,
@@ -90,7 +90,7 @@
     },
     "9": {
       "ID": 9,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 5,
@@ -101,7 +101,7 @@
     },
     "10": {
       "ID": 10,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 6,
@@ -112,7 +112,7 @@
     },
     "11": {
       "ID": 11,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 7,
@@ -123,7 +123,7 @@
     },
     "12": {
       "ID": 12,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 7,
@@ -134,7 +134,7 @@
     },
     "13": {
       "ID": 13,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 7,
@@ -145,7 +145,7 @@
     },
     "14": {
       "ID": 14,
-      "Camp": 2,
+      "Camp": 9,
       "Type": 1,
       "SubType": 0.0,
       "ConfID": 7,
@@ -222,7 +222,7 @@
     },
     "107": {
       "ID": 107,
-      "Camp": 2,
+      "Camp": 1,
       "Type": 2,
       "SubType": 1,
       "ConfID": 0.0,
@@ -351,6 +351,17 @@
       "Position": "36,0,40",
       "Note": "大兵5",
       "Enabled": 0
+    },
+    "row_34": {
+      "ID": 0.0,
+      "Camp": 2,
+      "Type": 0.0,
+      "SubType": 0.0,
+      "ConfID": 0.0,
+      "PrefabId": 0.0,
+      "Position": "",
+      "Note": "",
+      "Enabled": 0.0
     }
   }
 }

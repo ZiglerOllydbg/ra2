@@ -161,7 +161,7 @@
       "Icon": "Images/Tower",
       "Count": 4,
       "Position": "20,0,20;10,0,20;20,0,10;10,0,10",
-      "Name": "防御塔",
+      "Name": "碉堡",
       "Enabled": 1
     },
     "15": {
@@ -180,7 +180,7 @@
       "Type": 3,
       "Icon": "Images/Stope",
       "Count": 1,
-      "Position": "122,0,122",
+      "Position": "120,0,120",
       "Name": "油井",
       "Enabled": 1
     },
@@ -189,8 +189,8 @@
       "CampID": 2,
       "Type": 4,
       "Icon": "Images/PowerPlant",
-      "Count": 1,
-      "Position": "122,0,117",
+      "Count": 2,
+      "Position": "120,0,110;110,0,120",
       "Name": "电厂",
       "Enabled": 1
     },
@@ -200,7 +200,7 @@
       "Type": 5,
       "Icon": "Images/Barracks",
       "Count": 1,
-      "Position": "117,0,122",
+      "Position": "120,0,100",
       "Name": "兵营",
       "Enabled": 1
     },
@@ -210,7 +210,7 @@
       "Type": 6,
       "Icon": "Images/VehicleFactory",
       "Count": 1,
-      "Position": "112,0,122",
+      "Position": "100,0,120",
       "Name": "坦克工厂",
       "Enabled": 1
     },
@@ -219,9 +219,9 @@
       "CampID": 2,
       "Type": 7,
       "Icon": "Images/Tower",
-      "Count": 2,
-      "Position": "109,0,112;112,0,109",
-      "Name": "防御塔",
+      "Count": 4,
+      "Position": "105,0,105;115,0,105;105,0,115;115,0,115",
+      "Name": "碉堡",
       "Enabled": 1
     },
     "25": {
@@ -230,7 +230,7 @@
       "Type": 1,
       "Icon": "Images/MainBase",
       "Count": 1,
-      "Position": "15,0,15",
+      "Position": "110,0,110",
       "Name": "主基地",
       "Enabled": 1
     }

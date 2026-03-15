@@ -21,7 +21,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// <summary>
         /// AI 阵营 ID
         /// </summary>
-        private const int AI_CAMP_ID = 2;
+        private const int AI_CAMP_ID = 9;
 
         /// <summary>
         /// 玩家阵营 ID

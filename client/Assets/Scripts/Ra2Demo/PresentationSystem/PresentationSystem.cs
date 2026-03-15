@@ -556,7 +556,7 @@ namespace ZLockstep.View.Systems
             var view = ComponentManager.GetComponent<ViewComponent>(entity);
             var logicTransform = ComponentManager.GetComponent<TransformComponent>(entity);
 
-            if (view.GameObject == null || view.Transform == null)
+            if (view.Transform == null)
                 return;
 
             // 检查是否是正在建造的建筑
@@ -566,16 +566,29 @@ namespace ZLockstep.View.Systems
             }
             else
             {
-                // 建筑已经建造完成，移除建造模型
-                if (_constructionModels.ContainsKey(entity.Id))
-                {
-                    var constructionModel = _constructionModels[entity.Id];
-                    if (constructionModel != null)
-                    {
-                        Object.Destroy(constructionModel);
-                    }
-                    _constructionModels.Remove(entity.Id);
-                }
+                view.GameObject.SetActive(true);
+
+                // if (ComponentManager.HasComponent<BuildingComponent>(entity))
+                // {
+                //     var buildingComponent = ComponentManager.GetComponent<BuildingComponent>(entity);
+                //     if (view.GameObject == null)
+                //     {
+                //         ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
+                //         if (confBuilding == null)
+                //         {
+                //             Debug.LogWarning($"[PresentationSystem] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
+                //             return;
+                //         }
+
+                //         GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
+                //         if (buildingPrefab != null)
+                //         {
+                //             // 创建建筑模型
+                //             view.GameObject = Object.Instantiate(buildingPrefab, _viewRoot);
+                //         }
+                //     }
+                // }
+                
             }
 
             // 记录上一帧位置（用于插值）
