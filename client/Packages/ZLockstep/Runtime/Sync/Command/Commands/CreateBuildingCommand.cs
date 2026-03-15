@@ -45,23 +45,20 @@ namespace ZLockstep.Sync.Command.Commands
 
         public override void Execute(zWorld world)
         {
-            // 如果是非采矿场建筑，需要判断在主城的限制区域内
-            if (BuildingType != BuildingType.Smelter)
+            if (BuildingType != BuildingType.Base)
             {
-                if (!BuildingPlacementUtils.CheckBuildableArea(world, Position, CampId))
+                // 主基地之外的建筑都需要有主基地才能建造
+                var (mainBaseComponent, entity) = world.ComponentManager.GetComponentWithCondition<MainBaseComponent>(
+                    e => {
+                        if (!world.ComponentManager.HasComponent<CampComponent>(e)) 
+                            return false;
+                        var campComponent = world.ComponentManager.GetComponent<CampComponent>(e);
+                        return campComponent.CampId == CampId;
+                    });
+                
+                if (entity.Id == -1)
                 {
-                    UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：超出主城建造范围");
-                    world.EventManager.Publish(new MessageEvent($"建造失败：超出主城建造范围"));
-                    return;
-                }
-            }
-            // 如果是采矿场，需要判断是否在矿源附近
-            else
-            {
-                if (!CheckMineProximity(world, Position))
-                {
-                    UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造采矿场 在位置{Position} 失败：不在矿源附近");
-                    world.EventManager.Publish(new MessageEvent($"建造采矿场失败：不在矿源附近"));
+                    world.EventManager.Publish(new MessageEvent("先建造主基地才能建造其他建筑"));
                     return;
                 }
             }
