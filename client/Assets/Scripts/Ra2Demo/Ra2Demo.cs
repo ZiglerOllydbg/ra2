@@ -232,6 +232,17 @@ public class Ra2Demo : MonoBehaviour
     private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
     private Vector2 dragCurrentScreenPos; // 拖拽当前屏幕位置（用于绘制虚线）
     
+    // 输入事件队列 - 解决同一帧内多个输入事件的顺序处理问题
+    private System.Collections.Generic.Queue<InputEvent> inputEventQueue = new System.Collections.Generic.Queue<InputEvent>();
+    
+    // 输入事件结构
+    private struct InputEvent
+    {
+        public InputActionState State;
+        public Vector2 Position;
+        public float Timestamp;
+    }
+    
     // 单位移动模式相关字段
     private bool isUnitMoveMode = false; // 是否处于单位移动模式
     private float unitSelectionRadius = 5f; // 单位选择半径（米）
@@ -261,63 +272,78 @@ public class Ra2Demo : MonoBehaviour
     
     private void OnPress(InputAction.CallbackContext context)
     {
-        zUDebug.Log($"[StandaloneBattleDemo] OnPress - 记录按下状态");
+        // 将事件加入队列而非直接设置状态
+        inputEventQueue.Enqueue(new InputEvent
+        {
+            State = InputActionState.PressStarted,
+            Position = GetCurrentInputPosition(),
+            Timestamp = Time.time
+        });
         
-        // 仅记录操作状态和位置
-        currentInputState = InputActionState.PressStarted;
-        pressStartPosition = GetCurrentInputPosition();
-        currentPosition = pressStartPosition;
-        
-        // 记录拖拽起始屏幕位置（用于绘制虚线）
-        dragStartScreenPos = pressStartPosition;
-        shouldDrawDragLine = false; // 初始不绘制虚线
-
-        zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}");
+        zUDebug.Log($"[StandaloneBattleDemo] OnPress - 加入队列");
     }
 
     private void OnDrag(InputAction.CallbackContext context)
     {
-        // 仅记录操作状态和位置
-        currentInputState = InputActionState.Dragging;
-        currentPosition = context.ReadValue<Vector2>();
-        dragCurrentScreenPos = currentPosition;
-
-        // zUDebug.Log($"[StandaloneBattleDemo] OnDrag - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}");
+        // 将事件加入队列而非直接设置状态
+        inputEventQueue.Enqueue(new InputEvent
+        {
+            State = InputActionState.Dragging,
+            Position = context.ReadValue<Vector2>(),
+            Timestamp = Time.time
+        });
+        
+        zUDebug.Log($"[StandaloneBattleDemo] OnDrag - 加入队列，位置：{context.ReadValue<Vector2>()}");
     }
 
     private void OnRelease(InputAction.CallbackContext context)
     {
-        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 记录释放状态");
+        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 加入队列");
         
-        // 仅记录操作状态和位置
-        currentInputState = InputActionState.ReleasePerformed;
-        currentPosition = GetCurrentInputPosition();
-        
-        // 重置虚线绘制标志
-        shouldDrawDragLine = false;
+        // 将事件加入队列而非直接设置状态
+        inputEventQueue.Enqueue(new InputEvent
+        {
+            State = InputActionState.ReleasePerformed,
+            Position = GetCurrentInputPosition(),
+            Timestamp = Time.time
+        });
     }
 
     /// <summary>
-    /// 在 Update中处理输入逻辑
+    /// 在 Update中处理输入逻辑 - 按队列顺序处理所有事件
     /// </summary>
     private void ProcessInputLogic()
     {
-        switch (currentInputState)
+        // 按顺序处理队列中的所有事件
+        while (inputEventQueue.Count > 0)
         {
-            case InputActionState.PressStarted:
-                HandlePressLogic();
-                currentInputState = InputActionState.None; // 重置状态
-                break;
-                
-            case InputActionState.Dragging:
-                HandleDragLogic();
-                currentInputState = InputActionState.None; // 重置状态
-                break;
-                
-            case InputActionState.ReleasePerformed:
-                HandleReleaseLogic();
-                currentInputState = InputActionState.None; // 重置状态
-                break;
+            var inputEvent = inputEventQueue.Dequeue();
+            
+            zUDebug.Log($"[StandaloneBattleDemo] ProcessInputLogic - 处理事件：{inputEvent.State}, 位置：{inputEvent.Position}");
+            
+            switch (inputEvent.State)
+            {
+                case InputActionState.PressStarted:
+                    pressStartPosition = inputEvent.Position;
+                    currentPosition = inputEvent.Position;
+                    dragStartScreenPos = inputEvent.Position;
+                    shouldDrawDragLine = false;
+                    HandlePressLogic();
+                    break;
+                    
+                case InputActionState.Dragging:
+                    currentPosition = inputEvent.Position;
+                    dragCurrentScreenPos = inputEvent.Position;
+                    shouldDrawDragLine = true;
+                    HandleDragLogic();
+                    break;
+                    
+                case InputActionState.ReleasePerformed:
+                    currentPosition = inputEvent.Position;
+                    shouldDrawDragLine = false;
+                    HandleReleaseLogic();
+                    break;
+            }
         }
     }
 
@@ -326,10 +352,11 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void HandlePressLogic()
     {
+        zUDebug.Log($"[StandaloneBattleDemo] HandlePressLogic - 尝试处理点击");
+
         if (EventSystem.current.IsPointerOverGameObject()) {
             return;
         }
-
 
         // 尝试获取点击位置的世界坐标
         Vector3 worldPosition = Vector3.zero;
@@ -661,6 +688,8 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
+        // 处理输入逻辑（在 Update中执行，而非输入回调中）
+        ProcessInputLogic();
         // 触发 HealthPanel 的 LateUpdate 事件
         Frame.DispatchEvent(new HealthPanelLateUpdateEvent());
     }
@@ -681,9 +710,6 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        // 处理输入逻辑（在 Update中执行，而非输入回调中）
-        ProcessInputLogic();
-        
         // 表现系统：插值更新
         if (_presentationSystem != null)
         {
