@@ -292,16 +292,6 @@ namespace Game.Examples
                         float x = building["x"]?.ToObject<float>() ?? 0;
                         float y = building["y"]?.ToObject<float>() ?? 0;
 
-                        // 根据类型确定建筑参数
-                        BuildingType buildingType = BuildingType.None; // 默认基地
-
-                        switch (type)
-                        {
-                            case "base":
-                                buildingType = BuildingType.Base; // 基地
-                                break;
-                        }
-
                         // 根据类型创建建筑实体
                         var entityEvent = EntityCreationManager.CreateBuildingEntity(World, campId,
                         new zVector3((zfloat)x, zfloat.Zero, (zfloat)y),

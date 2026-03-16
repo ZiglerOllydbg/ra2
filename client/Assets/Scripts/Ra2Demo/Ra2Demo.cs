@@ -43,27 +43,6 @@ public class Ra2Demo : MonoBehaviour
 
     public RTSControl _controls;
     public Camera _mainCamera;
-    // 添加多选支持相关字段
-    private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
-
-    private Vector3 m_CameraInitialPosition = Vector3.zero; // 相机初始位置
-
-    // 拖拽检测相关字段
-    private bool isPressing = false; // 是否正在按下状态
-    private Vector2 pressStartPosition; // 按下时的起始位置
-    private Vector2 currentPosition; // 当前位置
-    private const float DRAG_THRESHOLD = 5f; // 拖拽阈值，像素单位
-    
-    // 单位移动模式相关字段
-    private bool isUnitMoveMode = false; // 是否处于单位移动模式
-    private float unitSelectionRadius = 5f; // 单位选择半径（米）
-
-    private float tapSelectRadius = 5f; // 单击时点击的半径（米）
-    
-    // 选择数量限制字段
-    [Header("选择限制")]
-    [Tooltip("最大可选择单位数量，0 表示不限制")]
-    [SerializeField] private int maxSelectionCount = 0; // 默认为 0，不限制数量
     
     /// <summary>
     /// 设置最大选择数量
@@ -102,20 +81,6 @@ public class Ra2Demo : MonoBehaviour
     {
         return unitSelectionRadius;
     }
-    
-    // 虚线绘制相关字段
-    private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
-    private Vector2 dragCurrentScreenPos; // 拖拽当前屏幕位置（用于绘制虚线）
-    private bool shouldDrawDragLine = false; // 是否应该绘制拖拽虚线
-    
-    // 选择框资源管理字段
-    private GameObject selectionBoxInstance = null; // 选择框资源实例
-    private const string SELECTION_BOX_PREFAB_PATH = "Prefabs/Ring"; // 选择框预制体路径（需要根据实际资源调整）
-    
-    // 淡出效果相关字段
-    private bool isFadingOut = false; // 是否正在淡出
-    private float fadeOutStartTime = 0f; // 淡出开始时间
-    private const float FADE_OUT_DURATION = 0.3f; // 淡出持续时间（秒）
 
     /**************************************
      * UI 部分
@@ -125,12 +90,6 @@ public class Ra2Demo : MonoBehaviour
     private const float JOYSTICK_CAMERA_MOVE_SPEED = 0.02f;  // 虚拟摇杆相机移动速度
     private const float CAMERA_MOVE_ZONE_WIDTH_RATIO = 0.33f;  // 相机移动区域宽度比例（左侧 1/3 屏幕）
     
-    // 相机移动状态字段
-    private bool isCameraMoving = false; // 是否正在移动相机
-
-    // 添加建造功能相关字段
-    private BuildingType buildingToBuild = BuildingType.None; // 要建造的建筑类型: 3=采矿场, 4=电厂, 5=坦克工厂
-
     // 选择模式/（相机）移动模式
     public bool IsSelectMode { get; set; } = true;
 
@@ -257,24 +216,120 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Release.performed -= OnRelease;
     }
 
+    // 操作状态枚举
+    private enum InputActionState
+    {
+        None,
+        PressStarted,      // 按下开始
+        Dragging,          // 拖拽中
+        ReleasePerformed   // 释放执行
+    }
+
+    // 输入操作状态
+    private InputActionState currentInputState = InputActionState.None;
+    private Vector2 pressStartPosition; // 按下时的起始位置
+    private Vector2 currentPosition; // 当前位置
+    private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
+    private Vector2 dragCurrentScreenPos; // 拖拽当前屏幕位置（用于绘制虚线）
+    
+    // 单位移动模式相关字段
+    private bool isUnitMoveMode = false; // 是否处于单位移动模式
+    private float unitSelectionRadius = 5f; // 单位选择半径（米）
+    private float tapSelectRadius = 5f; // 单击时点击的半径（米）
+    
+    // 相机移动相关字段
+    private Vector3 m_CameraInitialPosition = Vector3.zero; // 相机初始位置
+    private bool isCameraMoving = false; // 是否正在移动相机
+    
+    // 选择相关字段
+    private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
+    [Header("选择限制")]
+    [Tooltip("最大可选择单位数量，0 表示不限制")]
+    [SerializeField] private int maxSelectionCount = 0; // 默认为 0，不限制数量
+    
+    // 虚线绘制相关字段
+    private bool shouldDrawDragLine = false; // 是否应该绘制拖拽虚线
+    
+    // 选择框资源管理字段
+    private GameObject selectionBoxInstance = null; // 选择框资源实例
+    private const string SELECTION_BOX_PREFAB_PATH = "Prefabs/Ring"; // 选择框预制体路径（需要根据实际资源调整）
+    
+    // 淡出效果相关字段
+    private bool isFadingOut = false; // 是否正在淡出
+    private float fadeOutStartTime = 0f; // 淡出开始时间
+    private const float FADE_OUT_DURATION = 0.3f; // 淡出持续时间（秒）
     
     private void OnPress(InputAction.CallbackContext context)
     {
-        if (EventSystem.current.IsPointerOverGameObject()) {
-            return;
-        }
-
-        zUDebug.Log($"[StandaloneBattleDemo] OnPress, performed={context.performed}");
+        zUDebug.Log($"[StandaloneBattleDemo] OnPress - 记录按下状态");
         
-        // 记录按下状态和起始位置，支持鼠标和触摸
-        isPressing = true;
+        // 仅记录操作状态和位置
+        currentInputState = InputActionState.PressStarted;
         pressStartPosition = GetCurrentInputPosition();
+        currentPosition = pressStartPosition;
         
         // 记录拖拽起始屏幕位置（用于绘制虚线）
         dragStartScreenPos = pressStartPosition;
         shouldDrawDragLine = false; // 初始不绘制虚线
 
         zUDebug.Log($"[StandaloneBattleDemo] OnPress - pressStartPosition: {pressStartPosition}");
+    }
+
+    private void OnDrag(InputAction.CallbackContext context)
+    {
+        // 仅记录操作状态和位置
+        currentInputState = InputActionState.Dragging;
+        currentPosition = context.ReadValue<Vector2>();
+        dragCurrentScreenPos = currentPosition;
+
+        // zUDebug.Log($"[StandaloneBattleDemo] OnDrag - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}");
+    }
+
+    private void OnRelease(InputAction.CallbackContext context)
+    {
+        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 记录释放状态");
+        
+        // 仅记录操作状态和位置
+        currentInputState = InputActionState.ReleasePerformed;
+        currentPosition = GetCurrentInputPosition();
+        
+        // 重置虚线绘制标志
+        shouldDrawDragLine = false;
+    }
+
+    /// <summary>
+    /// 在 Update中处理输入逻辑
+    /// </summary>
+    private void ProcessInputLogic()
+    {
+        switch (currentInputState)
+        {
+            case InputActionState.PressStarted:
+                HandlePressLogic();
+                currentInputState = InputActionState.None; // 重置状态
+                break;
+                
+            case InputActionState.Dragging:
+                HandleDragLogic();
+                currentInputState = InputActionState.None; // 重置状态
+                break;
+                
+            case InputActionState.ReleasePerformed:
+                HandleReleaseLogic();
+                currentInputState = InputActionState.None; // 重置状态
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 处理按下逻辑
+    /// </summary>
+    private void HandlePressLogic()
+    {
+        if (EventSystem.current.IsPointerOverGameObject()) {
+            return;
+        }
+
 
         // 尝试获取点击位置的世界坐标
         Vector3 worldPosition = Vector3.zero;
@@ -407,42 +462,96 @@ public class Ra2Demo : MonoBehaviour
         }
     }
 
-    private void OnDrag(InputAction.CallbackContext context)
+    /// <summary>
+    /// 处理拖拽逻辑
+    /// </summary>
+    private void HandleDragLogic()
     {
         if (EventSystem.current.IsPointerOverGameObject()) {
             return;
         }
 
-        currentPosition = context.ReadValue<Vector2>();
-        
-        // 更新当前屏幕位置（用于绘制虚线）
-        dragCurrentScreenPos = currentPosition;
-
         // 仅在按下状态下处理拖拽
-        if (isPressing)
+        float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
+        
+        // 如果是单位移动模式
+        if (isUnitMoveMode)
         {
-            float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
+            zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [单位移动模式] - 忽略拖拽，等待释放");
             
-            // 如果是单位移动模式
-            if (isUnitMoveMode)
-            {
-                zUDebug.Log($"[StandaloneBattleDemo] OnDrag [单位移动模式] - 忽略拖拽，等待释放");
-                
-                // 启用虚线绘制标志
-                shouldDrawDragLine = true;
-            }
-            // 如果是相机移动模式
-            else if (isCameraMoving)
-            {
-                // 详细记录相机移动信息
-                zUDebug.Log($"[StandaloneBattleDemo] OnDrag [相机移动] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
-                // 直接移动相机，不需要阈值判断
-                MoveCameraByDrag(currentPosition);
-            }
-            else
-            {
+            // 启用虚线绘制标志
+            shouldDrawDragLine = true;
+        }
+        // 如果是相机移动模式
+        else if (isCameraMoving)
+        {
+            // 详细记录相机移动信息
+            zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [相机移动] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
+            // 直接移动相机，不需要阈值判断
+            MoveCameraByDrag(currentPosition);
+        }
+    }
 
+    /// <summary>
+    /// 处理释放逻辑
+    /// </summary>
+    private void HandleReleaseLogic()
+    {
+        zUDebug.Log($"[StandaloneBattleDemo] HandleReleaseLogic - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+
+        // 检查是否之前处于按下状态（即发生了拖拽）
+        float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
+        
+        // 如果是单位移动模式
+        if (isUnitMoveMode)
+        {
+            zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+            
+            // 隐藏选择框实例
+            HideSelectionBox();
+            
+            // 获取目标位置并发送移动命令
+            if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
+            {
+                zUDebug.Log($"[StandaloneBattleDemo] >>> 目标位置：{targetWorldPosition}");
+                
+                // 使用当前选中的单位列表发送移动命令
+                if (selectedEntityIds.Count > 0)
+                {
+                    SendMoveCommand(selectedEntityIds, targetWorldPosition);
+                }
+                else
+                {
+                    zUDebug.LogWarning("[StandaloneBattleDemo] >>> 没有找到可移动的单位");
+                }
+
+                String entityIds = "";
+                foreach (var entityId in selectedEntityIds)
+                {
+                    entityIds += entityId + ",";
+                }
+
+                // TODO PostHog 记录移动，包括 currentPosition 和 targetWorldPosition
+                PostHog.Capture("move_to_target", new Dictionary<string, object>()
+                {
+                    {"entityIds", entityIds},
+                    {"pressStartPosition", pressStartPosition},
+                    {"targetPosition", currentPosition},
+                });
             }
+            
+            // 清空选中单位列表
+            ClearAllOutlines();
+            
+            // 重置单位移动模式
+            isUnitMoveMode = false;
+        }
+        // 如果是相机移动模式
+        else if (isCameraMoving)
+        {
+            zUDebug.Log($"[StandaloneBattleDemo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
+            // 重置相机移动状态
+            isCameraMoving = false;
         }
     }
 
@@ -472,81 +581,6 @@ public class Ra2Demo : MonoBehaviour
             // 调试日志
             zUDebug.Log($"[StandaloneBattleDemo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
         }
-    }
-
-    private void OnRelease(InputAction.CallbackContext context)
-    {
-        zUDebug.Log($"[StandaloneBattleDemo] OnRelease, performed={context.performed}");
-        currentPosition = GetCurrentInputPosition();
-        
-        // 重置虚线绘制标志
-        shouldDrawDragLine = false;
-
-        // 检查是否之前处于按下状态（即发生了拖拽）
-        if (isPressing)
-        {
-            float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
-            
-            // 如果是单位移动模式
-            if (isUnitMoveMode)
-            {
-                zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
-                
-                // 隐藏选择框实例
-                HideSelectionBox();
-                
-                // 获取目标位置并发送移动命令
-                if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
-                {
-                    zUDebug.Log($"[StandaloneBattleDemo] >>> 目标位置：{targetWorldPosition}");
-                    
-                    // 使用当前选中的单位列表发送移动命令
-                    if (selectedEntityIds.Count > 0)
-                    {
-                        SendMoveCommand(selectedEntityIds, targetWorldPosition);
-                    }
-                    else
-                    {
-                        zUDebug.LogWarning("[StandaloneBattleDemo] >>> 没有找到可移动的单位");
-                    }
-
-                    String entityIds = "";
-                    foreach (var entityId in selectedEntityIds)
-                    {
-                        entityIds += entityId + ",";
-                    }
-
-                    // TODO PostHog记录移动，包括currentPosition和targetWorldPosition
-                    PostHog.Capture("move_to_target", new Dictionary<string, object>()
-                    {
-                        {"entityIds", entityIds},
-                        {"pressStartPosition", pressStartPosition},
-                        {"targetPosition", currentPosition},
-                    });
-                }
-                
-                // 清空选中单位列表
-                ClearAllOutlines();
-                
-                // 重置单位移动模式
-                isUnitMoveMode = false;
-            }
-            // 如果是相机移动模式
-            else if (isCameraMoving)
-            {
-                zUDebug.Log($"[StandaloneBattleDemo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
-                // 重置相机移动状态
-                isCameraMoving = false;
-            }
-            else
-            {
-
-            }
-        }
-        
-        // 重置拖拽状态
-        isPressing = false;
-        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 重置拖拽状态，isPressing=false");
     }
 
     private Vector2 GetCurrentInputPosition()
@@ -643,10 +677,13 @@ public class Ra2Demo : MonoBehaviour
     }
 
     /// <summary>
-    /// 测试：右键点击地面让选中的单位移动（可选）
+    /// 表现系统：插值更新
     /// </summary>
     private void Update()
     {
+        // 处理输入逻辑（在 Update中执行，而非输入回调中）
+        ProcessInputLogic();
+        
         // 表现系统：插值更新
         if (_presentationSystem != null)
         {
@@ -717,41 +754,10 @@ public class Ra2Demo : MonoBehaviour
         Debug.Log($"[Test] 发送移动命令：{validEntityIds.Count}个单位 → {targetWorldPosition}");
     }
 
-    /// <summary>
-    /// 发送移动命令给选中的单位（保留原有方法以兼容框选后的移动）
-    /// </summary>
-    private void SendMoveCommandForSelectedUnit(Vector2 screenPosition)
-    {
-        // 检查是否有选中的单位
-        if (selectedEntityIds.Count == 0)
-        {
-            Debug.Log("[Test] 没有选中的单位");
-            return;
-        }
-
-        if (_game == null || _game.World == null)
-            return;
-
-        if (!TryGetGroundPosition(screenPosition, out Vector3 worldPosition))
-            return;
-
-        // 使用新的 SendMoveCommand 方法
-        SendMoveCommand(selectedEntityIds, worldPosition);
-    }
-
     private void OnGUI()
     {
         // 绘制拖拽虚线（单位移动模式）
         DrawDragLine();
-    }
-
-    /// <summary>
-    /// 开始建筑放置模式
-    /// </summary>
-    /// <param name="buildingType">建筑类型 (3=采矿场, 4=电厂, 5=坦克工厂)</param>
-    public void StartBuildingPlacement(BuildingType buildingType)
-    {
-        buildingToBuild = buildingType;
     }
 
     /// <summary>

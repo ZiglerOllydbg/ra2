@@ -107,7 +107,6 @@ public class Ra2Processor : BaseProcessor
             typeof(MatchedEvent),
             typeof(GameStartEvent),
             typeof(EconomyEvent),
-            typeof(SelectBuildingEvent),
             typeof(ShowMessageEvent),
             typeof(SettleEvent),
             typeof(RestartGameEvent),
@@ -187,9 +186,6 @@ public class Ra2Processor : BaseProcessor
                 break;
             case EconomyEvent e:
                 RefreshEconomy();
-                break;
-            case SelectBuildingEvent e:
-                _ra2Demo.StartBuildingPlacement(e.BuildingType);
                 break;
             case ShowMessageEvent e:
                 MainPanel.ShowMessage(e.Message);
