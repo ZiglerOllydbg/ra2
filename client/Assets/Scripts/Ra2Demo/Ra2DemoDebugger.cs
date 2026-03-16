@@ -504,7 +504,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     /// <summary>
-    /// 绘制单位统计信息（按阵营分组显示每种 Unit 类型的数量）
+    /// 绘制单位统计信息（按阵营分组显示每种 Unit 类型的数量、金钱和电力）
     /// </summary>
     private void DrawUnitStatistics(BattleGame game, GUIStyle labelStyle)
     {
@@ -515,7 +515,32 @@ public class Ra2DemoDebugger : MonoBehaviour
         // 外层字典：PlayerId -> 内层字典
         // 内层字典：UnitType -> 数量
         Dictionary<int, Dictionary<UnitType, int>> campUnitStats = new Dictionary<int, Dictionary<UnitType, int>>();
+        
+        // 统计每个阵营的金钱和电力（通过 EconomyComponent + CampComponent 获取）
+        Dictionary<int, EconomyComponent> campEconomyStats = new Dictionary<int, EconomyComponent>();
 
+        // 1. 先获取所有带 EconomyComponent 的实体（数量较少），再获取对应的 CampComponent
+        var economyEntities = game.World.ComponentManager.GetAllEntityIdsWith<EconomyComponent>();
+        foreach (var entityId in economyEntities)
+        {
+            var entity = new Entity(entityId);
+            
+            // 检查是否有 CampComponent 来确定阵营
+            if (!game.World.ComponentManager.HasComponent<CampComponent>(entity))
+                continue;
+                
+            var campComponent = game.World.ComponentManager.GetComponent<CampComponent>(entity);
+            int campId = campComponent.CampId;
+            var economyComponent = game.World.ComponentManager.GetComponent<EconomyComponent>(entity);
+            
+            // 如果该阵营还未在字典中，先创建
+            if (!campEconomyStats.ContainsKey(campId))
+            {
+                campEconomyStats[campId] = economyComponent;
+            }
+        }
+        
+        // 2. 统计单位数据
         var entities = game.World.ComponentManager.GetAllEntityIdsWith<TransformComponent>();
 
         foreach (var entityId in entities)
@@ -554,35 +579,45 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Space(10);
         GUILayout.Label("=== 单位统计 ===", labelStyle);
         
-        // 按阵营遍历显示
-        foreach (var campEntry in campUnitStats.OrderBy(kvp => kvp.Key))
+        // 按阵营遍历显示（只显示有经济数据的阵营）
+        foreach (var economyEntry in campEconomyStats.OrderBy(kvp => kvp.Key))
         {
-            int playerId = campEntry.Key;
-            Dictionary<UnitType, int> unitTypes = campEntry.Value;
+            int playerId = economyEntry.Key;
+            var economy = economyEntry.Value;
             
-            GUILayout.Label($"[阵营 {playerId}]", labelStyle);
+            GUILayout.Label($"[阵营 {playerId}] 金钱：{economy.Money} | 电力：{economy.Power}", labelStyle);
             
-            // 构建单位列表字符串
-            List<string> unitList = new List<string>();
-            foreach (var unitEntry in unitTypes)
+            // 如果该阵营有单位数据，显示单位列表
+            if (campUnitStats.ContainsKey(playerId))
             {
-                ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitEntry.Key);
-                if (confUnit != null)
+                Dictionary<UnitType, int> unitTypes = campUnitStats[playerId];
+                
+                // 构建单位列表字符串
+                List<string> unitList = new List<string>();
+                foreach (var unitEntry in unitTypes)
                 {
-                    unitList.Add($"{confUnit.Name}:{unitEntry.Value}");
+                    ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitEntry.Key);
+                    if (confUnit != null)
+                    {
+                        unitList.Add($"{confUnit.Name}:{unitEntry.Value}");
+                    }
+                }
+                
+                // 显示格式：[1] 大兵:28，坦克:2
+                if (unitList.Count > 0)
+                {
+                    string unitInfo = string.Join(",", unitList);
+                    GUILayout.Label($"  [{playerId}] {unitInfo}", labelStyle);
                 }
             }
-            
-            // 显示格式：[1] 大兵:28,坦克:2
-            string unitInfo = string.Join(",", unitList);
-            GUILayout.Label($"  [{playerId}] {unitInfo}", labelStyle);
             
             GUILayout.Space(5);
         }
 
+        GUILayout.Space(20);
         // 显示总数
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
-        GUILayout.Label($"单位总数：{totalCount}", labelStyle);
+        GUILayout.Label($"所有阵营单位总数：{totalCount}", labelStyle);
     }
 
     /// <summary>
