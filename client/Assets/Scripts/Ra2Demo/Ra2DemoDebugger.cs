@@ -397,13 +397,13 @@ public class Ra2DemoDebugger : MonoBehaviour
         Rect toggleRect = new Rect(20, 500, 200, 350);
         // 显示调试显示开关
         GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
-        toggleStyle.fontSize = 16;
+        toggleStyle.fontSize = 24;
         toggleStyle.normal.textColor = Color.green;
         // 选中颜色
         toggleStyle.onNormal.textColor = Color.red;
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 16;
+        labelStyle.fontSize = 32;
         labelStyle.normal.textColor = Color.yellow;
         
         GUILayout.BeginArea(toggleRect);
@@ -423,7 +423,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         Rect statsRect = new Rect(20, 500, 300, 400);
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 28;
+        labelStyle.fontSize = 24;
         labelStyle.normal.textColor = Color.cyan;
         
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
@@ -585,11 +585,11 @@ public class Ra2DemoDebugger : MonoBehaviour
         Rect helpRect = new Rect(20, 500, 400, 350);
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 16;
+        labelStyle.fontSize = 24;
         labelStyle.normal.textColor = Color.white;
         
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-        titleStyle.fontSize = 18;
+        titleStyle.fontSize = 32;
         titleStyle.normal.textColor = Color.yellow;
         titleStyle.fontStyle = FontStyle.Bold;
         
