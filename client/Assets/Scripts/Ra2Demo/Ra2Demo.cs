@@ -356,6 +356,7 @@ public class Ra2Demo : MonoBehaviour
         zUDebug.Log($"[StandaloneBattleDemo] HandlePressLogic - 尝试处理点击");
 
         if (EventSystem.current.IsPointerOverGameObject()) {
+            zUDebug.Log($"[StandaloneBattleDemo] HandlePressLogic - 点击被拦截");
             return;
         }
 
