@@ -182,7 +182,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     // 更新攻击冷却
                     attack.TimeSinceLastAttack += DeltaTime;
                     
-                    zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
+                    // zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
                     
                     zfloat rangeSqr = attack.Range * attack.Range;
 
@@ -255,7 +255,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                             transform.Rotation = zQuaternion.LookRotation(toTarget.normalized);
                             ComponentManager.AddComponent(entity, transform);
 
-                            zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
+                            // zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
 
                             // 播放音效标记
                             attack.PlayAttackAudio = true;

@@ -226,7 +226,6 @@ public class Ra2Demo : MonoBehaviour
     }
 
     // 输入操作状态
-    private InputActionState currentInputState = InputActionState.None;
     private Vector2 pressStartPosition; // 按下时的起始位置
     private Vector2 currentPosition; // 当前位置
     private Vector2 dragStartScreenPos; // 拖拽起始屏幕位置（用于绘制虚线）
@@ -292,8 +291,6 @@ public class Ra2Demo : MonoBehaviour
             Position = context.ReadValue<Vector2>(),
             Timestamp = Time.time
         });
-        
-        zUDebug.Log($"[StandaloneBattleDemo] OnDrag - 加入队列，位置：{context.ReadValue<Vector2>()}");
     }
 
     private void OnRelease(InputAction.CallbackContext context)
@@ -319,7 +316,7 @@ public class Ra2Demo : MonoBehaviour
         {
             var inputEvent = inputEventQueue.Dequeue();
             
-            zUDebug.Log($"[StandaloneBattleDemo] ProcessInputLogic - 处理事件：{inputEvent.State}, 位置：{inputEvent.Position}");
+            // zUDebug.Log($"[StandaloneBattleDemo] ProcessInputLogic - 处理事件：{inputEvent.State}, 位置：{inputEvent.Position}");
             
             switch (inputEvent.State)
             {
@@ -498,22 +495,16 @@ public class Ra2Demo : MonoBehaviour
             return;
         }
 
-        // 仅在按下状态下处理拖拽
-        float dragDistance = Vector2.Distance(pressStartPosition, currentPosition);
-        
         // 如果是单位移动模式
         if (isUnitMoveMode)
         {
-            zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [单位移动模式] - 忽略拖拽，等待释放");
-            
             // 启用虚线绘制标志
             shouldDrawDragLine = true;
+            // zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [单位移动模式] - 忽略拖拽，等待释放");
         }
         // 如果是相机移动模式
         else if (isCameraMoving)
         {
-            // 详细记录相机移动信息
-            zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [相机移动] - CurrentPos: {currentPosition}, StartPos: {pressStartPosition}, Distance: {dragDistance:F2}");
             // 直接移动相机，不需要阈值判断
             MoveCameraByDrag(currentPosition);
         }
@@ -606,7 +597,7 @@ public class Ra2Demo : MonoBehaviour
             RTSCameraTargetController.Instance.CameraTarget.position = newPosition;
             
             // 调试日志
-            zUDebug.Log($"[StandaloneBattleDemo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
+            // zUDebug.Log($"[StandaloneBattleDemo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
         }
     }
 
