@@ -33,6 +33,10 @@ public class MatchPanel : BasePanel
     private TMP_Text _nameText;
     private RawImage _headImg;
     
+    // 数据缓存字段
+    private string _cachedNickname;
+    private string _cachedAvatarUrl;
+    
     public MatchPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
     {
@@ -66,11 +70,17 @@ public class MatchPanel : BasePanel
         _matchGroup.gameObject.SetActive(true);
         // 隐藏匹配中界面
         _matchingGroup.gameObject.SetActive(false);
+        
+        // 恢复缓存的玩家信息
+        RestorePlayerInfo();
     }
 
     // 设置玩家名称显示
     public void SetPlayerName(string name)
     {
+        // 缓存玩家名称
+        _cachedNickname = name;
+        
         if (_nameText != null)
         {
             _nameText.text = name;
@@ -85,6 +95,9 @@ public class MatchPanel : BasePanel
     // 设置玩家头像显示
     public void SetHeadImg(string avatarUrl)
     {
+        // 缓存头像 URL
+        _cachedAvatarUrl = avatarUrl;
+        
         if (_headImg != null)
         {
             LoadAvatarTexture(avatarUrl);
@@ -93,6 +106,24 @@ public class MatchPanel : BasePanel
         else
         {
             Debug.LogWarning("[MatchPanel] _headImg 组件未找到，无法设置玩家头像");
+        }
+    }
+    
+    // 恢复缓存的玩家信息
+    private void RestorePlayerInfo()
+    {
+        // 恢复玩家名称
+        if (!string.IsNullOrEmpty(_cachedNickname) && _nameText != null)
+        {
+            _nameText.text = _cachedNickname;
+            Debug.Log($"[MatchPanel] 恢复玩家名称：{_cachedNickname}");
+        }
+        
+        // 恢复头像
+        if (!string.IsNullOrEmpty(_cachedAvatarUrl) && _headImg != null)
+        {
+            LoadAvatarTexture(_cachedAvatarUrl);
+            Debug.Log($"[MatchPanel] 恢复玩家头像：{_cachedAvatarUrl}");
         }
     }
 
