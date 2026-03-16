@@ -321,6 +321,9 @@ public class Ra2Demo : MonoBehaviour
             // 清空之前的选择
             ClearAllOutlines();
             
+            // 收集所有范围内的单位及其距离
+            List<(int entityId, float distance)> unitsInRange = new List<(int, float)>();
+            
             var entities = _game.World.ComponentManager
                 .GetAllEntityIdsWith<TransformComponent>();
 
@@ -348,22 +351,32 @@ public class Ra2Demo : MonoBehaviour
 
                 if (distance <= unitSelectionRadius)
                 {
-                    // 检查是否已达到最大选择数量限制
-                    if (maxSelectionCount > 0 && selectedEntityIds.Count >= maxSelectionCount)
-                    {
-                        zUDebug.Log($"[StandaloneBattleDemo] 已达到最大选择数量限制：{maxSelectionCount}");
-                        break; // 停止选择
-                    }
-                    
-                    // 添加到选中列表
-                    selectedEntityIds.Add(entityId);
-                    
-                    // 启用轮廓显示
-                    EnableOutlineForEntity(entityId);
-                    
-                    zUDebug.Log($"[StandaloneBattleDemo] 检测到单位在范围内：EntityId={entityId}, Distance={distance:F2}m");
+                    unitsInRange.Add((entityId, distance));
                 }
             }
+            
+            // 按距离排序，选择最近的单位
+            unitsInRange.Sort((a, b) => a.distance.CompareTo(b.distance));
+            
+            // 根据最大选择数量限制，选择最近的单位
+            int selectCount = maxSelectionCount > 0 
+                ? Mathf.Min(unitsInRange.Count, maxSelectionCount) 
+                : unitsInRange.Count;
+            
+            for (int i = 0; i < selectCount; i++)
+            {
+                int entityId = unitsInRange[i].entityId;
+                
+                // 添加到选中列表
+                selectedEntityIds.Add(entityId);
+                
+                // 启用轮廓显示
+                EnableOutlineForEntity(entityId);
+                
+                zUDebug.Log($"[StandaloneBattleDemo] 选中单位：EntityId={entityId}, Distance={unitsInRange[i].distance:F2}m");
+            }
+            
+            zUDebug.Log($"[StandaloneBattleDemo] 共检测到 {unitsInRange.Count} 个单位在范围内，实际选择 {selectCount} 个单位");
         }
 
         // 根据是否有单位在范围内决定模式

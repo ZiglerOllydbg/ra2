@@ -569,7 +569,7 @@ public class MainPanel : BasePanel
     }
     
     /// <summary>
-    /// 选择半径切换按钮点击处理 - 切换小部队/大部队选择模式
+    /// 选择半径切换按钮点击处理 - 切换小部队/大部队/单个单位选择模式
     /// </summary>
     private void OnSelectionRadiusButtonClick()
     {
@@ -578,20 +578,30 @@ public class MainPanel : BasePanel
         TMP_Text buttonText = selectionRadiusBtn.GetComponentInChildren<TMP_Text>();
         if (buttonText != null)
         {
-            // 根据当前文本切换选择半径
+            // 根据当前文本切换选择半径和最大选择数量
             if (buttonText.text == "移动选择小部队")
             {
                 // 切换到大部队模式（15 米）
                 Ra2Demo.SetUnitSelectionRadius(15f);
+                Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
                 buttonText.text = "移动选择大部队";
-                ShowMessage("切换到移动选择大部队模式（15 米）");
+                ShowMessage("切换到移动选择大部队模式（15 米，不限制数量）");
+            }
+            else if (buttonText.text == "移动选择大部队")
+            {
+                // 切换到单个单位模式
+                Ra2Demo.SetUnitSelectionRadius(5f);
+                Ra2Demo.SetMaxSelectionCount(1); // 只选择 1 个单位
+                buttonText.text = "选择单个单位";
+                ShowMessage("切换到选择单个单位模式（5 米，限选 1 个）");
             }
             else
             {
                 // 切换到小部队模式（5 米）
                 Ra2Demo.SetUnitSelectionRadius(5f);
+                Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
                 buttonText.text = "移动选择小部队";
-                ShowMessage("切换到移动选择小部队模式（5 米）");
+                ShowMessage("切换到移动选择小部队模式（5 米，不限制数量）");
             }
         }
         else
