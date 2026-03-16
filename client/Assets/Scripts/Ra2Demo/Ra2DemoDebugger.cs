@@ -420,7 +420,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawUnitStatisticsPanel(BattleGame game)
     {
-        Rect statsRect = new Rect(20, 500, 300, 400);
+        Rect statsRect = new Rect(20, 500, 1000, 500);
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
         labelStyle.fontSize = 24;
@@ -504,15 +504,17 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     /// <summary>
-    /// 绘制单位统计信息（每种 Unit 类型的数量）
+    /// 绘制单位统计信息（按阵营分组显示每种 Unit 类型的数量）
     /// </summary>
     private void DrawUnitStatistics(BattleGame game, GUIStyle labelStyle)
     {
         if (game == null || game.World == null)
             return;
 
-        // 统计每种 UnitType 的数量
-        Dictionary<UnitType, int> unitTypeCounts = new Dictionary<UnitType, int>();
+        // 统计每个阵营每种 UnitType 的数量
+        // 外层字典：PlayerId -> 内层字典
+        // 内层字典：UnitType -> 数量
+        Dictionary<int, Dictionary<UnitType, int>> campUnitStats = new Dictionary<int, Dictionary<UnitType, int>>();
 
         var entities = game.World.ComponentManager.GetAllEntityIdsWith<TransformComponent>();
 
@@ -526,17 +528,25 @@ public class Ra2DemoDebugger : MonoBehaviour
 
             var unitComponent = game.World.ComponentManager.GetComponent<UnitComponent>(entity);
             UnitType unitType = unitComponent.UnitType;
+            int playerId = unitComponent.PlayerId;
 
             if (ConfigManager.Get<ConfUnit>((int)unitType) == null)
                 continue;
 
-            if (unitTypeCounts.ContainsKey(unitType))
+            // 如果该阵营还未在字典中，先创建
+            if (!campUnitStats.ContainsKey(playerId))
             {
-                unitTypeCounts[unitType]++;
+                campUnitStats[playerId] = new Dictionary<UnitType, int>();
+            }
+
+            // 统计该阵营下该单位类型的数量
+            if (campUnitStats[playerId].ContainsKey(unitType))
+            {
+                campUnitStats[playerId][unitType]++;
             }
             else
             {
-                unitTypeCounts[unitType] = 1;
+                campUnitStats[playerId][unitType] = 1;
             }
         }
 
@@ -544,37 +554,35 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Space(10);
         GUILayout.Label("=== 单位统计 ===", labelStyle);
         
-        foreach (var kvp in unitTypeCounts)
+        // 按阵营遍历显示
+        foreach (var campEntry in campUnitStats.OrderBy(kvp => kvp.Key))
         {
-            ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)kvp.Key);
-            if (confUnit == null) 
-                continue;
-            GUILayout.Label($"{confUnit.Name}: {kvp.Value}", labelStyle);
+            int playerId = campEntry.Key;
+            Dictionary<UnitType, int> unitTypes = campEntry.Value;
+            
+            GUILayout.Label($"[阵营 {playerId}]", labelStyle);
+            
+            // 构建单位列表字符串
+            List<string> unitList = new List<string>();
+            foreach (var unitEntry in unitTypes)
+            {
+                ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitEntry.Key);
+                if (confUnit != null)
+                {
+                    unitList.Add($"{confUnit.Name}:{unitEntry.Value}");
+                }
+            }
+            
+            // 显示格式：[1] 大兵:28,坦克:2
+            string unitInfo = string.Join(",", unitList);
+            GUILayout.Label($"  [{playerId}] {unitInfo}", labelStyle);
+            
+            GUILayout.Space(5);
         }
 
         // 显示总数
-        int totalCount = unitTypeCounts.Values.Sum();
+        int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
         GUILayout.Label($"单位总数：{totalCount}", labelStyle);
-    }
-
-    /// <summary>
-    /// 获取 UnitType 的中文名称（从 ConfUnit 配置表读取）
-    /// </summary>
-    private string GetUnitTypeName(UnitType unitType)
-    {
-        // 根据 UnitType 查找对应的 ConfUnitID
-        // 需要遍历配置表找到匹配的 Type
-        var allUnits = ConfigManager.GetAll<ConfUnit>();
-        foreach (var confUnit in allUnits)
-        {
-            // 匹配单位类型
-            if ((int)unitType == confUnit.Type)
-            {
-                return confUnit.Name;
-            }
-        }
-        
-        return "";
     }
 
     /// <summary>
