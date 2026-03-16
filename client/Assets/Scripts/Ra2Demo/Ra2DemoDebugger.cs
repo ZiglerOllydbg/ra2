@@ -423,11 +423,11 @@ public class Ra2DemoDebugger : MonoBehaviour
         Rect statsRect = new Rect(20, 500, 300, 400);
         
         GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 18;
+        labelStyle.fontSize = 28;
         labelStyle.normal.textColor = Color.cyan;
         
         GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-        titleStyle.fontSize = 20;
+        titleStyle.fontSize = 32;
         titleStyle.normal.textColor = Color.yellow;
         titleStyle.fontStyle = FontStyle.Bold;
         
@@ -527,6 +527,9 @@ public class Ra2DemoDebugger : MonoBehaviour
             var unitComponent = game.World.ComponentManager.GetComponent<UnitComponent>(entity);
             UnitType unitType = unitComponent.UnitType;
 
+            if (ConfigManager.Get<ConfUnit>((int)unitType) == null)
+                continue;
+
             if (unitTypeCounts.ContainsKey(unitType))
             {
                 unitTypeCounts[unitType]++;
@@ -543,8 +546,10 @@ public class Ra2DemoDebugger : MonoBehaviour
         
         foreach (var kvp in unitTypeCounts)
         {
-            string unitName = GetUnitTypeName(kvp.Key);
-            GUILayout.Label($"{unitName}: {kvp.Value}", labelStyle);
+            ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)kvp.Key);
+            if (confUnit == null) 
+                continue;
+            GUILayout.Label($"{confUnit.Name}: {kvp.Value}", labelStyle);
         }
 
         // 显示总数
@@ -557,9 +562,6 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private string GetUnitTypeName(UnitType unitType)
     {
-        if (unitType == UnitType.None)
-            return "无效单位";
-        
         // 根据 UnitType 查找对应的 ConfUnitID
         // 需要遍历配置表找到匹配的 Type
         var allUnits = ConfigManager.GetAll<ConfUnit>();
@@ -572,22 +574,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             }
         }
         
-        // 如果配置表中找不到，返回默认名称
-        switch (unitType)
-        {
-            case UnitType.Infantry:
-                return "动员兵";
-            case UnitType.badgerTank:
-                return "獾式坦克";
-            case UnitType.grizzlyTank:
-                return "灰熊坦克";
-            case UnitType.Harvester:
-                return "矿车";
-            case UnitType.Projectile:
-                return "弹丸";
-            default:
-                return $"未知类型 ({unitType})";
-        }
+        return "";
     }
 
     /// <summary>
