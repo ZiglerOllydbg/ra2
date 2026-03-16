@@ -30,10 +30,12 @@ public class MainPanel : BasePanel
     
     // 选择半径切换按钮
     private Button selectionRadiusBtn;
+    
+    // 退出按钮
+    private Button exitBtn;
 
-    // 确认和取消
-    private Button confirmOkBtn;
-    private Button confirmCancelBtn;
+    // 确认对话框组件
+    private ConfirmDialogComponent confirmDialog;
 
     // 消息提示相关
     private TMP_Text messageText;
@@ -87,19 +89,11 @@ public class MainPanel : BasePanel
         // 获取选择半径切换按钮
         selectionRadiusBtn = PanelObject.transform.Find("SelectionRadiusBtn")?.GetComponent<Button>();
         
-        // 初始化按钮文本为默认值
-        if (selectionRadiusBtn != null)
-        {
-            TMP_Text radiusBtnText = selectionRadiusBtn.GetComponentInChildren<TMP_Text>();
-            if (radiusBtnText != null)
-            {
-                radiusBtnText.text = "移动选择小部队";
-            }
-        }
+        // 获取退出按钮
+        exitBtn = PanelObject.transform.Find("ExitBtn")?.GetComponent<Button>();
         
-        confirmOkBtn = PanelObject.transform.Find("Confirm/OK")?.GetComponent<Button>();
-        confirmCancelBtn = PanelObject.transform.Find("Confirm/Cancel")?.GetComponent<Button>();
-        HideConfirm();
+        // 初始化和获取确认对话框组件
+        confirmDialog = new ConfirmDialogComponent(PanelObject.transform.Find("Confirm"));
         
         // 获取消息提示组件
         var messageGroup = PanelObject.transform.Find("Tips");
@@ -211,14 +205,10 @@ public class MainPanel : BasePanel
             selectionRadiusBtn.onClick.AddListener(OnSelectionRadiusButtonClick);
         }
 
-        if (confirmOkBtn != null)
+        // 退出按钮事件监听
+        if (exitBtn != null)
         {
-            confirmOkBtn.onClick.AddListener(OnConfirmOkClick);
-        }
-
-        if (confirmCancelBtn != null)
-        {
-            confirmCancelBtn.onClick.AddListener(OnConfirmCancelClick);
+            exitBtn.onClick.AddListener(OnExitButtonClick);
         }
 
     }
@@ -255,15 +245,12 @@ public class MainPanel : BasePanel
             selectionRadiusBtn.onClick.RemoveListener(OnSelectionRadiusButtonClick);
         }
 
-        if (confirmOkBtn != null)
+        // 移除退出按钮事件监听
+        if (exitBtn != null)
         {
-            confirmOkBtn.onClick.RemoveListener(OnConfirmOkClick);
+            exitBtn.onClick.RemoveListener(OnExitButtonClick);
         }
 
-        if (confirmCancelBtn != null)
-        {
-            confirmCancelBtn.onClick.RemoveListener(OnConfirmCancelClick);
-        }
     }
     
     protected override void OnBecameInvisible()
@@ -298,6 +285,12 @@ public class MainPanel : BasePanel
         // 销毁热键快捷栏子面板
         hotKeySubPanel?.Destroy();
         hotKeySubPanel = null;
+        
+        // 清理确认对话框组件
+        if (confirmDialog != null)
+        {
+            confirmDialog.UnregisterEvents();
+        }
     }
 
     /// <summary>
@@ -445,33 +438,25 @@ public class MainPanel : BasePanel
     }
     
     #endregion
+
+    /// <summary>
+    /// 退出按钮点击处理
+    /// </summary>
+    private void OnExitButtonClick()
+    {
+        confirmDialog.Show(
+            onConfirm: () =>
+            {
+                Frame.DispatchEvent(new RestartGameEvent());
+            },
+            onCancel: () =>
+            {
+                // 取消时只需关闭弹窗，ClearCallbacksAndHide 会自动处理
+            },
+            message: "确定要退出游戏吗？"
+        );
+    }
     
-    private void OnConfirmOkClick()
-    {
-        Ra2Demo.OnConfirmOk();
-
-        HideConfirm();
-    }
-
-    private void OnConfirmCancelClick()
-    {
-        Ra2Demo.OnConfirmCancel();
-
-        HideConfirm();
-    }
-
-    public void ShowConfirm()
-    {
-        confirmOkBtn.gameObject.SetActive(true);
-        confirmCancelBtn.gameObject.SetActive(true);
-    }
-
-    public void HideConfirm()
-    {
-        confirmOkBtn.gameObject.SetActive(false);
-        confirmCancelBtn.gameObject.SetActive(false);
-    }
-
     /// <summary>
     /// Select按钮点击处理
     /// </summary>
