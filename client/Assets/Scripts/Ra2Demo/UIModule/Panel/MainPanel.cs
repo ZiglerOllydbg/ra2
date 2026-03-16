@@ -108,15 +108,19 @@ public class MainPanel : BasePanel
         }
 
         messageText = PanelObject.transform.Find("Tips/Message")?.GetComponent<TMP_Text>();
-        
+
         // 初始化建造子面板
-        buildingSubPanel = new MainBuildingSubPanel(PanelObject.transform);
-        buildingSubPanel.OnCloseClick = OnSubPanelClosed;
+        buildingSubPanel = new MainBuildingSubPanel(PanelObject.transform)
+        {
+            OnCloseClick = OnSubPanelClosed
+        };
         buildingSubPanel.Hide();
 
         // 初始化生产子面板
-        producerSubPanel = new MainProducerSubPanel(PanelObject.transform);
-        producerSubPanel.OnCloseClick = OnSubPanelClosed;
+        producerSubPanel = new MainProducerSubPanel(PanelObject.transform)
+        {
+            OnCloseClick = OnSubPanelClosed
+        };
         producerSubPanel.Hide();
         producerSubPanel.SetGameContext(Ra2Demo.GetBattleGame());
 
@@ -137,10 +141,12 @@ public class MainPanel : BasePanel
         // 初始化热键快捷栏子面板
         hotKeySubPanel = new HotKeySubPanel(PanelObject.transform);
         hotKeySubPanel.Show(new HotKeyPanelData() { HotKeys = new string[] { "1", "2", "3", "4" } });
-        
+
         // 初始化设置子面板
-        settingSubPanel = new SettingSubPanel(PanelObject.transform);
-        settingSubPanel.OnCloseClick = OnSubPanelClosed;
+        settingSubPanel = new SettingSubPanel(PanelObject.transform)
+        {
+            OnCloseClick = OnSubPanelClosed
+        };
         settingSubPanel.Hide();
     }
 
@@ -448,10 +454,6 @@ public class MainPanel : BasePanel
             onConfirm: () =>
             {
                 Frame.DispatchEvent(new RestartGameEvent());
-            },
-            onCancel: () =>
-            {
-                // 取消时只需关闭弹窗，ClearCallbacksAndHide 会自动处理
             },
             message: "确定要退出游戏吗？"
         );

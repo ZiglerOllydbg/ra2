@@ -1,97 +1,131 @@
-# ConfirmDialogComponent - 通用确认对话框组件（非 MonoBehaviour 版本）
+# ConfirmDialogComponent - 确认对话框组件
 
-## 概述
-`ConfirmDialogComponent` 是一个轻量级的纯 C# 确认对话框组件，用于处理各种需要用户确认的场景。
-**不继承自 MonoBehaviour**，因此更轻量、更灵活，可以在任何 C# 类中使用。
+轻量级确认对话框，纯 C# 实现，用于需要用户确认的场景。
 
-## 功能特性
-- ✅ 纯 C# 实现，不依赖 MonoBehaviour
-- ✅ 支持自定义确认和取消回调
-- ✅ 支持动态设置消息文本
-- ✅ 自动管理事件注册和注销
-- ✅ 防止内存泄漏的回调清理机制
-- ✅ 轻量级设计，性能更优
+## 核心使用
 
-## 使用方法
-
-### 1. 创建并初始化组件
+### 1️⃣ 初始化
 ```csharp
-// 在面板类中声明字段
 private ConfirmDialogComponent confirmDialog;
 
-// 在 OnBecameVisible 中初始化
 protected override void OnBecameVisible()
 {
-    base.OnBecameVisible();
-    
-    var confirmPanelTransform = PanelObject.transform.Find("Confirm");
-    if (confirmPanelTransform != null)
-    {
-        confirmDialog = new ConfirmDialogComponent();
-        confirmDialog.Initialize(confirmPanelTransform);
-    }
+    confirmDialog = new ConfirmDialogComponent(PanelObject.transform.Find("Confirm"));
 }
 ```
 
-### 2. 显示对话框
+### 2️⃣ 显示对话框
 ```csharp
-// 简单用法（仅确认回调）
-confirmDialog.Show(() => {
-    Debug.Log("用户确认了操作");
-    // 执行确认逻辑
-});
-
-// 完整用法（确认 + 取消 + 消息）
 confirmDialog.Show(
-    onConfirm: () => {
-        Debug.Log("用户确认了");
-        Frame.DispatchEvent(new RestartGameEvent());
-    },
-    onCancel: () => {
-        Debug.Log("用户取消了");
-    },
+    onConfirm: () => { /* 确认逻辑 */ },
+    onCancel: () => { /* 取消逻辑（可选） */ },
     message: "确定要执行此操作吗？"
 );
 ```
 
-### 3. 隐藏对话框
-```csharp
-confirmDialog.Hide();
-```
+### 3️⃣ 其他方法
+- `Hide()` - 隐藏对话框
+- `SetMessage("消息")` - 设置文本
 
-### 4. 单独设置消息文本
+### 4️⃣ 清理事件（重要）
 ```csharp
-confirmDialog.SetMessage("这是一条新消息");
-```
-
-### 5. 清理事件监听
-```csharp
-// 在 OnBecameInvisible 中调用
 protected override void OnBecameInvisible()
 {
-    base.OnBecameInvisible();
-    
-    if (confirmDialog != null)
+    confirmDialog?.UnregisterEvents(); // 防止内存泄漏
+}
+```
+
+## API 速查
+
+| 方法 | 作用 |
+|------|------|
+| `new ConfirmDialogComponent(transform)` | 构造函数，自动初始化 |
+| `Show(onConfirm, onCancel, message)` | 显示对话框 |
+| `Hide()` | 隐藏并清理回调 |
+| `SetMessage(msg)` | 设置消息文本 |
+| `UnregisterEvents()` | 移除事件监听 |
+
+## UI 结构要求
+```
+Confirm (父对象)
+├── OK (Button)
+├── Cancel (Button)
+└── Text (TMP_Text)
+```
+
+## ⚠️ 注意事项
+- 必须在 `OnBecameInvisible` 中调用 `UnregisterEvents()`
+- 每次 `Show()` 会覆盖之前的回调
+- 确保 UI 路径包含 OK/Cancel/Text 子对象
+
+## 设计特点
+- ✅ 轻量：不依赖 MonoBehaviour
+- ✅ 安全：自动清理回调，防止内存泄漏
+- ✅ 灵活：可在任何 C# 类中使用
+- ✅ 复用：一次编写，多处使用
+
+## 使用示例（MainPanel 中的完整实现）
+
+```csharp
+public class MainPanel : BasePanel
+{
+    private ConfirmDialogComponent confirmDialog;
+
+    protected override void OnBecameVisible()
     {
-        confirmDialog.UnregisterEvents();
+        base.OnBecameVisible();
+        
+        // 初始化确认对话框组件
+        confirmDialog = new ConfirmDialogComponent(PanelObject.transform.Find("Confirm"));
+    }
+
+    protected override void AddEvent()
+    {
+        base.AddEvent();
+        // 组件内部已自动注册按钮事件，无需额外操作
+    }
+
+    protected override void RemoveEvent()
+    {
+        base.RemoveEvent();
+        // 组件内部已自动注册按钮事件，无需额外操作
+    }
+
+    protected override void OnBecameInvisible()
+    {
+        base.OnBecameInvisible();
+        
+        // 清理事件监听
+        if (confirmDialog != null)
+        {
+            confirmDialog.UnregisterEvents();
+        }
+    }
+
+    // 使用示例：退出按钮点击处理
+    private void OnExitButtonClick()
+    {
+        confirmDialog.Show(
+            onConfirm: () =>
+            {
+                Frame.DispatchEvent(new RestartGameEvent());
+            },
+            onCancel: () =>
+            {
+                // 取消时只需关闭弹窗，ClearCallbacksAndHide 会自动处理
+            },
+            message: "确定要退出游戏吗？"
+        );
     }
 }
 ```
 
-## API 参考
-
-### 公共方法
-- `void Initialize(Transform parent)` - 初始化组件，获取 UI 引用
-- `void Show(Action onConfirm, Action onCancel = null, string message = null)` - 显示对话框
-- `void Hide()` - 隐藏对话框并清理回调
-- `void SetMessage(string message)` - 设置消息文本
-- `void UnregisterEvents()` - 移除事件监听
-
-### 注意事项
-1. ⚠️ **必须在面板销毁前调用 `UnregisterEvents()` 清理事件**
+## 注意事项
+1. ⚠️ **必须在面板销毁前调用 `UnregisterEvents()` 清理事件**，防止内存泄漏
 2. ⚠️ 每次调用 `Show()` 会覆盖之前的回调
 3. ⚠️ 调用 `Hide()` 会自动清理回调委托
-4. ⚠️ 必须在 `Initialize()` 后才能使用
+4. ⚠️ 组件在构造函数中自动完成初始化和事件注册
+5. ⚠️ 确保传入的 Transform 路径正确（如 "Confirm"），包含 OK、Cancel 按钮和 Text 子对象
 
 ## 设计优势
 
@@ -107,3 +141,38 @@ protected override void OnBecameInvisible()
 - 🔒 **内存安全**：自动清理回调，防止内存泄漏
 - 🎯 **职责分离**：UI 组件负责展示，业务逻辑由调用方提供
 - ♻️ **高度复用**：一次编写，多处使用
+
+## UI 层级结构要求
+
+使用该组件时，确保 UI 层级结构如下：
+
+```
+Confirm (父对象)
+├── OK (Button)
+├── Cancel (Button)
+└── Text (TMP_Text)
+```
+
+- **OK**: 确认按钮，挂载 Button 组件
+- **Cancel**: 取消按钮，挂载 Button 组件
+- **Text**: 消息文本，挂载 TMP_Text 组件
+
+## 工作流程
+
+1. **初始化阶段**（构造函数）
+   - 获取 UI 组件引用（OK/Cancel 按钮、Text 文本）
+   - 自动注册按钮点击事件
+   - 初始隐藏对话框
+
+2. **显示阶段**（Show 方法）
+   - 保存回调委托
+   - 设置消息文本（如果提供）
+   - 激活对话框面板
+
+3. **交互阶段**
+   - 用户点击确认 → 执行确认回调 → 隐藏对话框
+   - 用户点击取消 → 执行取消回调 → 隐藏对话框
+
+4. **清理阶段**（UnregisterEvents 方法）
+   - 移除所有按钮事件监听
+   - 防止内存泄漏
