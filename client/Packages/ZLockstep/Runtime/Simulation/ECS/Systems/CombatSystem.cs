@@ -3,6 +3,7 @@ using ZLockstep.Simulation.Events;
 using ZLockstep.Simulation.ECS.Utils;
 using zUnity;
 using System;
+using System.Collections.Generic;
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -20,10 +21,58 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private static readonly zfloat TARGET_SEARCH_INTERVAL = (zfloat)1.0f;
 
+        /// <summary>
+        /// 空间索引树，用于加速邻近实体查询
+        /// </summary>
+        private SpatialIndex spatialIndex;
+
+        /// <summary>
+        /// 搜索邻居的最大半径（基于最大攻击范围的估计值）
+        /// </summary>
+        private const float MAX_SEARCH_RADIUS = 100f;
+
         public override void Update()
         {
+            // 每帧重建空间索引（简单但有效的方式）
+            RebuildSpatialIndex();
+            
             // 处理所有有攻击能力的实体
             ProcessAttacks();
+        }
+
+        /// <summary>
+        /// 重建空间索引
+        /// </summary>
+        private void RebuildSpatialIndex()
+        {
+            if (spatialIndex == null)
+            {
+                spatialIndex = new SpatialIndex();
+            }
+            
+            // 清空并重新添加所有实体
+            spatialIndex.Clear();
+            
+            // 获取所有有 Transform 和 Camp 组件的实体
+            var entities = ComponentManager.GetAllEntityIdsWith<TransformComponent>();
+            
+            foreach (var entityId in entities)
+            {
+                var entity = new Entity(entityId);
+                
+                // 确保有 Camp 组件
+                if (!ComponentManager.HasComponent<CampComponent>(entity))
+                    continue;
+                
+                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+                var camp = ComponentManager.GetComponent<CampComponent>(entity);
+                
+                // 添加到空间索引
+                spatialIndex.Add(entityId, transform.Position, camp.CampId);
+            }
+            
+            // 重建 KD-tree
+            spatialIndex.Rebuild();
         }
 
         /// <summary>
@@ -37,13 +86,13 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 var entity = new Entity(entityId);
 
-                // 检查攻击者是否还活着（只检查DeathComponent，不检查生命值）
+                // 检查攻击者是否还活着（只检查 DeathComponent，不检查生命值）
                 if (ComponentManager.HasComponent<DeathComponent>(entity))
                 {
                     continue; // 死亡单位不能攻击
                 }
 
-                // 必须有Transform和Camp组件
+                // 必须有 Transform 和 Camp 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(entity) ||
                     !ComponentManager.HasComponent<CampComponent>(entity) ||
                     !ComponentManager.HasComponent<AttackComponent>(entity)
@@ -75,8 +124,8 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                     if (shouldSearchTarget)
                     {
-                        // 搜索新目标
-                        attack.TargetEntityId = FindNearestEnemy(entity, camp, transform.Position, attack.Range);
+                        // 使用 KD-tree 搜索新目标
+                        attack.TargetEntityId = FindNearestEnemyKDTree(entity, camp, transform.Position, attack.Range);
                         attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
                     }
                 }
@@ -107,7 +156,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
                     if (ComponentManager.HasComponent<BuildingComponent>(target))
                     {
-                        int priorityTargetId = FindNearestNonBuildingEnemy(entity, camp, transform.Position, attack.Range);
+                        int priorityTargetId = FindNearestNonBuildingEnemyKDTree(entity, camp, transform.Position, attack.Range);
                         if (priorityTargetId >= 0)
                         {
                             // 存在可优先攻击的非建筑目标，切换目标
@@ -301,7 +350,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
             if (ComponentManager.HasComponent<BuildingComponent>(mainTarget))
             {
-                int priorityTargetId = FindNearestNonBuildingEnemy(entity, camp, transform.Position, attack.Range);
+                int priorityTargetId = FindNearestNonBuildingEnemyKDTree(entity, camp, transform.Position, attack.Range);
                 if (priorityTargetId >= 0)
                 {
                     // 存在可优先攻击的非建筑目标，切换目标
@@ -421,7 +470,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
 
         /// <summary>
-        /// 搜索多个敌方单位
+        /// 使用 KD-tree 搜索多个敌方单位
         /// </summary>
         /// <param name="self">自己</param>
         /// <param name="selfCamp">自己的阵营</param>
@@ -432,22 +481,28 @@ namespace ZLockstep.Simulation.ECS.Systems
         private System.Collections.Generic.List<int> FindMultipleTargets(Entity self, CampComponent selfCamp, zVector3 position, zfloat range, int maxTargets)
         {
             var targetIds = new System.Collections.Generic.List<int>();
+            
+            if (spatialIndex == null)
+                return targetIds;
+            
+            // 使用 KD-tree 进行空间邻近查询
+            float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
+            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
+            
             zfloat rangeSqr = range * range;
 
-            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
-
-            foreach (var entityId in allEntities)
+            foreach (var neighbor in neighbors)
             {
-                Entity otherEntity = new Entity(entityId);
-
                 // 跳过自己
-                if (otherEntity.Id == self.Id)
+                if (neighbor.EntityId == self.Id)
                     continue;
 
                 // 检查是否为敌人
-                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
-                if (!selfCamp.IsEnemy(otherCamp))
+                var neighborCamp = new CampComponent { CampId = neighbor.CampId };
+                if (!selfCamp.IsEnemy(neighborCamp))
                     continue;
+
+                Entity otherEntity = new Entity(neighbor.EntityId);
 
                 // 必须有 Transform 和 Health 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
@@ -480,7 +535,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 在范围内的目标添加到列表
                 if (distSqr <= rangeSqr)
                 {
-                    targetIds.Add(entityId);
+                    targetIds.Add(neighbor.EntityId);
                     
                     // 如果已经达到最大目标数，停止搜索
                     if (targetIds.Count >= maxTargets)
@@ -492,27 +547,32 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
 
         /// <summary>
-        /// 搜索最近的敌方单位
+        /// 使用 KD-tree 搜索最近的敌方单位
         /// </summary>
-        private int FindNearestEnemy(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
+        private int FindNearestEnemyKDTree(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
         {
+            if (spatialIndex == null)
+                return -1;
+            
             int nearestEnemyId = -1;
             zfloat minDistSqr = range * range;
 
-            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+            // 使用 KD-tree 进行空间邻近查询
+            float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
+            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
 
-            foreach (var entityId in allEntities)
+            foreach (var neighbor in neighbors)
             {
-                Entity otherEntity = new Entity(entityId);
-
                 // 跳过自己
-                if (otherEntity.Id == self.Id)
+                if (neighbor.EntityId == self.Id)
                     continue;
 
                 // 检查是否为敌人
-                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
-                if (!selfCamp.IsEnemy(otherCamp))
+                var neighborCamp = new CampComponent { CampId = neighbor.CampId };
+                if (!selfCamp.IsEnemy(neighborCamp))
                     continue;
+
+                Entity otherEntity = new Entity(neighbor.EntityId);
 
                 // 必须有 Transform 和 Health 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
@@ -546,7 +606,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 if (distSqr < minDistSqr)
                 {
                     minDistSqr = distSqr;
-                    nearestEnemyId = entityId;
+                    nearestEnemyId = neighbor.EntityId;
                 }
             }
 
@@ -554,34 +614,39 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
 
         /// <summary>
-        /// 搜索最近的非建筑敌方单位
+        /// 使用 KD-tree 搜索最近的非建筑敌方单位
         /// </summary>
-        private int FindNearestNonBuildingEnemy(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
+        private int FindNearestNonBuildingEnemyKDTree(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
         {
+            if (spatialIndex == null)
+                return -1;
+            
             int nearestEnemyId = -1;
             zfloat minDistSqr = range * range;
 
-            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
+            // 使用 KD-tree 进行空间邻近查询
+            float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
+            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
 
-            foreach (var entityId in allEntities)
+            foreach (var neighbor in neighbors)
             {
-                Entity otherEntity = new Entity(entityId);
-
                 // 跳过自己
-                if (otherEntity.Id == self.Id)
+                if (neighbor.EntityId == self.Id)
                     continue;
 
                 // 检查是否为敌人
-                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
-                if (!selfCamp.IsEnemy(otherCamp))
+                var neighborCamp = new CampComponent { CampId = neighbor.CampId };
+                if (!selfCamp.IsEnemy(neighborCamp))
                     continue;
 
-                // 必须有Transform和Health组件
+                Entity otherEntity = new Entity(neighbor.EntityId);
+
+                // 必须有 Transform 和 Health 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
                     !ComponentManager.HasComponent<HealthComponent>(otherEntity))
                     continue;
 
-                // 检查是否还活着（只检查DeathComponent）
+                // 检查是否还活着（只检查 DeathComponent）
                 if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
                     continue;
 
@@ -597,7 +662,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 if (distSqr < minDistSqr)
                 {
                     minDistSqr = distSqr;
-                    nearestEnemyId = entityId;
+                    nearestEnemyId = neighbor.EntityId;
                 }
             }
 
@@ -687,6 +752,158 @@ namespace ZLockstep.Simulation.ECS.Systems
             });
 
             zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}");
+        }
+    }
+
+    /// <summary>
+    /// 空间索引数据结构，用于存储实体的空间信息
+    /// </summary>
+    public class SpatialEntry
+    {
+        public int EntityId;
+        public zVector3 Position;
+        public int CampId;
+    }
+
+    /// <summary>
+    /// 简化的 2D KD-tree 实现，专用于 CombatSystem 空间邻近查询
+    /// </summary>
+    public class SpatialIndex
+    {
+        private class Node
+        {
+            public SpatialEntry entry;
+            public Node left;
+            public Node right;
+            public float splitValue; // 分割值
+            public int splitAxis; // 分割轴 (0=x, 1=z)
+        }
+
+        private Node root;
+        private List<SpatialEntry> entries = new List<SpatialEntry>();
+        private bool needsRebuild = true;
+
+        /// <summary>
+        /// 添加实体条目
+        /// </summary>
+        public void Add(int entityId, zVector3 position, int campId)
+        {
+            entries.Add(new SpatialEntry
+            {
+                EntityId = entityId,
+                Position = position,
+                CampId = campId
+            });
+            needsRebuild = true;
+        }
+
+        /// <summary>
+        /// 清空索引
+        /// </summary>
+        public void Clear()
+        {
+            entries.Clear();
+            root = null;
+            needsRebuild = false;
+        }
+
+        /// <summary>
+        /// 重建 KD-tree
+        /// </summary>
+        public void Rebuild()
+        {
+            if (!needsRebuild && root != null)
+                return;
+
+            root = BuildTree(entries.ToArray(), 0, entries.Count - 1, 0);
+            needsRebuild = false;
+        }
+
+        private Node BuildTree(SpatialEntry[] entriesArray, int start, int end, int depth)
+        {
+            if (start > end)
+                return null;
+
+            int axis = depth % 2; // 交替选择 x 或 z 轴
+            int mid = start + (end - start) / 2;
+
+            // 按当前轴排序
+            Array.Sort(entriesArray, start, end - start + 1, new EntryComparer(axis));
+
+            var node = new Node
+            {
+                entry = entriesArray[mid],
+                splitAxis = axis,
+                splitValue = axis == 0 ? (float)entriesArray[mid].Position.x : (float)entriesArray[mid].Position.z
+            };
+
+            node.left = BuildTree(entriesArray, start, mid - 1, depth + 1);
+            node.right = BuildTree(entriesArray, mid + 1, end, depth + 1);
+
+            return node;
+        }
+
+        /// <summary>
+        /// 径向搜索：查找给定点周围半径范围内的所有实体
+        /// </summary>
+        public List<SpatialEntry> RadialSearch(zVector3 center, float radius)
+        {
+            if (root == null)
+                return new List<SpatialEntry>();
+
+            var result = new List<SpatialEntry>();
+            float radiusSq = radius * radius;
+            float[] centerPoint = new float[] { (float)center.x, (float)center.z };
+
+            SearchRadial(root, centerPoint, radius, radiusSq, result);
+            return result;
+        }
+
+        private void SearchRadial(Node node, float[] centerPoint, float radius, float radiusSq, List<SpatialEntry> result)
+        {
+            if (node == null)
+                return;
+
+            // 计算当前节点与查询点的距离
+            float dx = (float)node.entry.Position.x - centerPoint[0];
+            float dz = (float)node.entry.Position.z - centerPoint[1];
+            float distSq = dx * dx + dz * dz;
+
+            // 如果在范围内且不是同一个实体，添加到结果
+            if (distSq <= radiusSq && distSq > 0.0001f)
+            {
+                result.Add(node.entry);
+            }
+
+            // 决定搜索哪个子树
+            float diff = centerPoint[node.splitAxis] - node.splitValue;
+
+            if (diff <= radius)
+            {
+                SearchRadial(node.left, centerPoint, radius, radiusSq, result);
+            }
+
+            if (diff >= -radius)
+            {
+                SearchRadial(node.right, centerPoint, radius, radiusSq, result);
+            }
+        }
+
+        private class EntryComparer : IComparer<SpatialEntry>
+        {
+            private int axis;
+
+            public EntryComparer(int axis)
+            {
+                this.axis = axis;
+            }
+
+            public int Compare(SpatialEntry a, SpatialEntry b)
+            {
+                float valA = axis == 0 ? (float)a.Position.x : (float)a.Position.z;
+                float valB = axis == 0 ? (float)b.Position.x : (float)b.Position.z;
+                return valA.CompareTo(valB);
+            }
         }
     }
 }
