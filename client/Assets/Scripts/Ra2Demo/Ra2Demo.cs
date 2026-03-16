@@ -129,7 +129,7 @@ public class Ra2Demo : MonoBehaviour
             if (unitPrefabs[i] != null)
             {
                 prefabDict[i] = unitPrefabs[i];
-                Debug.Log($"[StandaloneBattleDemo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
+                Debug.Log($"[Ra2Demo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
             }
         }
 
@@ -138,7 +138,7 @@ public class Ra2Demo : MonoBehaviour
         _presentationSystem.SetGame(_game);
         _game.World.SystemManager.RegisterSystem(_presentationSystem);
 
-        zUDebug.Log("[StandaloneBattleDemo] 视图系统初始化完成");
+        zUDebug.Log("[Ra2Demo] 视图系统初始化完成");
     }
 
     /// <summary>
@@ -283,7 +283,7 @@ public class Ra2Demo : MonoBehaviour
             Timestamp = Time.time
         });
         
-        zUDebug.Log($"[StandaloneBattleDemo] OnPress - 加入队列");
+        zUDebug.Log($"[Ra2Demo] OnPress - 加入队列");
     }
 
     private void OnDrag(InputAction.CallbackContext context)
@@ -299,7 +299,7 @@ public class Ra2Demo : MonoBehaviour
 
     private void OnRelease(InputAction.CallbackContext context)
     {
-        zUDebug.Log($"[StandaloneBattleDemo] OnRelease - 加入队列");
+        zUDebug.Log($"[Ra2Demo] OnRelease - 加入队列");
         
         // 将事件加入队列而非直接设置状态
         inputEventQueue.Enqueue(new InputEvent
@@ -320,7 +320,7 @@ public class Ra2Demo : MonoBehaviour
         {
             var inputEvent = inputEventQueue.Dequeue();
             
-            // zUDebug.Log($"[StandaloneBattleDemo] ProcessInputLogic - 处理事件：{inputEvent.State}, 位置：{inputEvent.Position}");
+            // zUDebug.Log($"[Ra2Demo] ProcessInputLogic - 处理事件：{inputEvent.State}, 位置：{inputEvent.Position}");
             
             switch (inputEvent.State)
             {
@@ -353,10 +353,24 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void HandlePressLogic()
     {
-        zUDebug.Log($"[StandaloneBattleDemo] HandlePressLogic - 尝试处理点击");
+        zUDebug.Log($"[Ra2Demo] HandlePressLogic - 尝试处理点击");
 
         if (EventSystem.current.IsPointerOverGameObject()) {
-            zUDebug.Log($"[StandaloneBattleDemo] HandlePressLogic - 点击被拦截");
+            // 方法 2：精确获取被点击的 UI GameObject
+            PointerEventData pointerData = new PointerEventData(EventSystem.current)
+            {
+                position = Mouse.current.position.ReadValue() // 新输入系统获取鼠标位置
+            };
+
+            List<RaycastResult> results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointerData, results);
+
+            if (results.Count > 0)
+            {
+                Debug.Log($"[Debug] 真正被点击的 UI 对象: {results[0].gameObject.name}");
+                // results[0] 是最上层的 UI 元素
+            }
+
             return;
         }
 
@@ -457,10 +471,10 @@ public class Ra2Demo : MonoBehaviour
                 // 启用轮廓显示
                 EnableOutlineForEntity(entityId);
                 
-                zUDebug.Log($"[StandaloneBattleDemo] 选中单位：EntityId={entityId}, Distance={unitsInRange[i].distance:F2}m");
+                zUDebug.Log($"[Ra2Demo] 选中单位：EntityId={entityId}, Distance={unitsInRange[i].distance:F2}m");
             }
             
-            zUDebug.Log($"[StandaloneBattleDemo] 共检测到 {unitsInRange.Count} 个单位在范围内，实际选择 {selectCount} 个单位");
+            zUDebug.Log($"[Ra2Demo] 共检测到 {unitsInRange.Count} 个单位在范围内，实际选择 {selectCount} 个单位");
         }
 
         // 根据是否有单位在范围内决定模式
@@ -473,7 +487,7 @@ public class Ra2Demo : MonoBehaviour
             // 创建并显示选择框资源实例，传入世界坐标位置
             CreateAndShowSelectionBox(worldPosition);
             
-            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
+            zUDebug.Log($"[Ra2Demo] >>> 进入单位移动模式，点击位置：{worldPosition}, 选中单位数：{selectedEntityIds.Count}");
         }
         else
         {
@@ -487,7 +501,7 @@ public class Ra2Demo : MonoBehaviour
                 m_CameraInitialPosition = RTSCameraTargetController.Instance.CameraTarget.position;
             }
             
-            zUDebug.Log($"[StandaloneBattleDemo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{m_CameraInitialPosition}");
+            zUDebug.Log($"[Ra2Demo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{m_CameraInitialPosition}");
         }
     }
 
@@ -505,7 +519,7 @@ public class Ra2Demo : MonoBehaviour
         {
             // 启用虚线绘制标志
             shouldDrawDragLine = true;
-            // zUDebug.Log($"[StandaloneBattleDemo] HandleDragLogic [单位移动模式] - 忽略拖拽，等待释放");
+            // zUDebug.Log($"[Ra2Demo] HandleDragLogic [单位移动模式] - 忽略拖拽，等待释放");
         }
         // 如果是相机移动模式
         else if (isCameraMoving)
@@ -520,7 +534,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void HandleReleaseLogic()
     {
-        zUDebug.Log($"[StandaloneBattleDemo] HandleReleaseLogic - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+        zUDebug.Log($"[Ra2Demo] HandleReleaseLogic - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
 
         // 检查是否之前处于按下状态（即发生了拖拽）
         float totalDragDistance = Vector2.Distance(pressStartPosition, currentPosition);
@@ -528,7 +542,7 @@ public class Ra2Demo : MonoBehaviour
         // 如果是单位移动模式
         if (isUnitMoveMode)
         {
-            zUDebug.Log($"[StandaloneBattleDemo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
+            zUDebug.Log($"[Ra2Demo] >>> 单位移动模式结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}");
             
             // 隐藏选择框实例
             HideSelectionBox();
@@ -536,7 +550,7 @@ public class Ra2Demo : MonoBehaviour
             // 获取目标位置并发送移动命令
             if (TryGetGroundPosition(currentPosition, out Vector3 targetWorldPosition))
             {
-                zUDebug.Log($"[StandaloneBattleDemo] >>> 目标位置：{targetWorldPosition}");
+                zUDebug.Log($"[Ra2Demo] >>> 目标位置：{targetWorldPosition}");
                 
                 // 使用当前选中的单位列表发送移动命令
                 if (selectedEntityIds.Count > 0)
@@ -545,7 +559,7 @@ public class Ra2Demo : MonoBehaviour
                 }
                 else
                 {
-                    zUDebug.LogWarning("[StandaloneBattleDemo] >>> 没有找到可移动的单位");
+                    zUDebug.LogWarning("[Ra2Demo] >>> 没有找到可移动的单位");
                 }
 
                 String entityIds = "";
@@ -572,7 +586,7 @@ public class Ra2Demo : MonoBehaviour
         // 如果是相机移动模式
         else if (isCameraMoving)
         {
-            zUDebug.Log($"[StandaloneBattleDemo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
+            zUDebug.Log($"[Ra2Demo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
             // 重置相机移动状态
             isCameraMoving = false;
         }
@@ -602,7 +616,7 @@ public class Ra2Demo : MonoBehaviour
             RTSCameraTargetController.Instance.CameraTarget.position = newPosition;
             
             // 调试日志
-            // zUDebug.Log($"[StandaloneBattleDemo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
+            // zUDebug.Log($"[Ra2Demo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
         }
     }
 
@@ -1075,7 +1089,7 @@ public class Ra2Demo : MonoBehaviour
             }
             
             selectionBoxInstance.SetActive(true);
-            zUDebug.Log($"[StandaloneBattleDemo] 选择框已重新激活并更新位置：{worldPosition}");
+            zUDebug.Log($"[Ra2Demo] 选择框已重新激活并更新位置：{worldPosition}");
         }
         else
         {
@@ -1086,11 +1100,11 @@ public class Ra2Demo : MonoBehaviour
             {
                 selectionBoxInstance.transform.position = worldPosition;
                 
-                zUDebug.Log($"[StandaloneBattleDemo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
+                zUDebug.Log($"[Ra2Demo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
             }
             else
             {
-                zUDebug.LogWarning($"[StandaloneBattleDemo] 选择框创建失败，请检查资源路径：{SELECTION_BOX_PREFAB_PATH}");
+                zUDebug.LogWarning($"[Ra2Demo] 选择框创建失败，请检查资源路径：{SELECTION_BOX_PREFAB_PATH}");
                 return;
             }
         }
@@ -1121,7 +1135,7 @@ public class Ra2Demo : MonoBehaviour
             
             if (elapsed >= FADE_OUT_DURATION)
             {
-                zUDebug.Log($"[StandaloneBattleDemo] 选择框淡出完成：{elapsed} / {FADE_OUT_DURATION}");
+                zUDebug.Log($"[Ra2Demo] 选择框淡出完成：{elapsed} / {FADE_OUT_DURATION}");
                 // 淡出完成，隐藏对象
                 HideSelectionBox();
                 isFadingOut = false;
@@ -1136,7 +1150,7 @@ public class Ra2Demo : MonoBehaviour
             }
             else
             {
-                zUDebug.Log($"[StandaloneBattleDemo] 选择框淡出中：{elapsed} / {FADE_OUT_DURATION}");
+                zUDebug.Log($"[Ra2Demo] 选择框淡出中：{elapsed} / {FADE_OUT_DURATION}");
                 // 计算透明度（线性插值）
                 float t = elapsed / FADE_OUT_DURATION;
                 Material material = renderer.material;
@@ -1167,7 +1181,7 @@ public class Ra2Demo : MonoBehaviour
         if (selectionBoxInstance != null)
         {
             selectionBoxInstance.SetActive(false);
-            zUDebug.Log("[StandaloneBattleDemo] 选择框已隐藏");
+            zUDebug.Log("[Ra2Demo] 选择框已隐藏");
         }
     }
 
