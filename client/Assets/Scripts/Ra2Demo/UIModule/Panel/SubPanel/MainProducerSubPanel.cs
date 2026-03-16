@@ -190,10 +190,6 @@ public class MainProducerSubPanel
             }
         }
 
-        
-        
-
-        
         RefreshList(dataList);
     }
     
@@ -205,17 +201,33 @@ public class MainProducerSubPanel
         if (game == null || listItems == null)
             return;
 
-        // 使用GetComponentsWithCondition一次性获取符合条件的实体
+        // 使用 GetComponentsWithCondition 一次性获取符合条件的实体
         var components = game.World.ComponentManager
             .GetComponentsWithCondition<ProduceComponent>(entity =>
                 game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
                 !game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
                 game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
 
+        // 计算预期的列表项总数
+        int expectedItemCount = 0;
+        foreach (var (produceComponent, entity) in components)
+        {
+            expectedItemCount += produceComponent.SupportedUnitTypes.Count;
+        }
+
+        // 如果列表项数量发生变化，需要重建控件
+        if (expectedItemCount != listItems.Count)
+        {
+            Debug.Log($"[生产列表] 列表项数量发生变化：{listItems.Count} -> {expectedItemCount}，重建列表");
+            RefreshProducerList();
+            return;
+        }
+
+        // 数量未变化，只更新现有项的数据
         int itemIndex = 0;
         foreach (var (produceComponent, entity) in components)
         {
-            // 为每个支持的单位类型创建一个ProducerItemData
+            // 为每个支持的单位类型创建一个 ProducerItemData
             foreach (var unitType in produceComponent.SupportedUnitTypes)
             {
                 if (itemIndex >= listItems.Count)
