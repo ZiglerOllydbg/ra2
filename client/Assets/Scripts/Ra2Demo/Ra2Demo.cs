@@ -17,6 +17,7 @@ using UnityEngine.EventSystems;
 using ZLib;
 using PostHogUnity;
 using WeChatWASM;
+using Unity.Collections;
 
 /// <summary>
 /// 测试脚本：点击地面创建单位（使用Command系统）
@@ -96,6 +97,9 @@ public class Ra2Demo : MonoBehaviour
 
     private void Awake()
     {
+        // FIX ME: 临时解决内存泄漏
+        NativeLeakDetection.Mode = NativeLeakDetectionMode.EnabledWithStackTrace;
+
         // 初始化命令映射
         CommandMapper.Initialize();
 
