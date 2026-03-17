@@ -695,6 +695,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   _mainCamera: {fileID: 0}
+  maxSelectionCount: 0
 --- !u!114 &812412505
 MonoBehaviour:
   m_ObjectHideFlags: 0

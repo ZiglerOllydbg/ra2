@@ -10,12 +10,12 @@
       "Hp": 3000,
       "Atk": 0,
       "Def": 10,
-      "ConstructionTime": 0,
+      "ConstructionTime": 2,
       "CostMoney": 2000,
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
       "Name": "主基地",
-      "Description": ""
+      "Description": "拥有主基地才能建造其他建筑"
     },
     "2": {
       "ID": 2,
@@ -114,7 +114,7 @@
       "Def": 20,
       "ConstructionTime": 5,
       "CostMoney": 500,
-      "CostPower": 0,
+      "CostPower": 2,
       "CreateUnitIDList": 0.0,
       "Name": "碉堡",
       "Description": "自动攻击范围内的敌人"
