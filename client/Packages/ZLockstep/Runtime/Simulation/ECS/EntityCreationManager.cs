@@ -174,18 +174,9 @@ namespace ZLockstep.Simulation.ECS
             // 13. 如果是采矿场，添加采矿组件
             else if (buildingType == BuildingType.Smelter) // 采矿场
             {
-                // 查找最近的矿源并关联
-                int nearestMineEntityId = FindNearestMine(world, position);
-                if (nearestMineEntityId != -1)
-                {
-                    // 添加采矿组件，关联到最近的矿源
-                    var miningComponent = MiningComponent.Create(nearestMineEntityId);
-                    world.ComponentManager.AddComponent(entity, miningComponent);
-                }
-                else
-                {
-                    UnityEngine.Debug.LogWarning($"[EntityCreationManager] 未能找到附近的矿源，采矿场实体 {entity.Id} 将不会进行采矿");
-                }
+                // 添加采矿组件，关联到最近的矿源
+                var miningComponent = MiningComponent.Create(0);
+                world.ComponentManager.AddComponent(entity, miningComponent);
             }
 
             // 14. 添加建造组件（所有建筑都需要建造时间）
