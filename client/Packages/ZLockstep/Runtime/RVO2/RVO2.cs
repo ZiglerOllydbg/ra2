@@ -591,6 +591,11 @@ namespace ZLockstep.RVO
                         {
                             // 投影到截断圆
                             zfloat wLength = zMathf.Sqrt(wLengthSq);
+                            if (wLength < new zfloat(0, 1000))
+                            {
+                                zUDebug.LogWarning($"[RVO2] 投影到截断圆时，w 长度过小，请检查代码逻辑！");
+                                continue;
+                            }
                             zVector2 unitW = w / wLength;
 
                             line.direction = new zVector2(unitW.y, -unitW.x);
