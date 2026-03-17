@@ -36,10 +36,6 @@ namespace ZLockstep.Simulation.ECS.Systems
                 var miningEntity = new Entity(entityId);
                 var miningComponent = ComponentManager.GetComponent<MiningComponent>(miningEntity);
                 
-                // 检查是否正在采矿
-                if (!miningComponent.IsMining)
-                    continue;
-                
                 // 检查建筑是否已完成建造
                 if (ComponentManager.HasComponent<BuildingConstructionComponent>(miningEntity))
                 {
@@ -56,44 +52,22 @@ namespace ZLockstep.Simulation.ECS.Systems
                     // 重置计时器
                     miningComponent.MiningTimer = 0;
                     
-                    // 获取关联的矿源
-                    var mineEntity = new Entity(miningComponent.MineEntityId);
-                    if (ComponentManager.HasComponent<MineComponent>(mineEntity))
+                    // 获取采矿场的阵营
+                    if (ComponentManager.HasComponent<CampComponent>(miningEntity))
                     {
-                        var mineComponent = ComponentManager.GetComponent<MineComponent>(mineEntity);
+                        var campComponent = ComponentManager.GetComponent<CampComponent>(miningEntity);
+                        int campId = campComponent.CampId;
+
+                        ConfCamp confCamp = ConfigManager.Get<ConfCamp>(campId);
+                        int addMoney = confCamp?.AddMoneyPerSecond ?? 0;
                         
-                        // 检查矿源是否有足够的资源
-                        if (mineComponent.ResourceAmount >= miningComponent.ResourcePerCycle)
-                        {
-                            // 减少矿源资源
-                            mineComponent.ResourceAmount -= miningComponent.ResourcePerCycle;
-                            ComponentManager.AddComponent(mineEntity, mineComponent);
-                            
-                            // 获取采矿场的阵营
-                            if (ComponentManager.HasComponent<CampComponent>(miningEntity))
-                            {
-                                var campComponent = ComponentManager.GetComponent<CampComponent>(miningEntity);
-                                int campId = campComponent.CampId;
-                                
-                                // 增加玩家资金
-                                AddResourceToPlayer(campId, miningComponent.ResourcePerCycle);
-                            }
-                        }
-                        else
-                        {
-                            // 矿源资源不足，停止采矿
-                            miningComponent.IsMining = false;
-                        }
-                        
-                        // 更新采矿组件
-                        ComponentManager.AddComponent(miningEntity, miningComponent);
+                        // 增加玩家资金
+                        AddResourceToPlayer(campId, addMoney);
                     }
                 }
-                else
-                {
-                    // 更新采矿组件的计时器
-                    ComponentManager.AddComponent(miningEntity, miningComponent);
-                }
+
+                // 更新采矿组件的计时器
+                ComponentManager.AddComponent(miningEntity, miningComponent);
             }
         }
         

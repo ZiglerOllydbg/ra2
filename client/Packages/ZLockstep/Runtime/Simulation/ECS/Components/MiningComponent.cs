@@ -20,16 +20,6 @@ namespace ZLockstep.Simulation.ECS.Components
         public int MiningTimer;
         
         /// <summary>
-        /// 是否正在采矿
-        /// </summary>
-        public bool IsMining;
-        
-        /// <summary>
-        /// 每次采集获得的资金
-        /// </summary>
-        public int ResourcePerCycle;
-        
-        /// <summary>
         /// 采集周期（帧数）
         /// </summary>
         public int MiningCycleFrames;
@@ -42,8 +32,6 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             MineEntityId = mineEntityId;
             MiningTimer = 0;
-            IsMining = true;
-            ResourcePerCycle = 10;
             MiningCycleFrames = 20;
         }
 

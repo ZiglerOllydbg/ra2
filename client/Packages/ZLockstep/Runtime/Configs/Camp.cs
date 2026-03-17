@@ -19,6 +19,7 @@ public class ConfCamp
 	public string VehicleFactoryPosition; // 生产出生点
 	public int InitMoney; // 初始金钱
 	public int InitPower; // 初始电力
+	public int AddMoneyPerSecond; // 每秒增加金钱
 }
 
 
