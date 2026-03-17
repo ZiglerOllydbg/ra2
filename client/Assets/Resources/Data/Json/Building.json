@@ -52,7 +52,7 @@
       "CostPower": 5,
       "CreateUnitIDList": 0.0,
       "Name": "油井",
-      "Description": "金钱的来源"
+      "Description": "金钱的来源，持续获得金钱"
     },
     "4": {
       "ID": 4,
@@ -70,7 +70,7 @@
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
       "Name": "电厂",
-      "Description": "为基地提供电力支持"
+      "Description": "生产10点电力，为基地提供电力支持"
     },
     "5": {
       "ID": 5,
@@ -88,7 +88,7 @@
       "CostPower": 5,
       "CreateUnitIDList": 1,
       "Name": "兵营",
-      "Description": "可生产步兵单位"
+      "Description": "消耗5点电力，可生产步兵单位"
     },
     "6": {
       "ID": 6,
@@ -106,7 +106,7 @@
       "CostPower": 10,
       "CreateUnitIDList": "2,3",
       "Name": "战车工厂",
-      "Description": "可生产坦克单位"
+      "Description": "消耗10点电力，可生产坦克单位"
     },
     "7": {
       "ID": 7,
