@@ -75,7 +75,7 @@ namespace ZLockstep.Sync.Command.Commands
             if (ChangeValue > 0)
             {
                 // 检查资金是否足够
-                if (!CheckAndDeductProductionCost(world, campComponent.CampId))
+                if (!CheckAndDeductProductionCost(world, campComponent.CampId, ChangeValue))
                 {
                     UnityEngine.Debug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 资金不足，无法生产单位 {UnitType}");
                     return;
@@ -85,7 +85,7 @@ namespace ZLockstep.Sync.Command.Commands
             else if (ChangeValue < 0 && newNumber < currentNumber)
             {
                 // 返还资金
-                RefundProductionCost(world, campComponent.CampId);
+                RefundProductionCost(world, campComponent.CampId, -ChangeValue);
             }
 
             // 检查单位类型是否支持生产
@@ -95,7 +95,7 @@ namespace ZLockstep.Sync.Command.Commands
                 // 如果不支持生产，且之前扣除了资金，需要返还资金
                 if (ChangeValue > 0)
                 {
-                    RefundProductionCost(world, campComponent.CampId);
+                    RefundProductionCost(world, campComponent.CampId, ChangeValue);
                 }
                 return;
             }
@@ -116,7 +116,7 @@ namespace ZLockstep.Sync.Command.Commands
                 // 如果未找到单位类型，且之前扣除了资金，需要返还资金
                 if (ChangeValue > 0)
                 {
-                    RefundProductionCost(world, campComponent.CampId);
+                    RefundProductionCost(world, campComponent.CampId, ChangeValue);
                 }
                 return;
             }
@@ -126,9 +126,10 @@ namespace ZLockstep.Sync.Command.Commands
         /// 检查并扣除生产单位所需的成本
         /// </summary>
         /// <param name="world">游戏世界实例</param>
-        /// <param name="campId">阵营ID</param>
+        /// <param name="campId">阵营 ID</param>
+        /// <param name="quantity">生产数量</param>
         /// <returns>是否有足够的资源</returns>
-        private bool CheckAndDeductProductionCost(zWorld world, int campId)
+        private bool CheckAndDeductProductionCost(zWorld world, int campId, int quantity)
         {
             // 获取玩家的经济组件
             var (economyComponent, economyEntity) = world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
@@ -149,12 +150,12 @@ namespace ZLockstep.Sync.Command.Commands
                 return false;
             }
 
-            int costMoney = confUnit.CostMoney;
+            int costMoney = confUnit.CostMoney * quantity;
             
             // 检查是否有足够的资源
             if (economyComponent.Money < costMoney)
             {
-                UnityEngine.Debug.Log($"[ProduceCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
+                UnityEngine.Debug.Log($"[ProduceCommand] 资金不足。需要：{costMoney}, 当前：{economyComponent.Money}");
                 return false;
             }
             
@@ -169,13 +170,13 @@ namespace ZLockstep.Sync.Command.Commands
                 CampId = campId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = "生产单位消耗资金"
+                Reason = $"生产单位消耗资金 x{quantity}"
             });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[ProduceCommand] 扣除资源成功。花费资金: {costMoney}。剩余资金: {economyComponent.Money}");
+            UnityEngine.Debug.Log($"[ProduceCommand] 扣除资源成功。花费资金：{costMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
             return true;
         }
 
@@ -183,8 +184,9 @@ namespace ZLockstep.Sync.Command.Commands
         /// 返还生产单位所需的成本
         /// </summary>
         /// <param name="world">游戏世界实例</param>
-        /// <param name="campId">阵营ID</param>
-        private void RefundProductionCost(zWorld world, int campId)
+        /// <param name="campId">阵营 ID</param>
+        /// <param name="quantity">返还数量</param>
+        private void RefundProductionCost(zWorld world, int campId, int quantity)
         {
             // 获取玩家的经济组件
             var (economyComponent, economyEntity) = world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
@@ -205,7 +207,7 @@ namespace ZLockstep.Sync.Command.Commands
                 return;
             }
 
-            int refundMoney = confUnit.CostMoney;
+            int refundMoney = confUnit.CostMoney * quantity;
             
             // 返还资源
             int oldMoney = economyComponent.Money;
@@ -218,13 +220,13 @@ namespace ZLockstep.Sync.Command.Commands
                 CampId = campId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = "取消生产单位返还资金"
+                Reason = $"取消生产单位返还资金 x{quantity}"
             });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[ProduceCommand] 返还资源成功。返还资金: {refundMoney}。剩余资金: {economyComponent.Money}");
+            UnityEngine.Debug.Log($"[ProduceCommand] 返还资源成功。返还资金：{refundMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
         }
 
         public override string ToString()
