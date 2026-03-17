@@ -175,13 +175,13 @@ public class MainProducerSubPanel
                 string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
-                    displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
+                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage}%";
                 }
                 
                 var itemData = new ProducerItemData
                 {
                     Name = displayName,
-                    BelongFactory = "" + entity.Id,
+                    BelongFactory = "$" + confUnit.CostMoney,
                     Description = confUnit.Description,
                     UnitType = unitType,
                     FactoryEntityId = entity.Id,
@@ -258,13 +258,13 @@ public class MainProducerSubPanel
                 string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
-                    displayName = $"{displayName} (+{currentProduceCount}) {productionProgressPercentage}%";
+                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage}%";
                 }
                 
                 var itemData = new ProducerItemData
                 {
                     Name = displayName,
-                    BelongFactory = "" + entity.Id,
+                    BelongFactory = "$" + confUnit.CostMoney,
                     Description = confUnit.Description,
                     UnitType = unitType,
                     FactoryEntityId = entity.Id,

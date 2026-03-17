@@ -164,7 +164,7 @@
       "CampID": 1,
       "Type": 4,
       "Icon": "Images/PowerPlant",
-      "Count": 2,
+      "Count": 1,
       "Position": "5,0,15;15,0,5",
       "Name": "电厂",
       "Enabled": 1
@@ -224,7 +224,7 @@
       "CampID": 2,
       "Type": 4,
       "Icon": "Images/PowerPlant",
-      "Count": 2,
+      "Count": 1,
       "Position": "120,0,110;110,0,120",
       "Name": "电厂",
       "Enabled": 1
