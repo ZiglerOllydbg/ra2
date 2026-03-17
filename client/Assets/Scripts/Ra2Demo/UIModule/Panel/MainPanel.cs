@@ -28,8 +28,10 @@ public class MainPanel : BasePanel
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
     
-    // 选择半径切换按钮
-    private Button selectionRadiusBtn;
+    // 选择模式切换按钮组
+    private Button soloBtn;      // 单个单位模式
+    private Button fewBtn;       // 小部队模式
+    private Button manyBtn;      // 大部队模式
     
     // 退出按钮
     private Button exitBtn;
@@ -80,17 +82,22 @@ public class MainPanel : BasePanel
         moneyText = PanelObject.transform.Find("Info/Money/Value")?.GetComponent<TMP_Text>();
         powerText = PanelObject.transform.Find("Info/Power/Value")?.GetComponent<TMP_Text>();
         
-        // 获取按钮组件
+        // 获取主功能按钮组件
         selectBtn = PanelObject.transform.Find("SelectBtn")?.GetComponent<Button>();
         buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
-        producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>(); // 新增生产按钮
-        
-        // 获取选择半径切换按钮
-        selectionRadiusBtn = PanelObject.transform.Find("SelectionRadiusBtn")?.GetComponent<Button>();
-        
+        producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>();
+
+        // 获取选择模式切换按钮组（三个新按钮）
+        soloBtn = PanelObject.transform.Find("SoloBtn")?.GetComponent<Button>();
+        fewBtn = PanelObject.transform.Find("FewBtn")?.GetComponent<Button>();
+        manyBtn = PanelObject.transform.Find("ManyBtn")?.GetComponent<Button>();
+
         // 获取退出按钮
         exitBtn = PanelObject.transform.Find("ExitBtn")?.GetComponent<Button>();
+        
+        // 初始化选择按钮组的背景图片状态（默认选中第一个按钮 - Solo 模式）
+        OnFewModeClick();
         
         // 初始化和获取确认对话框组件
         confirmDialog = new ConfirmDialogComponent(PanelObject.transform.Find("Confirm"));
@@ -205,10 +212,20 @@ public class MainPanel : BasePanel
             producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
 
-        // 选择半径切换按钮事件监听
-        if (selectionRadiusBtn != null)
+        // 选择模式切换按钮事件监听
+        if (soloBtn != null)
         {
-            selectionRadiusBtn.onClick.AddListener(OnSelectionRadiusButtonClick);
+            soloBtn.onClick.AddListener(OnSoloModeClick);
+        }
+        
+        if (fewBtn != null)
+        {
+            fewBtn.onClick.AddListener(OnFewModeClick);
+        }
+        
+        if (manyBtn != null)
+        {
+            manyBtn.onClick.AddListener(OnManyModeClick);
         }
 
         // 退出按钮事件监听
@@ -245,10 +262,20 @@ public class MainPanel : BasePanel
             producerBtn.onClick.RemoveListener(OnProducerButtonClick);
         }
 
-        // 移除选择半径切换按钮事件监听
-        if (selectionRadiusBtn != null)
+        // 移除选择模式切换按钮事件监听
+        if (soloBtn != null)
         {
-            selectionRadiusBtn.onClick.RemoveListener(OnSelectionRadiusButtonClick);
+            soloBtn.onClick.RemoveListener(OnSoloModeClick);
+        }
+        
+        if (fewBtn != null)
+        {
+            fewBtn.onClick.RemoveListener(OnFewModeClick);
+        }
+        
+        if (manyBtn != null)
+        {
+            manyBtn.onClick.RemoveListener(OnManyModeClick);
         }
 
         // 移除退出按钮事件监听
@@ -569,44 +596,123 @@ public class MainPanel : BasePanel
     }
     
     /// <summary>
-    /// 选择半径切换按钮点击处理 - 切换小部队/大部队/单个单位选择模式
+    /// 单个单位模式按钮点击处理
     /// </summary>
-    private void OnSelectionRadiusButtonClick()
+    private void OnSoloModeClick()
     {
-        if (selectionRadiusBtn == null) return;
+        if (soloBtn == null) return;
         
-        TMP_Text buttonText = selectionRadiusBtn.GetComponentInChildren<TMP_Text>();
+        TMP_Text buttonText = soloBtn.GetComponentInChildren<TMP_Text>();
         if (buttonText != null)
         {
-            // 根据当前文本切换选择半径和最大选择数量
-            if (buttonText.text == "移动选择小部队")
-            {
-                // 切换到大部队模式（15 米）
-                Ra2Demo.SetUnitSelectionRadius(15f);
-                Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
-                buttonText.text = "移动选择大部队";
-                ShowMessage("切换到移动选择大部队模式（15 米，不限制数量）");
-            }
-            else if (buttonText.text == "移动选择大部队")
-            {
-                // 切换到单个单位模式
-                Ra2Demo.SetUnitSelectionRadius(5f);
-                Ra2Demo.SetMaxSelectionCount(1); // 只选择 1 个单位
-                buttonText.text = "选择单个单位";
-                ShowMessage("切换到选择单个单位模式（5 米，限选 1 个）");
-            }
-            else
-            {
-                // 切换到小部队模式（5 米）
-                Ra2Demo.SetUnitSelectionRadius(5f);
-                Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
-                buttonText.text = "移动选择小部队";
-                ShowMessage("切换到移动选择小部队模式（5 米，不限制数量）");
-            }
+            Ra2Demo.SetUnitSelectionRadius(5f);
+            Ra2Demo.SetMaxSelectionCount(1); // 只选择 1 个单位
+            ShowMessage("选择单人");
         }
         else
         {
-            zUDebug.LogError("[MainPanel] Can't find selection radius button text component!");
+            zUDebug.LogError("[MainPanel] Can't find solo button text component!");
+        }
+        
+        // 更新所有按钮的背景图片状态
+        UpdateSelectionButtonsState(0); // Solo 按钮被选中
+    }
+    
+    /// <summary>
+    /// 小部队模式按钮点击处理
+    /// </summary>
+    private void OnFewModeClick()
+    {
+        if (fewBtn == null) return;
+        
+        TMP_Text buttonText = fewBtn.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            Ra2Demo.SetUnitSelectionRadius(5f);
+            Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
+            ShowMessage("选择小部队");
+        }
+        else
+        {
+            zUDebug.LogError("[MainPanel] Can't find few button text component!");
+        }
+        
+        // 更新所有按钮的背景图片状态
+        UpdateSelectionButtonsState(1); // Few 按钮被选中
+    }
+    
+    /// <summary>
+    /// 大部队模式按钮点击处理
+    /// </summary>
+    private void OnManyModeClick()
+    {
+        if (manyBtn == null) return;
+        
+        TMP_Text buttonText = manyBtn.GetComponentInChildren<TMP_Text>();
+        if (buttonText != null)
+        {
+            Ra2Demo.SetUnitSelectionRadius(15f);
+            Ra2Demo.SetMaxSelectionCount(0); // 不限制数量
+            ShowMessage("选择大部队");
+        }
+        else
+        {
+            zUDebug.LogError("[MainPanel] Can't find many button text component!");
+        }
+        
+        // 更新所有按钮的背景图片状态
+        UpdateSelectionButtonsState(2); // 大部队按钮被选中
+    }
+    
+    /// <summary>
+    /// 更新选择模式按钮组的背景图片状态
+    /// </summary>
+    /// <param name="selectedIndex">选中的按钮索引 (0=Solo, 1=Few, 2=Many)</param>
+    private void UpdateSelectionButtonsState(int selectedIndex)
+    {
+        // 加载背景图片资源
+        Sprite f1 = ResourceCache.GetSprite("images/f1");
+        Sprite f2 = ResourceCache.GetSprite("images/f2");
+        Sprite f3 = ResourceCache.GetSprite("images/f3");
+        
+        Sprite b1 = ResourceCache.GetSprite("images/b1");
+        Sprite b2 = ResourceCache.GetSprite("images/b2");
+        Sprite b3 = ResourceCache.GetSprite("images/b3");
+        
+        // 根据选中的按钮设置背景图片
+        switch (selectedIndex)
+        {
+            case 0: // Solo 按钮被选中
+                SetButtonBackground(soloBtn, b1);
+                SetButtonBackground(fewBtn, f2);
+                SetButtonBackground(manyBtn, f3);
+                break;
+            case 1: // Few 按钮被选中
+                SetButtonBackground(soloBtn, f1);
+                SetButtonBackground(fewBtn, b2);
+                SetButtonBackground(manyBtn, f3);
+                break;
+            case 2: // Many 按钮被选中
+                SetButtonBackground(soloBtn, f1);
+                SetButtonBackground(fewBtn, f2);
+                SetButtonBackground(manyBtn, b3);
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// 设置按钮的背景图片
+    /// </summary>
+    /// <param name="button">目标按钮</param>
+    /// <param name="sprite">要设置的图片</param>
+    private void SetButtonBackground(Button button, Sprite sprite)
+    {
+        if (button == null || sprite == null) return;
+        
+        Image image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = sprite;
         }
     }
 }
