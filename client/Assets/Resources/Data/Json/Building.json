@@ -7,7 +7,7 @@
       "Prefab": "MainBase",
       "BuildPrefab": "Building",
       "Size": 5,
-      "Hp": 3000,
+      "Hp": 5000,
       "Atk": 0,
       "Def": 10,
       "ConstructionTime": 2,
