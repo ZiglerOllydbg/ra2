@@ -137,6 +137,51 @@ public class GMManager
         AddLog($"GM: Added money: {amount}");
     }
 
+    [GMCommand("addcampmoney")]
+    private void AddCampMoney(string[] args)
+    {
+        if (args.Length < 2)
+        {
+            AddLog("Usage: addcampmoney <campId> <amount>");
+            AddLog("Example: addcampmoney 0 1000  (Add 1000 money to camp 0)");
+            return;
+        }
+
+        if (!int.TryParse(args[0], out int campId))
+        {
+            AddLog("Error: Invalid camp ID (must be a number)");
+            return;
+        }
+
+        if (!int.TryParse(args[1], out int amount))
+        {
+            AddLog("Error: Invalid amount (must be a number)");
+            return;
+        }
+
+        // 查找玩家的经济组件
+        var (economyComponent, entity) = _world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+            e => _world.ComponentManager.HasComponent<CampComponent>(e) && 
+                 _world.ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
+        
+        if (entity.Id != -1)
+        {
+            // 找到玩家的经济组件，增加资金
+            int oldMoney = economyComponent.Money;
+            economyComponent.Money += amount;
+            int newMoney = economyComponent.Money;
+            
+            // 保存更新后的组件
+            _world.ComponentManager.AddComponent(entity, economyComponent);
+            
+            AddLog($"GM: Added {amount} money to camp {campId} (Old: {oldMoney}, New: {newMoney})");
+        }
+        else
+        {
+            AddLog($"Error: Camp {campId} not found or doesn't have EconomyComponent");
+        }
+    }
+
     [GMCommand("addtank")]
     private void AddTank(string[] args)
     {
