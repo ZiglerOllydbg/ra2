@@ -16,7 +16,7 @@ namespace ZLockstep.Simulation.ECS
         None = 0,
         Base = 1,       // 基地
         Mine = 2,       // 矿
-        Smelter = 3,    // 冶金厂
+        Smelter = 3,    // 油井
         PowerPlant = 4, // 电厂
         Barracks = 5,   // 兵营
         vehicleFactory = 6, // 战车工厂

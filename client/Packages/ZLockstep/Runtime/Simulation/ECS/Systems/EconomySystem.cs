@@ -135,13 +135,37 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 return;
             }
+
+            ConfCamp confCamp = ConfigManager.Get<ConfCamp>(campId);
+            if (confCamp == null)
+            {
+                zUDebug.LogError("未找到阵营配置.  campId: " + campId);
+                return;
+            }
+
+            IEnumerable<(BuildingComponent, Entity)> enumBuildingComponents = ComponentManager.GetComponentsWithCondition<BuildingComponent>(
+                e => ComponentManager.HasComponent<CampComponent>(e) 
+                    && ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
             
-            // 计算电力：初始10电 + 电厂数量*10 - 采矿场数量*5 - 坦克工厂数量*5
-            int powerPlants = CountBuildingsForCamp(campId, BuildingType.PowerPlant);
-            int smelters = CountBuildingsForCamp(campId, BuildingType.Smelter);
-            int factories = CountBuildingsForCamp(campId, BuildingType.vehicleFactory);
-            
-            int totalPower = 10 + powerPlants * 10 - smelters * 5 - factories * 5;
+            int producePower = 0;
+            int costPower = 0;
+            foreach (var (buildingComponent, buildingEntity) in enumBuildingComponents)
+            {
+                ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
+                if (confBuilding == null)
+                {
+                    zUDebug.LogError("未找到建筑配置.  BuildingType: " + buildingComponent.BuildingType);
+                    continue;
+                }
+
+                costPower += confBuilding.CostPower;
+
+                // 建筑完毕才能产生电力
+                if (!ComponentManager.HasComponent<BuildingConstructionComponent>(buildingEntity))
+                    producePower += confBuilding.ProducePower;
+            }
+
+            int totalPower = confCamp.InitPower + producePower - costPower;
             
             // 检查电力是否发生变化，如果变化则触发事件
             if (economyComponent.Power != totalPower)
@@ -160,48 +184,9 @@ namespace ZLockstep.Simulation.ECS.Systems
                 });
                 
                 ComponentManager.AddComponent(economyEntity, economyComponent);
+
+                zUDebug.Log($"[EconomySystem] 阵营 {campId} 的电力已更新。消耗电力: {costPower}。生产电力: {producePower}。剩余电力: {economyComponent.Power}, 更新前电力: {oldPower}");
             }
-        }
-        
-        /// <summary>
-        /// 计算指定阵营的建筑数量
-        /// </summary>
-        /// <param name="campId">阵营ID</param>
-        /// <param name="buildingType">建筑类型</param>
-        /// <returns>建筑数量</returns>
-        private int CountBuildingsForCamp(int campId, BuildingType buildingType)
-        {
-            int count = 0;
-            var buildingEntities = ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
-            
-            foreach (var entityId in buildingEntities)
-            {
-                var entity = new Entity(entityId);
-                
-                // 检查阵营
-                if (!ComponentManager.HasComponent<CampComponent>(entity))
-                    continue;
-                    
-                var campComponent = ComponentManager.GetComponent<CampComponent>(entity);
-                if (campComponent.CampId != campId)
-                    continue;
-                
-                // 检查建筑类型
-                var buildingComponent = ComponentManager.GetComponent<BuildingComponent>(entity);
-                if (buildingComponent.BuildingType != (int)buildingType)
-                    continue;
-                
-                if (buildingComponent.BuildingType == (int)BuildingType.PowerPlant)
-                {
-                    // 检查建筑是否已完成建造
-                    if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
-                        continue;
-                }
-                
-                count++;
-            }
-            
-            return count;
         }
         
         /// <summary>

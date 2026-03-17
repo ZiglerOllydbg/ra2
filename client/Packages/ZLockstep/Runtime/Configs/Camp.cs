@@ -17,6 +17,8 @@ public class ConfCamp
 	public int ID; // 阵营编号
 	public string BarracksPosition; // 生产出生点
 	public string VehicleFactoryPosition; // 生产出生点
+	public int InitMoney; // 初始金钱
+	public int InitPower; // 初始电力
 }
 
 

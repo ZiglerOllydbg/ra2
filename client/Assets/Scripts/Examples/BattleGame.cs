@@ -203,9 +203,13 @@ namespace Game.Examples
 
                     if (confBuilding.Type == (int)BuildingType.Base)
                     {
+                        ConfCamp confCamp = ConfigManager.Get<ConfCamp>(conf.Camp);
+                        int initMoney = confCamp?.InitMoney ?? 0;
+                        int initPower = confCamp?.InitPower ?? 0;
+
                         // 添加经济
                         var ecoEntity = World.EntityManager.CreateEntity();
-                        World.ComponentManager.AddComponent(ecoEntity, EconomyComponent.Create(10000, 10));
+                        World.ComponentManager.AddComponent(ecoEntity, EconomyComponent.Create(initMoney, initPower));
                         World.ComponentManager.AddComponent(ecoEntity, CampComponent.Create(conf.Camp));
                     }
                 } else if (conf.Type == 2)
@@ -324,11 +328,15 @@ namespace Game.Examples
                         }
                     }
                 }
+
+                ConfCamp confCamp = ConfigManager.Get<ConfCamp>(campId);
+                int initPower = confCamp?.InitPower ?? 10;
                 
                 // 添加经济组件（每个玩家一个全局实体）
                 var money = playerObj["money"]?.ToObject<int>() ?? 2200; // 默认2200资金
+                var power = playerObj["power"]?.ToObject<int>() ?? initPower;
                 var economyEntity = World.EntityManager.CreateEntity();
-                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, 10));
+                World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, power));
                 World.ComponentManager.AddComponent(economyEntity, CampComponent.Create(campId));
             }
 
