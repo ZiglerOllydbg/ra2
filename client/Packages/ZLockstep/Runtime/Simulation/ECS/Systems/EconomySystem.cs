@@ -139,7 +139,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     producePower += confBuilding.ProducePower;
             }
 
-            int totalPower = confCamp.InitPower + producePower - costPower;
+            int totalPower = economyComponent.GMPower + confCamp.InitPower + producePower - costPower;
             
             // 检查电力是否发生变化，如果变化则触发事件
             if (economyComponent.Power != totalPower)

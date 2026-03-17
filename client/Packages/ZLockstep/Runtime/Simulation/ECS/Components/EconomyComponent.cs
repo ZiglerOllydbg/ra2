@@ -19,6 +19,11 @@ namespace ZLockstep.Simulation.ECS.Components
         public int Power;
 
         /// <summary>
+        /// GM调试增加的电力
+        /// </summary>
+        public int GMPower;
+
+        /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="money">初始资金</param>
@@ -27,6 +32,7 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             Money = money;
             Power = power;
+            GMPower = 0;
         }
 
         /// <summary>

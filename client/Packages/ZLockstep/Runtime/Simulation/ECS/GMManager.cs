@@ -182,6 +182,52 @@ public class GMManager
         }
     }
 
+    [GMCommand("setgmpower")]
+    private void SetGMPower(string[] args)
+    {
+        if (args.Length < 2)
+        {
+            AddLog("Usage: setgmpower <campId> <powerAmount>");
+            AddLog("Example: setgmpower 0 5000  (Set GM power to 5000 for camp 0)");
+            return;
+        }
+
+        if (!int.TryParse(args[0], out int campId))
+        {
+            AddLog("Error: Invalid camp ID (must be a number)");
+            return;
+        }
+
+        if (!int.TryParse(args[1], out int powerAmount))
+        {
+            AddLog("Error: Invalid power amount (must be a number)");
+            return;
+        }
+
+        // 查找玩家的经济组件
+        var (economyComponent, entity) = _world.ComponentManager.GetComponentWithCondition<EconomyComponent>(
+            e => _world.ComponentManager.HasComponent<CampComponent>(e) && 
+                 _world.ComponentManager.GetComponent<CampComponent>(e).CampId == campId);
+        
+        if (entity.Id != -1)
+        {
+            // 找到玩家的经济组件，设置 GM 电力
+            int oldPower = economyComponent.Power;
+            int oldGMPower = economyComponent.GMPower;
+            economyComponent.GMPower = powerAmount;
+            int newGMPower = economyComponent.GMPower;
+            
+            // 保存更新后的组件
+            _world.ComponentManager.AddComponent(entity, economyComponent);
+            
+            AddLog($"GM: Set GMPower for camp {campId} (Old Power: {oldPower}, Old GMPower: {oldGMPower}, New GMPower: {newGMPower})");
+        }
+        else
+        {
+            AddLog($"Error: Camp {campId} not found or doesn't have EconomyComponent");
+        }
+    }
+
     [GMCommand("addtank")]
     private void AddTank(string[] args)
     {
