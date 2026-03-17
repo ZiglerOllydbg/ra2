@@ -22,11 +22,6 @@ namespace ZLockstep.Simulation.ECS.Components
         public int ConfProjectileID;
 
         /// <summary>
-        /// 攻击伤害
-        /// </summary>
-        public zfloat Damage;
-
-        /// <summary>
         /// 攻击间隔（秒）
         /// </summary>
         public zfloat AttackInterval;
@@ -65,7 +60,6 @@ namespace ZLockstep.Simulation.ECS.Components
         {
             return new AttackComponent
             {
-                Damage = (zfloat)10.0f,
                 Range = (zfloat)5.0f,
                 AttackInterval = (zfloat)1.0f,
                 TimeSinceLastAttack = zfloat.Zero,

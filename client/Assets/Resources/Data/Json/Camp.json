@@ -4,7 +4,7 @@
       "ID": 0,
       "BarracksPosition": "115,0,95",
       "VehicleFactoryPosition": "95,0,115",
-      "InitMoney": 5000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 15
     },
@@ -12,7 +12,7 @@
       "ID": 1,
       "BarracksPosition": "10,0,30",
       "VehicleFactoryPosition": "30,0,10",
-      "InitMoney": 5000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 15
     },
@@ -20,7 +20,7 @@
       "ID": 2,
       "BarracksPosition": "115,0,95",
       "VehicleFactoryPosition": "95,0,115",
-      "InitMoney": 5000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 15
     },
@@ -28,7 +28,7 @@
       "ID": 8,
       "BarracksPosition": "115,0,95",
       "VehicleFactoryPosition": "95,0,115",
-      "InitMoney": 5000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 15
     },

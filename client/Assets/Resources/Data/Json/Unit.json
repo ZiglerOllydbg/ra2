@@ -10,7 +10,7 @@
       "Def": 10,
       "AtkRange": 10,
       "ProjectileID": 1,
-      "AtkInterval": 2000,
+      "AtkInterval": 4000,
       "AtkCount": 1,
       "Speed": 5,
       "CostMoney": 100,
@@ -28,7 +28,7 @@
       "Def": 20,
       "AtkRange": 10,
       "ProjectileID": 2,
-      "AtkInterval": 2000,
+      "AtkInterval": 4000,
       "AtkCount": 5,
       "Speed": 5,
       "CostMoney": 500,
@@ -61,7 +61,7 @@
       "Type": 1,
       "Speed": 10,
       "IsHoming": 0,
-      "Damage": 10,
+      "Damage": 20,
       "Prefab": "Bullet",
       "AudioClip": "infantry_200ms",
       "Note": "步枪子弹"
@@ -71,7 +71,7 @@
       "Type": 1,
       "Speed": 10,
       "IsHoming": 0,
-      "Damage": 10,
+      "Damage": 20,
       "Prefab": "Cartridge",
       "AudioClip": "badger_tank_200ms",
       "Note": "机枪子弹"
@@ -85,6 +85,16 @@
       "Prefab": "Shell",
       "AudioClip": "grizzly_tank_1000ms",
       "Note": "炮弹"
+    },
+    "4": {
+      "ID": 4,
+      "Type": 1,
+      "Speed": 10,
+      "IsHoming": 0,
+      "Damage": 30,
+      "Prefab": "Cartridge",
+      "AudioClip": "badger_tank_200ms",
+      "Note": "碉堡机枪子弹"
     }
   }
 }

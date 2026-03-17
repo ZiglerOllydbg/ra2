@@ -92,6 +92,12 @@ namespace ZLockstep.Simulation.ECS.Systems
                     continue; // 死亡单位不能攻击
                 }
 
+                // 正在建筑的碉堡等建筑单位也不能攻击
+                if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
+                {
+                    continue; // acting building cannot attack
+                }
+
                 // 必须有 Transform 和 Camp 组件
                 if (!ComponentManager.HasComponent<TransformComponent>(entity) ||
                     !ComponentManager.HasComponent<CampComponent>(entity) ||

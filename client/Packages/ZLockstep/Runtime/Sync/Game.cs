@@ -679,7 +679,6 @@ namespace ZLockstep.Sync
                 case 1: // 动员兵
                     return new Simulation.ECS.Components.AttackComponent
                     {
-                        Damage = (zfloat)10.0f,
                         Range = (zfloat)4.0f,
                         AttackInterval = (zfloat)1.0f,
                         TimeSinceLastAttack = zfloat.Zero,
@@ -688,7 +687,6 @@ namespace ZLockstep.Sync
                 case 2: // 犀牛坦克
                     return new Simulation.ECS.Components.AttackComponent
                     {
-                        Damage = (zfloat)30.0f,
                         Range = (zfloat)8.0f,
                         AttackInterval = (zfloat)2.0f,
                         TimeSinceLastAttack = zfloat.Zero,
@@ -737,7 +735,6 @@ namespace ZLockstep.Sync
                 case 1: // 防御塔
                     return new Simulation.ECS.Components.AttackComponent
                     {
-                        Damage = (zfloat)40.0f,
                         Range = (zfloat)12.0f,
                         AttackInterval = (zfloat)1.5f,
                         TimeSinceLastAttack = zfloat.Zero,

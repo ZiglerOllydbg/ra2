@@ -21,7 +21,10 @@ public class ConfBuilding
 	public string BuildPrefab; // 建造模型
 	public int Size; // 占地尺寸（直径）建议奇数
 	public int Hp; // 血量
-	public int Atk; // 攻击
+	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
+	public int AtkRange; // 攻击范围
+	public int AtkInterval; // 攻击频率10000=1秒
+	public int AtkCount; // 攻击目标数量
 	public int Def; // 防御
 	public int ConstructionTime; // 建造时间（秒）
 	public int CostMoney; // 消耗金钱
