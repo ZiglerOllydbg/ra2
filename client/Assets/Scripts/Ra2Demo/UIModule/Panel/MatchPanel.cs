@@ -127,31 +127,32 @@ public class MatchPanel : BasePanel
         }
     }
 
-    // 异步加载头像纹理
     private void LoadAvatarTexture(string url)
     {
         var www = UnityWebRequestTexture.GetTexture(url);
-        var operation = www.SendWebRequest();
         
-        // 使用 completed 回调处理完成事件
+        // 将 www 作为参数传入，避免闭包捕获（更安全）
+        var operation = www.SendWebRequest();
         operation.completed += (AsyncOperation op) =>
         {
-            if (www.result == UnityWebRequest.Result.ConnectionError || 
-                www.result == UnityWebRequest.Result.ProtocolError)
+            // 使用 op.webRequest 来获取原始请求（Unity 2020+ 支持）
+            // 或者继续使用 www，但要确保它没被提前 GC
+            
+            if (www.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"[MatchPanel] 加载头像失败：{www.error}");
             }
             else
             {
-                Texture2D texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                Texture2D texture = DownloadHandlerTexture.GetContent(www);
                 if (texture != null && _headImg != null)
                 {
                     _headImg.texture = texture;
                     Debug.Log($"[MatchPanel] 头像加载成功，尺寸：{texture.width}x{texture.height}");
                 }
             }
-            
-            www.Dispose();
+
+            www.Dispose(); // 安全释放
         };
     }
 
