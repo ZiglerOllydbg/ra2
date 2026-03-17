@@ -393,16 +393,19 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                 return;
             }
 
-            // 创建生产命令
-            var command = new ZLockstep.Sync.Command.Commands.ProduceCommand(
-                campId: AI_CAMP_ID,
-                entityId: barracksId,
-                unitType: INFANTRY_UNIT_TYPE,
-                changeValue: count
-            );
+            for (int i = 0; i < count; i++)
+            {
+                // 创建生产命令
+                var command = new ZLockstep.Sync.Command.Commands.ProduceCommand(
+                    campId: AI_CAMP_ID,
+                    entityId: barracksId,
+                    unitType: INFANTRY_UNIT_TYPE,
+                    changeValue: 1
+                );
 
-            // 提交命令
-            game.SubmitCommand(command);
+                // 提交命令
+                game.SubmitCommand(command);
+            }
 
             zUDebug.Log($"[FirstAISystem] 发送生产命令：兵营{barracksId} 生产{count}个大兵");
         }
