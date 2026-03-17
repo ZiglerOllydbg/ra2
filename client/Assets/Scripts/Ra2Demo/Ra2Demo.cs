@@ -1063,6 +1063,12 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="worldPosition">世界坐标位置（只更新 X 和 Z 轴）</param>
     private void CreateAndShowSelectionBox(Vector3 worldPosition)
     {
+        if (maxSelectionCount > 0)
+        {
+            // 不创建选择框实例，因为最大选择数量已限制
+            return;
+        }
+
         worldPosition.y = 0.1f;
 
         // 如果已有实例，先隐藏它
