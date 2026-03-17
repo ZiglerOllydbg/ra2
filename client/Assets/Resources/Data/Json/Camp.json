@@ -36,7 +36,7 @@
       "ID": 9,
       "BarracksPosition": "115,0,95",
       "VehicleFactoryPosition": "95,0,115",
-      "InitMoney": 5000,
+      "InitMoney": 3000,
       "InitPower": 5,
       "AddMoneyPerSecond": 15
     }
