@@ -577,7 +577,7 @@ public class Ra2DemoDebugger : MonoBehaviour
 
         // 绘制统计信息
         GUILayout.Space(10);
-        GUILayout.Label("=== 单位统计 ===", labelStyle);
+        GUILayout.Label("=== Units statistics ===", labelStyle);
         
         // 按阵营遍历显示（只显示有经济数据的阵营）
         foreach (var economyEntry in campEconomyStats.OrderBy(kvp => kvp.Key))
@@ -585,7 +585,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             int playerId = economyEntry.Key;
             var economy = economyEntry.Value;
             
-            GUILayout.Label($"[阵营 {playerId}] 金钱：{economy.Money} | 电力：{economy.Power}", labelStyle);
+            GUILayout.Label($"[Player {playerId}] Money: {economy.Money} | Power: {economy.Power}", labelStyle);
             
             // 如果该阵营有单位数据，显示单位列表
             if (campUnitStats.ContainsKey(playerId))
@@ -599,7 +599,7 @@ public class Ra2DemoDebugger : MonoBehaviour
                     ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitEntry.Key);
                     if (confUnit != null)
                     {
-                        unitList.Add($"{confUnit.Name}:{unitEntry.Value}");
+                        unitList.Add($"{unitEntry.ToString()}");
                     }
                 }
                 
@@ -607,7 +607,7 @@ public class Ra2DemoDebugger : MonoBehaviour
                 if (unitList.Count > 0)
                 {
                     string unitInfo = string.Join(",", unitList);
-                    GUILayout.Label($"  [{playerId}] {unitInfo}", labelStyle);
+                    GUILayout.Label($"  {unitInfo}", labelStyle);
                 }
             }
             
@@ -617,7 +617,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Space(20);
         // 显示总数
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
-        GUILayout.Label($"所有阵营单位总数：{totalCount}", labelStyle);
+        GUILayout.Label($"All Units: {totalCount}", labelStyle);
     }
 
     /// <summary>
