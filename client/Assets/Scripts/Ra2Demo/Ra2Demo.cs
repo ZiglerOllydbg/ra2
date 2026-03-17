@@ -1099,7 +1099,15 @@ public class Ra2Demo : MonoBehaviour
             if (selectionBoxInstance != null)
             {
                 selectionBoxInstance.transform.position = worldPosition;
-                
+                // 如果unitSelectionRadius==15，设置size*3，否则默认尺寸
+                if (unitSelectionRadius == 15)
+                {
+                    selectionBoxInstance.transform.localScale = new Vector3(3, 1, 3);
+                }
+                else
+                {
+                    selectionBoxInstance.transform.localScale = new Vector3(1, 1, 1);
+                }
                 zUDebug.Log($"[Ra2Demo] 选择框创建成功：{selectionBoxInstance.name}, 位置：{worldPosition}");
             }
             else
