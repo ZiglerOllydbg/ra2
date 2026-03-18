@@ -261,6 +261,11 @@ namespace ZLockstep.Simulation.ECS.Systems
                             transform.Rotation = zQuaternion.LookRotation(toTarget.normalized);
                             ComponentManager.AddComponent(entity, transform);
 
+                            // 更新旋转状态
+                            var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
+                            rotationState.DesiredDirection = toTarget.normalized;
+                            ComponentManager.AddComponent(entity, rotationState);
+
                             // zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
 
                             // 播放音效标记

@@ -679,23 +679,6 @@ namespace ZLockstep.View.Systems
                 {
                     // view.Animator.SetBool("Fire", false);
                 }
-
-                // 获取AudioSource
-                // var audioSource = view.GameObject.GetComponent<AudioSource>();
-                // if (audioSource != null)
-                // {
-                //     if (attack.PlayAttackAudio)
-                //     {
-                //         attack.PlayAttackAudio = false;
-                //         ComponentManager.AddComponent(entity, attack);
-
-                //         // 播放音效
-                //         AudioClip clip = ResourceCache.GetAudioClip("Audio/deafening-cannon-shot");
-                //         audioSource.clip = clip;
-                //         audioSource.Play();
-                //         zUDebug.Log($"[PresentationSystem] 播放攻击音效: {attack.ConfProjectileID}");
-                //     }
-                // }
             }
         }
 
@@ -781,34 +764,6 @@ namespace ZLockstep.View.Systems
             if (outlineComponent != null)
             {
                 outlineComponent.OutlineColor = color;
-            }
-        }
-
-        /// <summary>
-        /// 为正在建造的建筑显示建造模型
-        /// </summary>
-        /// <param name="parentObject">父对象（建筑模型）</param>
-        /// <param name="entity">实体</param>
-        private void ShowConstructionModel(GameObject parentObject, Entity entity)
-        {
-            // 获取建造模型预制体
-            if (_unitPrefabs.TryGetValue(8, out var constructionPrefab))
-            {
-                // 实例化建造模型
-                GameObject constructionModel = Object.Instantiate(constructionPrefab, parentObject.transform);
-                constructionModel.name = $"ConstructionModel_Entity_{entity.Id}";
-                
-                // 设置建造模型的位置（在父对象上方）
-                constructionModel.transform.localPosition = Vector3.up * 2;
-                
-                // 将建造模型添加到字典中
-                _constructionModels[entity.Id] = constructionModel;
-                
-                Debug.Log($"[PresentationSystem] 为正在建造的实体 {entity.Id} 显示建造模型");
-            }
-            else
-            {
-                Debug.LogWarning($"[PresentationSystem] 找不到预制体ID为8的建造模型");
             }
         }
 
