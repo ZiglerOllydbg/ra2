@@ -523,6 +523,7 @@ public class MainPanel : BasePanel
         Debug.Log("Build按钮被点击了！");
 
         producerSubPanel.Hide();
+        settingSubPanel.Hide();
 
         if (buildingSubPanel.IsVisiable())
         {
@@ -549,6 +550,7 @@ public class MainPanel : BasePanel
         Debug.Log("Producer按钮被点击了！");
         
         buildingSubPanel.Hide();
+        settingSubPanel.Hide();
 
         if (producerSubPanel.IsVisiable())
         {
