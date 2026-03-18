@@ -20,7 +20,7 @@
       "PrefabId": 0,
       "Position": "5,0,5",
       "Note": "金矿",
-      "Enabled": 1
+      "Enabled": 0
     },
     "3": {
       "ID": 3,
@@ -53,7 +53,7 @@
       "PrefabId": 0,
       "Position": "120,0,120",
       "Note": "金矿",
-      "Enabled": 1
+      "Enabled": 0
     },
     "6": {
       "ID": 6,

@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLib;
 using ZLockstep.Simulation.ECS.Components;
+using ZLockstep.Sync.Command.Commands;
+using ZLockstep.Sync.Command;
 
 /// <summary>
 /// 主面板 - 游戏主界面
@@ -483,8 +485,19 @@ public class MainPanel : BasePanel
         confirmDialog.Show(
             onConfirm: () =>
             {
-                // 确认售卖，打印信息
+                // 确认售卖，调用售卖 command
                 Debug.Log($"[MainPanel] 确认售卖建筑：{confBuilding.Name}, EntityId: {entityId}");
+
+                // 获取玩家阵营 ID（假设为 0）
+                int campId = 0;
+                
+                // 创建售卖建筑命令
+                var sellCommand = new SellStructureCommand(campId, entityId);
+                
+                // 提交命令到游戏世界
+                Ra2Demo?.GetBattleGame()?.SubmitCommand(sellCommand);
+                
+                Debug.Log($"[MainPanel] 已提交售卖建筑命令");
             },
             message: $"是否要售卖\"{confBuilding.Name}\"建筑？"
         );

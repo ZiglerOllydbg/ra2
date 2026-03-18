@@ -55,4 +55,30 @@ namespace ZLockstep.Simulation.Events
         /// </summary>
         public string Reason;
     }
+
+    /// <summary>
+    /// 建筑被摧毁事件
+    /// </summary>
+    public struct BuildingDestroyedEvent : IEvent
+    {
+        /// <summary>
+        /// 玩家阵营 ID
+        /// </summary>
+        public int CampId;
+
+        /// <summary>
+        /// 建筑实体 ID
+        /// </summary>
+        public int EntityId;
+
+        /// <summary>
+        /// 建筑类型
+        /// </summary>
+        public int BuildingType;
+
+        /// <summary>
+        /// 摧毁原因
+        /// </summary>
+        public string Reason;
+    }
 }
