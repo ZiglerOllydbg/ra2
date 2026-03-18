@@ -19,6 +19,7 @@ public class ConfUnit
 	public string Prefab; // 资源prefab
 	public string Icon; // 图标
 	public int Hp; // 血量
+	public int AutoHeal; // 自动回血万分比
 	public int Atk; // 攻击
 	public int Def; // 防御
 	public int AtkRange; // 攻击范围

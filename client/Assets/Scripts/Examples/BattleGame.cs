@@ -146,9 +146,13 @@ namespace Game.Examples
 
             World.SystemManager.RegisterSystem(new ProjectileSystem());
 
-            // 注册生命值系统（在ProjectileSystem之后，DeathRemovalSystem之前）
+            // 注册生命值系统（在 ProjectileSystem 之后，DeathRemovalSystem 之前）
             World.SystemManager.RegisterSystem(new HealthSystem());
             zUDebug.Log("[BattleGame] 生命值系统注册完成");
+
+            // 注册自动回血系统（在 HealthSystem 之后，处理受伤后的自动回血）
+            World.SystemManager.RegisterSystem(new AutoHealSystem());
+            zUDebug.Log("[BattleGame] 自动回血系统注册完成");
 
             // 注册销毁系统
             World.SystemManager.RegisterSystem(new DeathRemovalSystem());

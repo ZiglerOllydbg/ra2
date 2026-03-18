@@ -120,15 +120,9 @@ namespace ZLockstep.Simulation.ECS.Systems
                 return;
 
             var health = ComponentManager.GetComponent<HealthComponent>(target);
-            health.CurrentHealth -= damage;
+            health.TakeDamage(damage, World.TimeManager.Tick); // 使用 TakeDamage 方法并传入当前 tick
 
-            // 确保生命值不低于0
-            if (health.CurrentHealth < zfloat.Zero)
-            {
-                health.CurrentHealth = zfloat.Zero;
-            }
-
-            // 写回生命值组件（由HealthSystem统一处理死亡检测）
+            // 写回生命值组件（由 HealthSystem 统一处理死亡检测）
             ComponentManager.AddComponent(target, health);
 
             // zUDebug.Log($"[ProjectileSystem] 对实体{targetEntityId}造成{damage}伤害，剩余生命{health.CurrentHealth}");
@@ -161,4 +155,3 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
     }
 }
-

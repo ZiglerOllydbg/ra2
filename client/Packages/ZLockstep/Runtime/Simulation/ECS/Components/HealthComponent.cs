@@ -8,11 +8,17 @@ namespace ZLockstep.Simulation.ECS.Components
     {
         public zfloat MaxHealth;
         public zfloat CurrentHealth;
+        /// <summary>
+        /// 最后掉血的时间戳 (tick 数)
+        /// 用于自动回血计算，超过 5 秒未掉血则开始自动回血
+        /// </summary>
+        public int LastDamageTick;
 
         public HealthComponent(zfloat maxHealth)
         {
             MaxHealth = maxHealth;
             CurrentHealth = maxHealth;
+            LastDamageTick = -1; // 初始值为 -1 表示从未受过伤害
         }
 
         /// <summary>
@@ -41,11 +47,12 @@ namespace ZLockstep.Simulation.ECS.Components
         /// <summary>
         /// 受到伤害
         /// </summary>
-        public void TakeDamage(zfloat damage)
+        public void TakeDamage(zfloat damage, int currentTick)
         {
             CurrentHealth -= damage;
             if (CurrentHealth < zfloat.Zero)
                 CurrentHealth = zfloat.Zero;
+            LastDamageTick = currentTick; // 更新最后掉血时间
         }
 
         /// <summary>

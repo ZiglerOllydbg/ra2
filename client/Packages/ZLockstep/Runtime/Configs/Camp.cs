@@ -20,6 +20,7 @@ public class ConfCamp
 	public int InitMoney; // 初始金钱
 	public int InitPower; // 初始电力
 	public int AddMoneyPerSecond; // 每秒增加金钱
+	public int HealDelayTick; // 自动回血的冷却时间
 }
 
 
