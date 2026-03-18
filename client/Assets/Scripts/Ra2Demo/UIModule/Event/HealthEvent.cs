@@ -27,3 +27,16 @@ public class HealthBarSettingChangedEvent : ModuleEvent
         ShowAlways = showAlways;
     }
 }
+
+/// <summary>
+/// 确认售卖建筑事件
+/// 当玩家在售卖模式下点击本地玩家的建筑时触发
+/// </summary>
+public class ConfirmSellBuildingEvent : ModuleEvent
+{
+    public int EntityId { get; private set; }
+    public ConfirmSellBuildingEvent(int entityId) : base()
+    {
+        EntityId = entityId;
+    }
+}

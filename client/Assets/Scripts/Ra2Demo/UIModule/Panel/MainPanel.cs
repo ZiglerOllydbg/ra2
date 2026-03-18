@@ -5,6 +5,7 @@ using TMPro;
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS;
 using ZLib;
+using ZLockstep.Simulation.ECS.Components;
 
 /// <summary>
 /// 主面板 - 游戏主界面
@@ -462,7 +463,43 @@ public class MainPanel : BasePanel
     
     #endregion
     
-    #region 子面板控制
+    /// <summary>
+    /// 显示确认售卖建筑对话框
+    /// </summary>
+    /// <param name="entityId">建筑实体 ID</param>
+    /// <param name="buildingName">建筑名称</param>
+    public void ShowConfirmSellBuilding(int entityId)
+    {
+        Entity entity = new Entity(entityId);
+        BuildingComponent buildingComponent = Ra2Demo.GetBattleGame().World.ComponentManager.GetComponent<BuildingComponent>(entity);
+
+        ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
+        if (confBuilding == null)
+        {
+            Debug.LogError($"[MainPanel] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
+            return;
+        }
+
+        confirmDialog.Show(
+            onConfirm: () =>
+            {
+                // 确认售卖，打印信息
+                Debug.Log($"[MainPanel] 确认售卖建筑：{confBuilding.Name}, EntityId: {entityId}");
+            },
+            message: $"是否要售卖\"{confBuilding.Name}\"建筑？"
+        );
+    }
+
+    private void OnExitButtonClick()
+    {
+        confirmDialog.Show(
+            onConfirm: () =>
+            {
+                Frame.DispatchEvent(new RestartGameEvent());
+            },
+            message: "确定要退出游戏吗？"
+        );
+    }
     
     /// <summary>
     /// 子面板关闭回调
@@ -486,25 +523,9 @@ public class MainPanel : BasePanel
             // subPanel.RefreshList(dataList);
         }
     }
-    
-    #endregion
 
     /// <summary>
-    /// 退出按钮点击处理
-    /// </summary>
-    private void OnExitButtonClick()
-    {
-        confirmDialog.Show(
-            onConfirm: () =>
-            {
-                Frame.DispatchEvent(new RestartGameEvent());
-            },
-            message: "确定要退出游戏吗？"
-        );
-    }
-    
-    /// <summary>
-    /// Select按钮点击处理
+    /// Select 按钮点击处理
     /// </summary>
     private void OnSelectButtonClick()
     {

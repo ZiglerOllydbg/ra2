@@ -410,6 +410,12 @@ public class Ra2Demo : MonoBehaviour
                 if (_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(clickedBuildingEntity))
                 {
                     Debug.Log($"[建筑检测 - 本地玩家] 这是本地玩家的建筑，可以出售");
+                    
+                    // 获取建筑组件以获取建筑类型
+                    var buildingComp = _game.World.ComponentManager.GetComponent<BuildingComponent>(clickedBuildingEntity);
+                    
+                    // 触发确认售卖建筑事件
+                    Frame.DispatchEvent(new ConfirmSellBuildingEvent(clickedBuildingEntity.Id));
                 }
                 else
                 {
@@ -1275,4 +1281,5 @@ public class Ra2Demo : MonoBehaviour
 
         return new Entity(-1);
     }
+
 }

@@ -115,7 +115,8 @@ public class Ra2Processor : BaseProcessor
             typeof(HealthEvent),
             typeof(HealthPanelLateUpdateEvent),
             typeof(HealthBarSettingChangedEvent),
-            typeof(LoginEvent)
+            typeof(LoginEvent),
+            typeof(ConfirmSellBuildingEvent),
         };
     }
 
@@ -189,6 +190,10 @@ public class Ra2Processor : BaseProcessor
                 break;
             case ShowMessageEvent e:
                 MainPanel.ShowMessage(e.Message);
+                break;
+            case ConfirmSellBuildingEvent e:
+                // 显示确认售卖建筑对话框
+                MainPanel.ShowConfirmSellBuilding(e.EntityId);
                 break;
             case SettleEvent e:
                 MainPanel.Close();
