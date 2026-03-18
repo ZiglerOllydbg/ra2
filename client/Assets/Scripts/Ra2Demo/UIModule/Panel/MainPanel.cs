@@ -603,6 +603,8 @@ public class MainPanel : BasePanel
         
         // 设置按钮背景图片
         SetButtonBackground(sellBtn, sellSprite);
+
+        Ra2Demo.SetSellMode(isSelling);
         
         // 显示提示信息
         ShowMessage(isSelling ? "进入售卖模式" : "退出售卖模式");

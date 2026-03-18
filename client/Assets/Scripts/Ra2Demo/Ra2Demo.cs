@@ -93,6 +93,28 @@ public class Ra2Demo : MonoBehaviour
     
     // 选择模式/（相机）移动模式
     public bool IsSelectMode { get; set; } = true;
+    
+    // 出售模式状态
+    private bool isSellMode = false;
+    
+    /// <summary>
+    /// 设置出售模式
+    /// </summary>
+    /// <param name="sell">true: 开启出售模式，false: 关闭出售模式</param>
+    public void SetSellMode(bool sell)
+    {
+        isSellMode = sell;
+        zUDebug.Log($"[Ra2Demo] 出售模式已{(isSellMode ? "开启" : "关闭")}");
+    }
+    
+    /// <summary>
+    /// 获取当前出售模式状态
+    /// </summary>
+    /// <returns>出售模式状态</returns>
+    public bool GetSellMode()
+    {
+        return isSellMode;
+    }
 
 
     private void Awake()
@@ -377,6 +399,28 @@ public class Ra2Demo : MonoBehaviour
         // 尝试获取点击位置的世界坐标
         Vector3 worldPosition = Vector3.zero;
         bool hasGroundPosition = TryGetGroundPosition(pressStartPosition, out worldPosition);
+
+        // 射线探测是否命中建筑（仅在出售模式下检测）
+        if (isSellMode)
+        {
+            Entity clickedBuildingEntity = GetClickedBuildingEntity(worldPosition);
+            if (clickedBuildingEntity.Id != -1)
+            {
+                // 检查是否包含 LocalPlayerComponent（本地玩家建筑）
+                if (_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(clickedBuildingEntity))
+                {
+                    Debug.Log($"[建筑检测 - 本地玩家] 这是本地玩家的建筑，可以出售");
+                }
+                else
+                {
+                    Debug.Log($"[建筑检测 - 非本地玩家] 这不是本地玩家的建筑");
+                }
+
+                // 检测是否点击了单位，不再继续执行下面逻辑
+                return;
+            }
+        }
+
 
         bool hasUnitInRange = false;
         if (hasGroundPosition && _game != null && _game.World != null)
@@ -1204,6 +1248,31 @@ public class Ra2Demo : MonoBehaviour
         _game = game;
     }
 
+    private Entity GetClickedBuildingEntity(Vector3 worldPosition)
+    {
+        if (_game != null && _game.World != null)
+        {
+            // 遍历所有建筑实体，检测是否有点中的建筑
+            var buildingEntityIds = _game.World.ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
+            
+            foreach (var entityId in buildingEntityIds)
+            {
+                var entity = new Entity(entityId);
+                var transformComp = _game.World.ComponentManager.GetComponent<TransformComponent>(entity);
+                var buildingComp = _game.World.ComponentManager.GetComponent<BuildingComponent>(entity);
+                
+                Vector3 buildingPos = transformComp.Position.ToVector3();
+                float distance = Vector3.Distance(buildingPos, worldPosition);
+                
+                // 判断点击位置是否在建筑范围内（考虑建筑的尺寸）
+                // 这里使用一个简单的圆形碰撞检测，半径为 4 米
+                if (distance <= 4f)
+                {
+                    return entity;
+                }
+            }
+        }
 
-
+        return new Entity(-1);
+    }
 }
