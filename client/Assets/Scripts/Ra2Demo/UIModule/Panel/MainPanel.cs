@@ -27,6 +27,10 @@ public class MainPanel : BasePanel
     private Button buildBtn;
     private Button settingBtn;
     private Button producerBtn; // 新增生产按钮引用
+    private Button sellBtn;     // 新增售卖按钮引用
+    
+    // 售卖状态标识
+    private bool isSelling = false;
     
     // 选择模式切换按钮组
     private Button soloBtn;      // 单个单位模式
@@ -87,6 +91,7 @@ public class MainPanel : BasePanel
         buildBtn = PanelObject.transform.Find("BuildingBtn")?.GetComponent<Button>();
         settingBtn = PanelObject.transform.Find("SettingBtn")?.GetComponent<Button>();
         producerBtn = PanelObject.transform.Find("ProducerBtn")?.GetComponent<Button>();
+        sellBtn = PanelObject.transform.Find("SellBtn")?.GetComponent<Button>();
 
         // 获取选择模式切换按钮组（三个新按钮）
         soloBtn = PanelObject.transform.Find("SoloBtn")?.GetComponent<Button>();
@@ -212,6 +217,12 @@ public class MainPanel : BasePanel
             producerBtn.onClick.AddListener(OnProducerButtonClick);
         }
 
+        // 新增售卖按钮事件监听
+        if (sellBtn != null)
+        {
+            sellBtn.onClick.AddListener(OnSellButtonClick);
+        }
+
         // 选择模式切换按钮事件监听
         if (soloBtn != null)
         {
@@ -260,6 +271,12 @@ public class MainPanel : BasePanel
         if (producerBtn != null)
         {
             producerBtn.onClick.RemoveListener(OnProducerButtonClick);
+        }
+
+        // 移除售卖按钮事件监听
+        if (sellBtn != null)
+        {
+            sellBtn.onClick.RemoveListener(OnSellButtonClick);
         }
 
         // 移除选择模式切换按钮事件监听
@@ -547,7 +564,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnProducerButtonClick()
     {
-        Debug.Log("Producer按钮被点击了！");
+        Debug.Log("Producer 按钮被点击了！");
         
         buildingSubPanel.Hide();
         settingSubPanel.Hide();
@@ -567,6 +584,28 @@ public class MainPanel : BasePanel
             // 显示子面板
             producerSubPanel.Show(subPanelData);
         }
+    }
+    
+    /// <summary>
+    /// 售卖按钮点击处理 - 切换售卖状态和背景图片
+    /// </summary>
+    private void OnSellButtonClick()
+    {
+        Debug.Log("Sell 按钮被点击了！");
+        
+        // 切换售卖状态
+        isSelling = !isSelling;
+        
+        // 根据状态加载对应的背景图片
+        Sprite sellSprite = isSelling 
+            ? ResourceCache.GetSprite("images/SellSelected") 
+            : ResourceCache.GetSprite("images/Sell");
+        
+        // 设置按钮背景图片
+        SetButtonBackground(sellBtn, sellSprite);
+        
+        // 显示提示信息
+        ShowMessage(isSelling ? "进入售卖模式" : "退出售卖模式");
     }
     
     /// <summary>
