@@ -221,8 +221,8 @@ public class Ra2Processor : BaseProcessor
                     }
                     else
                     {
-                        // 隐藏指定实体的血量条
-                        HealthPanel.HideHealthBar(e.Id);
+                        // 删除指定实体的血量条
+                        HealthPanel.DeleteHealthBar(e.Id);
                     }
                 }
                 break;

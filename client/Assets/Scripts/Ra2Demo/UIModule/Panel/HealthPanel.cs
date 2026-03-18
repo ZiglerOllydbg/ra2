@@ -200,9 +200,25 @@ public class HealthPanel : BasePanel
     }
 
     /// <summary>
+    /// 删除指定实体的血量条实例
+    /// </summary>
+    /// <param name="entityId">实体 ID</param>
+    public void DeleteHealthBar(int entityId)
+    {
+        if (healthBars.TryGetValue(entityId, out HealthBarInstance healthBarInstance))
+        {
+            if (healthBarInstance.gameObject != null)
+            {
+                GameObject.Destroy(healthBarInstance.gameObject);
+            }
+            healthBars.Remove(entityId);
+        }
+    }
+
+    /// <summary>
     /// 显示指定实体的血量条
     /// </summary>
-    /// <param name="entityId">实体ID</param>
+    /// <param name="entityId">实体 ID</param>
     public void ShowHealthBar(int entityId)
     {
         if (healthBars.TryGetValue(entityId, out HealthBarInstance healthBarInstance))
