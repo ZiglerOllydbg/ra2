@@ -149,7 +149,7 @@ public class Ra2Processor : BaseProcessor
                     // 延迟2秒后调用SendReady
                     Tick.SetTimeout(() => {
                         NetworkManager.Instance.CurrentWebSocket.SendReady();
-                    }, 1.0f);
+                    }, 2.0f);
                 }
                 break;
             case GameStartEvent e:
