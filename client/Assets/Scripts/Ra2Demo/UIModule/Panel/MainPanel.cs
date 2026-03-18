@@ -85,7 +85,7 @@ public class MainPanel : BasePanel
     protected override void OnBecameVisible()
     {
         base.OnBecameVisible();
-        // 获取面板中的UI组件引用
+        // 获取面板中的 UI 组件引用
         moneyText = PanelObject.transform.Find("Info/Money/Value")?.GetComponent<TMP_Text>();
         powerText = PanelObject.transform.Find("Info/Power/Value")?.GetComponent<TMP_Text>();
         
@@ -106,6 +106,9 @@ public class MainPanel : BasePanel
         
         // 初始化选择按钮组的背景图片状态（默认选中第一个按钮 - Solo 模式）
         OnFewModeClick();
+        
+        // 初始化售卖状态
+        InitializeSellState();
         
         // 初始化和获取确认对话框组件
         confirmDialog = new ConfirmDialogComponent(PanelObject.transform.Find("Confirm"));
@@ -641,7 +644,7 @@ public class MainPanel : BasePanel
         Ra2Demo.SetSellMode(isSelling);
         
         // 显示提示信息
-        ShowMessage(isSelling ? "进入售卖模式" : "退出售卖模式");
+        ShowMessage(isSelling ? "进入售卖模式，8折出售！" : "退出售卖模式");
     }
     
     /// <summary>
@@ -791,5 +794,21 @@ public class MainPanel : BasePanel
         {
             image.sprite = sprite;
         }
+    }
+    
+    /// <summary>
+    /// 初始化售卖状态为默认值（关闭状态）
+    /// </summary>
+    private void InitializeSellState()
+    {
+        // 设置初始售卖状态为 false
+        isSelling = false;
+        
+        // 加载默认的"Sell"背景图片并应用
+        Sprite sellSprite = ResourceCache.GetSprite("images/Sell");
+        SetButtonBackground(sellBtn, sellSprite);
+        
+        // 同步游戏逻辑状态
+        Ra2Demo.SetSellMode(isSelling);
     }
 }
