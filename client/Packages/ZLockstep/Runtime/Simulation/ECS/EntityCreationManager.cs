@@ -71,6 +71,11 @@ namespace ZLockstep.Simulation.ECS
 
             BuildingType buildingType = (BuildingType)confBuilding.Type;
 
+            if (buildingType == BuildingType.Mine)
+            {
+                return null;
+            }
+
             int width = confBuilding.Size;
             int height = confBuilding.Size;
 
