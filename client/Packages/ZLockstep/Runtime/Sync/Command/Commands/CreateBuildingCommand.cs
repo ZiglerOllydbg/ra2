@@ -166,7 +166,7 @@ namespace ZLockstep.Sync.Command.Commands
             int costPower = confBuilding.CostPower;
             
             // 检查是否有足够的资源
-            if (economyComponent.Money < costMoney)
+            if (costMoney > 0 && economyComponent.Money < costMoney)
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
 
@@ -177,7 +177,7 @@ namespace ZLockstep.Sync.Command.Commands
                 return false;
             }
 
-            if (economyComponent.Power < costPower)
+            if (costPower > 0 && economyComponent.Power < costPower)
             {
                 UnityEngine.Debug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
                 world.EventManager.Publish(new MessageEvent
