@@ -39,6 +39,9 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 遍历所有支持生产的单位类型
                 foreach (var unitType in produceComponent.SupportedUnitTypes)
                 {
+                    ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
+                    int maxProgress = confUnit?.ProduceTime ?? 100;
+
                     // 获取当前生产数量
                     int produceNumber = produceComponent.ProduceNumbers.ContainsKey(unitType) ? 
                         produceComponent.ProduceNumbers[unitType] : 0;
@@ -50,10 +53,10 @@ namespace ZLockstep.Simulation.ECS.Systems
                     // 如果生产数量大于0，增加进度
                     if (produceNumber > 0)
                     {
-                        progress += 3;
+                        progress += 1;
                         
                         // 如果进度达到100，生产一个单位
-                        if (progress >= 100)
+                        if (progress >= maxProgress)
                         {
                             // 重置进度
                             progress = 0;

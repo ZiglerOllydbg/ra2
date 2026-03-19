@@ -175,7 +175,7 @@ public class MainProducerSubPanel
                 string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
-                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage}%";
+                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage / confUnit.ProduceTime * 100}%";
                 }
                 
                 var itemData = new ProducerItemData
@@ -258,7 +258,7 @@ public class MainProducerSubPanel
                 string displayName = confUnit.Name;
                 if (currentProduceCount > 0)
                 {
-                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage}%";
+                    displayName = $"{displayName}(+{currentProduceCount}){productionProgressPercentage / confUnit.ProduceTime * 100}%";
                 }
                 
                 var itemData = new ProducerItemData
