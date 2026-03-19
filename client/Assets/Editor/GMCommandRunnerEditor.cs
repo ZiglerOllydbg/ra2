@@ -72,25 +72,6 @@ public class GMCommandRunnerEditor : EditorWindow
 
     private void ProcessCommand(string cmd)
     {
-        switch (cmd)
-        {
-            case "god":
-                Debug.Log("[GM] 上帝模式已切换 (模拟)");
-                break;
-                
-            case "clear":
-                Debug.Log("[GM] 清理场景命令执行");
-                break;
-                
-            case "debug":
-                Debug.Log("[GM] 调试模式切换");
-                break;
-                
-            default:
-                Debug.Log($"[GM] 收到未知指令: {cmd}");
-                break;
-        }
-
         // 提交到游戏系统
         SubmitToGameSystem(cmd);
     }
