@@ -139,7 +139,7 @@
       "Prefab": "Tower",
       "BuildPrefab": "TowerBuilding",
       "Size": 3,
-      "Hp": 2000,
+      "Hp": 1500,
       "AutoHeal": 300,
       "ProjectileID": 4,
       "AtkRange": 15,

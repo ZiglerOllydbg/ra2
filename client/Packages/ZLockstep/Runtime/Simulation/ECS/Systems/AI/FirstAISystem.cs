@@ -88,7 +88,12 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         public void Initialize(FlowFieldNavigationSystem navSystem)
         {
             _navSystem = navSystem;
+
+            // 添加AI组件
+            ComponentManager.AddGlobalComponent(new AIComponent(AI_CAMP_ID, new List<AIActionType> { AIActionType.Produce, AIActionType.Attack }));
         }
+
+
 
         public override void Update()
         {
@@ -98,14 +103,22 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                 return;
             }
 
+            AIComponent aIComponent = ComponentManager.GetGlobalComponent<AIComponent>();
+            if (!aIComponent.IsEnabled)
+                return;
+
             // 更新评估计时器
             _timeSinceLastEvaluation += DeltaTime;
 
             // 定期重新评估 AI 单位的行为
             if (_timeSinceLastEvaluation >= _evaluationInterval)
             {
-                FindPlayerBuilding();
-                EvaluateAIUnits();
+                // 只有启用了攻击行为才执行
+                if (aIComponent.EnabledActions.Contains(AIActionType.Attack))
+                {
+                    FindPlayerBuilding();
+                    EvaluateAIUnits();
+                }
                 _timeSinceLastEvaluation = zfloat.Zero;
             }
             
@@ -115,8 +128,12 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
             // 检查是否到达生产时间
             if (_timeSinceLastProduction >= _productionInterval)
             {
-                ProduceInfantryPeriodically();
-                EvaluateAIOffense();
+                // 只有启用了生产行为才执行
+                if (aIComponent.EnabledActions.Contains(AIActionType.Produce))
+                {
+                    ProduceInfantryPeriodically();
+                    EvaluateAIOffense();
+                }
                 _timeSinceLastProduction = zfloat.Zero;
             }
         }
@@ -219,7 +236,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         }
 
         /// <summary>
-        /// 评估所有AI单位的行为
+        /// 收集所有 AI 阵营的可移动单位 ID
         /// </summary>
         private void EvaluateAIOffense()
         {

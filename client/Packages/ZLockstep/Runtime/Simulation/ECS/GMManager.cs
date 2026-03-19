@@ -6,6 +6,7 @@ using UnityEngine;
 using ZLockstep.Simulation;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;  // 添加这个using语句
+using ZLockstep.Simulation.ECS.Systems.AI;
 using ZLockstep.Sync.Command.Commands;
 using zUnity;
 
@@ -351,7 +352,7 @@ public class GMManager
     [GMCommand("setrotationy")]
     private void SetEntityRotationY(string[] args)
     {
-        // 更简单的版本：只设置Y轴旋转（绕垂直轴旋转）
+        // 更简单的版本：只设置 Y 轴旋转（绕垂直轴旋转）
         if (args.Length < 2)
         {
             AddLog("Usage: setrotationy <entityId> <angle>");
@@ -376,18 +377,18 @@ public class GMManager
         // 创建实体
         Entity entity = new Entity(entityId);
 
-        // 检查实体是否存在以及是否有TransformComponent
+        // 检查实体是否存在以及是否有 TransformComponent
         if (!_world.ComponentManager.HasComponent<TransformComponent>(entity))
         {
             AddLog($"Error: Entity {entityId} not found or doesn't have TransformComponent");
             return;
         }
 
-        // 获取当前的Transform组件
+        // 获取当前的 Transform 组件
         var transform = _world.ComponentManager.GetComponent<TransformComponent>(entity);
 
-        // 创建绕Y轴旋转的四元数
-        // 将角度转换为zfloat格式（放大10000倍）
+        // 创建绕 Y 轴旋转的四元数
+        // 将角度转换为 zfloat 格式（放大 10000 倍）
         long angleScaled = (long)(angle * 100); // 转换为百分之一度
         zfloat angleZFloat = zfloat.CreateFloat(angleScaled);
         
@@ -404,5 +405,167 @@ public class GMManager
 
         AddLog($"GM: Rotated entity {entityId} by {angle:F1} degrees around Y axis");
         AddLog($"New rotation: {transform.Rotation.ToString()}");
+    }
+
+    [GMCommand("addaiaction")]
+    private void AddAIAction(string[] args)
+    {
+        if (args.Length < 1)
+        {
+            AddLog("Usage: addaiaction <actionType1> [actionType2] [actionType3] ...");
+            AddLog("Available actions: Produce(1), Attack(2)");
+            AddLog("Example: addaiaction 1  (Add Produce action)");
+            AddLog("Example: addaiaction 1 2  (Add both Produce and Attack actions)");
+            return;
+        }
+
+        // 获取全局 AIComponent
+        var aiComponent = _world.ComponentManager.GetGlobalComponent<AIComponent>();
+        
+        List<AIActionType> addedActions = new();
+        List<string> errorMessages = new();
+
+        // 遍历所有参数，支持添加多个行为
+        foreach (string arg in args)
+        {
+            if (!int.TryParse(arg, out int actionTypeInt))
+            {
+                errorMessages.Add($"Invalid action type: {arg}");
+                continue;
+            }
+
+            AIActionType actionType = (AIActionType)actionTypeInt;
+
+            // 验证枚举值是否有效
+            if (!Enum.IsDefined(typeof(AIActionType), actionType))
+            {
+                errorMessages.Add($"Invalid action type {actionType}. Available: Produce(1), Attack(2)");
+                continue;
+            }
+
+            // 检查是否已存在
+            if (aiComponent.EnabledActions.Contains(actionType))
+            {
+                errorMessages.Add($"Action {actionType} is already enabled");
+                continue;
+            }
+
+            // 添加行为
+            aiComponent.EnabledActions.Add(actionType);
+            addedActions.Add(actionType);
+        }
+
+        // 保存更新后的组件
+        if (addedActions.Count > 0)
+        {
+            _world.ComponentManager.AddGlobalComponent(aiComponent);
+        }
+        
+        // 输出结果
+        if (addedActions.Count > 0)
+        {
+            AddLog($"GM: Added {addedActions.Count} AI action(s): {string.Join(", ", addedActions)}");
+            AddLog($"Enabled actions: {string.Join(", ", aiComponent.EnabledActions)}");
+        }
+        
+        // 输出错误信息（如果有）
+        if (errorMessages.Count > 0)
+        {
+            foreach (string error in errorMessages)
+            {
+                AddLog($"Error: {error}");
+            }
+        }
+
+        if (addedActions.Count == 0 && errorMessages.Count > 0)
+        {
+            AddLog("GM: No actions were added");
+        }
+    }
+
+    [GMCommand("removeaiaction")]
+    private void RemoveAIAction(string[] args)
+    {
+        if (args.Length < 1)
+        {
+            AddLog("Usage: removeaiaction <actionType1> [actionType2] [actionType3] ...");
+            AddLog("Available actions: Produce(1), Attack(2)");
+            AddLog("Example: removeaiaction 1  (Remove Produce action)");
+            AddLog("Example: removeaiaction 1 2  (Remove both Produce and Attack actions)");
+            return;
+        }
+
+        // 获取全局 AIComponent
+        var aiComponent = _world.ComponentManager.GetGlobalComponent<AIComponent>();
+        
+        List<AIActionType> removedActions = new();
+        List<string> errorMessages = new();
+
+        // 遍历所有参数，支持移除多个行为
+        foreach (string arg in args)
+        {
+            if (!int.TryParse(arg, out int actionTypeInt))
+            {
+                errorMessages.Add($"Invalid action type: {arg}");
+                continue;
+            }
+
+            AIActionType actionType = (AIActionType)actionTypeInt;
+
+            // 验证枚举值是否有效
+            if (!Enum.IsDefined(typeof(AIActionType), actionType))
+            {
+                errorMessages.Add($"Invalid action type {actionType}. Available: Produce(1), Attack(2)");
+                continue;
+            }
+
+            // 检查是否存在
+            if (!aiComponent.EnabledActions.Contains(actionType))
+            {
+                errorMessages.Add($"Action {actionType} is not enabled");
+                continue;
+            }
+
+            // 移除行为
+            aiComponent.EnabledActions.Remove(actionType);
+            removedActions.Add(actionType);
+        }
+
+        // 保存更新后的组件
+        if (removedActions.Count > 0)
+        {
+            _world.ComponentManager.AddGlobalComponent(aiComponent);
+        }
+        
+        // 输出结果
+        if (removedActions.Count > 0)
+        {
+            AddLog($"GM: Removed {removedActions.Count} AI action(s): {string.Join(", ", removedActions)}");
+            AddLog($"Remaining actions: {string.Join(", ", aiComponent.EnabledActions)}");
+        }
+        
+        // 输出错误信息（如果有）
+        if (errorMessages.Count > 0)
+        {
+            foreach (string error in errorMessages)
+            {
+                AddLog($"Error: {error}");
+            }
+        }
+
+        if (removedActions.Count == 0 && errorMessages.Count > 0)
+        {
+            AddLog("GM: No actions were removed");
+        }
+    }
+
+    [GMCommand("listaiactions")]
+    private void ListAIActions(string[] args)
+    {
+        // 获取全局 AIComponent
+        var aiComponent = _world.ComponentManager.GetGlobalComponent<AIComponent>();
+
+        AddLog($"Current enabled AI actions: {string.Join(", ", aiComponent.EnabledActions)}");
+        AddLog($"Available actions: Produce(1), Attack(2)");
     }
 }
