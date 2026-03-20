@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Game.Examples;
 using Game.RA2.Client;
 using Newtonsoft.Json.Linq;
@@ -247,7 +248,7 @@ public class MatchPanel : BasePanel
         GlobalInfoComponent globalInfoComponent = new(1);
         ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
         // 创建世界
-        ra2Demo.GetBattleGame().CreateWorldByConfig();
+        ra2Demo.GetBattleGame().CreateWorldByConfig(new List<int> { 1, 9 });
 
         // 在创建BattleGame后，立即开始记录命令
         ra2Demo.GetBattleGame().World.CommandManager.StartRecording(System.IO.Path.Combine(Application.persistentDataPath, fileName));
@@ -359,7 +360,7 @@ public class MatchPanel : BasePanel
         GlobalInfoComponent globalInfoComponent = new(1);
         ra2Demo.GetBattleGame().World.ComponentManager.AddGlobalComponent(globalInfoComponent);
         // 创建世界
-        ra2Demo.GetBattleGame().CreateWorldByConfig();
+        ra2Demo.GetBattleGame().CreateWorldByConfig(new List<int> { 1, 9 });
 
         // 设置回放数据到战斗游戏中
         for (int i = 0; i < commandReader.FrameInputs.Count; i++)

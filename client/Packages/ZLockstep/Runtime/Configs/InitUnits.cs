@@ -17,7 +17,6 @@ public class ConfInitUnits
 	public string ID; // 编号
 	public int Camp; // 阵营
 	public int Type; // 主类型：1=建筑；2=单位
-	public int SubType; // 子类型
 	public int ConfID; // 配置ID
 	public int PrefabId; // 资源ID-Deprecated
 	public string Position; // 位置

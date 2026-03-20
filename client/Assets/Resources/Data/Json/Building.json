@@ -201,7 +201,7 @@
       "CampID": 1,
       "Type": 7,
       "Icon": "Images/Tower",
-      "Count": 4,
+      "Count": 1,
       "Position": "20,0,20;10,0,20;20,0,10;10,0,10",
       "Name": "碉堡",
       "Enabled": 1
@@ -261,7 +261,7 @@
       "CampID": 2,
       "Type": 7,
       "Icon": "Images/Tower",
-      "Count": 4,
+      "Count": 1,
       "Position": "105,0,105;115,0,105;105,0,115;115,0,115",
       "Name": "碉堡",
       "Enabled": 1

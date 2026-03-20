@@ -175,7 +175,7 @@ namespace Game.Examples
             zUDebug.Log("[BattleGame] 游戏系统注册完成");
         }
 
-        public void CreateWorldByConfig()
+        public void CreateWorldByConfig(List<int> campIDs)
         {
             List<ConfInitUnits> confs = ConfigManager.GetAll<ConfInitUnits>();
 
@@ -184,6 +184,8 @@ namespace Game.Examples
             foreach (var conf in confs)
             {
                 if (conf.Enabled == 0) continue;
+
+                if (!campIDs.Contains(conf.Camp)) continue;
 
                 var confPos = StringToVector3Converter.StringToZVector3(conf.Position);
 
@@ -219,7 +221,7 @@ namespace Game.Examples
                 } else if (conf.Type == 2)
                 {
                     // 单位
-                    var entEvent = EntityCreationManager.CreateUnitEntity(World, conf.Camp, (UnitType)conf.SubType,
+                    var entEvent = EntityCreationManager.CreateUnitEntity(World, conf.Camp, (UnitType)conf.ConfID,
                         new zVector3(confPos.x, confPos.y, confPos.z),
                         prefabId: conf.PrefabId);
                     if (entEvent.HasValue)

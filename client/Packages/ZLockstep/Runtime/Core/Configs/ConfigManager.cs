@@ -227,9 +227,22 @@ public class ConfigManager
                 string id = kvp.Key;
                 var objData = kvp.Value;
                 
-                // 将JToken转换为T类型的对象
-                T obj = objData.ToObject<T>() as T;
-                result[id] = obj;
+                // 将 JToken 转换为 T 类型的对象
+                try
+                {
+                    T obj = objData.ToObject<T>() as T;
+                    result[id] = obj;
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogError($"[ConfigManager] 配置数据转换失败 - 类型：{typeof(T).Name}, ID: {id}, 错误：{ex.Message}");
+                    UnityEngine.Debug.LogError($"[ConfigManager] 详细堆栈：{ex.StackTrace}");
+                    if (ex.InnerException != null)
+                    {
+                        UnityEngine.Debug.LogError($"[ConfigManager] 内部异常：{ex.InnerException.Message}");
+                    }
+                    // 继续处理其他数据，不中断整个加载过程
+                }
             }
             
             _cachedData[type.FullName] = result;

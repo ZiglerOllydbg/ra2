@@ -128,13 +128,18 @@ public class NetworkManager
         {
             if (data.InitialState.Count == 2)
             {
-                _ra2Demo.GetBattleGame().CreateWorldByConfig();
-            } else
+                // 单人
+                _ra2Demo.GetBattleGame().CreateWorldByConfig(new List<int> { 1, 9 });
+            }
+            else if (data.InitialState.Count == 3)
+            {
+                // 双人
+                _ra2Demo.GetBattleGame().CreateWorldByConfig(new List<int> { 1, 2 });
+            }
+            else
             {
                 _ra2Demo.GetBattleGame().InitializeWorldFromMatchData(data.InitialState);
             }
-
-            
         }
 
         Frame.DispatchEvent(new MatchedEvent(data));
