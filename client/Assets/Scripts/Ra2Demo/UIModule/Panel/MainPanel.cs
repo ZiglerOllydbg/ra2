@@ -347,6 +347,26 @@ public class MainPanel : BasePanel
         {
             confirmDialog.UnregisterEvents();
         }
+
+        // 停止BGM
+        StopMusicBGM();
+    }
+    private void StopMusicBGM()
+    {
+        // 获取 BGM 的 AudioSource 组件
+        GameObject bgmObject = GameObject.Find("BGM");
+        if (bgmObject != null)
+        {
+            AudioSource bgmAudioSource = bgmObject.GetComponent<AudioSource>();
+            if (bgmAudioSource != null)
+            {
+                // 获取保存的背景音乐音量
+                if (bgmAudioSource.isPlaying)
+                {
+                    bgmAudioSource.Stop();
+                }
+            }
+        }
     }
 
     /// <summary>
