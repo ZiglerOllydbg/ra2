@@ -45,9 +45,9 @@ public class MainPanel : BasePanel
 
     // Zoom Slider 组件
     private Slider zoomSlider;
-    private const float CAMERA_ZOOM_MIN = 15f;   // 相机最近距离（与 RTSCameraTargetController.CameraZoomMin 一致）
-    private const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离（与 RTSCameraTargetController.CameraZoomMax 一致）
-    private const float CAMERA_ZOOM_DEFAULT = 20f; // 默认相机高度
+    public const float CAMERA_ZOOM_MIN = 10f;   // 相机最近距离（与 RTSCameraTargetController.CameraZoomMin 一致）
+    public const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离（与 RTSCameraTargetController.CameraZoomMax 一致）
+    public const float CAMERA_ZOOM_DEFAULT = 20f; // 默认相机高度
 
     // 确认对话框组件
     private ConfirmDialogComponent confirmDialog;

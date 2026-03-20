@@ -659,10 +659,11 @@ public class Ra2Demo : MonoBehaviour
             // 将屏幕像素偏移转换为世界坐标偏移（考虑相机高度）
             // 使用简单的比例关系：屏幕像素 -> 世界单位
             float cameraSize = RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize;
-
+            
             // 根据 cameraSize 动态调整 worldUnitsPerPixel
-            // cameraSize 范围：15-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
-            float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - 15f) / (35f - 15f));
+            // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
+            // cameraSize=10 时 worldUnitsPerPixel=0.15，cameraSize=35 时 worldUnitsPerPixel=0.08
+            float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - 10f) / (35f - 10f));
             Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
             
             // 直接叠加到初始位置
