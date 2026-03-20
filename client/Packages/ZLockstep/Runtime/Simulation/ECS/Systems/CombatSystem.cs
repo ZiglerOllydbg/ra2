@@ -107,177 +107,21 @@ namespace ZLockstep.Simulation.ECS.Systems
                 
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
-
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
 
-                if (attack.MaxTargets > 1)
+                // 更新攻击冷却
+                attack.TimeSinceLastAttack += DeltaTime;
+
+                // 检查是否可以攻击
+                if (!attack.CanAttack)
                 {
-                    // 多目标攻击
-                    AttackMultiTarget(entity);
+                    // 写回攻击组件
+                    ComponentManager.AddComponent(entity, attack);
                     continue;
                 }
 
-                // 1. 检查是否有目标，如果超过查找间隔时间则重新查找
-                if (attack.TargetEntityId < 0 || !IsValidTarget(attack.TargetEntityId))
-                {
-                    bool shouldSearchTarget = false;
-                    // 即使有目标，也要定期检查是否有更优目标（但受间隔限制）
-                    zfloat offset = zfloat.CreateFloat(entityId % 20);
-                    if (!shouldSearchTarget && attack.TimeSinceLastTargetSearch + offset >= TARGET_SEARCH_INTERVAL)
-                    {
-                        shouldSearchTarget = true;
-                    }
-
-                    if (shouldSearchTarget)
-                    {
-                        // 使用 KD-tree 搜索新目标
-                        attack.TargetEntityId = FindNearestEnemyKDTree(entity, camp, transform.Position, attack.Range);
-                        attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
-                    }
-                }
-
-                attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
-
-                // 2. 如果有目标，检查是否在范围内，并且如果目标是建筑则检查是否有更优先的目标
-                if (attack.TargetEntityId >= 0)
-                {
-                    Entity target = new Entity(attack.TargetEntityId);
-                    
-                    if (!ComponentManager.HasComponent<TransformComponent>(target))
-                    {
-                        attack.TargetEntityId = -1;
-                        ComponentManager.AddComponent(entity, attack);
-                        
-                        // 清空炮塔目标
-                        if (ComponentManager.HasComponent<TurretComponent>(entity))
-                        {
-                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
-                            turret.HasTarget = false;
-                            ComponentManager.AddComponent(entity, turret);
-                        }
-                        
-                        continue;
-                    }
-
-                    // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
-                    if (ComponentManager.HasComponent<BuildingComponent>(target))
-                    {
-                        int priorityTargetId = FindNearestNonBuildingEnemyKDTree(entity, camp, transform.Position, attack.Range);
-                        if (priorityTargetId >= 0)
-                        {
-                            // 存在可优先攻击的非建筑目标，切换目标
-                            attack.TargetEntityId = priorityTargetId;
-                            target = new Entity(attack.TargetEntityId);
-                        }
-                    }
-
-                    var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-                    // 如果目标是建筑，计算到建筑边界的距离
-                    zfloat distanceSqr;
-                    if (ComponentManager.HasComponent<BuildingComponent>(target))
-                    {
-                        var building = ComponentManager.GetComponent<BuildingComponent>(target);
-                        zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
-                        distanceSqr = (new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position).sqrMagnitude;
-                    }
-                    else
-                    {
-                        distanceSqr = (targetTransform.Position - transform.Position).sqrMagnitude;
-                    }
-
-                    // 更新攻击冷却
-                    attack.TimeSinceLastAttack += DeltaTime;
-                    
-                    // zUDebug.Log("[CombatSystem] Attack: " + entityId + " TimeSinceLastAttack: " + attack.TimeSinceLastAttack);
-                    
-                    zfloat rangeSqr = attack.Range * attack.Range;
-
-                    // 如果超出范围，清空目标
-                    if (distanceSqr > rangeSqr)
-                    {
-                        attack.TargetEntityId = -1;
-                        
-                        // 清空炮塔目标
-                        if (ComponentManager.HasComponent<TurretComponent>(entity))
-                        {
-                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
-                            turret.HasTarget = false;
-                            ComponentManager.AddComponent(entity, turret);
-                        }
-                    }
-                    // 如果在范围内，设置炮塔朝向目标
-                    else
-                    {
-                        // 更新炮塔朝向目标
-                        if (ComponentManager.HasComponent<TurretComponent>(entity))
-                        {
-                            var turret = ComponentManager.GetComponent<TurretComponent>(entity);
-                            turret.HasTarget = true;
-                            
-                            // 计算朝向目标的方向（2D）
-                            zVector3 toTarget;
-                            if (ComponentManager.HasComponent<BuildingComponent>(target))
-                            {
-                                // 如果目标是建筑，朝向建筑边界点
-                                var building = ComponentManager.GetComponent<BuildingComponent>(target);
-                                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
-                                toTarget = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position;
-                            }
-                            else
-                            {
-                                // 普通目标
-                                toTarget = targetTransform.Position - transform.Position;
-                            }
-                            
-                            zVector2 toTarget2D = new zVector2(toTarget.x, toTarget.z);
-                            if (toTarget2D.magnitude > zfloat.Epsilon)
-                            {
-                                turret.DesiredTurretDirection = toTarget2D.normalized;
-                            }
-                            
-                            ComponentManager.AddComponent(entity, turret);
-                        }
-                        
-                        // 如果冷却完成，发射攻击
-                        if (attack.CanAttack)
-                        {
-                            // 确定攻击目标点
-                            zVector3 targetPos;
-                            if (ComponentManager.HasComponent<BuildingComponent>(target))
-                            {
-                                // 如果目标是建筑，攻击建筑边界点
-                                var building = ComponentManager.GetComponent<BuildingComponent>(target);
-                                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
-                                targetPos = new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y);
-                            }
-                            else
-                            {
-                                // 普通目标
-                                targetPos = targetTransform.Position;
-                            }
-                            
-                            // 更新攻击者朝向
-                            zVector3 toTarget = targetTransform.Position - transform.Position;
-                            transform.Rotation = zQuaternion.LookRotation(toTarget.normalized);
-                            ComponentManager.AddComponent(entity, transform);
-
-                            // 更新旋转状态
-                            var rotationState = ComponentManager.GetComponent<RotationStateComponent>(entity);
-                            rotationState.DesiredDirection = toTarget.normalized;
-                            ComponentManager.AddComponent(entity, rotationState);
-
-                            // zUDebug.Log("[攻击朝向调试]entityId=" + entityId + ", toTarget:" + toTarget + ", Rotation=" + transform.Rotation);
-
-                            // 播放音效标记
-                            attack.PlayAttackAudio = true;
-                            FireProjectile(entity, target, transform.Position, targetPos, camp.CampId, attack.ConfProjectileID);
-                            attack.TimeSinceLastAttack = zfloat.Zero;
-                        }
-                    }
-                }
-
-                // 写回攻击组件
-                ComponentManager.AddComponent(entity, attack);
+                // 统一使用多目标攻击逻辑（即使 MaxTargets=1 也走多目标流程）
+                AttackMultiTarget(entity);
             }
         }
 
@@ -302,24 +146,9 @@ namespace ZLockstep.Simulation.ECS.Systems
 
             // 更新攻击冷却
             attack.TimeSinceLastAttack += DeltaTime;
-            attack.TimeSinceLastTargetSearch += DeltaTime; // 累加目标查找时间
             
-            // 搜索多个目标（受间隔限制）
-            System.Collections.Generic.List<int> targetIds;
-            if (attack.TimeSinceLastTargetSearch >= TARGET_SEARCH_INTERVAL || attack.TargetEntityId < 0)
-            {
-                targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
-                attack.TimeSinceLastTargetSearch = zfloat.Zero; // 重置查找时间
-            }
-            else
-            {
-                // 如果还在冷却时间内，使用当前目标
-                targetIds = new System.Collections.Generic.List<int>();
-                if (attack.TargetEntityId >= 0)
-                {
-                    targetIds.Add(attack.TargetEntityId);
-                }
-            }
+            // 每次都搜索多个目标
+            List<int> targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
             
             if (targetIds.Count == 0)
             {
@@ -331,7 +160,6 @@ namespace ZLockstep.Simulation.ECS.Systems
                     ComponentManager.AddComponent(entity, turret);
                 }
                 
-                attack.TargetEntityId = -1;
                 ComponentManager.AddComponent(entity, attack);
                 return;
             }
@@ -489,9 +317,9 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <param name="range">范围</param>
         /// <param name="maxTargets">最大目标数量</param>
         /// <returns>目标实体 ID 列表</returns>
-        private System.Collections.Generic.List<int> FindMultipleTargets(Entity self, CampComponent selfCamp, zVector3 position, zfloat range, int maxTargets)
+        private List<int> FindMultipleTargets(Entity self, CampComponent selfCamp, zVector3 position, zfloat range, int maxTargets)
         {
-            var targetIds = new System.Collections.Generic.List<int>();
+            var targetIds = new List<int>();
             
             if (spatialIndex == null)
                 return targetIds;
@@ -557,72 +385,6 @@ namespace ZLockstep.Simulation.ECS.Systems
             return targetIds;
         }
 
-        /// <summary>
-        /// 使用 KD-tree 搜索最近的敌方单位
-        /// </summary>
-        private int FindNearestEnemyKDTree(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
-        {
-            if (spatialIndex == null)
-                return -1;
-            
-            int nearestEnemyId = -1;
-            zfloat minDistSqr = range * range;
-
-            // 使用 KD-tree 进行空间邻近查询
-            float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
-            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
-
-            foreach (var neighbor in neighbors)
-            {
-                // 跳过自己
-                if (neighbor.EntityId == self.Id)
-                    continue;
-
-                // 检查是否为敌人
-                var neighborCamp = new CampComponent { CampId = neighbor.CampId };
-                if (!selfCamp.IsEnemy(neighborCamp))
-                    continue;
-
-                Entity otherEntity = new Entity(neighbor.EntityId);
-
-                // 必须有 Transform 和 Health 组件
-                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
-                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
-                    continue;
-
-                // 检查是否还活着（只检查 DeathComponent）
-                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
-                    continue;
-
-                // 计算距离
-                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
-                zfloat distSqr;
-                
-                // 如果目标是建筑，计算到建筑边界的距离
-                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
-                {
-                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
-                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
-                        continue; // 建筑不在范围内
-                    
-                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
-                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
-                }
-                else
-                {
-                    distSqr = (otherTransform.Position - position).sqrMagnitude;
-                }
-
-                // 找到最近的敌人
-                if (distSqr < minDistSqr)
-                {
-                    minDistSqr = distSqr;
-                    nearestEnemyId = neighbor.EntityId;
-                }
-            }
-
-            return nearestEnemyId;
-        }
 
         /// <summary>
         /// 使用 KD-tree 搜索最近的非建筑敌方单位
