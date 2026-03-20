@@ -43,6 +43,12 @@ public class MainPanel : BasePanel
     // 退出按钮
     private Button exitBtn;
 
+    // Zoom Slider 组件
+    private Slider zoomSlider;
+    private const float CAMERA_ZOOM_MIN = 15f;   // 相机最近距离（与 RTSCameraTargetController.CameraZoomMin 一致）
+    private const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离（与 RTSCameraTargetController.CameraZoomMax 一致）
+    private const float CAMERA_ZOOM_DEFAULT = 20f; // 默认相机高度
+
     // 确认对话框组件
     private ConfirmDialogComponent confirmDialog;
 
@@ -104,6 +110,9 @@ public class MainPanel : BasePanel
         // 获取退出按钮
         exitBtn = PanelObject.transform.Find("ExitBtn")?.GetComponent<Button>();
         
+        // 获取 Zoom Slider 组件
+        zoomSlider = PanelObject.transform.Find("ZoomSlider")?.GetComponent<Slider>();
+        
         // 初始化选择按钮组的背景图片状态（默认选中第一个按钮 - Solo 模式）
         OnFewModeClick();
         
@@ -155,6 +164,9 @@ public class MainPanel : BasePanel
         
         // 启动小地图定时刷新
         StartMiniMapRefresh();
+
+        // 初始化 Zoom Slider
+        InitializeZoomSlider();
 
         // 初始化热键快捷栏子面板
         hotKeySubPanel = new HotKeySubPanel(PanelObject.transform);
@@ -251,6 +263,12 @@ public class MainPanel : BasePanel
             exitBtn.onClick.AddListener(OnExitButtonClick);
         }
 
+        // Zoom Slider 事件监听
+        if (zoomSlider != null)
+        {
+            zoomSlider.onValueChanged.AddListener(OnZoomSliderChanged);
+        }
+
     }
 
     protected override void RemoveEvent()
@@ -301,10 +319,16 @@ public class MainPanel : BasePanel
             manyBtn.onClick.RemoveListener(OnManyModeClick);
         }
 
-        // 移除退出按钮事件监听
+        // 退出按钮事件监听
         if (exitBtn != null)
         {
             exitBtn.onClick.RemoveListener(OnExitButtonClick);
+        }
+
+        // Zoom Slider 事件监听
+        if (zoomSlider != null)
+        {
+            zoomSlider.onValueChanged.RemoveListener(OnZoomSliderChanged);
         }
 
     }
@@ -817,7 +841,7 @@ public class MainPanel : BasePanel
     }
     
     /// <summary>
-    /// 初始化售卖状态为默认值（关闭状态）
+    /// 初始化售卖状态为默认值 (关闭状态)
     /// </summary>
     private void InitializeSellState()
     {
@@ -830,5 +854,39 @@ public class MainPanel : BasePanel
         
         // 同步游戏逻辑状态
         Ra2Demo.SetSellMode(isSelling);
+    }
+    
+    /// <summary>
+    /// 初始化 Zoom Slider
+    /// </summary>
+    private void InitializeZoomSlider()
+    {
+        if (zoomSlider == null || Ra2Demo == null) return;
+        
+        // 设置 Slider 的范围（与 RTSCameraTargetController 保持一致）
+        zoomSlider.minValue = CAMERA_ZOOM_MIN;
+        zoomSlider.maxValue = CAMERA_ZOOM_MAX;
+        
+        // 获取当前相机高度作为初始值
+        RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize = CAMERA_ZOOM_DEFAULT;
+        // 设置 Slider 当前值为相机当前高度
+        zoomSlider.value = CAMERA_ZOOM_DEFAULT;
+        
+        Debug.Log($"[MainPanel] Zoom Slider 初始化 - 范围：[{CAMERA_ZOOM_MIN}, {CAMERA_ZOOM_MAX}], 当前高度：{CAMERA_ZOOM_DEFAULT:F2}");
+    }
+    
+    /// <summary>
+    /// Zoom Slider 值改变处理
+    /// </summary>
+    /// <param name="value">Slider 当前值 (相机 Y 坐标)</param>
+    private void OnZoomSliderChanged(float value)
+    {
+        if (Ra2Demo == null || RTSCameraTargetController.Instance == null) return;
+        
+        // 直接设置 CameraTarget 的 Y 坐标
+        RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize = value;
+        
+        // 调试日志
+        Debug.Log($"[MainPanel] Zoom Slider 值改变 - 新高度：{value:F2}");
     }
 }
