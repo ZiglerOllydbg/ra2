@@ -153,7 +153,7 @@ public class MainPanel : BasePanel
 
         // 初始化小地图子面板
         miniMapSubPanel = new MiniMapSubPanel(PanelObject.transform);
-        miniMapSubPanel.Show(new MiniMapPanelData() { Title = "小地图", SizeText = "地图尺寸：256*256"});
+        miniMapSubPanel.Show(new MiniMapPanelData() { Title = "小地图", SizeText = "地图尺寸：128*128"});
         
         // 设置小地图纹理
         if (Ra2Demo != null && miniMapSubPanel != null)

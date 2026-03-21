@@ -48,6 +48,14 @@ public class Ra2Demo : MonoBehaviour
     [Header("相机设置")]
     public Camera _mainCamera;
     public GameObject _cameraTarget;
+
+    [SerializeField, Range(-10000, 0)] public float BoundaryMinX = -500f;
+
+    [SerializeField, Range(0, 10000)] public float BoundaryMaxX = 500f;
+
+    [SerializeField, Range(-10000, 0)] public float BoundaryMinZ = -500f;
+
+    [SerializeField, Range(0, 10000)] public float BoundaryMaxZ = 500f;
      
     /// <summary>
     /// 设置最大选择数量
@@ -758,9 +766,19 @@ public class Ra2Demo : MonoBehaviour
     private void MainCameraFollow()
     {
         Vector3 position = _cameraTarget.transform.position;
-        position.y = _mainCamera.transform.position.y;
-        position.z -= 50; 
-        _mainCamera.transform.position = position;
+
+        float halfHeight = _mainCamera.orthographicSize * 1.41f;
+        float halfWidth = _mainCamera.orthographicSize * _mainCamera.aspect;
+
+        position.x = Mathf.Clamp(position.x, BoundaryMinX + halfWidth, BoundaryMaxX - halfWidth);
+        position.z = Mathf.Clamp(position.z, BoundaryMinZ + halfHeight, BoundaryMaxZ - halfHeight);
+        // 更新相机跟随目标位置
+        _cameraTarget.transform.position = position;
+
+        // 调整相机高度和z轴偏移
+        Vector3 cameraPosition = new(position.x, _mainCamera.transform.position.y, position.z - 50);
+
+        _mainCamera.transform.position = cameraPosition;
     }
 
     private void FixedUpdate()
