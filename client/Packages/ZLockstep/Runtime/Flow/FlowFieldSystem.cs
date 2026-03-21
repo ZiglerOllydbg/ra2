@@ -37,7 +37,7 @@ namespace ZLockstep.Flow
 
         // Debug: 最近一次散点集合
         private readonly List<zVector2> debugScatterPoints = new List<zVector2>();
-        public System.Collections.Generic.IReadOnlyList<zVector2> DebugScatterPoints => debugScatterPoints;
+        public IReadOnlyList<zVector2> DebugScatterPoints => debugScatterPoints;
         private zVector2 debugScatterCenter = zVector2.zero;
         private zfloat debugScatterRadius = zfloat.Zero;
         public zVector2 DebugScatterCenter => debugScatterCenter;
@@ -121,19 +121,6 @@ namespace ZLockstep.Flow
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
             }
 
-            // 在请求新流场之前，移除该实体作为动态障碍物
-            if (navigator.RvoAgentId >= 0)
-            {
-                var map = flowFieldManager.GetMap();
-                if (map is SimpleMapManager simpleMap)
-                {
-                    simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
-                }
-                // 重置智能体的静止状态
-                rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
-                flowFieldManager.MarkDynamicObstaclesNeedUpdate();
-            }
-
             // 请求新流场
             navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(alignedTargetPos);
             navigator.HasReachedTarget = false;
@@ -197,21 +184,6 @@ namespace ZLockstep.Flow
             zfloat minSpacing = map.GetGridSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
-            // 在请求新流场之前，移除所有实体作为动态障碍物
-            foreach (var e in entities)
-            {
-                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(e);
-                if (navigator.RvoAgentId >= 0)
-                {
-                    var map = flowFieldManager.GetMap();
-                    if (map is SimpleMapManager simpleMap)
-                    {
-                        simpleMap.RemoveDynamicObstacle(navigator.RvoAgentId);
-                    }
-                    // 重置智能体的静止状态
-                    rvoSimulator.ResetAgentStationaryState(navigator.RvoAgentId);
-                }
-            }
             flowFieldManager.MarkDynamicObstaclesNeedUpdate();
 
             // 生成候选散点（方形格，默认）

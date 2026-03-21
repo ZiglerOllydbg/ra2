@@ -301,11 +301,6 @@ namespace ZLockstep.RVO
             agent.maxNeighbors = maxNeighbors;
             agent.timeHorizon = timeHorizon;
             agent.id = nextAgentId++;
-            
-            // 初始化静止检测相关字段
-            agent.lastPosition = position;
-            agent.stationaryFrames = 0;
-            agent.isStationary = false;
 
             agents.Add(agent);
             idToAgentMap[agent.id] = agent;
@@ -467,31 +462,6 @@ namespace ZLockstep.RVO
             
             // 每帧结束后重建 KD-tree，为下一帧做准备
             RebuildKDTree();
-        }
-
-        /// <summary>
-        /// 更新智能体的静止状态
-        /// </summary>
-        /// <param name="agent">需要更新状态的智能体</param>
-        private void UpdateStationaryState(RVO2Agent agent)
-        {
-            zfloat moveDistance = (agent.position - agent.lastPosition).magnitude;
-            
-            if (moveDistance < stationaryThreshold && agent.prefVelocity == zVector2.zero)
-            {
-                agent.stationaryFrames++;
-                if (agent.stationaryFrames >= stationaryFrameThreshold)
-                {
-                    agent.isStationary = true;
-                }
-            }
-            else
-            {
-                agent.stationaryFrames = 0;
-                agent.isStationary = false;
-            }
-            
-            agent.lastPosition = agent.position;
         }
 
         /// <summary>
@@ -927,22 +897,6 @@ namespace ZLockstep.RVO
         }
         
         /// <summary>
-        /// 重置指定智能体的静止状态
-        /// 
-        /// 将指定智能体的静止计数器和静止状态重置为初始值，
-        /// 用于在智能体开始移动时确保状态的一致性。
-        /// </summary>
-        /// <param name="agentId">要重置的智能体 ID</param>
-        public void ResetAgentStationaryState(int agentId)
-        {
-            if (idToAgentMap.TryGetValue(agentId, out var agent))
-            {
-                agent.stationaryFrames = 0;
-                agent.isStationary = false;
-            }
-        }
-        
-        /// <summary>
         /// 获取当前系统中的智能体总数量
         /// 
         /// 返回模拟器中活跃智能体的数量，包括静止和移动状态的个体。
@@ -993,23 +947,6 @@ namespace ZLockstep.RVO
         {
             return agents.AsReadOnly();
         }
-        
-        /// <summary>
-        /// 获取静止的智能体列表
-        /// </summary>
-        /// <returns>静止智能体的列表</returns>
-        public List<RVO2Agent> GetStationaryAgents()
-        {
-            List<RVO2Agent> stationaryAgents = new List<RVO2Agent>();
-            foreach (var agent in agents)
-            {
-                if (agent.isStationary)
-                {
-                    stationaryAgents.Add(agent);
-                }
-            }
-            return stationaryAgents;
-        }
     }
 
     /// <summary>
@@ -1054,15 +991,6 @@ namespace ZLockstep.RVO
 
         /// <summary>避障时间范围</summary>
         public zfloat timeHorizon;
-        
-        /// <summary>上一帧位置</summary>
-        public zVector2 lastPosition;
-        
-        /// <summary>静止帧数</summary>
-        public int stationaryFrames;
-        
-        /// <summary>是否为静止状态</summary>
-        public bool isStationary;
     }
 
     /// <summary>
