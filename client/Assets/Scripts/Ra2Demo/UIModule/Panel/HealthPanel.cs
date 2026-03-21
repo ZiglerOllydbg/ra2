@@ -146,7 +146,7 @@ public class HealthPanel : BasePanel
             if (healthBarInstance.gameObject != null)
             {
                 float offsetX = 0f;
-                float offsetY = 80f; // 向上偏移 50 像素
+                float offsetY = 60f; // 向上偏移 50 像素
                 // 添加向上的偏移量，使血条显示在单位上方
                 if (componentManager.HasComponent<BuildingComponent>(entity))
                 {
