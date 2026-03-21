@@ -6,7 +6,7 @@
       "Type": 1,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "15,0,15",
+      "Position": "25,0,25",
       "Note": "主基地",
       "Enabled": 1
     },
@@ -16,7 +16,7 @@
       "Type": 1,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "110,0,110",
+      "Position": "100,0,100",
       "Note": "主基地",
       "Enabled": 1
     },
@@ -26,7 +26,7 @@
       "Type": 1,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "110,0,110",
+      "Position": "100,0,100",
       "Note": "主基地",
       "Enabled": 1
     },
@@ -36,7 +36,7 @@
       "Type": 1,
       "ConfID": 3,
       "PrefabId": 0,
-      "Position": "120,0,120",
+      "Position": "110,0,110",
       "Note": "采矿场",
       "Enabled": 1
     },
@@ -46,7 +46,7 @@
       "Type": 1,
       "ConfID": 4,
       "PrefabId": 0,
-      "Position": "120,0,110",
+      "Position": "110,0,100",
       "Note": "电厂",
       "Enabled": 1
     },
@@ -56,7 +56,7 @@
       "Type": 1,
       "ConfID": 4,
       "PrefabId": 0,
-      "Position": "110,0,120",
+      "Position": "100,0,110",
       "Note": "电厂",
       "Enabled": 1
     },
@@ -66,7 +66,7 @@
       "Type": 1,
       "ConfID": 5,
       "PrefabId": 0,
-      "Position": "120,0,100",
+      "Position": "110,0,90",
       "Note": "兵营",
       "Enabled": 1
     },
@@ -76,7 +76,7 @@
       "Type": 1,
       "ConfID": 6,
       "PrefabId": 0,
-      "Position": "100,0,120",
+      "Position": "90,0,110",
       "Note": "坦克工厂",
       "Enabled": 1
     },
@@ -86,7 +86,7 @@
       "Type": 1,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "105,0,105",
+      "Position": "95,0,95",
       "Note": "防御塔1",
       "Enabled": 1
     },
@@ -96,7 +96,7 @@
       "Type": 1,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "115,0,105",
+      "Position": "105,0,95",
       "Note": "防御塔2",
       "Enabled": 0
     },
@@ -106,7 +106,7 @@
       "Type": 1,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "105,0,115",
+      "Position": "95,0,105",
       "Note": "防御塔3",
       "Enabled": 0
     },
@@ -116,7 +116,7 @@
       "Type": 1,
       "ConfID": 7,
       "PrefabId": 0,
-      "Position": "115,0,115",
+      "Position": "105,0,105",
       "Note": "防御塔4",
       "Enabled": 0
     },
@@ -126,7 +126,7 @@
       "Type": 2,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "20,0,20",
+      "Position": "30,0,30",
       "Note": "士兵",
       "Enabled": 0
     },
@@ -136,7 +136,7 @@
       "Type": 2,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "21,0,20",
+      "Position": "31,0,30",
       "Note": "士兵",
       "Enabled": 0
     },
@@ -146,7 +146,7 @@
       "Type": 2,
       "ConfID": 1,
       "PrefabId": 0,
-      "Position": "22,0,20",
+      "Position": "32,0,30",
       "Note": "士兵",
       "Enabled": 0
     }

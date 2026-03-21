@@ -157,7 +157,7 @@ public class Ra2Processor : BaseProcessor
                 {
                     zUDebug.Log("[Ra2Processor] 开始游戏");
                     LoadingPanel.Close();
-
+                    HealthPanel.Open();
                     MainPanel.Ra2Demo = _ra2Demo;
                     MainPanel.Open();
                     
@@ -168,13 +168,11 @@ public class Ra2Processor : BaseProcessor
                 {
                     zUDebug.Log("[Ra2Processor]  solo 模式开始游戏");
                     MatchPanel.Close();
-
+                    HealthPanel.Open();
                     MainPanel.Ra2Demo = _ra2Demo;
                     MainPanel.Open();
 
                     RefreshEconomy();
-
-                    HealthPanel.Open();
                 }
                 break;
             case ReplayGameStartEvent:
@@ -196,6 +194,7 @@ public class Ra2Processor : BaseProcessor
                 MainPanel.ShowConfirmSellBuilding(e.EntityId);
                 break;
             case SettleEvent e:
+                HealthPanel.Close();
                 MainPanel.Close();
                 SettlePanel.Open();
                 SettlePanel.SetResult(e.IsVictory);

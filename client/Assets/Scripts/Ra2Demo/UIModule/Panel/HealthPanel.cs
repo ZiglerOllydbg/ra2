@@ -145,9 +145,25 @@ public class HealthPanel : BasePanel
         {
             if (healthBarInstance.gameObject != null)
             {
+                float offsetX = 0f;
+                float offsetY = 80f; // 向上偏移 50 像素
                 // 添加向上的偏移量，使血条显示在单位上方
-                float offsetY = 50f; // 向上偏移 50 像素
-                healthBarInstance.gameObject.transform.position = new Vector3(screenPosition.x, screenPosition.y + offsetY, 0);
+                if (componentManager.HasComponent<BuildingComponent>(entity))
+                {
+                    int buildingType = componentManager.GetComponent<BuildingComponent>(entity).BuildingType;
+                    ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingType);
+                    if (confBuilding != null)
+                    {
+                        offsetX = confBuilding.HpOffsetX;
+                        offsetY = confBuilding.HpOffsetY;
+                    }
+                    else
+                    {
+                        offsetY = 120f;
+                    }
+                }
+                
+                healthBarInstance.gameObject.transform.position = new Vector3(screenPosition.x + offsetX, screenPosition.y + offsetY, 0);
             }
 
             if (healthBarInstance.fillImage != null)
