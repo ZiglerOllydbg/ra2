@@ -663,7 +663,7 @@ public class Ra2Demo : MonoBehaviour
             // 根据 cameraSize 动态调整 worldUnitsPerPixel
             // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
             // cameraSize=10 时 worldUnitsPerPixel=0.15，cameraSize=35 时 worldUnitsPerPixel=0.08
-            float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - 10f) / (35f - 10f));
+            float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
             Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
             
             // 直接叠加到初始位置
