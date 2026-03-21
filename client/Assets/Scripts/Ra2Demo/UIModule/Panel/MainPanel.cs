@@ -45,8 +45,8 @@ public class MainPanel : BasePanel
 
     // Zoom Slider 组件
     private Slider zoomSlider;
-    public const float CAMERA_ZOOM_MIN = 20f;   // 相机最近距离（与 RTSCameraTargetController.CameraZoomMin 一致）
-    public const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离（与 RTSCameraTargetController.CameraZoomMax 一致）
+    public const float CAMERA_ZOOM_MIN = 20f;   // 相机最近距离
+    public const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离
     public const float CAMERA_ZOOM_DEFAULT = 20f; // 默认相机高度
 
     // 确认对话框组件
@@ -863,12 +863,13 @@ public class MainPanel : BasePanel
     {
         if (zoomSlider == null || Ra2Demo == null) return;
         
-        // 设置 Slider 的范围（与 RTSCameraTargetController 保持一致）
+        // 设置 Slider 的范围
         zoomSlider.minValue = CAMERA_ZOOM_MIN;
         zoomSlider.maxValue = CAMERA_ZOOM_MAX;
         
         // 获取当前相机高度作为初始值
-        RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize = CAMERA_ZOOM_DEFAULT;
+        Camera camera = Camera.main;
+        camera.orthographicSize = CAMERA_ZOOM_DEFAULT;
         // 设置 Slider 当前值为相机当前高度
         zoomSlider.value = CAMERA_ZOOM_DEFAULT;
         
@@ -881,10 +882,10 @@ public class MainPanel : BasePanel
     /// <param name="value">Slider 当前值 (相机 Y 坐标)</param>
     private void OnZoomSliderChanged(float value)
     {
-        if (Ra2Demo == null || RTSCameraTargetController.Instance == null) return;
-        
-        // 直接设置 CameraTarget 的 Y 坐标
-        RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize = value;
+        if (Ra2Demo == null) return;
+
+        Camera camera = Camera.main;
+        camera.orthographicSize = value;
         
         // 调试日志
         Debug.Log($"[MainPanel] Zoom Slider 值改变 - 新高度：{value:F2}");

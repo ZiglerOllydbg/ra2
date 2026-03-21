@@ -174,7 +174,7 @@ public class MiniMapSubPanel
         float worldZ = Mathf.Lerp(0, height, normalizedPos.y);
         
         // 移动主相机或角色
-        RTSCameraTargetController.Instance.CameraTarget.position = new Vector3(worldX, 0, worldZ);
+        ra2Demo._cameraTarget.transform.position = new Vector3(worldX, 0, worldZ);
     }
 
     /// <summary>

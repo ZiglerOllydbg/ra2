@@ -43,8 +43,12 @@ public class Ra2Demo : MonoBehaviour
     private MiniMapController miniMapController; // 小地图控制器
 
     public RTSControl _controls;
+
+
+    [Header("相机设置")]
     public Camera _mainCamera;
-    
+    public GameObject _cameraTarget;
+     
     /// <summary>
     /// 设置最大选择数量
     /// </summary>
@@ -274,7 +278,7 @@ public class Ra2Demo : MonoBehaviour
     private float tapSelectRadius = 5f; // 单击时点击的半径（米）
     
     // 相机移动相关字段
-    private Vector3 m_CameraInitialPosition = Vector3.zero; // 相机初始位置
+    private Vector3 _targetInitialPosition = Vector3.zero; // 相机初始位置
     private bool isCameraMoving = false; // 是否正在移动相机
     
     // 选择相关字段
@@ -546,12 +550,9 @@ public class Ra2Demo : MonoBehaviour
             isCameraMoving = true;
             
             // 记录相机初始位置
-            if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
-            {
-                m_CameraInitialPosition = RTSCameraTargetController.Instance.CameraTarget.position;
-            }
+            _targetInitialPosition = _cameraTarget.transform.position;
             
-            zUDebug.Log($"[Ra2Demo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{m_CameraInitialPosition}");
+            zUDebug.Log($"[Ra2Demo] >>> 进入相机移动模式，起始位置：{pressStartPosition}, 相机初始位置：{_targetInitialPosition}");
         }
     }
 
@@ -636,7 +637,7 @@ public class Ra2Demo : MonoBehaviour
         // 如果是相机移动模式
         else if (isCameraMoving)
         {
-            zUDebug.Log($"[Ra2Demo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}, FinalCameraPos: {RTSCameraTargetController.Instance?.CameraTarget?.position}");
+            zUDebug.Log($"[Ra2Demo] >>> 相机移动结束 - StartPos: {pressStartPosition}, EndPos: {currentPosition}, TotalDistance: {totalDragDistance:F2}");
             // 重置相机移动状态
             isCameraMoving = false;
         }
@@ -648,31 +649,24 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="currentScreenPos">当前屏幕位置</param>
     private void MoveCameraByDrag(Vector2 currentScreenPos)
     {
-        if (RTSCameraTargetController.Instance != null && _mainCamera != null)
-        {
-            // 计算从起始位置的偏移量（屏幕像素）
-            Vector2 screenDelta = currentScreenPos - pressStartPosition;
-            
-            // 获取相机到地面的距离
-            float cameraHeight = RTSCameraTargetController.Instance.CameraTarget.position.y;
-            
-            // 将屏幕像素偏移转换为世界坐标偏移（考虑相机高度）
-            // 使用简单的比例关系：屏幕像素 -> 世界单位
-            float cameraSize = RTSCameraTargetController.Instance.VirtualCamera.m_Lens.OrthographicSize;
-            
-            // 根据 cameraSize 动态调整 worldUnitsPerPixel
-            // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
-            // cameraSize=10 时 worldUnitsPerPixel=0.15，cameraSize=35 时 worldUnitsPerPixel=0.08
-            float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
-            Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
-            
-            // 直接叠加到初始位置
-            Vector3 newPosition = m_CameraInitialPosition + worldDelta;
-            RTSCameraTargetController.Instance.CameraTarget.position = newPosition;
-            
-            // 调试日志
-            // zUDebug.Log($"[Ra2Demo] 相机移动 - ScreenDelta: {screenDelta}, Height: {cameraHeight:F2}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
-        }
+        // 计算从起始位置的偏移量（屏幕像素）
+        Vector2 screenDelta = currentScreenPos - pressStartPosition;
+
+        float cameraSize = _mainCamera.orthographicSize;
+
+        
+        // 根据 cameraSize 动态调整 worldUnitsPerPixel
+        // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
+        // cameraSize=10 时 worldUnitsPerPixel=0.15，cameraSize=35 时 worldUnitsPerPixel=0.08
+        float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
+        Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
+        
+        // 直接叠加到初始位置
+        Vector3 newPosition = _targetInitialPosition + worldDelta;
+        _cameraTarget.transform.position = newPosition;
+        
+        // 调试日志
+        zUDebug.Log($"[Ra2Demo] 相机移动 - ScreenDelta: {screenDelta}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
     }
 
     private Vector2 GetCurrentInputPosition()
@@ -757,6 +751,16 @@ public class Ra2Demo : MonoBehaviour
         ProcessInputLogic();
         // 触发 HealthPanel 的 LateUpdate 事件
         Frame.DispatchEvent(new HealthPanelLateUpdateEvent());
+        // 主相机跟随目标
+        MainCameraFollow();
+    }
+
+    private void MainCameraFollow()
+    {
+        Vector3 position = _cameraTarget.transform.position;
+        position.y = _mainCamera.transform.position.y;
+        position.z -= 50; 
+        _mainCamera.transform.position = position;
     }
 
     private void FixedUpdate()
@@ -995,20 +999,11 @@ public class Ra2Demo : MonoBehaviour
                 Vector3 factoryPosition = transform.Position.ToVector3();
 
                 // 将相机移动到工厂位置
-                if (RTSCameraTargetController.Instance != null && RTSCameraTargetController.Instance.CameraTarget != null)
-                {
-                    // 调整目标距离
-                    factoryPosition.y = 0;
-                    RTSCameraTargetController.Instance.CameraTarget.position = factoryPosition;
-                    zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
-                }
+                _cameraTarget.transform.position = factoryPosition;
+                zUDebug.Log($"[Ra2Demo] 相机已移动到我方工厂位置: {factoryPosition}");
                 return;
             }
         }
-
-        // 调整相机位置
-        Vector3 adjustedPosition = new(RTSCameraTargetController.Instance.CameraTarget.position.x, 0, RTSCameraTargetController.Instance.CameraTarget.position.z);
-        RTSCameraTargetController.Instance.CameraTarget.position = adjustedPosition;
 
         zUDebug.Log("[Ra2Demo] 未找到我方工厂");
     }
