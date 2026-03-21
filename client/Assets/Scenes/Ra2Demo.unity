@@ -377,6 +377,10 @@ MonoBehaviour:
   - {fileID: 0}
   _mainCamera: {fileID: 1230374406}
   _cameraTarget: {fileID: 396749519}
+  BoundaryMinX: 0
+  BoundaryMaxX: 128
+  BoundaryMinZ: 0
+  BoundaryMaxZ: 128
   maxSelectionCount: 0
 --- !u!114 &812412505
 MonoBehaviour:

@@ -662,11 +662,9 @@ public class Ra2Demo : MonoBehaviour
 
         float cameraSize = _mainCamera.orthographicSize;
 
-        
         // 根据 cameraSize 动态调整 worldUnitsPerPixel
         // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
-        // cameraSize=10 时 worldUnitsPerPixel=0.15，cameraSize=35 时 worldUnitsPerPixel=0.08
-        float worldUnitsPerPixel = Mathf.Lerp(0.15f, 0.08f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
+        float worldUnitsPerPixel = Mathf.Lerp(0.1f, 0.05f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
         Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
         
         // 直接叠加到初始位置
@@ -769,6 +767,15 @@ public class Ra2Demo : MonoBehaviour
 
         float halfHeight = _mainCamera.orthographicSize * 1.41f;
         float halfWidth = _mainCamera.orthographicSize * _mainCamera.aspect;
+
+        if (halfWidth * 2 > BoundaryMaxX - BoundaryMinX)
+        {
+            halfWidth = (BoundaryMaxX - BoundaryMinX) / 2;
+        }
+        if (halfHeight * 2 > BoundaryMaxZ - BoundaryMinZ)
+        {
+            halfHeight = (BoundaryMaxZ - BoundaryMinZ) / 2;
+        }
 
         position.x = Mathf.Clamp(position.x, BoundaryMinX + halfWidth, BoundaryMaxX - halfWidth);
         position.z = Mathf.Clamp(position.z, BoundaryMinZ + halfHeight, BoundaryMaxZ - halfHeight);

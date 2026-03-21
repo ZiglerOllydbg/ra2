@@ -45,8 +45,8 @@ public class MainPanel : BasePanel
 
     // Zoom Slider 组件
     private Slider zoomSlider;
-    public const float CAMERA_ZOOM_MIN = 20f;   // 相机最近距离
-    public const float CAMERA_ZOOM_MAX = 35f; // 相机最远距离
+    public const float CAMERA_ZOOM_MIN = 10f;   // 相机最近距离
+    public const float CAMERA_ZOOM_MAX = 30f; // 相机最远距离
     public const float CAMERA_ZOOM_DEFAULT = 20f; // 默认相机高度
 
     // 确认对话框组件
