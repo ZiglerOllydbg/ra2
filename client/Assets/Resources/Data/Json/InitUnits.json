@@ -128,7 +128,7 @@
       "PrefabId": 0,
       "Position": "30,0,30",
       "Note": "士兵",
-      "Enabled": 0
+      "Enabled": 1
     },
     "15": {
       "ID": 15,
@@ -138,7 +138,7 @@
       "PrefabId": 0,
       "Position": "31,0,30",
       "Note": "士兵",
-      "Enabled": 0
+      "Enabled": 1
     },
     "16": {
       "ID": 16,
@@ -148,7 +148,17 @@
       "PrefabId": 0,
       "Position": "32,0,30",
       "Note": "士兵",
-      "Enabled": 0
+      "Enabled": 1
+    },
+    "17": {
+      "ID": 17,
+      "Camp": 1,
+      "Type": 2,
+      "ConfID": 3,
+      "PrefabId": 0,
+      "Position": "30,0,32",
+      "Note": "灰熊坦克",
+      "Enabled": 1
     }
   }
 }
