@@ -52,7 +52,6 @@ namespace ZLockstep.Flow
         private int maxCachedFields;
         private int currentFrame;
         private int maxUpdatesPerFrame;
-        private RVO2Simulator rvoSimulator;
         private bool dynamicObstaclesNeedUpdate;
 
         /// <summary>
@@ -93,15 +92,6 @@ namespace ZLockstep.Flow
         public IFlowFieldMap GetMap()
         {
             return map;
-        }
-        
-        /// <summary>
-        /// 设置RVO模拟器引用
-        /// </summary>
-        /// <param name="simulator">RVO模拟器</param>
-        public void SetRvoSimulator(RVO2Simulator simulator)
-        {
-            rvoSimulator = simulator;
         }
         
         /// <summary>
@@ -366,9 +356,6 @@ namespace ZLockstep.Flow
         /// </summary>
         public void UpdateDirtyFields()
         {
-            // 更新动态障碍物信息
-            UpdateDynamicObstaclesIfNeeded();
-            
             int updated = 0;
             while (dirtyFields.Count > 0 && updated < maxUpdatesPerFrame)
             {
@@ -395,36 +382,6 @@ namespace ZLockstep.Flow
                 }
                 // 出队后无论是否更新，移除脏标记记录，避免重复
                 dirtySet.Remove(field.fieldId);
-            }
-        }
-        
-        /// <summary>
-        /// 立即更新动态障碍物（如果需要）
-        /// </summary>
-        public void UpdateDynamicObstaclesIfNeeded()
-        {
-            if (dynamicObstaclesNeedUpdate)
-            {
-                UpdateDynamicObstacles();
-                dynamicObstaclesNeedUpdate = false;
-            }
-        }
-        
-        /// <summary>
-        /// 更新动态障碍物信息
-        /// </summary>
-        private void UpdateDynamicObstacles()
-        {
-            if (rvoSimulator == null || !(map is SimpleMapManager))
-                return;
-                
-            // 获取当前所有静止的智能体
-            var stationaryAgents = rvoSimulator.GetStationaryAgents();
-            
-            // 添加新的动态障碍物
-            foreach (var agent in stationaryAgents)
-            {
-                // (map as SimpleMapManager).AddDynamicObstacle(agent.id, agent.position, agent.radius * 3 / 2);
             }
         }
 

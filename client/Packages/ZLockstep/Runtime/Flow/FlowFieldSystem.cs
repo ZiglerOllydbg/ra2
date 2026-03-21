@@ -55,12 +55,6 @@ namespace ZLockstep.Flow
             flowFieldManager = ffMgr;
             rvoSimulator = rvoSim;
             map = gameMap;
-            
-            // 设置RVO模拟器引用到流场管理器
-            flowFieldManager.SetRvoSimulator(rvoSimulator);
-            
-            // 设置流场管理器引用到RVO模拟器
-            rvoSimulator.SetFlowFieldManager(flowFieldManager);
         }
 
         protected override void OnInitialize()

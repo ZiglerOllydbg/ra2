@@ -231,11 +231,6 @@ namespace ZLockstep.RVO
         /// 静止判定帧数
         /// </summary>
         private int stationaryFrameThreshold = 30;
-        
-        /// <summary>
-        /// 流场管理器引用，用于通知动态障碍物变化
-        /// </summary>
-        private FlowFieldManager flowFieldManager;
 
         /// <summary>
         /// 搜索邻居的最大半径（基于最大速度和时间的估计值）
@@ -249,15 +244,6 @@ namespace ZLockstep.RVO
         public void SetVelocitySmoothingFactor(zfloat smoothingFactor)
         {
             velocitySmoothingFactor = smoothingFactor;
-        }
-        
-        /// <summary>
-        /// 设置流场管理器引用
-        /// </summary>
-        /// <param name="manager">流场管理器</param>
-        public void SetFlowFieldManager(FlowFieldManager manager)
-        {
-            flowFieldManager = manager;
         }
 
         /// <summary>
@@ -475,28 +461,6 @@ namespace ZLockstep.RVO
             // 阶段 2：统一应用新速度并更新位置
             for (int i = 0; i < agents.Count; i++)
             {
-                // 更新静止状态
-                bool wasStationary = agents[i].isStationary;
-                UpdateStationaryState(agents[i]);
-                bool isStationary = agents[i].isStationary;
-                
-                // 如果智能体开始移动，立即移除其动态障碍物
-                if (wasStationary && !isStationary && flowFieldManager != null)
-                {
-                    // 通过 ID 精确移除动态障碍物
-                    var map = flowFieldManager.GetMap();
-                    if (map is SimpleMapManager simpleMap)
-                    {
-                        simpleMap.RemoveDynamicObstacle(agents[i].id);
-                    }
-                    flowFieldManager.MarkDynamicObstaclesNeedUpdate();
-                }
-                // 如果智能体变为静止，通知流场管理器需要更新动态障碍物
-                else if (!wasStationary && isStationary && flowFieldManager != null)
-                {
-                    flowFieldManager.MarkDynamicObstaclesNeedUpdate();
-                }
-                
                 agents[i].velocity = agents[i].newVelocity;
                 agents[i].position += agents[i].velocity * deltaTime;
             }
@@ -951,17 +915,6 @@ namespace ZLockstep.RVO
         {
             if (idToAgentMap.TryGetValue(agentId, out var agent))
             {
-                // 移除动态障碍物
-                if (flowFieldManager != null)
-                {
-                    var map = flowFieldManager.GetMap();
-                    if (map is SimpleMapManager simpleMap)
-                    {
-                        simpleMap.RemoveDynamicObstacle(agentId);
-                    }
-                    flowFieldManager.MarkDynamicObstaclesNeedUpdate();
-                }
-                
                 agents.Remove(agent);
                 idToAgentMap.Remove(agentId);
                 
