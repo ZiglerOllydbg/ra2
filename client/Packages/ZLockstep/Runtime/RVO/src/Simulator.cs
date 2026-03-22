@@ -340,45 +340,19 @@ namespace ZLockstep.RVO
         {
             updateDeleteAgent();
 
-            if (workers_ == null)
-            {
-                workers_ = new Worker[numWorkers_];
-                doneEvents_ = new ManualResetEvent[workers_.Length];
-                workerAgentCount_ = getNumAgents();
-
-                for (int block = 0; block < workers_.Length; ++block)
-                {
-                    doneEvents_[block] = new ManualResetEvent(false);
-                    workers_[block] = new Worker(block * getNumAgents() / workers_.Length, (block + 1) * getNumAgents() / workers_.Length, doneEvents_[block]);
-                }
-            }
-
-            if (workerAgentCount_ != getNumAgents())
-            {
-                workerAgentCount_ = getNumAgents();
-                for (int block = 0; block < workers_.Length; ++block)
-                {
-                    workers_[block].config(block * getNumAgents() / workers_.Length, (block + 1) * getNumAgents() / workers_.Length);
-                }
-            }
-
             kdTree_.buildAgentTree();
 
-            for (int block = 0; block < workers_.Length; ++block)
+            // Single-threaded processing
+            for (int index = 0; index < getNumAgents(); ++index)
             {
-                doneEvents_[block].Reset();
-                ThreadPool.QueueUserWorkItem(workers_[block].step);
+                agents_[index].computeNeighbors();
+                agents_[index].computeNewVelocity();
             }
 
-            WaitHandle.WaitAll(doneEvents_);
-
-            for (int block = 0; block < workers_.Length; ++block)
+            for (int index = 0; index < getNumAgents(); ++index)
             {
-                doneEvents_[block].Reset();
-                ThreadPool.QueueUserWorkItem(workers_[block].update);
+                agents_[index].update();
             }
-
-            WaitHandle.WaitAll(doneEvents_);
 
             globalTime_ += timeStep_;
 
@@ -633,7 +607,7 @@ namespace ZLockstep.RVO
          */
         public int GetNumWorkers()
         {
-            return numWorkers_;
+            return 1;
         }
 
         /**
@@ -918,15 +892,7 @@ namespace ZLockstep.RVO
          */
         public void SetNumWorkers(int numWorkers)
         {
-            numWorkers_ = numWorkers;
-
-            if (numWorkers_ <= 0)
-            {
-                int completionPorts;
-                ThreadPool.GetMinThreads(out numWorkers_, out completionPorts);
-            }
-            workers_ = null;
-            workerAgentCount_ = 0;
+            // Single-threaded mode, this method does nothing
         }
 
         /**
