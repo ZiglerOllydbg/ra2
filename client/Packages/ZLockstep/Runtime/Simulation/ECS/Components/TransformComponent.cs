@@ -15,7 +15,7 @@ namespace ZLockstep.Simulation.ECS.Components
         public static TransformComponent Default => new TransformComponent
         {
             Position = zVector3.zero,
-            Rotation = zQuaternion.identity,
+            Rotation = zQuaternion.xPositive,
             Scale = zVector3.one
         };
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace zUnity
@@ -51,13 +51,12 @@ namespace zUnity
 		}
 
         public static readonly zQuaternion identity = new zQuaternion(zfloat.Zero, zfloat.Zero, zfloat.Zero, zfloat.One);
-        //public static zQuaternion identity
-        //{
-        //    get
-        //    {
-        //        return _identity;
-        //    }
-        //}
+        
+        /// <summary>
+        /// X 轴正方向的旋转（绕 Y 轴旋转 -90 度，从 Z 轴正方向转向 X 轴正方向）
+        /// 等同于 Euler(0, -90, 0) 或 LookRotation(zVector3.right)
+        /// </summary>
+        public static readonly zQuaternion xPositive = zQuaternion.LookRotation(zVector3.right);
 
 		/// <summary>
 		/// 返回欧拉角
@@ -443,12 +442,7 @@ namespace zUnity
 		{
 			upwards.Normalize();
 			forward.Normalize();
-			/*zVector3 right = zVector3.Cross(upwards, forward).normalized;
 
-			zVector3 n = forward + upwards + right;
-			zVector3 baseN = zVector3.forward + zVector3.up + zVector3.right;
-
-			return FromToRotation(baseN, n);*/
 			if (forward.sqrMagnitude != 1)
 				forward = forward.normalized;
 

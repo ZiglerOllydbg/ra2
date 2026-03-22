@@ -22,7 +22,7 @@ namespace ZLockstep.Flow
     /// 5. 卡住检测与处理
     /// 6. 到达目标检测
     /// </summary>
-    public class OldFlowFieldNavigationSystem : BaseSystem
+    public class NewFlowFieldNavigationSystem : BaseSystem
     {
         private FlowFieldManager flowFieldManager;
         private RVO2Simulator rvoSimulator;
@@ -662,7 +662,62 @@ namespace ZLockstep.Flow
             foreach (var entityId in navigatorEntities)
             {
                 Entity entity = new Entity(entityId);
-                UpdateEntityNavigation(entity);
+
+                // 检查单位是否存活，死亡单位不能移动（只检查DeathComponent）
+                if (ComponentManager.HasComponent<DeathComponent>(entity))
+                {
+                    ClearMoveTarget(entity);
+                    continue;
+                }
+
+                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
+
+                if (!navigator.IsEnabled)
+                    continue;
+
+                // 没有目标
+                if (!ComponentManager.HasComponent<MoveTargetComponent>(entity))
+                {
+                    if (navigator.RvoAgentId >= 0)
+                    {
+                        rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                    }
+                    continue;
+                }
+
+                if (navigator.CurrentFlowFieldId < 0)
+                    continue;
+
+                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+                var target = ComponentManager.GetComponent<MoveTargetComponent>(entity);
+
+                zVector2 currentPos = new zVector2(transform.Position.x, transform.Position.z);
+
+                // 从流场获取方向
+                zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
+
+                // 当流场方向为零时（通常是在目标格子内），直接朝目标点移动
+                if (flowDirection == zVector2.zero)
+                {
+                    zVector2 toTarget = target.TargetPosition - currentPos;
+                    zfloat distSq = toTarget.sqrMagnitude;
+                    
+                    // 如果距离很近（小于到达半径的平方），停止移动
+                    zfloat arrivalRadiusSq = navigator.ArrivalRadius * navigator.ArrivalRadius;
+                    if (distSq <= arrivalRadiusSq)
+                    {
+                        navigator.HasReachedTarget = true;
+                        ComponentManager.AddComponent(entity, navigator);
+                        ClearMoveTarget(entity, true);
+                        continue;
+                    }
+                    
+                    // 否则，直接朝目标移动（用于目标格子内的精确移动）
+                    flowDirection = toTarget.normalized;
+                }
+    
+                // 设置期望速度（RVO会处理避障）
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, flowDirection);
             }
 
             // 3. RVO统一计算避障
@@ -672,7 +727,24 @@ namespace ZLockstep.Flow
             foreach (var entityId in navigatorEntities)
             {
                 Entity entity = new Entity(entityId);
-                SyncPosition(entity);
+                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
+                if (navigator.RvoAgentId < 0)
+                    continue;
+
+                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+                zVector2 newPos = rvoSimulator.GetAgentPosition(navigator.RvoAgentId);
+
+                transform.Position.x = newPos.x;
+                transform.Position.z = newPos.y;
+                ComponentManager.AddComponent(entity, transform);
+
+                // 同步速度到VelocityComponent（如果有）
+                if (ComponentManager.HasComponent<VelocityComponent>(entity))
+                {
+                    zVector2 vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
+                    var velocity = new VelocityComponent(new zVector3(vel2D.x, zfloat.Zero, vel2D.y));
+                    ComponentManager.AddComponent(entity, velocity);
+                }
             }
         }
 

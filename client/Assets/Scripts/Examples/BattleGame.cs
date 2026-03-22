@@ -141,7 +141,7 @@ namespace Game.Examples
             World.SystemManager.RegisterSystem(new CombatSystem());
 
             // 注册旋转系统（在战斗系统之后，处理车体和炮塔旋转）
-            World.SystemManager.RegisterSystem(new RotationSystem());
+            // World.SystemManager.RegisterSystem(new RotationSystem());
             zUDebug.Log("[BattleGame] 旋转系统注册完成");
 
             World.SystemManager.RegisterSystem(new ProjectileSystem());

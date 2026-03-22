@@ -59,6 +59,26 @@ namespace ZLockstep.RVO
         }
 
         /**
+         * <summary>Returns a zero vector.</summary>
+         *
+         * <returns>A vector with both coordinates set to zero.</returns>
+         */
+        public static Vector2 zero
+        {
+            get { return new Vector2(0f, 0f); }
+        }
+
+        /**
+         * <summary>Checks if this vector is zero (both coordinates are zero).</summary>
+         *
+         * <returns>True if both x and y coordinates are zero, false otherwise.</returns>
+         */
+        public bool IsZero
+        {
+            get { return Math.Abs(x_) < float.Epsilon && Math.Abs(y_) < float.Epsilon; }
+        }
+
+        /**
          * <summary>Returns the string representation of this vector.</summary>
          *
          * <returns>The string representation of this vector.</returns>
@@ -192,6 +212,59 @@ namespace ZLockstep.RVO
         public static Vector2 operator -(Vector2 vector)
         {
             return new Vector2(-vector.x_, -vector.y_);
+        }
+
+        /**
+         * <summary>Determines whether the specified object is equal to this vector.</summary>
+         *
+         * <returns>True if the specified object is equal to this vector, false otherwise.</returns>
+         *
+         * <param name="obj">The object to compare with this vector.</param>
+         */
+        public override bool Equals(object obj)
+        {
+            if (obj is Vector2)
+            {
+                Vector2 other = (Vector2)obj;
+                return Math.Abs(x_ - other.x_) < float.Epsilon && Math.Abs(y_ - other.y_) < float.Epsilon;
+            }
+            return false;
+        }
+
+        /**
+         * <summary>Returns a hash code for this vector.</summary>
+         *
+         * <returns>A hash code for this vector.</returns>
+         */
+        public override int GetHashCode()
+        {
+            return x_.GetHashCode() ^ y_.GetHashCode();
+        }
+
+        /**
+         * <summary>Equality operator for comparing two vectors.</summary>
+         *
+         * <returns>True if both vectors have approximately equal coordinates, false otherwise.</returns>
+         *
+         * <param name="left">The first vector.</param>
+         * <param name="right">The second vector.</param>
+         */
+        public static bool operator ==(Vector2 left, Vector2 right)
+        {
+            return Math.Abs(left.x_ - right.x_) < float.Epsilon && Math.Abs(left.y_ - right.y_) < float.Epsilon;
+        }
+
+        /**
+         * <summary>Inequality operator for comparing two vectors.</summary>
+         *
+         * <returns>True if the vectors are not equal, false otherwise.</returns>
+         *
+         * <param name="left">The first vector.</param>
+         * <param name="right">The second vector.</param>
+         */
+        public static bool operator !=(Vector2 left, Vector2 right)
+        {
+            return !(left == right);
         }
     }
 }

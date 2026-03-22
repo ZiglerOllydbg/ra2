@@ -4,8 +4,6 @@ using zUnity;
 using ZLockstep.RVO;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
-using ZLockstep.View;
-using System;
 
 namespace ZLockstep.Flow
 {
@@ -24,10 +22,10 @@ namespace ZLockstep.Flow
     /// 5. 卡住检测与处理
     /// 6. 到达目标检测
     /// </summary>
-    public class FlowFieldNavigationSystem : BaseSystem
+    public class OldFlowFieldNavigationSystem : BaseSystem
     {
         private FlowFieldManager flowFieldManager;
-        // private RVO2Simulator rvoSimulator;
+        private RVO2Simulator rvoSimulator;
         private IFlowFieldMap map;
         
         private struct PooledAgent
@@ -55,18 +53,13 @@ namespace ZLockstep.Flow
         public void InitializeNavigation(FlowFieldManager ffMgr, RVO2Simulator rvoSim, IFlowFieldMap gameMap)
         {
             flowFieldManager = ffMgr;
-            // rvoSimulator = rvoSim;
+            rvoSimulator = rvoSim;
             map = gameMap;
         }
 
         protected override void OnInitialize()
         {
             // 系统初始化
-            Simulator.Instance.setTimeStep(0.25f);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 2.0f, 2.0f, new Vector2(0.0f, 0.0f));
-
-            // add in awake
-            Simulator.Instance.processObstacles();
         }
 
         /// <summary>
@@ -91,15 +84,14 @@ namespace ZLockstep.Flow
             
             // 在RVO中创建智能体
             // 优化的RVO参数，减少卡死在角落的情况
-            // int rvoAgentId = rvoSimulator.AddAgent(
-            //         pos2D,
-            //         radius,
-            //         maxSpeed,
-            //         maxNeighbors: 10,
-            //         timeHorizon: new zfloat(1, 5000)  // 降低到1.5，减少过早反应
-            //     );
-            int sid = Simulator.Instance.addAgent(new Vector2(pos2D.ToVector2().x, pos2D.ToVector2().y), 15.0f, 10, 5.0f, 2.0f, 2.0f, 5.0f, new Vector2(0.0f, 0.0f));
-            navigator.RvoAgentId = sid;
+            int rvoAgentId = rvoSimulator.AddAgent(
+                    pos2D,
+                    radius,
+                    maxSpeed,
+                    maxNeighbors: 10,
+                    timeHorizon: new zfloat(1, 5000)  // 降低到1.5，减少过早反应
+                );
+            navigator.RvoAgentId = rvoAgentId;
 
             ComponentManager.AddComponent(entity, navigator);
         }
@@ -645,8 +637,7 @@ namespace ZLockstep.Flow
             // 停止RVO智能体
             if (navigator.RvoAgentId >= 0)
             {
-                // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
             }
         }
 
@@ -660,12 +651,7 @@ namespace ZLockstep.Flow
         /// </summary>
         public override void Update()
         {
-            UpdateRVO();
-        }
-
-        private void UpdateFlowField()
-        {
-            if (flowFieldManager == null)
+            if (flowFieldManager == null || rvoSimulator == null)
                 return;
 
             // 1. 更新流场管理器（处理脏流场）
@@ -680,8 +666,7 @@ namespace ZLockstep.Flow
             }
 
             // 3. RVO统一计算避障
-            // rvoSimulator.DoStep(DeltaTime);
-            Simulator.Instance.doStep();
+            rvoSimulator.DoStep(DeltaTime);
 
             // 4. 同步位置回Transform组件
             foreach (var entityId in navigatorEntities)
@@ -689,105 +674,6 @@ namespace ZLockstep.Flow
                 Entity entity = new Entity(entityId);
                 SyncPosition(entity);
             }
-        }
-
-        private void UpdateRVO()
-        {
-            if (flowFieldManager == null)
-                return;
-
-            // 1. 更新流场管理器（处理脏流场）
-            flowFieldManager.Tick();
-
-            // 设置期望速度
-            var navigatorEntities = ComponentManager.GetAllEntityIdsWith<FlowFieldNavigatorComponent>();
-            foreach (var entityId in navigatorEntities)
-            {
-                Entity entity = new Entity(entityId);
-
-                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
-
-                if (!navigator.IsEnabled)
-                    continue;
-
-                // 没有目标
-                if (!ComponentManager.HasComponent<MoveTargetComponent>(entity))
-                {
-                    if (navigator.RvoAgentId >= 0)
-                    {
-                        // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                        Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
-                    }
-                    continue;
-                }
-
-                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-                zVector2 currentPos = new zVector2(transform.Position.x, transform.Position.z);
-                var target = ComponentManager.GetComponent<MoveTargetComponent>(entity);
-
-                // 从流场获取方向
-                zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
-
-                // 当流场方向为零时（通常是在目标格子内），直接朝目标点移动
-                if (flowDirection == zVector2.zero)
-                {
-                    // 直接朝目标移动
-                    Vector2 moveTarget = new(target.TargetPosition.x.ToFloat(), target.TargetPosition.y.ToFloat());
-                    Vector2 goalVector = moveTarget - Simulator.Instance.getAgentPosition(navigator.RvoAgentId);
-                    if (RVOMath.absSq(goalVector) > 1.0f)
-                    {
-                        goalVector = RVOMath.normalize(goalVector);
-                    }
-                    
-                    // 否则，直接朝目标移动（用于目标格子内的精确移动）
-                    Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
-                }
-                else
-                {
-                    // 添加流场方向
-                    Vector2 goalVector = new Vector2(flowDirection.x.ToFloat(), flowDirection.y.ToFloat());
-                    // 增加速度
-                    goalVector = goalVector * 5f;
-                    Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
-                }
-            }
-
-            Simulator.Instance.doStep();
-
-            // 4. 同步位置回Transform组件
-            foreach (var entityId in navigatorEntities)
-            {
-                Entity entity = new Entity(entityId);
-
-                var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
-                if (navigator.RvoAgentId < 0)
-                    continue;
-
-                // 位置
-                Vector2 pos = Simulator.Instance.getAgentPosition(navigator.RvoAgentId);            
-                zfloat x = zfloat.CreateFloat((long)(pos.x() * 10000));
-                zfloat y = zfloat.CreateFloat((long)(pos.y() * 10000));
-                zVector2 newV2Pos = new(x, y);
-                // 朝向
-                Vector2 vel = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId);
-                if (vel.IsZero)
-                {
-                    continue;
-                }
-
-                vel = RVOMath.normalize(vel);
-                zVector3 forward = new(zfloat.FromFloat(vel.x()), zfloat.Zero, zfloat.FromFloat(vel.y()));
-
-                // 同步位置
-                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-                transform.Position.x = newV2Pos.x;
-                transform.Position.z = newV2Pos.y;
-                transform.Rotation = zQuaternion.LookRotation(forward);
-
-                ComponentManager.AddComponent(entity, transform);
-                // zUDebug.Log($"[RVO] UpdateEntityNavigation: entityId={entity.Id}, newPos:{newV2Pos}, forward:{forward}");
-            }
-
         }
 
         /// <summary>
@@ -818,8 +704,7 @@ namespace ZLockstep.Flow
             {
                 if (navigator.RvoAgentId >= 0)
                 {
-                    // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                    Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
+                    rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 }
                 return;
             }
@@ -977,8 +862,7 @@ namespace ZLockstep.Flow
             // 如果正在原地转向，停止移动
             if (isInPlaceRotating)
             {
-                // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 ComponentManager.AddComponent(entity, navigator);
                 return;
             }
@@ -998,9 +882,7 @@ namespace ZLockstep.Flow
             }
             
             // 设置期望速度（RVO会处理避障）
-            // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, desiredVelocity);
-            // TODO : RVO
-            Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(desiredVelocity.ToVector2().x, desiredVelocity.ToVector2().y));
+            rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, desiredVelocity);
 
             // 保存更新后的导航组件
             ComponentManager.AddComponent(entity, navigator);
@@ -1115,28 +997,19 @@ namespace ZLockstep.Flow
 
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
             zVector2 oldPos = new zVector2(transform.Position.x, transform.Position.z);
-            // zVector2 newPos = rvoSimulator.GetAgentPosition(navigator.RvoAgentId);
-
-            Vector2 pos = Simulator.Instance.getAgentPosition(navigator.RvoAgentId);
-            zfloat x = zfloat.CreateFloat((long)(pos.x() * 10000));
-            zfloat y = zfloat.CreateFloat((long)(pos.y() * 10000));
-
-            zVector2 newPos = new zVector2(x, y);
-
-           
+            zVector2 newPos = rvoSimulator.GetAgentPosition(navigator.RvoAgentId);
             
             // ===== 检查是否已到达目标 =====
             // 如果已经标记为到达，确保速度为零
             if (navigator.HasReachedTarget)
             {
                 // 冻结代理：速度为零，位置对齐 Transform
-                // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
-                // zVector2 freezePos = new zVector2(transform.Position.x, transform.Position.z);
+                rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                zVector2 freezePos = new zVector2(transform.Position.x, transform.Position.z);
                 // 对齐网格
-                // flowFieldManager.GetMap().WorldToGrid(freezePos, out int gx, out int gy);
-                // zVector2 fixedPos = new zVector2(gx, gy);
-                // rvoSimulator.SetAgentPosition(navigator.RvoAgentId, fixedPos);
+                flowFieldManager.GetMap().WorldToGrid(freezePos, out int gx, out int gy);
+                zVector2 fixedPos = new zVector2(gx, gy);
+                rvoSimulator.SetAgentPosition(navigator.RvoAgentId, fixedPos);
                 // freezePos transform.Position
                 // zUDebug.Log($"navigator.RvoAgentId: {navigator.RvoAgentId}, freezePos: {freezePos}, transform.Position: {fixedPos}");
 
@@ -1157,7 +1030,7 @@ namespace ZLockstep.Flow
                 if (rotationState.IsInPlaceRotating)
                 {
                     // 冻结位置：重置RVO代理位置到当前Transform位置
-                    // rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
+                    rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
 
                     // 同步零速度到 VelocityComponent（若存在）
                     if (ComponentManager.HasComponent<VelocityComponent>(entity))
@@ -1169,23 +1042,22 @@ namespace ZLockstep.Flow
                 }
             }
             
-            // // ===== 碰撞检测：检查新位置是否在障碍物里 =====
-            // if (map != null)
-            // {
-            //     map.WorldToGrid(newPos, out int gridX, out int gridY);
+            // ===== 碰撞检测：检查新位置是否在障碍物里 =====
+            if (map != null)
+            {
+                map.WorldToGrid(newPos, out int gridX, out int gridY);
                 
-            //     // 如果新位置不可行走，回退到旧位置
-            //     if (!map.IsWalkable(gridX, gridY))
-            //     {
-            //         // 回退到旧位置
-            //         newPos = oldPos;
-            //         rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
+                // 如果新位置不可行走，回退到旧位置
+                if (!map.IsWalkable(gridX, gridY))
+                {
+                    // 回退到旧位置
+                    newPos = oldPos;
+                    rvoSimulator.SetAgentPosition(navigator.RvoAgentId, oldPos);
                     
-            //         // 停止速度，避免继续尝试进入障碍物
-            //         // rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
-            //         Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
-            //     }
-            // }
+                    // 停止速度，避免继续尝试进入障碍物
+                    rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
+                }
+            }
             
             transform.Position.x = newPos.x;
             transform.Position.z = newPos.y;
@@ -1194,14 +1066,7 @@ namespace ZLockstep.Flow
             // 同步速度到VelocityComponent（如果有）
             if (ComponentManager.HasComponent<VelocityComponent>(entity))
             {
-                // zVector2 vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
-
-                Vector2 vel = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId);
-                zfloat xx = zfloat.CreateFloat((long)(vel.x() * 10000));
-                zfloat yy = zfloat.CreateFloat((long)(vel.y() * 10000));
-                zVector2 vel2D = new zVector2(xx, yy);
-                vel2D.Normalize();
-
+                zVector2 vel2D = rvoSimulator.GetAgentVelocity(navigator.RvoAgentId);
                 var velocity = new VelocityComponent(new zVector3(vel2D.x, zfloat.Zero, vel2D.y));
                 ComponentManager.AddComponent(entity, velocity);
             }
@@ -1225,8 +1090,7 @@ namespace ZLockstep.Flow
             // 将 RVO 代理归还池并冻结
             if (navigator.RvoAgentId >= 0)
             {
-                // rvoSimulator.RemoveAgent(navigator.RvoAgentId);
-                Simulator.Instance.delAgent(navigator.RvoAgentId);
+                rvoSimulator.RemoveAgent(navigator.RvoAgentId);
                 navigator.RvoAgentId = -1;
             }
 

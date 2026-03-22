@@ -554,17 +554,13 @@ namespace ZLockstep.View.Systems
         private void SyncEntityToView(Entity entity)
         {
             var view = ComponentManager.GetComponent<ViewComponent>(entity);
-            var logicTransform = ComponentManager.GetComponent<TransformComponent>(entity);
+            var transformComponent = ComponentManager.GetComponent<TransformComponent>(entity);
 
             if (view.Transform == null)
                 return;
 
             // 检查是否是正在建造的建筑
-            if (ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
-            {
-                // TODO 正在建造中的建筑...
-            }
-            else
+            if (!ComponentManager.HasComponent<BuildingConstructionComponent>(entity))
             {
                 if (ComponentManager.HasComponent<BuildingComponent>(entity))
                 {
@@ -627,15 +623,17 @@ namespace ZLockstep.View.Systems
             }
 
             // 直接同步（无插值）
-            view.Transform.position = logicTransform.Position.ToVector3();
-            view.Transform.rotation = logicTransform.Rotation.ToQuaternion();
-            view.Transform.localScale = logicTransform.Scale.ToVector3();
-
-            // 同步动画状态
-            SyncAnimationState(entity, view);
+            view.Transform.position = transformComponent.Position.ToVector3();
+            view.Transform.rotation = transformComponent.Rotation.ToQuaternion();
+            view.Transform.localScale = transformComponent.Scale.ToVector3();
 
             // 写回ViewComponent（如果有修改）
             ComponentManager.AddComponent(entity, view);
+            
+            // 同步动画状态
+            SyncAnimationState(entity, view);
+
+            // zUDebug.Log($"[PresentationSystem] SyncEntityToView: entityId={entity.Id}, transformComponent.Rotation.eulerAngles:{transformComponent.Rotation.eulerAngles}");
         }
 
         /// <summary>

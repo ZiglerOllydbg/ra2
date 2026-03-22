@@ -805,10 +805,10 @@ public class Ra2Demo : MonoBehaviour
     private void Update()
     {
         // 表现系统：插值更新
-        if (_presentationSystem != null)
-        {
-            _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
-        }
+        // if (_presentationSystem != null)
+        // {
+        //     _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
+        // }
 
         // 更新淡出效果
         UpdateFadeOut();

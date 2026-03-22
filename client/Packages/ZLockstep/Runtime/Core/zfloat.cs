@@ -134,7 +134,7 @@ public struct zfloat : ISerializable
 	}
 
 	/// <summary>
-	/// 传入一个扩大10000倍的小数
+	/// 传入一个扩大 10000 倍的小数
 	/// </summary>
 	/// <param name="__value"></param>
 	/// <returns></returns>
@@ -142,6 +142,19 @@ public struct zfloat : ISerializable
 	{
 		zfloat zf;// = new zfloat();
 		zf.value = __value;
+		return zf;
+	}
+
+	/// <summary>
+	/// 直接将 float 转换为 zfloat
+	/// 通过乘以缩放系数后取整实现转换
+	/// </summary>
+	/// <param name="value">要转换的浮点数值</param>
+	/// <returns>转换后的 zfloat 值</returns>
+	public static zfloat FromFloat(float value)
+	{
+		zfloat zf;
+		zf.value = (long)(value * SCALE_10000);
 		return zf;
 	}
 

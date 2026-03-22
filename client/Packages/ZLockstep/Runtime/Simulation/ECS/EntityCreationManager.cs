@@ -244,7 +244,7 @@ namespace ZLockstep.Simulation.ECS
             world.ComponentManager.AddComponent(entity, new TransformComponent
             {
                 Position = position,
-                Rotation = zQuaternion.identity,
+                Rotation = zQuaternion.xPositive,
                 Scale = zVector3.one * radius
             });
 
