@@ -32,7 +32,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace ZLockstep.RVO
 {
@@ -41,67 +40,6 @@ namespace ZLockstep.RVO
      */
     public class Simulator
     {
-        /**
-         * <summary>Defines a worker.</summary>
-         */
-        private class Worker
-        {
-            private ManualResetEvent doneEvent_;
-            private int end_;
-            private int start_;
-
-            /**
-             * <summary>Constructs and initializes a worker.</summary>
-             *
-             * <param name="start">Start.</param>
-             * <param name="end">End.</param>
-             * <param name="doneEvent">Done event.</param>
-             */
-            internal Worker(int start, int end, ManualResetEvent doneEvent)
-            {
-                start_ = start;
-                end_ = end;
-                doneEvent_ = doneEvent;
-            }
-
-            internal void config(int start, int end)
-            {
-                start_ = start;
-                end_ = end;
-            }
-
-            /**
-             * <summary>Performs a simulation step.</summary>
-             *
-             * <param name="obj">Unused.</param>
-             */
-            internal void step(object obj)
-            {
-                for (int index = start_; index < end_; ++index)
-                {
-                    Simulator.Instance.agents_[index].computeNeighbors();
-                    Simulator.Instance.agents_[index].computeNewVelocity();
-                }
-                doneEvent_.Set();
-            }
-
-            /**
-             * <summary>updates the two-dimensional position and
-             * two-dimensional velocity of each agent.</summary>
-             *
-             * <param name="obj">Unused.</param>
-             */
-            internal void update(object obj)
-            {
-                for (int index = start_; index < end_; ++index)
-                {
-                    Simulator.Instance.agents_[index].update();
-                }
-
-                doneEvent_.Set();
-            }
-        }
-
         internal IDictionary<int, int> agentNo2indexDict_;
         internal IDictionary<int, int> index2agentNoDict_;
         internal IList<Agent> agents_;
@@ -112,10 +50,6 @@ namespace ZLockstep.RVO
         private static Simulator instance_ = new Simulator();
 
         private Agent defaultAgent_;
-        private ManualResetEvent[] doneEvents_;
-        private Worker[] workers_;
-        private int numWorkers_;
-        private int workerAgentCount_;
         private float globalTime_;
 
         public static Simulator Instance
@@ -326,8 +260,6 @@ namespace ZLockstep.RVO
             obstacles_ = new List<Obstacle>();
             globalTime_ = 0.0f;
             timeStep_ = 0.1f;
-
-            SetNumWorkers(0);
         }
 
         /**
@@ -914,4 +846,4 @@ namespace ZLockstep.RVO
             Clear();
         }
     }
-}
+}    

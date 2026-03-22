@@ -62,7 +62,7 @@ namespace ZLockstep.Flow
         protected override void OnInitialize()
         {
             // 系统初始化
-            Simulator.Instance.setTimeStep(0.25f);
+            Simulator.Instance.setTimeStep(0.1f);
             Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 2.0f, 2.0f, new Vector2(0.0f, 0.0f));
 
             // add in awake
@@ -691,6 +691,8 @@ namespace ZLockstep.Flow
             }
         }
 
+        private Random m_random = new Random();
+
         private void UpdateRVO()
         {
             if (flowFieldManager == null)
@@ -747,8 +749,15 @@ namespace ZLockstep.Flow
                     // 添加流场方向
                     Vector2 goalVector = new Vector2(flowDirection.x.ToFloat(), flowDirection.y.ToFloat());
                     // 增加速度
-                    goalVector = goalVector * 5f;
+                    goalVector = goalVector * 3f;
                     Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
+                    
+                    float angle = (float) m_random.NextDouble()*2.0f*(float) Math.PI;
+                    float dist = (float) m_random.NextDouble()*0.0001f;
+
+                    Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) +
+                                                                dist*
+                                                                new Vector2((float) Math.Cos(angle), (float) Math.Sin(angle)));
                 }
             }
 
