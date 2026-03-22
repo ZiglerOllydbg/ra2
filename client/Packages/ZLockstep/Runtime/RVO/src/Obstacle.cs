@@ -30,7 +30,7 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Defines static obstacles in the simulation.</summary>

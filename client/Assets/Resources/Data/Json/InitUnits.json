@@ -128,7 +128,7 @@
       "PrefabId": 0,
       "Position": "30,0,30",
       "Note": "士兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "15": {
       "ID": 15,
@@ -138,7 +138,7 @@
       "PrefabId": 0,
       "Position": "31,0,30",
       "Note": "士兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "16": {
       "ID": 16,
@@ -148,7 +148,7 @@
       "PrefabId": 0,
       "Position": "32,0,30",
       "Note": "士兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "17": {
       "ID": 17,

@@ -33,7 +33,7 @@
 using System.Collections.Generic;
 using System;
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Defines k-D trees for agents and static obstacles in the

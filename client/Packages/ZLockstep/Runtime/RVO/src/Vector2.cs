@@ -33,7 +33,7 @@
 using System;
 using System.Globalization;
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Defines a two-dimensional vector.</summary>

@@ -32,7 +32,7 @@
 
 using System;
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Contains functions and constants used in multiple classes.

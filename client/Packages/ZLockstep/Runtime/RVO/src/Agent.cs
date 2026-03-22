@@ -33,7 +33,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Defines an agent in the simulation.</summary>

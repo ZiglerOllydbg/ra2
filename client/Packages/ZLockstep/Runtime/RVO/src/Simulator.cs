@@ -34,7 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace RVO
+namespace ZLockstep.RVO
 {
     /**
      * <summary>Defines the simulation.</summary>
