@@ -34,15 +34,13 @@ namespace ZLockstep.Flow
         /// 速度阈值：当单位速度小于此值时，认为单位已停止移动
         /// 可在 Unity Inspector 中配置，针对不同场景调整
         /// </summary>
-        [UnityEngine.SerializeField]
         private float velocityStopThreshold = 0.1f;
         
         /// <summary>
         /// 到达距离阈值：当单位与目标距离小于此值时，认为已到达目标
         /// 可在 Unity Inspector 中配置，针对不同单位类型调整
         /// </summary>
-        [UnityEngine.SerializeField]
-        private float arrivalDistanceThreshold = 1f;
+        private float arrivalDistanceThreshold = 3f;
         
         private struct PooledAgent
         {
@@ -1106,6 +1104,8 @@ namespace ZLockstep.Flow
                     goalVector = RVOMath.normalize(goalVector);
                 }
 
+                goalVector = goalVector * navigator.MaxSpeed.ToFloat();
+
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
@@ -1115,6 +1115,7 @@ namespace ZLockstep.Flow
             {
                 // 沿流场方向移动
                 Vector2 goalVector = new Vector2(flowDirection.x.ToFloat(), flowDirection.y.ToFloat());
+                goalVector = RVOMath.normalize(goalVector);
                 // 增加速度倍率，加快移动
                 goalVector = goalVector * navigator.MaxSpeed.ToFloat();
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
@@ -1162,14 +1163,14 @@ namespace ZLockstep.Flow
                 return;
             }
 
-            // 检查当前速度是否已接近零，避免单位在极低速下继续计算
-            float speedSqr = RVOMath.absSq(vel);
-            if (speedSqr <= velocityStopThreshold)
-            {
-                // 速度已接近零，强制设置为零并退出
-                ClearMoveTarget(entity);
-                zUDebug.Log($"[RVO] {entityId} 已接近零速，停止移动，当前速度平方：{speedSqr}");
-            }
+            // // 检查当前速度是否已接近零，避免单位在极低速下继续计算
+            // float speedSqr = RVOMath.absSq(vel);
+            // if (speedSqr <= velocityStopThreshold)
+            // {
+            //     // 速度已接近零，强制设置为零并退出
+            //     ClearMoveTarget(entity);
+            //     zUDebug.Log($"[RVO] {entityId} 已接近零速，停止移动，当前速度平方：{speedSqr}");
+            // }
 
             Vector2 normalVel = RVOMath.normalize(vel);
             zVector3 forward = new(zfloat.FromFloat(normalVel.x()), zfloat.Zero, zfloat.FromFloat(normalVel.y()));
