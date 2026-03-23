@@ -61,8 +61,8 @@ namespace ZLockstep.RVO
          */
         private struct FloatPair
         {
-            private float a_;
-            private float b_;
+            private readonly float a_;
+            private readonly float b_;
 
             /**
              * <summary>Constructs and initializes a pair of scalar
