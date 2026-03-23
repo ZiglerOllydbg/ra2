@@ -103,6 +103,11 @@ namespace ZLockstep.Flow
         /// 是否是用户输入的目标
         /// </summary>
         public bool UserInput;
+        
+        /// <summary>
+        /// 上次流场方向
+        /// </summary>
+        public zVector2 lastFlowDirection;
 
         public static MoveTargetComponent Create(zVector2 targetPos)
         {

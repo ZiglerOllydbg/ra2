@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 using System.Linq;
 using System.Collections.Generic;
 using ZFrame;
+using ZLockstep.RVO;
 
 /// <summary>
 /// 调试可视化类，负责处理Ra2Demo中的OnGUI和OnDrawGizmos调试功能
@@ -132,27 +133,28 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (game == null || game.RvoSimulator == null)
             return;
 
-        var agents = game.RvoSimulator.GetAgents();
-        if (agents == null)
-            return;
+        var agentNoList = Simulator.Instance.GetAgentNoList();
 
-        foreach (var agent in agents)
+        foreach (var agentNo in agentNoList)
         {
+            ZLockstep.RVO.Vector2 v2Pos = Simulator.Instance.getAgentPosition(agentNo);
             // 获取agent位置
-            Vector3 pos = new Vector3((float)agent.position.x, 0.1f, (float)agent.position.y);
+            Vector3 pos = new Vector3(v2Pos.x(), 0.1f, v2Pos.y());
             
             // 绘制agent半径（白色）
             Gizmos.color = Color.white;
-            Gizmos.DrawWireSphere(pos, (float)agent.radius);
+            float radius = Simulator.Instance.getAgentRadius(agentNo);
+            Gizmos.DrawWireSphere(pos, radius);
             
             // 绘制agent位置（红色球体）
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(pos, 0.1f);
+            Gizmos.DrawSphere(pos, 0.5f);
             
             // 绘制agent速度（蓝色箭头）
-            if (agent.velocity.sqrMagnitude > zfloat.Epsilon)
+            ZLockstep.RVO.Vector2 v2Vel = Simulator.Instance.getAgentVelocity(agentNo);
+            if (RVOMath.absSq(v2Vel) > 0.001f)
             {
-                Vector3 velocity = new Vector3((float)agent.velocity.x, 0, (float)agent.velocity.y);
+                Vector3 velocity = new Vector3(v2Vel.x(), 0, v2Vel.y());
                 Gizmos.color = Color.blue;
                 Gizmos.DrawLine(pos, pos + velocity);
                 // 绘制箭头头部
@@ -161,7 +163,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             
             // 绘制agent ID
             #if UNITY_EDITOR
-            UnityEditor.Handles.Label(pos + Vector3.up * 0.5f, $"ID: {agent.id}");
+            UnityEditor.Handles.Label(pos + Vector3.up * 0.5f, $"ID: {agentNo}");
             #endif
         }
     }

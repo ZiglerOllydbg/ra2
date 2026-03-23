@@ -533,16 +533,6 @@ namespace ZLockstep.RVO
         }
 
         /**
-         * <summary>Returns the count of workers.</summary>
-         *
-         * <returns>The count of workers.</returns>
-         */
-        public int GetNumWorkers()
-        {
-            return 1;
-        }
-
-        /**
          * <summary>Returns the two-dimensional position of a specified obstacle
          * vertex.</summary>
          *
@@ -844,6 +834,16 @@ namespace ZLockstep.RVO
         private Simulator()
         {
             Clear();
+        }
+
+        /**
+         * <summary>获取所有智能体的编号列表。</summary>
+         *
+         * <returns>包含所有智能体编号的列表。</returns>
+         */
+        public IList<int> GetAgentNoList()
+        {
+            return new List<int>(agentNo2indexDict_.Keys);
         }
     }
 }    
