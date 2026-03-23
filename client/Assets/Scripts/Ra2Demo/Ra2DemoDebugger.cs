@@ -166,6 +166,21 @@ public class Ra2DemoDebugger : MonoBehaviour
             UnityEditor.Handles.Label(pos + Vector3.up * 0.5f, $"ID: {agentNo}");
             #endif
         }
+
+        // 绘制导航系统散点
+        var points = game.NavSystem.DebugScatterPoints;
+        if (points != null)
+        {
+            // 散点
+            Gizmos.color = Color.cyan;
+            float r = 0.5f;
+            for (int i = 0; i < points.Count; i++)
+            {
+                var p = points[i];
+                Vector3 pos = new Vector3((float)p.x, 0.05f, (float)p.y);
+                Gizmos.DrawWireSphere(pos, r);
+            }
+        }
     }
 
     /// <summary>
