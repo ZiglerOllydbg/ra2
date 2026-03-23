@@ -40,7 +40,7 @@ namespace ZLockstep.Flow
         /// 到达距离阈值：当单位与目标距离小于此值时，认为已到达目标
         /// 可在 Unity Inspector 中配置，针对不同单位类型调整
         /// </summary>
-        private float arrivalDistanceThreshold = 3f;
+        private float arrivalDistanceThreshold = 0.1f;
         
         private struct PooledAgent
         {
