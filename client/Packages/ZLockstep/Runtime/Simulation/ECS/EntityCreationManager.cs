@@ -5,6 +5,7 @@ using ZLockstep.Flow;
 using System.Collections.Generic;
 using ZLockstep.Simulation.ECS.Utils;
 using Utils;
+using ZLockstep.RVO;
 
 namespace ZLockstep.Simulation.ECS
 {
@@ -122,7 +123,35 @@ namespace ZLockstep.Simulation.ECS
             // 8. 更新地图：将建筑占据的格子标记为不可行走
             if (mapManager != null)
             {
-                mapManager.SetWalkableRect(gridX - width / 2, gridY - height / 2, gridX + width / 2, gridY + height / 2, false);
+                // 计算建筑占据的世界坐标边界
+                int minX = gridX - width / 2;
+                int minY = gridY - height / 2;
+                int maxX = gridX + width / 2;
+                int maxY = gridY + height / 2;
+
+                mapManager.SetWalkableRect(minX, minY, maxX, maxY, false);
+
+                // 将格子坐标转换为世界坐标
+                zVector2 bottomLeftWorld = mapManager.GridToWorld(minX, minY);
+                zVector2 topRightWorld = mapManager.GridToWorld(maxX, maxY);
+
+                // 获取格子尺寸
+                float gridSize = (float)mapManager.GetGridSize();
+
+                // 创建矩形障碍物顶点（逆时针顺序）
+                // 向外扩展半个格子，确保单位不会走到建筑内部
+                float halfGrid = gridSize * 0.5f;
+                List<Vector2> buildingVertices = new List<Vector2>
+                {
+                    new((float)bottomLeftWorld.x - halfGrid, (float)bottomLeftWorld.y - halfGrid),  // 左下
+                    new((float)topRightWorld.x + halfGrid, (float)bottomLeftWorld.y - halfGrid),   // 右下
+                    new((float)topRightWorld.x + halfGrid, (float)topRightWorld.y + halfGrid),     // 右上
+                    new((float)bottomLeftWorld.x - halfGrid, (float)topRightWorld.y + halfGrid)    // 左上
+                };
+
+                // RVO 添加建筑阻挡障碍物
+                Simulator.Instance.addObstacle(buildingVertices);
+                Simulator.Instance.processObstacles();
             }
 
             // 9. 标记流场为脏（需要重新计算）
