@@ -162,11 +162,9 @@ namespace ZLockstep.View.Systems
                 if (viewComponent.Animator != null)
                 {
                     viewComponent.Animator.SetTrigger("Death");
-                    Debug.Log($"[PresentationSystem] 实体{evt.EntityId}触发死亡动画");
                 }
                 else
                 {
-                    Debug.Log($"[PresentationSystem] 实体{evt.EntityId}死亡，但没有Animator组件");
                 }
                 
                 // 添加到死亡列表，用于后续跟踪动画状态
@@ -212,7 +210,7 @@ namespace ZLockstep.View.Systems
 
                         // 移除ViewComponent
                         ComponentManager.RemoveComponent<ViewComponent>(entity);
-                        Debug.Log($"[PresentationSystem] 实体{entityId}死亡动画播放完毕，已移除视图");
+                        // Debug.Log($"[PresentationSystem] 实体{entityId}死亡动画播放完毕，已移除视图");
 
                         // 移除血条
                         Frame.DispatchEvent(new HealthEvent(entityId, false, false));
@@ -392,7 +390,7 @@ namespace ZLockstep.View.Systems
                 indicator.Initialize(evt.PlayerId);
             }
 
-            Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}, position:{viewObject.transform.position}");
+            // Debug.Log($"[PresentationSystem] 为Entity_{evt.EntityId}创建了视图: {viewObject.name}, position:{viewObject.transform.position}");
         }
 
         /// <summary>
@@ -433,7 +431,7 @@ namespace ZLockstep.View.Systems
             trail.startColor = evt.PlayerId == 0 ? new Color(0.2f, 0.5f, 1f, 1f) : new Color(1f, 0.3f, 0.3f, 1f);
             trail.endColor = new Color(1f, 1f, 1f, 0f);
 
-            Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
+            // Debug.Log($"[PresentationSystem] 创建了默认弹道可视化: Entity_{evt.EntityId}");
 
             return projectile;
         }
@@ -475,7 +473,7 @@ namespace ZLockstep.View.Systems
             var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
             ComponentManager.AddComponent(entity, viewComponent);
 
-            Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
+            // Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
         }
 
         /// <summary>

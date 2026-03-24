@@ -678,6 +678,11 @@ namespace ZLockstep.Flow
             // 没有移动目标时，清零速度并退出
             if (!ComponentManager.HasComponent<MoveTargetComponent>(entity))
             {
+                // 停止RVO智能体
+                if (navigator.RvoAgentId >= 0)
+                {
+                    Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, new Vector2(0, 0));
+                }
                 return;
             }
 

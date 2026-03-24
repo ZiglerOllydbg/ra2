@@ -154,10 +154,10 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 发布单位创建事件
                 EventManager.Publish(unitEvent.Value);
 
-                // 为新单位设置一个附近的随机目标，触发流场分散逻辑
-                var navSystem = world.GameInstance.GetNavSystem();
-                zVector2 randomTarget = GetRandomTarget(new zVector2(spawnPosition.x, spawnPosition.z), (zfloat)5.0f);
-                navSystem.SetMoveTarget(new Entity(unitEvent.Value.EntityId), randomTarget);
+                // // 为新单位设置一个附近的随机目标，触发流场分散逻辑
+                // var navSystem = world.GameInstance.GetNavSystem();
+                // zVector2 randomTarget = GetRandomTarget(new zVector2(spawnPosition.x, spawnPosition.z), (zfloat)5.0f);
+                // navSystem.SetMoveTarget(new Entity(unitEvent.Value.EntityId), randomTarget);
             }
 
             zUDebug.Log($"[ProduceSystem] 玩家{playerId}的工厂{factoryEntity.Id}生产了单位类型{unitType}，位置{spawnPosition}");
