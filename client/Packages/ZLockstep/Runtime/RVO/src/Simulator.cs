@@ -190,6 +190,11 @@ namespace ZLockstep.RVO
             return agent.id_;
         }
 
+        public void ClearObstacles()
+        {
+            obstacles_.Clear();
+        }
+
         /**
          * <summary>Adds a new obstacle to the simulation.</summary>
          *

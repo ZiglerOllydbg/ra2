@@ -86,6 +86,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             if (flowFieldManager != null)
             {
                 flowFieldManager.MarkRegionDirty(minX, minY, maxX, maxY);
+                flowFieldManager.NeedUpdateObstacles = true;
             }
 
             zUDebug.Log($"[DeathRemovalSystem] 已移除建筑{entity.Id}的阻挡区域：[{minX},{minY}] 到 [{maxX},{maxY}]");

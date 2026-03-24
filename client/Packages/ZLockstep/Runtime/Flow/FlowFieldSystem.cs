@@ -63,11 +63,13 @@ namespace ZLockstep.Flow
         {
             flowFieldManager = ffMgr;
             map = gameMap;
-            AddMapRangeObstacle();
+            // UpdateObstacles();
         }
 
-        public void AddMapRangeObstacle()
+        public void UpdateObstacles()
         {
+            Simulator.Instance.ClearObstacles();
+
             // 场景边界
             int width = map.GetWidth();
             int height = map.GetHeight();
@@ -90,6 +92,31 @@ namespace ZLockstep.Flow
             };
 
             Simulator.Instance.addObstacle(boundaryVertices);
+
+            // 获取所有建筑，添加建筑障碍物
+            var buildingEntities = ComponentManager.GetAllEntityIdsWith<BuildingComponent>();
+            foreach (var entityId in buildingEntities)
+            {
+                Entity entity = new Entity(entityId);
+                var building = ComponentManager.GetComponent<BuildingComponent>(entity);
+                
+                // 计算建筑物的世界坐标边界
+                float minWorldX = building.GridX * gridSize;
+                float minWorldY = building.GridY * gridSize;
+                float maxWorldX = (building.GridX + building.Width) * gridSize;
+                float maxWorldY = (building.GridY + building.Height) * gridSize;
+
+                // 创建建筑物障碍物（逆时针顺序）
+                List<Vector2> buildingVertices = new List<Vector2>
+                {
+                    new(minWorldX, minWorldY),  // 左下
+                    new(maxWorldX, minWorldY),  // 右下
+                    new(maxWorldX, maxWorldY),  // 右上
+                    new(minWorldX, maxWorldY)   // 左上
+                };
+
+                Simulator.Instance.addObstacle(buildingVertices);
+            }
 
             // add in awake
             Simulator.Instance.processObstacles();
@@ -576,6 +603,12 @@ namespace ZLockstep.Flow
         /// </summary>
         public override void Update()
         {
+            if (flowFieldManager.NeedUpdateObstacles)
+            {
+                flowFieldManager.NeedUpdateObstacles = false;
+                UpdateObstacles();
+            }
+
             UpdateRVO();
 
             // 监控 agent 行为

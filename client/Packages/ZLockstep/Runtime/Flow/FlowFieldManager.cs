@@ -54,6 +54,8 @@ namespace ZLockstep.Flow
         private int maxUpdatesPerFrame;
         private bool dynamicObstaclesNeedUpdate;
 
+        public bool NeedUpdateObstacles {get; set;}
+
         /// <summary>
         /// 构造函数
         /// 初始化流场管理器的内部数据结构
