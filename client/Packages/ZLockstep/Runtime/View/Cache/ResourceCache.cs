@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 通用资源缓存管理器
-/// 支持多种Unity资源类型的缓存，避免重复加载，提高性能
+/// 支持多种 Unity 资源类型的缓存，避免重复加载，提高性能
 /// </summary>
 public static class ResourceCache
 {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ZFrame;
@@ -25,10 +26,6 @@ namespace ZLockstep.View.Systems
     {
         // Unity资源
         private Transform _viewRoot;
-        private Dictionary<int, GameObject> _unitPrefabs;
-
-        // 存储正在建造的建筑的建造模型
-        private Dictionary<int, GameObject> _constructionModels = new Dictionary<int, GameObject>();
 
         /// <summary>
         /// 是否启用平滑插值（在FixedUpdate之间）
@@ -49,7 +46,6 @@ namespace ZLockstep.View.Systems
         public void Initialize(Transform viewRoot, Dictionary<int, GameObject> prefabs)
         {
             _viewRoot = viewRoot;
-            _unitPrefabs = prefabs;
         }
 
         /// <summary>
@@ -63,14 +59,11 @@ namespace ZLockstep.View.Systems
             // 销毁所有子对象（游戏对象）
             for (int i = _viewRoot.childCount - 1; i >= 0; i--)
             {
-                Object.Destroy(_viewRoot.GetChild(i).gameObject);
+                UnityEngine.Object.Destroy(_viewRoot.GetChild(i).gameObject);
             }
             
             // 清理死亡实体列表
             _dyingEntities.Clear();
-            
-            // 清理建造模型
-            _constructionModels.Clear();
         }
 
         /// <summary>
@@ -169,17 +162,6 @@ namespace ZLockstep.View.Systems
                 
                 // 添加到死亡列表，用于后续跟踪动画状态
                 _dyingEntities.Add((evt.EntityId, viewComponent.Animator));
-                
-                // 移除建造模型（如果存在）
-                if (_constructionModels.ContainsKey(evt.EntityId))
-                {
-                    var constructionModel = _constructionModels[evt.EntityId];
-                    if (constructionModel != null)
-                    {
-                        Object.Destroy(constructionModel);
-                    }
-                    _constructionModels.Remove(evt.EntityId);
-                }
             }
         }
 
@@ -205,7 +187,7 @@ namespace ZLockstep.View.Systems
                         // 销毁GameObject
                         if (viewComponent.GameObject != null)
                         {
-                            Object.Destroy(viewComponent.GameObject);
+                            GameObjectPoolManager.ReturnToPool(viewComponent.GameObject);
                         }
 
                         // 移除ViewComponent
@@ -276,25 +258,24 @@ namespace ZLockstep.View.Systems
         private void CreateViewForEntity(UnitCreatedEvent evt)
         {
             GameObject viewObject = null;
+            String viewName = "";
 
             if (evt.ConfBuildingID > 0)
             {
                 ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(evt.ConfBuildingID);
                 if (confBuilding != null)
                 {
-                    // 创建建筑模型
-                    GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.BuildPrefab);
-                    if (buildingPrefab != null)
-                    {
-                        // 创建建筑模型
-                        viewObject = Object.Instantiate(buildingPrefab, _viewRoot);
-                    }
+                    // 创建建筑模型 - 使用对象池
+                    string buildingPrefabPath = "Prefabs/" + confBuilding.BuildPrefab;
+                    viewObject = GameObjectPoolManager.GetFromPool(buildingPrefabPath, _viewRoot);
 
                     if (confBuilding.Hp > 0)
                     {
                         // 血条显示
                         Frame.DispatchEvent(new HealthEvent(evt.EntityId, evt.PlayerId == 1, true));
                     }
+
+                    viewName = "[" + evt.PlayerId + "]Building_" + confBuilding.Type + "_" + evt.EntityId;
                 }
             }
 
@@ -303,12 +284,11 @@ namespace ZLockstep.View.Systems
                 ConfUnit confUnit = ConfigManager.Get<ConfUnit>(evt.ConfUnitID);
                 if (confUnit != null)
                 {
-                    // 创建单位模型
-                    GameObject unitPrefab = ResourceCache.GetPrefab("Prefabs/" + confUnit.Prefab);
-                    if (unitPrefab != null)
-                    {
-                        viewObject = Object.Instantiate(unitPrefab, _viewRoot);
-                    }
+                    // 创建单位模型 - 使用对象池
+                    string unitPrefabPath = "Prefabs/" + confUnit.Prefab;
+                    viewObject = GameObjectPoolManager.GetFromPool(unitPrefabPath, _viewRoot);
+
+                    viewName = "[" + evt.PlayerId + "]Unit_" + confUnit.Type + "_" + evt.EntityId;
                 }
 
                 // 血条显示
@@ -320,51 +300,27 @@ namespace ZLockstep.View.Systems
                 ConfProjectile confProjectile = ConfigManager.Get<ConfProjectile>(evt.ConfProjectileID);
                 if (confProjectile != null)
                 {
-                    // 创建弹道模型
-                    GameObject projectilePrefab = ResourceCache.GetPrefab("Prefabs/" + confProjectile.Prefab);
-                    if (projectilePrefab != null)
-                    {
-                        viewObject = Object.Instantiate(projectilePrefab, _viewRoot);
-                    }
-
+                    // 创建弹道模型 - 使用对象池
+                    string projectilePrefabPath = "Prefabs/" + confProjectile.Prefab;
+                    viewObject = GameObjectPoolManager.GetFromPool(projectilePrefabPath, _viewRoot);
+                    
                     // 获取音频组件，并播放音频
-                    AudioSource audioSource = viewObject.GetComponent<AudioSource>();
+                    AudioSource audioSource = viewObject?.GetComponent<AudioSource>();
                     if (audioSource != null)
                     {
                         AudioClip clip = ResourceCache.GetAudioClip("Audio/" + confProjectile.AudioClip);
                         audioSource.clip = clip;
                         audioSource.Play();
                     }
-                }
-            }
 
-            if (viewObject == null)
-            {
-                // 尝试获取预制体
-                if (_unitPrefabs.TryGetValue(evt.PrefabId, out var prefab))
-                {
-                    // 实例化预制体
-                    viewObject = Object.Instantiate(prefab, _viewRoot);
-                }
-                else
-                {
-                    // 找不到预制体，根据类型创建默认可视化
-                    if (evt.UnitType == (int)UnitType.Projectile) // 100=弹道类型
-                    {
-                        viewObject = CreateDefaultProjectileView(evt);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={evt.UnitType}, PrefabId={evt.PrefabId}");
-                        return;
-                    }
+                    viewName = "[" + evt.PlayerId + "]Projectile_" + confProjectile.Type + "_" + evt.EntityId;
                 }
             }
 
             if (viewObject == null)
                 return;
 
-            viewObject.name = $"Unit_{evt.EntityId}_Type{evt.UnitType}_P{evt.PlayerId}";
+            viewObject.name = viewName;
             viewObject.transform.position = evt.Position.ToVector3();
 
             // 添加描边组件（默认不启用）
@@ -436,45 +392,7 @@ namespace ZLockstep.View.Systems
             return projectile;
         }
 
-        /// <summary>
-        /// 为缺失视图的实体创建 GameObject
-        /// </summary>
-        private void CreateViewForMissingEntity(Entity entity)
-        {
-            var unit = ComponentManager.GetComponent<UnitComponent>(entity);
-            var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-
-            // 获取预制体
-            if (!_unitPrefabs.TryGetValue(unit.PrefabId, out var prefab))
-            {
-                Debug.LogWarning($"[PresentationSystem] 找不到预制体: UnitType={unit.UnitType}");
-                return;
-            }
-
-            // 实例化GameObject
-            GameObject viewObject = Object.Instantiate(prefab, _viewRoot);
-            viewObject.name = $"Unit_{entity.Id}_Type{unit.UnitType}_P{unit.PlayerId}_Resynced";
-            viewObject.transform.position = transform.Position.ToVector3();
-            viewObject.transform.rotation = transform.Rotation.ToQuaternion();
-            viewObject.transform.localScale = transform.Scale.ToVector3();
-
-            // 添加描边组件（默认不启用）
-            try 
-            {
-                var outlineComponent = viewObject.AddComponent<OutlineComponent>();
-                outlineComponent.enabled = false;
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogWarning($"[PresentationSystem] 无法为对象 {viewObject.name} 添加描边组件: {ex.Message}");
-            }
-
-            // 创建并添加ViewComponent
-            var viewComponent = ViewComponent.Create(viewObject, EnableSmoothInterpolation);
-            ComponentManager.AddComponent(entity, viewComponent);
-
-            // Debug.Log($"[PresentationSystem] 重新创建视图: Entity_{entity.Id}");
-        }
+        
 
         /// <summary>
         /// 同步所有View实体
@@ -501,7 +419,7 @@ namespace ZLockstep.View.Systems
         /// </summary>
         public void ResyncAllEntities()
         {
-            if (_viewRoot == null || _unitPrefabs == null)
+            if (_viewRoot == null)
             {
                 Debug.LogWarning("[PresentationSystem] ResyncAllEntities: 未初始化");
                 return;
@@ -534,12 +452,7 @@ namespace ZLockstep.View.Systems
                 }
                 else
                 {
-                    // 没有视图，需要创建
-                    if (ComponentManager.HasComponent<UnitComponent>(entity))
-                    {
-                        CreateViewForMissingEntity(entity);
-                        createdCount++;
-                    }
+                    zUDebug.LogError($"[PresentationSystem] ResyncAllEntities: Entity_{entity.Id} 缺少 ViewComponent");
                 }
             }
 
@@ -575,6 +488,8 @@ namespace ZLockstep.View.Systems
                         // 移除旧建筑模型（保存位置信息）
                         Vector3 oldPosition = Vector3.zero;
                         Quaternion oldRotation = Quaternion.identity;
+
+                        String gameObjectName = view.GameObject.name;
                         
                         if (view.GameObject != null)
                         {
@@ -582,29 +497,27 @@ namespace ZLockstep.View.Systems
                             oldPosition = view.Transform.position;
                             oldRotation = view.Transform.rotation;
                             
-                            Object.Destroy(view.GameObject);
+                            // 回收到对象池
+                            GameObjectPoolManager.ReturnToPool(view.GameObject);
                             view.GameObject = null;
                         }
 
-                        GameObject buildingPrefab = ResourceCache.GetPrefab("Prefabs/" + confBuilding.Prefab);
-                        if (buildingPrefab != null)
-                        {
-                            // 创建建筑模型
-                            view.GameObject = Object.Instantiate(buildingPrefab, _viewRoot);
-                            
-                            // 应用旧模型的位置和旋转
-                            view.GameObject.transform.position = oldPosition;
-                            view.GameObject.transform.rotation = oldRotation;
-                            
-                            // 更新 Transform 缓存
-                            view.Transform = view.GameObject.transform;
+                        // 创建建筑模型 - 使用对象池
+                        string prefabPath = "Prefabs/" + confBuilding.Prefab;
+                        view.GameObject = GameObjectPoolManager.GetFromPool(prefabPath, _viewRoot);
+                        view.GameObject.name = gameObjectName;
+;
+                        // 应用旧模型的位置和旋转
+                        view.GameObject.transform.position = oldPosition;
+                        view.GameObject.transform.rotation = oldRotation;
+                        
+                        // 更新 Transform 缓存
+                        view.Transform = view.GameObject.transform;
 
-                            int campId = ComponentManager.GetComponent<CampComponent>(entity).CampId;
+                        int campId = ComponentManager.GetComponent<CampComponent>(entity).CampId;
 
-
-                            var indicator = view.GameObject.AddComponent<PlayerUnitIndicator>();
-                            indicator.Initialize(campId);
-                        }
+                        var indicator = view.GameObject.AddComponent<PlayerUnitIndicator>();
+                        indicator.Initialize(campId);
 
                         view.BuildingOK = true;
                         ComponentManager.AddComponent(entity, view);
