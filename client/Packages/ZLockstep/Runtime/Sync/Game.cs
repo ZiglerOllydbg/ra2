@@ -233,7 +233,7 @@ namespace ZLockstep.Sync
                     // 3. 执行逻辑帧（传入目标帧号，确保 Tick 同步）
                     ExecuteLogicFrame(frameNumber);
                     
-                    // UnityEngine.Debug.Log($"[Game] 执行网络帧 {frameNumber}, world.Tick={World.Tick}");
+                    // zUDebug.Log($"[Game] 执行网络帧 {frameNumber}, world.Tick={World.Tick}");
                     return true;
 
                 default:
@@ -284,7 +284,7 @@ namespace ZLockstep.Sync
             // 特殊处理：在第一帧发布创世阶段创建的实体事件
             if (!_hasPublishedGenesisEntities && _genesisEntities.Count > 0)
             {
-                UnityEngine.Debug.Log($"[Game] 发布 {_genesisEntities.Count} 个创世阶段创建的实体事件");
+                zUDebug.Log($"[Game] 发布 {_genesisEntities.Count} 个创世阶段创建的实体事件");
                 foreach (var entityEvent in _genesisEntities)
                 {
                     World.EventManager.Publish(entityEvent);
@@ -356,7 +356,7 @@ namespace ZLockstep.Sync
 
             if (catchUpCommands == null || catchUpCommands.Count == 0)
             {
-                UnityEngine.Debug.LogWarning("[Game] 没有需要追赶的帧");
+                zUDebug.LogWarning("[Game] 没有需要追赶的帧");
                 return;
             }
 
@@ -367,7 +367,7 @@ namespace ZLockstep.Sync
             IsCatchingUp = true;
 
             int pendingFrames = FrameSyncManager.GetPendingFrameCount();
-            UnityEngine.Debug.Log($"[Game] 开始追帧，当前帧: {World.Tick}, 目标帧: {World.Tick + pendingFrames}, 需追赶: {pendingFrames} 帧");
+            zUDebug.Log($"[Game] 开始追帧，当前帧: {World.Tick}, 目标帧: {World.Tick + pendingFrames}, 需追赶: {pendingFrames} 帧");
         }
 
         /// <summary>
@@ -377,7 +377,7 @@ namespace ZLockstep.Sync
         {
             IsCatchingUp = false;
             
-            UnityEngine.Debug.Log($"[Game] 追帧完成，当前帧: {World.Tick}");
+            zUDebug.Log($"[Game] 追帧完成，当前帧: {World.Tick}");
             
             // TODO: 通知表现层重新同步所有视图
             // 因为追帧期间可能禁用了渲染
@@ -407,7 +407,7 @@ namespace ZLockstep.Sync
         public void Shutdown()
         {
             World?.Shutdown();
-            UnityEngine.Debug.Log("[Game] 已关闭");
+            zUDebug.Log("[Game] 已关闭");
         }
         
         /// <summary>
@@ -416,7 +416,7 @@ namespace ZLockstep.Sync
         public void Pause()
         {
             IsPaused = true;
-            UnityEngine.Debug.Log("[Game] 游戏已暂停");
+            zUDebug.Log("[Game] 游戏已暂停");
         }
         
         /// <summary>
@@ -425,7 +425,7 @@ namespace ZLockstep.Sync
         public void Resume()
         {
             IsPaused = false;
-            UnityEngine.Debug.Log("[Game] 游戏已恢复");
+            zUDebug.Log("[Game] 游戏已恢复");
         }
         
         /// <summary>
@@ -433,7 +433,7 @@ namespace ZLockstep.Sync
         /// </summary>
         public void OnWorldInitialized()
         {
-            UnityEngine.Debug.Log("[Game] 世界初始化完成，准备开始帧同步");
+            zUDebug.Log("[Game] 世界初始化完成，准备开始帧同步");
             // 可以在这里设置一个标志，表示创世阶段已完成，可以开始处理帧逻辑
         }
         
@@ -445,11 +445,11 @@ namespace ZLockstep.Sync
         {
             if (World == null)
             {
-                UnityEngine.Debug.LogError("[Game] 世界未初始化，无法执行创世阶段");
+                zUDebug.LogError("[Game] 世界未初始化，无法执行创世阶段");
                 return;
             }
 
-            UnityEngine.Debug.Log($"[Game] 开始创世阶段，初始化游戏世界状态");
+            zUDebug.Log($"[Game] 开始创世阶段，初始化游戏世界状态");
 
             // 创建一个临时列表来存储创世阶段创建的实体信息
             var createdEntities = new List<UnitCreatedEvent>();
@@ -506,7 +506,7 @@ namespace ZLockstep.Sync
             // 将创世阶段创建的实体信息存储起来，以便在第一帧时发布事件
             _genesisEntities = createdEntities;
             
-            UnityEngine.Debug.Log($"[Game] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
+            zUDebug.Log($"[Game] 创世阶段完成，游戏世界已初始化，共创建 {createdEntities.Count} 个实体");
         }
 
         private UnitCreatedEvent? CreateBuildingEntity(int playerId, string type, zVector3 position)
@@ -574,7 +574,7 @@ namespace ZLockstep.Sync
                 PrefabId = prefabId
             };
 
-            UnityEngine.Debug.Log($"[Game] 创建建筑: Player {playerId}, Type {type} (ID: {buildingType}), Position {position}");
+            zUDebug.Log($"[Game] 创建建筑: Player {playerId}, Type {type} (ID: {buildingType}), Position {position}");
             
             // 返回事件对象，而不是直接发布
             return unitCreatedEvent;
@@ -634,7 +634,7 @@ namespace ZLockstep.Sync
                 PrefabId = prefabId
             };
 
-            UnityEngine.Debug.Log($"[Game] 创建单位: Player {playerId}, Type {type} (ID: {unitType}), Position {position}");
+            zUDebug.Log($"[Game] 创建单位: Player {playerId}, Type {type} (ID: {unitType}), Position {position}");
             
             // 返回事件对象，而不是直接发布
             return unitCreatedEvent;

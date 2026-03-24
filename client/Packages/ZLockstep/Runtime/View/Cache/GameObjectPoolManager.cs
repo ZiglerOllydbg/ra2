@@ -196,7 +196,7 @@ public static class GameObjectPoolManager
 
         gameObjectPools[prefabPath] = pool;
 
-        Debug.Log($"Created object pool for {prefabPath} with initial capacity {initialCapacity}, max capacity {maxCapacity}");
+        zUDebug.Log($"Created object pool for {prefabPath} with initial capacity {initialCapacity}, max capacity {maxCapacity}");
         return true;
     }
     
@@ -263,7 +263,7 @@ public static class GameObjectPoolManager
         // 从映射字典中移除
         gameObjectToPathMap.Remove(obj);
         
-        Debug.Log($"Returned {obj.name} to pool. Available: {pool.availableObjects.Count}, Active: {pool.activeObjects.Count}");
+        zUDebug.Log($"Returned {obj.name} to pool. Available: {pool.availableObjects.Count}, Active: {pool.activeObjects.Count}");
     }
     
     /// <summary>
@@ -314,7 +314,7 @@ public static class GameObjectPoolManager
             createdCount++;
         }
 
-        Debug.Log($"Prewarmed {createdCount} objects for pool: {prefabPath}");
+        zUDebug.Log($"Prewarmed {createdCount} objects for pool: {prefabPath}");
     }
     
     /// <summary>
@@ -374,7 +374,7 @@ public static class GameObjectPoolManager
 
         gameObjectPools.Remove(prefabPath);
 
-        Debug.Log($"Cleared object pool for: {prefabPath}");
+        zUDebug.Log($"Cleared object pool for: {prefabPath}");
     }
     
     /// <summary>
@@ -389,7 +389,7 @@ public static class GameObjectPoolManager
             ClearPool(path, destroyAll);
         }
 
-        Debug.Log("All object pools cleared");
+        zUDebug.Log("All object pools cleared");
     }
     
     #endregion
@@ -456,20 +456,20 @@ public static class GameObjectPoolManager
     {
         if (!gameObjectPools.TryGetValue(prefabPath, out GameObjectPool pool))
         {
-            Debug.LogWarning($"Pool not found for: {prefabPath}");
+            zUDebug.LogWarning($"Pool not found for: {prefabPath}");
             return;
         }
 
         if (newMaxCapacity <= 0)
         {
-            Debug.LogError("New max capacity must be greater than 0");
+            zUDebug.LogError("New max capacity must be greater than 0");
             return;
         }
 
         int oldMaxCapacity = pool.maxCapacity;
         pool.maxCapacity = newMaxCapacity;
 
-        Debug.Log($"Resized pool {prefabPath} max capacity from {oldMaxCapacity} to {newMaxCapacity}");
+        zUDebug.Log($"Resized pool {prefabPath} max capacity from {oldMaxCapacity} to {newMaxCapacity}");
     }
     
     #endregion

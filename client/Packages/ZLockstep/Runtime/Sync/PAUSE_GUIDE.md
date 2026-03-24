@@ -20,14 +20,14 @@ public bool IsPaused { get; private set; }
 public void Pause() 
 {
     IsPaused = true;
-    UnityEngine.Debug.Log("[Game] 游戏已暂停");
+    zUDebug.Log("[Game] 游戏已暂停");
 }
 
 // 恢复方法
 public void Resume() 
 {
     IsPaused = false;
-    UnityEngine.Debug.Log("[Game] 游戏已恢复");
+    zUDebug.Log("[Game] 游戏已恢复");
 }
 ```
 

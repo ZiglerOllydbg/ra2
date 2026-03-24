@@ -147,7 +147,7 @@ void Update()
 {
     if (Input.GetKeyDown(KeyCode.F1))
     {
-        Debug.Log(ResourceCache.GetCacheStats());
+        zUDebug.Log(ResourceCache.GetCacheStats());
     }
 }
 ```

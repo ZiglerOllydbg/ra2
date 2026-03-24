@@ -90,7 +90,7 @@ namespace ZLockstep.Simulation.ECS.Utils
             // 检查建筑是否在地图边界内
             if (minX < 0 || minY < 0 || maxX >= mapManager.GetWidth() || maxY >= mapManager.GetHeight())
             {
-                zUnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
+                zUDebug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
                 return false;
             }
             
@@ -101,7 +101,7 @@ namespace ZLockstep.Simulation.ECS.Utils
                 {
                     if (!mapManager.IsWalkable(x, y))
                     {
-                        zUnityEngine.Debug.Log($"[BuildingPlacementUtils] 建筑位置存在阻挡。阻挡格子:({x},{y})");
+                        zUDebug.Log($"[BuildingPlacementUtils] 建筑位置存在阻挡。阻挡格子:({x},{y})");
                         return false;
                     }
                 }

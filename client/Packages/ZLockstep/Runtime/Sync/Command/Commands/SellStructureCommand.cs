@@ -64,7 +64,7 @@ namespace ZLockstep.Sync.Command.Commands
             
             if (refundAmount <= 0)
             {
-                UnityEngine.Debug.LogWarning($"[SellStructureCommand] 返还金额为 0，无法售卖");
+                zUDebug.LogWarning($"[SellStructureCommand] 返还金额为 0，无法售卖");
                 return;
             }
 
@@ -74,7 +74,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 销毁建筑实体
             DestroyBuilding(world, entity, confBuilding);
 
-            UnityEngine.Debug.Log($"[SellStructureCommand] 成功售卖建筑：{confBuilding.Name}, 返还金额：{refundAmount}");
+            zUDebug.Log($"[SellStructureCommand] 成功售卖建筑：{confBuilding.Name}, 返还金额：{refundAmount}");
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace ZLockstep.Sync.Command.Commands
                 zfloat refundAmountZ = confBuilding.CostMoney * baseRefundRate * healthPercent;
                 int refundAmount = (int)refundAmountZ;
                 
-                UnityEngine.Debug.Log($"[SellStructureCommand] 建筑血量百分比：{(float)healthPercent:P0}, 原价：{confBuilding.CostMoney}, 返还：{refundAmount}");
+                zUDebug.Log($"[SellStructureCommand] 建筑血量百分比：{(float)healthPercent:P0}, 原价：{confBuilding.CostMoney}, 返还：{refundAmount}");
                 
                 return refundAmount;
             }
@@ -107,7 +107,7 @@ namespace ZLockstep.Sync.Command.Commands
                 // 如果没有血量组件，按满血计算
                 zfloat refundAmountZ = confBuilding.CostMoney * baseRefundRate;
                 int refundAmount = (int)refundAmountZ;
-                UnityEngine.Debug.Log($"[SellStructureCommand] 无血量组件，按满血计算，返还：{refundAmount}");
+                zUDebug.Log($"[SellStructureCommand] 无血量组件，按满血计算，返还：{refundAmount}");
                 return refundAmount;
             }
         }
@@ -145,7 +145,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[SellStructureCommand] 返还资金成功。返还：{amount}, 剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[SellStructureCommand] 返还资金成功。返还：{amount}, 剩余资金：{economyComponent.Money}");
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace ZLockstep.Sync.Command.Commands
                 EntityId = entity.Id,
             });
             
-            UnityEngine.Debug.Log($"[SellStructureCommand] 建筑已销毁：{confBuilding.Name}, EntityId: {entity.Id}");
+            zUDebug.Log($"[SellStructureCommand] 建筑已销毁：{confBuilding.Name}, EntityId: {entity.Id}");
         }
 
         public override string ToString()

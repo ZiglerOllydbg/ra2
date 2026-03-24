@@ -82,7 +82,7 @@ public class HotKeySubPanel
     /// <param name="index">热键索引</param>
     private void OnHotKeyClicked(int index)
     {
-        Debug.Log($"热键 {index + 1} 被点击了！");
+        zUDebug.Log($"热键 {index + 1} 被点击了！");
         // 选择该编队中的单位
         if (ra2Demo != null && index >= 0 && index < hotkeyGroups.Length)
         {
@@ -132,7 +132,7 @@ public class HotKeySubPanel
     /// <param name="index">热键索引</param>
     private void OnHotKeyLongPressed(int index)
     {
-        Debug.Log($"热键 {index + 1} 被长按了！");
+        zUDebug.Log($"热键 {index + 1} 被长按了！");
         
         // 将当前选中的单位保存到该编队
         if (ra2Demo != null && index >= 0 && index < hotkeyGroups.Length)

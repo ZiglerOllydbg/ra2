@@ -525,7 +525,7 @@ public class MainPanel : BasePanel
         ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
         if (confBuilding == null)
         {
-            Debug.LogError($"[MainPanel] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
+            zUDebug.LogError($"[MainPanel] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
             return;
         }
 
@@ -533,7 +533,7 @@ public class MainPanel : BasePanel
             onConfirm: () =>
             {
                 // 确认售卖，调用售卖 command
-                Debug.Log($"[MainPanel] 确认售卖建筑：{confBuilding.Name}, EntityId: {entityId}");
+                zUDebug.Log($"[MainPanel] 确认售卖建筑：{confBuilding.Name}, EntityId: {entityId}");
 
                 // 获取玩家阵营 ID（假设为 0）
                 int campId = 0;
@@ -544,7 +544,7 @@ public class MainPanel : BasePanel
                 // 提交命令到游戏世界
                 Ra2Demo?.GetBattleGame()?.SubmitCommand(sellCommand);
                 
-                Debug.Log($"[MainPanel] 已提交售卖建筑命令");
+                zUDebug.Log($"[MainPanel] 已提交售卖建筑命令");
             },
             message: $"是否要售卖\"{confBuilding.Name}\"建筑？"
         );
@@ -567,7 +567,7 @@ public class MainPanel : BasePanel
     private void OnSubPanelClosed()
     {
         // 处理子面板关闭后的逻辑
-        Debug.Log("子面板已关闭");
+        zUDebug.Log("子面板已关闭");
     }
     
     /// <summary>
@@ -618,7 +618,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnBuildButtonClick()
     {
-        Debug.Log("Build按钮被点击了！");
+        zUDebug.Log("Build按钮被点击了！");
 
         producerSubPanel.Hide();
         settingSubPanel.Hide();
@@ -645,7 +645,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnProducerButtonClick()
     {
-        Debug.Log("Producer 按钮被点击了！");
+        zUDebug.Log("Producer 按钮被点击了！");
         
         buildingSubPanel.Hide();
         settingSubPanel.Hide();
@@ -672,7 +672,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSellButtonClick()
     {
-        Debug.Log("Sell 按钮被点击了！");
+        zUDebug.Log("Sell 按钮被点击了！");
         
         // 切换售卖状态
         isSelling = !isSelling;
@@ -696,7 +696,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSettingButtonClick()
     {
-        Debug.Log("Setting 按钮被点击了！");
+        zUDebug.Log("Setting 按钮被点击了！");
         
         // 关闭其他子面板
         buildingSubPanel.Hide();
@@ -873,7 +873,7 @@ public class MainPanel : BasePanel
         // 设置 Slider 当前值为相机当前高度
         zoomSlider.value = CAMERA_ZOOM_DEFAULT;
         
-        Debug.Log($"[MainPanel] Zoom Slider 初始化 - 范围：[{CAMERA_ZOOM_MIN}, {CAMERA_ZOOM_MAX}], 当前高度：{CAMERA_ZOOM_DEFAULT:F2}");
+        zUDebug.Log($"[MainPanel] Zoom Slider 初始化 - 范围：[{CAMERA_ZOOM_MIN}, {CAMERA_ZOOM_MAX}], 当前高度：{CAMERA_ZOOM_DEFAULT:F2}");
     }
     
     /// <summary>
@@ -888,6 +888,6 @@ public class MainPanel : BasePanel
         camera.orthographicSize = value;
         
         // 调试日志
-        Debug.Log($"[MainPanel] Zoom Slider 值改变 - 新高度：{value:F2}");
+        zUDebug.Log($"[MainPanel] Zoom Slider 值改变 - 新高度：{value:F2}");
     }
 }

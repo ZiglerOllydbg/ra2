@@ -159,13 +159,13 @@ public class ReconnectManager : MonoBehaviour
     
     void OnDisconnected()
     {
-        Debug.Log("断线了！");
+        zUDebug.Log("断线了！");
         _isReconnecting = true;
     }
     
     void OnReconnected()
     {
-        Debug.Log("重连成功，开始追帧");
+        zUDebug.Log("重连成功，开始追帧");
         
         // 1. 获取当前帧
         int clientFrame = worldBridge.LogicWorld.Tick;
@@ -176,7 +176,7 @@ public class ReconnectManager : MonoBehaviour
     
     void OnReceiveCatchUpData(Dictionary<int, List<ICommand>> catchUpCommands)
     {
-        Debug.Log($"收到追帧数据，共 {catchUpCommands.Count} 帧");
+        zUDebug.Log($"收到追帧数据，共 {catchUpCommands.Count} 帧");
         
         // 3. 开始追帧
         worldBridge.StartCatchUp(catchUpCommands);
@@ -190,7 +190,7 @@ public class ReconnectManager : MonoBehaviour
         if (worldBridge.Game.IsCatchingUp)
         {
             float progress = worldBridge.Game.GetCatchUpProgress();
-            Debug.Log($"追帧进度: {progress:P0}");
+            zUDebug.Log($"追帧进度: {progress:P0}");
         }
     }
 }
@@ -243,7 +243,7 @@ public class LockstepServer
             Commands = catchUpData
         });
         
-        Debug.Log($"发送追帧数据给玩家 {playerId}，范围: {clientFrame + 1} - {serverFrame}");
+        zUDebug.Log($"发送追帧数据给玩家 {playerId}，范围: {clientFrame + 1} - {serverFrame}");
     }
     
     void OnCommandExecuted(int frame, List<ICommand> commands)

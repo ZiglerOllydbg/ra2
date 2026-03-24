@@ -168,7 +168,7 @@ public class MainBuildingSubPanel
         
         if (itemTemplate == null || listContent == null)
         {
-            Debug.LogWarning("列表模板或Content容器未找到");
+            zUDebug.LogWarning("列表模板或Content容器未找到");
             return;
         }
         
@@ -176,7 +176,7 @@ public class MainBuildingSubPanel
         var layoutGroup = listContent.GetComponent<LayoutGroup>();
         if (layoutGroup == null)
         {
-            Debug.LogWarning("Content 上没有 LayoutGroup 组件，列表项可能会重叠。请添加 VerticalLayoutGroup 或 HorizontalLayoutGroup");
+            zUDebug.LogWarning("Content 上没有 LayoutGroup 组件，列表项可能会重叠。请添加 VerticalLayoutGroup 或 HorizontalLayoutGroup");
         }
         
         // 计算单个列表项的高度
@@ -301,25 +301,25 @@ public class MainBuildingSubPanel
     /// </summary>
     private void OnListItemSelect(BuildingListItem item)
     {
-        Debug.Log($"选中了列表项: {item.ItemData?.Name}");
+        zUDebug.Log($"选中了列表项: {item.ItemData?.Name}");
         // Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
         // TODO: 直接放置
 
         var confBuildingPlace = ConfigManager.Get<ConfBuildingPlace>(item.ItemData.ConfBuildingPlaceID);
         if (confBuildingPlace == null)
         {
-            Debug.LogError($"未找到建筑配置: {item.ItemData.ConfBuildingPlaceID}");
+            zUDebug.LogError($"未找到建筑配置: {item.ItemData.ConfBuildingPlaceID}");
             return;
         }
 
         // 1. 根据类型获取已经放置的建筑数量
         int currentCount = GetBuildingCountByType((BuildingType)confBuildingPlace.Type);
-        Debug.Log($"当前已放置 {item.ItemData.BuildingType} 数量: {currentCount}");
+        zUDebug.Log($"当前已放置 {item.ItemData.BuildingType} 数量: {currentCount}");
 
         // 2. 根据配置Count检查数量限制
         if (currentCount >= confBuildingPlace.Count)
         {
-            Debug.LogWarning($"建筑数量已达上限: {currentCount}/{confBuildingPlace.Count}");
+            zUDebug.LogWarning($"建筑数量已达上限: {currentCount}/{confBuildingPlace.Count}");
             MessageUtils.ShowTips("建筑数量已达上限");
             // TODO: 可以显示提示信息给用户
             Hide();
@@ -330,7 +330,7 @@ public class MainBuildingSubPanel
         Vector3[] positions = StringUtils.ParsePositions(confBuildingPlace.Position);
         if (positions.Length == 0)
         {
-            Debug.LogError($"配置中的位置信息无效: {confBuildingPlace.Position}");
+            zUDebug.LogError($"配置中的位置信息无效: {confBuildingPlace.Position}");
             Hide();
             return;
         }
@@ -339,7 +339,7 @@ public class MainBuildingSubPanel
         int nextPositionIndex = currentCount % positions.Length;
         Vector3 targetPosition = positions[nextPositionIndex];
         
-        Debug.Log($"准备在位置 {targetPosition} 放置建筑，索引: {nextPositionIndex}");
+        zUDebug.Log($"准备在位置 {targetPosition} 放置建筑，索引: {nextPositionIndex}");
         
         int buildingID = confBuildingPlace.Type;
         // 4. 直接调用放置逻辑
@@ -422,7 +422,7 @@ public class MainBuildingSubPanel
         Ra2Demo ra2Demo = Object.FindObjectOfType<Ra2Demo>();
         ra2Demo.GetBattleGame().SubmitCommand(createBuildingCommand);
         
-        Debug.Log($"已提交建筑放置命令，配置ID: {confID}, 位置: {logicPosition}");
+        zUDebug.Log($"已提交建筑放置命令，配置ID: {confID}, 位置: {logicPosition}");
     }
 
     /// <summary>

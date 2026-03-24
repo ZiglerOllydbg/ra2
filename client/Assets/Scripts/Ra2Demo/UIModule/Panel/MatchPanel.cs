@@ -85,11 +85,11 @@ public class MatchPanel : BasePanel
         if (_nameText != null)
         {
             _nameText.text = name;
-            Debug.Log($"[MatchPanel] 玩家名称已设置为：{name}");
+            zUDebug.Log($"[MatchPanel] 玩家名称已设置为：{name}");
         }
         else
         {
-            Debug.LogWarning("[MatchPanel] _nameText 组件未找到，无法设置玩家名称");
+            zUDebug.LogWarning("[MatchPanel] _nameText 组件未找到，无法设置玩家名称");
         }
     }
 
@@ -102,11 +102,11 @@ public class MatchPanel : BasePanel
         if (_headImg != null)
         {
             LoadAvatarTexture(avatarUrl);
-            Debug.Log($"[MatchPanel] 开始加载玩家头像：{avatarUrl}");
+            zUDebug.Log($"[MatchPanel] 开始加载玩家头像：{avatarUrl}");
         }
         else
         {
-            Debug.LogWarning("[MatchPanel] _headImg 组件未找到，无法设置玩家头像");
+            zUDebug.LogWarning("[MatchPanel] _headImg 组件未找到，无法设置玩家头像");
         }
     }
     
@@ -117,14 +117,14 @@ public class MatchPanel : BasePanel
         if (!string.IsNullOrEmpty(_cachedNickname) && _nameText != null)
         {
             _nameText.text = _cachedNickname;
-            Debug.Log($"[MatchPanel] 恢复玩家名称：{_cachedNickname}");
+            zUDebug.Log($"[MatchPanel] 恢复玩家名称：{_cachedNickname}");
         }
         
         // 恢复头像
         if (!string.IsNullOrEmpty(_cachedAvatarUrl) && _headImg != null)
         {
             LoadAvatarTexture(_cachedAvatarUrl);
-            Debug.Log($"[MatchPanel] 恢复玩家头像：{_cachedAvatarUrl}");
+            zUDebug.Log($"[MatchPanel] 恢复玩家头像：{_cachedAvatarUrl}");
         }
     }
 
@@ -141,7 +141,7 @@ public class MatchPanel : BasePanel
             
             if (www.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"[MatchPanel] 加载头像失败：{www.error}");
+                zUDebug.LogError($"[MatchPanel] 加载头像失败：{www.error}");
             }
             else
             {
@@ -149,7 +149,7 @@ public class MatchPanel : BasePanel
                 if (texture != null && _headImg != null)
                 {
                     _headImg.texture = texture;
-                    Debug.Log($"[MatchPanel] 头像加载成功，尺寸：{texture.width}x{texture.height}");
+                    zUDebug.Log($"[MatchPanel] 头像加载成功，尺寸：{texture.width}x{texture.height}");
                 }
             }
 
@@ -404,7 +404,7 @@ public class MatchPanel : BasePanel
     // UseLocalNet Toggle值变化处理方法
     private void OnUseLocalNetValueChanged(bool value)
     {
-        Debug.Log($"UseLocalNet状态变化为: {value}");
+        zUDebug.Log($"UseLocalNet状态变化为: {value}");
         SaveUseLocalNetOption(value);
     }
 

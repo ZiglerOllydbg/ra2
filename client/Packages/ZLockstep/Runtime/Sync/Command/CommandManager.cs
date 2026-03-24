@@ -133,7 +133,7 @@ namespace ZLockstep.Sync.Command
 
             if (executedCount > 0)
             {
-                UnityEngine.Debug.Log($"[CommandManager] Tick {currentTick}: 执行了 {executedCount} 个命令");
+                zUDebug.Log($"[CommandManager] Tick {currentTick}: 执行了 {executedCount} 个命令");
             }
         }
 

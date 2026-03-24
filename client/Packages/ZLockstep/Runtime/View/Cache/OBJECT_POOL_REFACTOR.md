@@ -552,7 +552,7 @@ void OnSceneUnload()
 - `GameObject.Destroy`: 销毁对象
 - `GameObject.SetActive`: 激活/停用对象
 - `Transform.SetParent/SetPosition/SetRotation`: 变换操作
-- `Debug.Log/Warning/Error`: 日志输出
+- `zUDebug.Log/Warning/Error`: 日志输出
 
 ---
 

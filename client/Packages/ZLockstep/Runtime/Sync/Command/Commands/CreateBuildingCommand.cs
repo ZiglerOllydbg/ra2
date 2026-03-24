@@ -67,7 +67,7 @@ namespace ZLockstep.Sync.Command.Commands
             var mapManager = world.GameInstance.GetMapManager();
             if (!BuildingPlacementUtils.CheckBuildingPlacement(ConfBuildingID, Position, mapManager))
             {
-                UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
+                zUDebug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造建筑类型{BuildingType} 在位置{Position} 失败：位置被阻挡或超出边界");
                 world.EventManager.Publish(new MessageEvent("无法建造建筑，请检查资源是否充足"));
                 return;
             }
@@ -75,7 +75,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查并扣除资源
             if (!CheckAndDeductResources(world))
             {
-                UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 资源不足，无法建造建筑类型{BuildingType}");
+                zUDebug.Log($"[CreateBuildingCommand] 阵营{CampId} 资源不足，无法建造建筑类型{BuildingType}");
                 return;
             }
 
@@ -95,7 +95,7 @@ namespace ZLockstep.Sync.Command.Commands
                 world.EventManager.Publish(unitCreatedEvent.Value);
             }
 
-            UnityEngine.Debug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造了建筑类型{BuildingType} " +
+            zUDebug.Log($"[CreateBuildingCommand] 阵营{CampId} 建造了建筑类型{BuildingType} " +
                 $"在位置{Position}");
         }
 
@@ -168,7 +168,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查是否有足够的资源
             if (costMoney > 0 && economyComponent.Money < costMoney)
             {
-                UnityEngine.Debug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
+                zUDebug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
 
                 world.EventManager.Publish(new MessageEvent
                 {
@@ -179,7 +179,7 @@ namespace ZLockstep.Sync.Command.Commands
 
             if (costPower > 0 && economyComponent.Power < costPower)
             {
-                UnityEngine.Debug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
+                zUDebug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
                 world.EventManager.Publish(new MessageEvent
                 {
                     Message = "电力不足！"
@@ -222,7 +222,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[CreateBuildingCommand] 扣除资源成功。花费资金: {costMoney}, 获得电力: {costPower}。剩余资金: {economyComponent.Money}, 总电力: {economyComponent.Power}");
+            zUDebug.Log($"[CreateBuildingCommand] 扣除资源成功。花费资金: {costMoney}, 获得电力: {costPower}。剩余资金: {economyComponent.Money}, 总电力: {economyComponent.Power}");
             return true;
         }
 

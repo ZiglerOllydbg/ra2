@@ -74,7 +74,7 @@ namespace ZLockstep.Sync
             // 第一次 PrepareNextFrame() 会变成 0，与 world.Tick 同步
             _currentFrame = _world.Tick - 1;
             
-            UnityEngine.Debug.Log($"[FrameSyncManager] 初始化：world.Tick={_world.Tick}, currentFrame={_currentFrame}");
+            zUDebug.Log($"[FrameSyncManager] 初始化：world.Tick={_world.Tick}, currentFrame={_currentFrame}");
         }
 
         /// <summary>
@@ -140,18 +140,18 @@ namespace ZLockstep.Sync
 
                 _frameCommands.Remove(nextFrame);
                 
-                Debug.Log($"[FrameSyncManager] 准备Frame {nextFrame}，命令数={commands.Count}");
+                zUDebug.Log($"[FrameSyncManager] 准备Frame {nextFrame}，命令数={commands.Count}");
             }
             else
             {
                 // 没有命令也要推进（空帧）
-                // Debug.Log($"[FrameSyncManager] 准备Frame {nextFrame}（空帧）");
+                // zUDebug.Log($"[FrameSyncManager] 准备Frame {nextFrame}（空帧）");
             }
 
             // 更新当前帧
             _currentFrame = nextFrame;
 
-            // Debug.Log($"[FrameSyncManager] currentFrame={_currentFrame}, world.Tick={_world.Tick} (将在ExecuteLogicFrame中同步)");
+            // zUDebug.Log($"[FrameSyncManager] currentFrame={_currentFrame}, world.Tick={_world.Tick} (将在ExecuteLogicFrame中同步)");
 
             return nextFrame;
         }
@@ -212,7 +212,7 @@ namespace ZLockstep.Sync
                 maxFrame = System.Math.Max(maxFrame, frame);
             }
 
-            Debug.Log($"[FrameSyncManager] 批量确认 {frameCommandsMap.Count} 帧，范围: {minFrame}-{maxFrame}，最新确认帧: {_confirmedFrame}");
+            zUDebug.Log($"[FrameSyncManager] 批量确认 {frameCommandsMap.Count} 帧，范围: {minFrame}-{maxFrame}，最新确认帧: {_confirmedFrame}");
         }
 
         /// <summary>
@@ -268,7 +268,7 @@ namespace ZLockstep.Sync
             _frameCommands.Clear();
             _pendingLocalCommands.Clear();
             
-            Debug.Log("[FrameSyncManager] 重置状态");
+            zUDebug.Log("[FrameSyncManager] 重置状态");
         }
     }
 

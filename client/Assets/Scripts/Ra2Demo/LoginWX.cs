@@ -33,7 +33,7 @@ public class LoginWX : MonoBehaviour
             // 初始化微信SDK
             WX.InitSDK((code) =>
             {
-                Debug.Log("init WXSDK code: " + code);
+                zUDebug.Log("init WXSDK code: " + code);
                 // 加载用户信息
                 this.LoaderWXMess();
             });
@@ -67,7 +67,7 @@ public class LoginWX : MonoBehaviour
                     {
                         success = (res) =>
                         {
-                            Debug.Log("同意隐私协议：" + JsonUtility.ToJson(res, true));
+                            zUDebug.Log("同意隐私协议：" + JsonUtility.ToJson(res, true));
                             // 用户同意隐私协议
                             // 3. 获取用户信息
                             this.GetScopeInfoSetting();
@@ -76,11 +76,11 @@ public class LoginWX : MonoBehaviour
                         },
                         fail = (err) =>
                         {
-                            Debug.Log("拒绝隐私协议：" + JsonUtility.ToJson(res, true));
+                            zUDebug.Log("拒绝隐私协议：" + JsonUtility.ToJson(res, true));
                         },
                         complete = (res) =>
                         {
-                            Debug.Log("询问隐私协议结束");
+                            zUDebug.Log("询问隐私协议结束");
                         }
                     });
                 }
@@ -103,8 +103,8 @@ public class LoginWX : MonoBehaviour
     /// </summary>
     public void StartGame()
     {
-        Debug.Log("start game");
-        Debug.Log("用户信息：" + JsonUtility.ToJson(this.userInfo, true));
+        zUDebug.Log("start game");
+        zUDebug.Log("用户信息：" + JsonUtility.ToJson(this.userInfo, true));
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public class LoginWX : MonoBehaviour
         {
             success = (res) =>
             {
-                Debug.Log("获取用户信息授权情况成功: " + JsonUtility.ToJson(res.authSetting, true));
+                zUDebug.Log("获取用户信息授权情况成功: " + JsonUtility.ToJson(res.authSetting, true));
                 // 判断用户信息的授权情况
                 if (!res.authSetting.ContainsKey("scope.userInfo") || !res.authSetting["scope.userInfo"])
                 {
@@ -134,7 +134,7 @@ public class LoginWX : MonoBehaviour
             },
             fail = (err) =>
             {
-                Debug.Log("获取用户信息授权情况失败：" + JsonUtility.ToJson(err, true));
+                zUDebug.Log("获取用户信息授权情况失败：" + JsonUtility.ToJson(err, true));
             }
         });
     }
@@ -144,7 +144,7 @@ public class LoginWX : MonoBehaviour
     /// </summary>
     private void CreateUserInfoButton()
     {
-        Debug.Log("create userinfo button area");
+        zUDebug.Log("create userinfo button area");
 
         /**
          * 方法一：创建用户信息获取按钮，在底部区域创建一个300高度的 透明！！！ 区域
@@ -165,11 +165,11 @@ public class LoginWX : MonoBehaviour
         // 监听授权区域的点击
         btn.OnTap((res) =>
         {
-            Debug.Log("click userinfo btn: " + JsonUtility.ToJson(res, true));
+            zUDebug.Log("click userinfo btn: " + JsonUtility.ToJson(res, true));
             if (res.errCode == 0)
             {
                 // 用户已允许获取个人信息，返回的 res.userInfo 即为用户信息
-                Debug.Log("userinfo: " + JsonUtility.ToJson(res.userInfo, true));
+                zUDebug.Log("userinfo: " + JsonUtility.ToJson(res.userInfo, true));
                 // 将用户信息存入成员变量，以待后用
                 this.userInfo = res.userInfo;
                 // 展示，只是为了测试看到
@@ -177,11 +177,11 @@ public class LoginWX : MonoBehaviour
             }
             else
             {
-                Debug.Log("用户拒绝获取个人信息");
+                zUDebug.Log("用户拒绝获取个人信息");
             }
             // 最后隐藏授权区域，防止阻塞游戏继续
             btn.Hide();
-            Debug.Log("已隐藏热区");
+            zUDebug.Log("已隐藏热区");
         });
     }
 
@@ -195,7 +195,7 @@ public class LoginWX : MonoBehaviour
             lang = "zh_CN",
             success = (res) =>
             {
-                Debug.Log("获取用户信息成功(API): " + JsonUtility.ToJson(res.userInfo, true));
+                zUDebug.Log("获取用户信息成功(API): " + JsonUtility.ToJson(res.userInfo, true));
                 // 将用户信息存入成员变量，或存入云端，方便后续使用
                 this.userInfo = this.ConvertUserInfo(res.userInfo);
 
@@ -203,7 +203,7 @@ public class LoginWX : MonoBehaviour
             },
             fail = (err) =>
             {
-                Debug.Log("获取用户信息失败(API): " + JsonUtility.ToJson(err, true));
+                zUDebug.Log("获取用户信息失败(API): " + JsonUtility.ToJson(err, true));
             }
         });
     }

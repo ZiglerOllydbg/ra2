@@ -77,7 +77,7 @@ namespace ZLockstep.Sync.Command.Commands
                 // 检查资金是否足够
                 if (!CheckAndDeductProductionCost(world, campComponent.CampId, ChangeValue))
                 {
-                    UnityEngine.Debug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 资金不足，无法生产单位 {UnitType}");
+                    zUDebug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 资金不足，无法生产单位 {UnitType}");
                     return;
                 }
             }
@@ -91,7 +91,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查单位类型是否支持生产
             if (!produceComponent.SupportedUnitTypes.Contains(UnitType))
             {
-                UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不支持生产单位类型 {UnitType}");
+                zUDebug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不支持生产单位类型 {UnitType}");
                 // 如果不支持生产，且之前扣除了资金，需要返还资金
                 if (ChangeValue > 0)
                 {
@@ -155,7 +155,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查是否有足够的资源
             if (economyComponent.Money < costMoney)
             {
-                UnityEngine.Debug.Log($"[ProduceCommand] 资金不足。需要：{costMoney}, 当前：{economyComponent.Money}");
+                zUDebug.Log($"[ProduceCommand] 资金不足。需要：{costMoney}, 当前：{economyComponent.Money}");
                 return false;
             }
             
@@ -176,7 +176,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[ProduceCommand] 扣除资源成功。花费资金：{costMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[ProduceCommand] 扣除资源成功。花费资金：{costMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
             return true;
         }
 
@@ -226,7 +226,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            UnityEngine.Debug.Log($"[ProduceCommand] 返还资源成功。返还资金：{refundMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[ProduceCommand] 返还资源成功。返还资金：{refundMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
         }
 
         public override string ToString()

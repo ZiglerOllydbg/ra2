@@ -104,7 +104,7 @@ namespace ZLockstep.View.Systems
             foreach (var evt in events)
             {
                 // 显示消息提示
-                Debug.Log($"[PresentationSystem] 显示消息：{evt.Message}");
+                zUDebug.Log($"[PresentationSystem] 显示消息：{evt.Message}");
                 Frame.DispatchEvent(new ShowMessageEvent(evt.Message));
             }
         }
@@ -131,7 +131,7 @@ namespace ZLockstep.View.Systems
             {
                 // 这里可以添加处理电力变化的逻辑
                 // 例如：更新UI上的电力显示
-                Debug.Log($"[PresentationSystem] 阵营{evt.CampId}电力变化: {evt.OldPower} -> {evt.NewPower} ({evt.Reason})");
+                zUDebug.Log($"[PresentationSystem] 阵营{evt.CampId}电力变化: {evt.OldPower} -> {evt.NewPower} ({evt.Reason})");
             }
         }
 
@@ -456,7 +456,7 @@ namespace ZLockstep.View.Systems
                 }
             }
 
-            Debug.Log($"[PresentationSystem] ResyncAllEntities 完成: 新建={createdCount}, 同步={syncedCount}");
+            zUDebug.Log($"[PresentationSystem] ResyncAllEntities 完成: 新建={createdCount}, 同步={syncedCount}");
         }
 
         /// <summary>

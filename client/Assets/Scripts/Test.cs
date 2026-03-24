@@ -202,7 +202,7 @@ public class Test : MonoBehaviour
             };
 
             worldBridge.SubmitCommand(moveCommand);
-            Debug.Log($"[Test] 发送移动命令: {playerUnits.Count}个单位 → {worldPosition}");
+            zUDebug.Log($"[Test] 发送移动命令: {playerUnits.Count}个单位 → {worldPosition}");
         }
     }
 

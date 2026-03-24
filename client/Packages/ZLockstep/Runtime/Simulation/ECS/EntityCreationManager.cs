@@ -231,7 +231,7 @@ namespace ZLockstep.Simulation.ECS
                 PlayerId = campId
             };
 
-            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
+            zUDebug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
                 $"在位置{position}（格子{gridX},{gridY}），尺寸{width}x{height}，Entity ID: {entity.Id}");
             
             return unitCreatedEvent;
@@ -361,7 +361,7 @@ namespace ZLockstep.Simulation.ECS
                 ConfUnitID = confUnitID,
             };
 
-            UnityEngine.Debug.Log($"[EntityCreationManager] 玩家{campId} 创建了单位类型{unitType} 在位置{position}，Entity ID: {entity.Id}");
+            zUDebug.Log($"[EntityCreationManager] 玩家{campId} 创建了单位类型{unitType} 在位置{position}，Entity ID: {entity.Id}");
             
             return unitCreatedEvent;
         }
@@ -468,7 +468,7 @@ namespace ZLockstep.Simulation.ECS
             var miningComponent = MiningComponent.Create(mineEntityId);
             world.ComponentManager.AddComponent(smelterEntity, miningComponent);
             
-            UnityEngine.Debug.Log($"[EntityCreationManager] 为采矿场实体 {smelterEntity.Id} 分配了矿源实体 {mineEntityId}");
+            zUDebug.Log($"[EntityCreationManager] 为采矿场实体 {smelterEntity.Id} 分配了矿源实体 {mineEntityId}");
         }
         
         #endregion

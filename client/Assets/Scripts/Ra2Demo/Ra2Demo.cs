@@ -163,7 +163,7 @@ public class Ra2Demo : MonoBehaviour
             if (unitPrefabs[i] != null)
             {
                 prefabDict[i] = unitPrefabs[i];
-                Debug.Log($"[Ra2Demo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
+                zUDebug.Log($"[Ra2Demo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
             }
         }
 
@@ -401,7 +401,7 @@ public class Ra2Demo : MonoBehaviour
 
             if (results.Count > 0)
             {
-                Debug.Log($"[Debug] 真正被点击的 UI 对象: {results[0].gameObject.name}");
+                zUDebug.Log($"[zUDebug] 真正被点击的 UI 对象: {results[0].gameObject.name}");
                 // results[0] 是最上层的 UI 元素
             }
 
@@ -421,7 +421,7 @@ public class Ra2Demo : MonoBehaviour
                 // 检查是否包含 LocalPlayerComponent（本地玩家建筑）
                 if (_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(clickedBuildingEntity))
                 {
-                    Debug.Log($"[建筑检测 - 本地玩家] 这是本地玩家的建筑，可以出售");
+                    zUDebug.Log($"[建筑检测 - 本地玩家] 这是本地玩家的建筑，可以出售");
                     
                     // 获取建筑组件以获取建筑类型
                     var buildingComp = _game.World.ComponentManager.GetComponent<BuildingComponent>(clickedBuildingEntity);
@@ -431,7 +431,7 @@ public class Ra2Demo : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log($"[建筑检测 - 非本地玩家] 这不是本地玩家的建筑");
+                    zUDebug.Log($"[建筑检测 - 非本地玩家] 这不是本地玩家的建筑");
                 }
 
                 // 检测是否点击了单位，不再继续执行下面逻辑
@@ -705,7 +705,7 @@ public class Ra2Demo : MonoBehaviour
 
         if (_mainCamera == null)
         {
-            Debug.LogWarning("[Test] 找不到主相机！");
+            zUDebug.LogWarning("[Test] 找不到主相机！");
             return false;
         }
 
@@ -725,7 +725,7 @@ public class Ra2Demo : MonoBehaviour
             return true;
         }
 
-        Debug.LogWarning("[Test] 无法获取点击位置！请确保有地面碰撞体或使用默认平面。");
+        zUDebug.LogWarning("[Test] 无法获取点击位置！请确保有地面碰撞体或使用默认平面。");
         return false;
     }
 
@@ -821,7 +821,7 @@ public class Ra2Demo : MonoBehaviour
     {
         if (entityIds.Count == 0)
         {
-            Debug.Log("[Test] 没有要移动的单位");
+            zUDebug.Log("[Test] 没有要移动的单位");
             return;
         }
 
@@ -835,7 +835,7 @@ public class Ra2Demo : MonoBehaviour
             var entity = new Entity(entityId);
             if (!_game.World.ComponentManager.HasComponent<UnitComponent>(entity))
             {
-                Debug.Log($"[Test] 单位 {entityId} 已不存在");
+                zUDebug.Log($"[Test] 单位 {entityId} 已不存在");
                 DisableOutlineForEntity(entityId);
                 continue;
             }
@@ -843,7 +843,7 @@ public class Ra2Demo : MonoBehaviour
             // 判断拥有 LocalPlayerComponent 就是当前玩家的单位
             if (!_game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity))
             {
-                Debug.Log($"[Test] 单位 {entityId} 不属于当前玩家");
+                zUDebug.Log($"[Test] 单位 {entityId} 不属于当前玩家");
                 DisableOutlineForEntity(entityId);
                 continue;
             }
@@ -853,7 +853,7 @@ public class Ra2Demo : MonoBehaviour
 
         if (validEntityIds.Count == 0)
         {
-            Debug.Log("[Test] 没有有效的选中单位");
+            zUDebug.Log("[Test] 没有有效的选中单位");
             return;
         }
 
@@ -871,7 +871,7 @@ public class Ra2Demo : MonoBehaviour
         };
 
         _game.SubmitCommand(moveCommand);
-        Debug.Log($"[Test] 发送移动命令：{validEntityIds.Count}个单位 → {targetWorldPosition}");
+        zUDebug.Log($"[Test] 发送移动命令：{validEntityIds.Count}个单位 → {targetWorldPosition}");
     }
 
     private void OnGUI()

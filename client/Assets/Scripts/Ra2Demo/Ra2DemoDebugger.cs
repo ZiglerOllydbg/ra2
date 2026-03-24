@@ -394,7 +394,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         {
             _showDebugUI = !_showDebugUI;
             _DebugType += 1;
-            Debug.Log($"[Ra2DemoDebugger] Debug UI 显示状态：{_showDebugUI}");
+            zUDebug.Log($"[Ra2DemoDebugger] zUDebug UI 显示状态：{_showDebugUI}");
         }
     }
 

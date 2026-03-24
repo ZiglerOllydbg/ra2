@@ -315,7 +315,7 @@ public class HealthPanel : BasePanel
     internal void OnHealthBarSettingChanged(HealthBarSettingChangedEvent e)
     {
         showHealthBarAlways = e.ShowAlways;
-        Debug.Log($"[HealthPanel] 血条永久显示设置已更新为：{(e.ShowAlways ? "开启" : "关闭")}");
+        zUDebug.Log($"[HealthPanel] 血条永久显示设置已更新为：{(e.ShowAlways ? "开启" : "关闭")}");
         
         // 立即刷新所有现有血量条的显示状态
         UpdateAllHealthBars();

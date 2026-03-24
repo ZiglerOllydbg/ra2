@@ -153,7 +153,7 @@ public class MainProducerSubPanel
                 ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
                 if (confUnit == null)
                 {
-                    Debug.LogError($"Invalid unit type: {unitType}");
+                    zUDebug.LogError($"Invalid unit type: {unitType}");
                     continue;
                 }
 
@@ -218,7 +218,7 @@ public class MainProducerSubPanel
         // 如果列表项数量发生变化，需要重建控件
         if (expectedItemCount != listItems.Count)
         {
-            Debug.Log($"[生产列表] 列表项数量发生变化：{listItems.Count} -> {expectedItemCount}，重建列表");
+            zUDebug.Log($"[生产列表] 列表项数量发生变化：{listItems.Count} -> {expectedItemCount}，重建列表");
             RefreshProducerList();
             return;
         }
@@ -236,7 +236,7 @@ public class MainProducerSubPanel
                 ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
                 if (confUnit == null)
                 {
-                    Debug.LogError($"Invalid unit type: {unitType}");
+                    zUDebug.LogError($"Invalid unit type: {unitType}");
                     continue;
                 }
 
@@ -299,7 +299,7 @@ public class MainProducerSubPanel
     {
         if (productionRecords.Count == 0)
         {
-            Debug.Log("[生产记录] 没有生产记录，跳过上报");
+            zUDebug.Log("[生产记录] 没有生产记录，跳过上报");
             return;
         }
 
@@ -319,16 +319,16 @@ public class MainProducerSubPanel
         try
         {
             PostHog.Capture("producer_units", properties);
-            Debug.Log($"[生产记录] 已发送 PostHog 事件：producer_units");
+            zUDebug.Log($"[生产记录] 已发送 PostHog 事件：producer_units");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[生产记录] 发送 PostHog 事件失败：{ex.Message}");
+            zUDebug.LogError($"[生产记录] 发送 PostHog 事件失败：{ex.Message}");
         }
 
         // 清空记录
         productionRecords.Clear();
-        Debug.Log("[生产记录] 已清空生产记录");
+        zUDebug.Log("[生产记录] 已清空生产记录");
     }
 
     public bool IsVisiable()
@@ -379,7 +379,7 @@ public class MainProducerSubPanel
         
         if (itemTemplate == null || listContent == null)
         {
-            Debug.LogWarning("列表模板或Content容器未找到");
+            zUDebug.LogWarning("列表模板或Content容器未找到");
             return;
         }
         
@@ -387,7 +387,7 @@ public class MainProducerSubPanel
         var layoutGroup = listContent.GetComponent<LayoutGroup>();
         if (layoutGroup == null)
         {
-            Debug.LogWarning("Content 上没有 LayoutGroup 组件，列表项可能会重叠。请添加 VerticalLayoutGroup 或 HorizontalLayoutGroup");
+            zUDebug.LogWarning("Content 上没有 LayoutGroup 组件，列表项可能会重叠。请添加 VerticalLayoutGroup 或 HorizontalLayoutGroup");
         }
         
         foreach (var data in dataList)
@@ -476,7 +476,7 @@ public class MainProducerSubPanel
     /// </summary>
     private void OnListItemAdd(ProducerListItem item)
     {
-        Debug.Log($"请求添加生产项: {item.ItemData?.Name}");
+        zUDebug.Log($"请求添加生产项: {item.ItemData?.Name}");
         
         // 记录添加操作
         if (item.ItemData != null && game != null)
@@ -488,7 +488,7 @@ public class MainProducerSubPanel
             }
             productionRecords[key]++;
             
-            Debug.Log($"[生产记录] 添加: {key}, 当前数量={productionRecords[key]}");
+            zUDebug.Log($"[生产记录] 添加: {key}, 当前数量={productionRecords[key]}");
         }
         
         // 实现添加逻辑，例如发送命令增加单位生产
@@ -503,7 +503,7 @@ public class MainProducerSubPanel
     /// </summary>
     private void OnListItemSub(ProducerListItem item)
     {
-        Debug.Log($"请求减少生产项: {item.ItemData?.Name}");
+        zUDebug.Log($"请求减少生产项: {item.ItemData?.Name}");
         
         // 记录减少操作
         if (item.ItemData != null && game != null)
@@ -515,7 +515,7 @@ public class MainProducerSubPanel
             }
             productionRecords[key]--;
             
-            Debug.Log($"[生产记录] 减少: {key}, 当前数量={productionRecords[key]}");
+            zUDebug.Log($"[生产记录] 减少: {key}, 当前数量={productionRecords[key]}");
         }
         
         // 实现减少逻辑，例如发送命令减少单位生产
@@ -547,7 +547,7 @@ public class MainProducerSubPanel
         };
 
         game.SubmitCommand(produceCommand);
-        Debug.Log($"[Test] 发送生产命令: 工厂{factoryEntityId} 单位类型{unitType} 变化值{changeValue}");
+        zUDebug.Log($"[Test] 发送生产命令: 工厂{factoryEntityId} 单位类型{unitType} 变化值{changeValue}");
     }
     
     /// <summary>

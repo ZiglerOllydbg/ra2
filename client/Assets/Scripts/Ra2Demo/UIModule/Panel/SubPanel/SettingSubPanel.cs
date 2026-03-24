@@ -192,7 +192,7 @@ public class SettingSubPanel
         // 更新文本显示
         UpdateMusicValueText(value);
         
-        Debug.Log($"[SettingSubPanel] 背景音乐音量已设置为：{value * 100:F0}%");
+        zUDebug.Log($"[SettingSubPanel] 背景音乐音量已设置为：{value * 100:F0}%");
     }
     
     /// <summary>
@@ -204,7 +204,7 @@ public class SettingSubPanel
         PlayerPrefs.SetInt("ShowHealthBar", isOn ? 1 : 0);
         PlayerPrefs.Save();
         
-        Debug.Log($"[SettingSubPanel] 血条永久显示已{(isOn ? "开启" : "关闭")}");
+        zUDebug.Log($"[SettingSubPanel] 血条永久显示已{(isOn ? "开启" : "关闭")}");
         
         // 发送事件通知血量面板更新设置
         Frame.DispatchEvent(new HealthBarSettingChangedEvent(isOn));
@@ -220,7 +220,7 @@ public class SettingSubPanel
         if (debugger != null)
         {
             debugger.SetDebugType(2);
-            Debug.Log("[SettingSubPanel] 已切换到单位统计面板");
+            zUDebug.Log("[SettingSubPanel] 已切换到单位统计面板");
         }
     }
     
@@ -234,7 +234,7 @@ public class SettingSubPanel
         if (debugger != null)
         {
             debugger.SetDebugType(0);
-            Debug.Log("[SettingSubPanel] 已关闭调试界面");
+            zUDebug.Log("[SettingSubPanel] 已关闭调试界面");
         }
     }
     

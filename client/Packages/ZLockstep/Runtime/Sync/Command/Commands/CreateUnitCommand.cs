@@ -80,7 +80,7 @@ namespace ZLockstep.Sync.Command.Commands
                 PrefabId = PrefabId
             });
 
-            UnityEngine.Debug.Log($"[CreateUnitCommand] 玩家{CampId} 创建了单位类型{UnitType} 在位置{Position}，Entity ID: {entity.Id}");
+            zUDebug.Log($"[CreateUnitCommand] 玩家{CampId} 创建了单位类型{UnitType} 在位置{Position}，Entity ID: {entity.Id}");
         }
 
         #region 辅助方法

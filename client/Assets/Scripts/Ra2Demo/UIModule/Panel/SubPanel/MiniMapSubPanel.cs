@@ -149,15 +149,15 @@ public class MiniMapSubPanel
                 (localPoint.y + rectTransform.rect.height * rectTransform.pivot.y) / rectTransform.rect.height
             );
 
-            Debug.Log($"点击局部坐标: {localPoint}");
-            Debug.Log($"归一化坐标 (0~1): {normalizedPos}");
+            zUDebug.Log($"点击局部坐标: {localPoint}");
+            zUDebug.Log($"归一化坐标 (0~1): {normalizedPos}");
 
             // 示例：根据点击位置移动主地图视角
             HandleMiniMapClick(normalizedPos);
         }
         
         // 输出被点击对象的详细信息（调试用）
-        Debug.Log($"[MiniMap] 当前选中对象：{EventSystem.current?.currentSelectedGameObject?.name ?? "null"}");
+        zUDebug.Log($"[MiniMap] 当前选中对象：{EventSystem.current?.currentSelectedGameObject?.name ?? "null"}");
     }
 
     void HandleMiniMapClick(Vector2 normalizedPos)

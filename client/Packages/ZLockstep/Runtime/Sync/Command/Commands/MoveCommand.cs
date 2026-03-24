@@ -79,7 +79,7 @@ namespace ZLockstep.Sync.Command.Commands
 
             if (successCount > 0)
             {
-                UnityEngine.Debug.Log($"[MoveCommand] 玩家{CampId} 命令{successCount}个单位移动到 {TargetPosition}");
+                zUDebug.Log($"[MoveCommand] 玩家{CampId} 命令{successCount}个单位移动到 {TargetPosition}");
             }
         }
 

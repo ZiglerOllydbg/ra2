@@ -340,7 +340,7 @@ public class NetworkSync
 ### 1. 查看命令执行情况
 
 ```csharp
-Debug.Log($"待执行命令数: {world.CommandManager.GetPendingCommandCount()}");
+zUDebug.Log($"待执行命令数: {world.CommandManager.GetPendingCommandCount()}");
 ```
 
 ### 2. 查看命令历史
@@ -349,7 +349,7 @@ Debug.Log($"待执行命令数: {world.CommandManager.GetPendingCommandCount()}"
 var history = world.CommandManager.GetCommandHistory();
 foreach (var cmd in history)
 {
-    Debug.Log($"Frame {cmd.ExecuteFrame}: {cmd.GetType().Name} by Player {cmd.PlayerId}");
+    zUDebug.Log($"Frame {cmd.ExecuteFrame}: {cmd.GetType().Name} by Player {cmd.PlayerId}");
 }
 ```
 

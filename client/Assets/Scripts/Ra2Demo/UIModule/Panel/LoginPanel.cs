@@ -30,7 +30,7 @@ public class LoginPanel : BasePanel
         // 获取 Login 按钮组件
         _loginButton = PanelObject.transform.Find("Login/LoginBtn")?.GetComponent<Button>();
         
-        Debug.Log("[LoginPanel] 面板已显示");
+        zUDebug.Log("[LoginPanel] 面板已显示");
     }
 
     // 3. 在 AddEvent 中添加按钮事件（面板显示时自动调用）
@@ -42,11 +42,11 @@ public class LoginPanel : BasePanel
         if (_loginButton != null)
         {
             _loginButton.onClick.AddListener(OnLoginButtonClick);
-            Debug.Log("[LoginPanel] 登录按钮事件已绑定");
+            zUDebug.Log("[LoginPanel] 登录按钮事件已绑定");
         }
         else
         {
-            Debug.LogWarning("[LoginPanel] 未找到登录按钮组件");
+            zUDebug.LogWarning("[LoginPanel] 未找到登录按钮组件");
         }
     }
 
@@ -59,7 +59,7 @@ public class LoginPanel : BasePanel
         if (_loginButton != null)
         {
             _loginButton.onClick.RemoveListener(OnLoginButtonClick);
-            Debug.Log("[LoginPanel] 登录按钮事件已移除");
+            zUDebug.Log("[LoginPanel] 登录按钮事件已移除");
         }
     }
 
@@ -67,13 +67,13 @@ public class LoginPanel : BasePanel
     protected override void OnBecameInvisible()
     {
         base.OnBecameInvisible();
-        Debug.Log("[LoginPanel] 面板已隐藏");
+        zUDebug.Log("[LoginPanel] 面板已隐藏");
     }
     
     // Login 按钮点击处理方法
     private void OnLoginButtonClick()
     {
-        Debug.Log("[LoginPanel] 登录按钮被点击");
+        zUDebug.Log("[LoginPanel] 登录按钮被点击");
         
         // TODO: 实现登录逻辑
         // 示例：触发登录事件或调用登录接口
@@ -94,7 +94,7 @@ public class LoginPanel : BasePanel
             }
             else 
             {
-                Debug.LogError("[MatchPanel] 未找到 LoginWX 组件");
+                zUDebug.LogError("[MatchPanel] 未找到 LoginWX 组件");
             }
         }
     }

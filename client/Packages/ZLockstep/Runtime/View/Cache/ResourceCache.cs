@@ -328,7 +328,7 @@ public static class ResourceCache
         spriteCache.Clear();
         textAssetCache.Clear();
         
-        Debug.Log("All resource caches cleared");
+        zUDebug.Log("All resource caches cleared");
     }
     
     /// <summary>
@@ -341,28 +341,28 @@ public static class ResourceCache
         {
             case nameof(GameObject):
                 gameObjectCache.Clear();
-                Debug.Log("GameObject cache cleared");
+                zUDebug.Log("GameObject cache cleared");
                 break;
             case nameof(Texture):
             case nameof(Texture2D):
                 textureCache.Clear();
-                Debug.Log("Texture cache cleared");
+                zUDebug.Log("Texture cache cleared");
                 break;
             case nameof(AudioClip):
                 audioClipCache.Clear();
-                Debug.Log("AudioClip cache cleared");
+                zUDebug.Log("AudioClip cache cleared");
                 break;
             case nameof(Material):
                 materialCache.Clear();
-                Debug.Log("Material cache cleared");
+                zUDebug.Log("Material cache cleared");
                 break;
             case nameof(Sprite):
                 spriteCache.Clear();
-                Debug.Log("Sprite cache cleared");
+                zUDebug.Log("Sprite cache cleared");
                 break;
             case nameof(TextAsset):
                 textAssetCache.Clear();
-                Debug.Log("TextAsset cache cleared");
+                zUDebug.Log("TextAsset cache cleared");
                 break;
         }
     }

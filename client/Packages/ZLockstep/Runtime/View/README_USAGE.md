@@ -31,7 +31,7 @@ public class GameTest : MonoBehaviour
             prefab: tankPrefab
         );
         
-        Debug.Log($"创建了实体: {entity.Id}");
+        zUDebug.Log($"创建了实体: {entity.Id}");
     }
 }
 ```
@@ -61,7 +61,7 @@ public class MyCustomSystem : BaseSystem
 {
     protected override void OnInitialize()
     {
-        Debug.Log("系统初始化");
+        zUDebug.Log("系统初始化");
     }
 
     public override void Update()
@@ -141,7 +141,7 @@ var health = new HealthComponent((zfloat)200.0f);
 health.TakeDamage((zfloat)50.0f);
 if (health.IsAlive)
 {
-    Debug.Log($"剩余血量: {health.HealthPercent * 100}%");
+    zUDebug.Log($"剩余血量: {health.HealthPercent * 100}%");
 }
 ```
 
@@ -212,7 +212,7 @@ public class RTSGameManager : MonoBehaviour
                 
                 worldBridge.LogicWorld.ComponentManager.AddComponent(playerTank, moveCmd);
                 
-                Debug.Log($"移动到: {targetPos}");
+                zUDebug.Log($"移动到: {targetPos}");
             }
         }
     }
@@ -227,14 +227,14 @@ var entity = new Entity(0);
 if (ComponentManager.HasComponent<TransformComponent>(entity))
 {
     var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-    Debug.Log($"位置: {transform.Position}");
+    zUDebug.Log($"位置: {transform.Position}");
 }
 ```
 
 ### 2. 遍历所有实体
 ```csharp
 var allUnits = ComponentManager.GetAllEntityIdsWith<UnitComponent>();
-Debug.Log($"当前单位数量: {allUnits.Count()}");
+zUDebug.Log($"当前单位数量: {allUnits.Count()}");
 ```
 
 ### 3. 在编辑器中可视化

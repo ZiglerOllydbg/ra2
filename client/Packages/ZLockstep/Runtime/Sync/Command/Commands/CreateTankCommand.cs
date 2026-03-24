@@ -69,11 +69,11 @@ namespace ZLockstep.Sync.Command.Commands
             if (unitCreatedEvent.HasValue)
             {
                 world.EventManager.Publish(unitCreatedEvent.Value);
-                UnityEngine.Debug.Log($"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position}");
+                zUDebug.Log($"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position}");
             }
             else
             {
-                UnityEngine.Debug.LogError($"[CreateTankCommand] 玩家{CampId} 创建坦克失败");
+                zUDebug.LogError($"[CreateTankCommand] 玩家{CampId} 创建坦克失败");
             }
         }
 
