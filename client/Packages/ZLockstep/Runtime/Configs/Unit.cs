@@ -26,7 +26,7 @@ public class ConfUnit
 	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
 	public int AtkInterval; // 攻击频率10000=1秒
 	public int AtkCount; // 攻击目标数量
-	public int Speed; // 移动速度
+	public int Speed; // 移动速度（最大6米/秒）
 	public int CostMoney; // 消耗金钱
 	public int ProduceTime; // 生产时间（帧数，每秒20帧）
 	public string Name; // 名称

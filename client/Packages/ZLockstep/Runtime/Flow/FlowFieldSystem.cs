@@ -44,6 +44,13 @@ namespace ZLockstep.Flow
         public zVector2 DebugScatterCenter => debugScatterCenter;
         public zfloat DebugScatterRadius => debugScatterRadius;
 
+        protected override void OnInitialize()
+        {
+            // 系统初始化
+            Simulator.Instance.setTimeStep(0.05f);
+            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
+        }
+
         /// <summary>
         /// 初始化流场导航系统
         /// 在系统注册到World后调用
@@ -55,13 +62,33 @@ namespace ZLockstep.Flow
         {
             flowFieldManager = ffMgr;
             map = gameMap;
+            AddMapRangeObstacle();
         }
 
-        protected override void OnInitialize()
+        public void AddMapRangeObstacle()
         {
-            // 系统初始化
-            Simulator.Instance.setTimeStep(0.05f);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 1.0f, 2.0f, new Vector2(0.0f, 0.0f));
+            // 场景边界
+            int width = map.GetWidth();
+            int height = map.GetHeight();
+            float gridSize = (float)map.GetGridSize();
+
+            // 创建场景边界障碍物（逆时针顺序）
+            // 边界向外扩展半个格子，确保单位不会走到地图边缘
+            float halfGrid = gridSize * 0.5f;
+            float minX = -halfGrid;
+            float minY = -halfGrid;
+            float maxX = width * gridSize - halfGrid;
+            float maxY = height * gridSize - halfGrid;
+
+            List<Vector2> boundaryVertices = new List<Vector2>
+            {
+                new(minX, minY),  // 左下
+                new(maxX, minY),  // 右下
+                new(maxX, maxY),  // 右上
+                new(minX, maxY)   // 左上
+            };
+
+            Simulator.Instance.addObstacle(boundaryVertices);
 
             // add in awake
             Simulator.Instance.processObstacles();
@@ -87,8 +114,9 @@ namespace ZLockstep.Flow
             // 添加导航组件
             var navigator = FlowFieldNavigatorComponent.Create(radius, maxSpeed);
             
-            int sid = Simulator.Instance.addAgent(new Vector2(pos2D.ToVector2().x, pos2D.ToVector2().y), 
-                15.0f, 10, 5.0f, 2.0f, 1.0f, 10.0f, new Vector2(0.0f, 0.0f));
+            int sid = Simulator.Instance.addAgent(new Vector2(pos2D.ToVector2().x, pos2D.ToVector2().y));
+            Simulator.Instance.setAgentRadius(sid, radius.ToFloat() / 2f);
+            Simulator.Instance.setAgentMaxSpeed(sid, maxSpeed.ToFloat());
             navigator.RvoAgentId = sid;
 
             ComponentManager.AddComponent(entity, navigator);
@@ -548,6 +576,20 @@ namespace ZLockstep.Flow
         public override void Update()
         {
             UpdateRVO();
+
+            // 监控 agent 行为
+            foreach (var agentNo in Simulator.Instance.GetAgentNoList())
+            {
+                // 获取实际邻居数量
+                int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
+                
+                // 如果经常达到上限，增加 maxNeighbors
+                if (actualNeighbors >= 10)
+                {
+                    zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！");
+                    // 考虑增加到 15 或 20
+                }
+            }
         }
 
         private Random m_random = new Random();

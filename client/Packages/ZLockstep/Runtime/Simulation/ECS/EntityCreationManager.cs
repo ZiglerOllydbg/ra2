@@ -259,7 +259,7 @@ namespace ZLockstep.Simulation.ECS
                 MoveSpeed = (zfloat)confUnit.Speed,
                 RotateSpeed = (zfloat)180.0f,
                 PlayerId = campId,
-                SelectionRadius = (zfloat)0.5f,
+                SelectionRadius = radius,
                 IsSelectable = true,
                 PrefabId = prefabId
             };
