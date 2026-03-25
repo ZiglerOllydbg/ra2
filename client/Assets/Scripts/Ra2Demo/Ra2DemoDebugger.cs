@@ -134,6 +134,23 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.EndArea();
     }
 
+        /// <summary>
+    /// 绘制帮助信息面板
+    /// </summary>
+    private void DrawHelpInfo()
+    {
+        GUILayout.Label("=== Debug Console ===", _titleStyle);
+        GUILayout.Space(10);
+        GUILayout.Label("press ` hotkey to switch panel:", _labelStyle);
+        GUILayout.Label("  Type 0 - close", _labelStyle);
+        GUILayout.Label("  Type 1 - help info", _labelStyle);
+        GUILayout.Label("  Type 2 - units stat", _labelStyle);
+        GUILayout.Label("  Type 3 - Gizmoz debug switch", _labelStyle);
+        GUILayout.Label("  Type 4 - simulation", _labelStyle);
+        GUILayout.Label("  Type 5 - pathfinding info", _labelStyle);
+        GUILayout.Space(5);
+    }
+
     private void OnDrawGizmos()
     {
         // 只在编辑器模式下或者运行时附加了该脚本的情况下工作
@@ -520,7 +537,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawDebugToggles(GUIStyle toggleStyle)
     {
-        GUILayout.Label("=== Debug Switch ===", _labelStyle);
+        GUILayout.Label("=== Gizmoz Debug Switch ===", _labelStyle);
         GUILayout.Space(15);
 
         showUnits = GUILayout.Toggle(showUnits, "Show Units", toggleStyle);
@@ -702,20 +719,5 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Label($"All Units: {totalCount}", labelStyle);
     }
 
-    /// <summary>
-    /// 绘制帮助信息面板
-    /// </summary>
-    private void DrawHelpInfo()
-    {
-        GUILayout.Label("=== Debug Console ===", _titleStyle);
-        GUILayout.Space(10);
-        GUILayout.Label("press ` hotkey to switch panel:", _labelStyle);
-        GUILayout.Label("  Type 0 - close", _labelStyle);
-        GUILayout.Label("  Type 1 - help info", _labelStyle);
-        GUILayout.Label("  Type 2 - units stat", _labelStyle);
-        GUILayout.Label("  Type 3 - debug switch", _labelStyle);
-        GUILayout.Label("  Type 4 - simulation", _labelStyle);
-        GUILayout.Label("  Type 5 - pathfinding info", _labelStyle);
-        GUILayout.Space(5);
-    }
+
 }
