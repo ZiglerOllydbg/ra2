@@ -22,7 +22,6 @@ public class Ra2DemoDebugger : MonoBehaviour
     public bool showGrid = true;           // 显示网格
     public bool showObstacles = true;      // 显示障碍物
     public bool showFlowField = true;      // 显示流场方向
-    public bool showSimulationInfo = true; // 显示仿真信息（包括zTime帧率）
 
     private Ra2Demo _demo;
     private Vector3 _lastClickPosition;
@@ -54,22 +53,85 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void InitializeGUIStyles()
     {
-        // 初始化标签样式
-        _labelStyle = new GUIStyle(GUI.skin.label);
-        _labelStyle.fontSize = 24;
-        _labelStyle.normal.textColor = Color.black;
-        
         // 初始化标题样式
-        _titleStyle = new GUIStyle(GUI.skin.label);
-        _titleStyle.fontSize = 32;
+        _titleStyle = new(GUI.skin.label)
+        {
+            fontSize = 32
+        };
         _titleStyle.normal.textColor = Color.green;
         _titleStyle.fontStyle = FontStyle.Bold;
-        
+
+        // 初始化标签样式
+        _labelStyle = new(GUI.skin.label)
+        {
+            fontSize = 24
+        };
+        _labelStyle.normal.textColor = Color.black;
+
         // 初始化开关样式
-        _toggleStyle = new GUIStyle(GUI.skin.toggle);
-        _toggleStyle.fontSize = 24;
+        _toggleStyle = new(GUI.skin.toggle)
+        {
+            fontSize = 24
+        };
         _toggleStyle.normal.textColor = Color.green;
         _toggleStyle.onNormal.textColor = Color.red;
+    }
+
+    private void OnGUI()
+    {
+        if (!_initStyle)
+        {
+            _initStyle = true;
+            InitializeGUIStyles();
+        }
+        
+        // 如果 Ra2Demo 不存在或游戏尚未准备好，则不显示调试 UI
+        if (_demo == null)
+            return;
+
+        var game = _demo.GetBattleGame();
+        if (game == null)
+            return;
+
+        // 根据开关状态决定是否绘制
+        int type = _DebugType % 6;
+        if (type == 0)
+        {
+            return;
+        }
+
+        // 绘制矩形框
+        GUI.Box(commonRect, "");
+        GUILayout.BeginArea(commonRect);
+
+        if (type == 1)
+        {
+            // 仅在编辑器状态下显示调试 UI
+            if (!Application.isEditor)
+                return;
+            DrawHelpInfo();
+        }
+        else if (type == 2)
+        {
+            DrawUnitStatisticsPanel(game);
+        }
+        else if (type == 3)
+        {
+            // 仅在编辑器状态下显示调试 UI
+            if (!Application.isEditor)
+                return;
+            DrawDebugUI(game);
+        }
+        else if (type == 4)
+        {
+            DrawSimulationInfoPanel(game);
+        }
+        else if (type == 5)
+        {
+            DrawPathfindingInfoPanel(game);
+        }
+
+        GUILayout.EndArea();
     }
 
     private void OnDrawGizmos()
@@ -385,49 +447,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         HandleDebugUIHotkey();
     }
 
-    private void OnGUI()
-    {
-        if (!_initStyle)
-        {
-            _initStyle = true;
-            InitializeGUIStyles();
-        }
-        
-        // 如果 Ra2Demo 不存在或游戏尚未准备好，则不显示调试 UI
-        if (_demo == null)
-            return;
 
-        var game = _demo.GetBattleGame();
-        if (game == null)
-            return;
-
-        // 根据开关状态决定是否绘制
-        int type = _DebugType % 4;
-        if (type == 1)
-        {
-            // 仅在编辑器状态下显示调试 UI
-            if (!Application.isEditor)
-                return;
-            // 绘制矩形框
-            GUI.Box(commonRect, "");
-            DrawHelpInfo();
-        }
-        else if (type == 2)
-        {
-            // 绘制矩形框
-            GUI.Box(commonRect, "");
-            DrawUnitStatisticsPanel(game);
-        }
-        else if (type == 3)
-        {
-            // 仅在编辑器状态下显示调试 UI
-            if (!Application.isEditor)
-                return;
-            // 绘制矩形框
-            GUI.Box(commonRect, "");
-            DrawDebugUI(game);
-        }
-    }
 
     /// <summary>
     /// 处理调试 UI 的快捷键 (` 键)
@@ -456,13 +476,21 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawDebugUI(BattleGame game)
     {
-        GUILayout.BeginArea(commonRect);
-        
         DrawDebugToggles(_toggleStyle);
+    }
+
+    /// <summary>
+    /// 绘制仿真信息面板（独立面板，type==4 时显示）
+    /// </summary>
+    private void DrawSimulationInfoPanel(BattleGame game)
+    {
+        GUILayout.Label("=== simulation info ===", _titleStyle);
+        GUILayout.Space(15);
         
-        DrawDebugInfoLabels(game, _labelStyle);
-        
-        GUILayout.EndArea();
+        if (game.World != null && game.World.TimeManager != null)
+        {
+            DrawSimulationInfo(game.World.TimeManager, _labelStyle);
+        }
     }
 
     /// <summary>
@@ -470,14 +498,21 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawUnitStatisticsPanel(BattleGame game)
     {
-        GUILayout.BeginArea(commonRect);
-        
         GUILayout.Label("=== 单位统计面板 ===", _titleStyle);
         GUILayout.Space(15);
         
         DrawUnitStatistics(game, _labelStyle);
+    }
+
+    /// <summary>
+    /// 绘制路径查找信息面板（独立面板，type==5 时显示）
+    /// </summary>
+    private void DrawPathfindingInfoPanel(BattleGame game)
+    {
+        GUILayout.Label("=== Pathfinding info ===", _titleStyle);
+        GUILayout.Space(15);
         
-        GUILayout.EndArea();
+        DrawPathfindingInfo(game, _labelStyle);
     }
 
     /// <summary>
@@ -491,44 +526,39 @@ public class Ra2DemoDebugger : MonoBehaviour
         showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
         showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
         showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
-        showSimulationInfo = GUILayout.Toggle(showSimulationInfo, "显示仿真信息", toggleStyle);
     }
 
-    private void ShowFlowField(BattleGame game, GUIStyle labelStyle)
+
+
+    /// <summary>
+    /// 绘制调试信息标签（流场数量、RVO 智能体数量等）
+    /// </summary>
+    private void DrawPathfindingInfo(BattleGame game, GUIStyle labelStyle)
+    {
+        GUILayout.Space(10);
+        GUILayout.Label("=== Pathfinding info ===", labelStyle);
+
+        // 显示流场数量
+        ShowFlowFieldInfo(game, labelStyle);
+        
+        // 显示 RVO agents 数量
+        if (game.RvoSimulator != null)
+        {
+            int rvoAgentCount = game.RvoSimulator.GetNumAgents();
+            GUILayout.Label($"RVO count: {rvoAgentCount}", labelStyle);
+        }
+    }
+
+    private void ShowFlowFieldInfo(BattleGame game, GUIStyle labelStyle)
     {
         if (game.FlowFieldManager != null)
         {
             int flowFieldCount = game.FlowFieldManager.GetActiveFieldCount();
-            GUILayout.Label($"流场数量：{flowFieldCount}", labelStyle);
+            GUILayout.Label($"flowfields count: {flowFieldCount}", labelStyle);
             
             // 显示流场请求次数
             int totalRequestCount = game.FlowFieldManager.GetTotalRequestCount();
-            GUILayout.Label($"流场请求次数：{totalRequestCount}", labelStyle);
-        }
-    }
-
-    /// <summary>
-    /// 绘制调试信息标签（流场数量、RVO 智能体数量、仿真信息等）
-    /// </summary>
-    private void DrawDebugInfoLabels(BattleGame game, GUIStyle labelStyle)
-    {
-        // 显示流场数量
-        if (showFlowField)
-        {
-            ShowFlowField(game, labelStyle);
-        }
-        
-        // 显示 RVO agents 数量
-        if (showRVOAgents && game.RvoSimulator != null)
-        {
-            int rvoAgentCount = game.RvoSimulator.GetNumAgents();
-            GUILayout.Label($"RVO 智能体数量：{rvoAgentCount}", labelStyle);
-        }
-
-        // 显示仿真信息（包括 zTime 帧率）
-        if (showSimulationInfo && game.World != null && game.World.TimeManager != null)
-        {
-            DrawSimulationInfo(game.World.TimeManager, labelStyle);
+            GUILayout.Label($"request flowfield count: {totalRequestCount}", labelStyle);
         }
     }
 
@@ -549,7 +579,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         }
         
         GUILayout.Label($"zTime Tick: {timeManager.Tick}", labelStyle);
-        GUILayout.Label($"zTime 时间：{(float)timeManager.Time:F2}s", labelStyle);
+        GUILayout.Label($"zTime Time: {(float)timeManager.Time:F2}s", labelStyle);
         GUILayout.Label($"zTime DeltaTime: {(float)timeManager.DeltaTime:F3}s", labelStyle);
         GUILayout.Label($"zTime FPS: {_zTimeFps:F1}", labelStyle);
     }
@@ -669,9 +699,6 @@ public class Ra2DemoDebugger : MonoBehaviour
         // 显示总数
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
         GUILayout.Label($"All Units: {totalCount}", labelStyle);
-
-        // 显示流场数量
-        ShowFlowField(game, labelStyle);
     }
 
     /// <summary>
@@ -679,22 +706,21 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawHelpInfo()
     {
-        GUILayout.BeginArea(commonRect);
-        
-        GUILayout.Label("=== 调试控制台帮助 ===", _titleStyle);
+        GUILayout.Label("=== Debug Console ===", _titleStyle);
         GUILayout.Space(10);
         
-        GUILayout.Label("快捷键说明:", _labelStyle);
-        GUILayout.Label("` 键 - 切换调试 UI 显示/隐藏", _labelStyle);
+        GUILayout.Label("Hotkey description:", _labelStyle);
+        GUILayout.Label("` key - toggle UI show/hide", _labelStyle);
         GUILayout.Space(5);
         
-        GUILayout.Label("调试类型切换:", _labelStyle);
-        GUILayout.Label("按 ` 键循环切换以下模式:", _labelStyle);
-        GUILayout.Label("  Type 0 - 帮助信息", _labelStyle);
-        GUILayout.Label("  Type 1 - 调试 UI (开关控制)", _labelStyle);
-        GUILayout.Label("  Type 2 - 单位统计面板", _labelStyle);
+        GUILayout.Label("all debug types:", _labelStyle);
+        GUILayout.Label("press ` hotkey to switch:", _labelStyle);
+        GUILayout.Label("  Type 0 - close", _labelStyle);
+        GUILayout.Label("  Type 1 - help info", _labelStyle);
+        GUILayout.Label("  Type 2 - units stat", _labelStyle);
+        GUILayout.Label("  Type 3 - debug switch", _labelStyle);
+        GUILayout.Label("  Type 4 - simulation", _labelStyle);
+        GUILayout.Label("  Type 5 - pathfinding info", _labelStyle);
         GUILayout.Space(5);
-        
-        GUILayout.EndArea();
     }
 }
