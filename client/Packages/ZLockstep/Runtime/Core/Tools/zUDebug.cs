@@ -10,6 +10,18 @@ public class zUDebug
 	public static void Log(object obj)
 	{
 #if !ONLYCSHARP
+		// 只有编辑器下才输出日志
+		if (enable && Application.isEditor)
+			UnityEngine.Debug.Log($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
+#else
+		Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
+#endif
+	}
+
+	[Conditional("ZLOGENABLE")]
+	public static void LogInfo(object obj)
+	{
+#if !ONLYCSHARP
 		if (enable)
 			UnityEngine.Debug.Log($"[{DateTime.Now:HH:mm:ss.fff}] {obj}");
 #else

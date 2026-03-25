@@ -33,7 +33,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     private float _zTimeFps = 0f;
 
     // 矩形框
-    private Rect commonRect = new(200, 400, 600, 500);
+    private Rect commonRect = new(200, 450, 600, 500);
     
     // GUI 样式初始化
     private bool _initStyle = false;
@@ -100,7 +100,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         }
 
         // 绘制矩形框
-        GUI.Box(commonRect, "");
+        // GUI.Box(commonRect, "");
         GUILayout.BeginArea(commonRect);
 
         if (type == 1)

@@ -612,18 +612,18 @@ namespace ZLockstep.Flow
             UpdateRVO();
 
             // 监控 agent 行为
-            foreach (var agentNo in Simulator.Instance.GetAgentNoList())
-            {
-                // 获取实际邻居数量
-                int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
+            // foreach (var agentNo in Simulator.Instance.GetAgentNoList())
+            // {
+            //     // 获取实际邻居数量
+            //     int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
                 
-                // 如果经常达到上限，增加 maxNeighbors
-                if (actualNeighbors >= 10)
-                {
-                    zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！");
-                    // 考虑增加到 15 或 20
-                }
-            }
+            //     // 如果经常达到上限，增加 maxNeighbors
+            //     if (actualNeighbors >= 10)
+            //     {
+            //         zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！");
+            //         // 考虑增加到 15 或 20
+            //     }
+            // }
         }
 
         private Random m_random = new Random();
@@ -738,7 +738,7 @@ namespace ZLockstep.Flow
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
-                zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}");
+                // zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}");
             }
             else
             {
@@ -757,7 +757,7 @@ namespace ZLockstep.Flow
 
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
-                zUDebug.Log($"[RVO] {entityId} 移动中, 流场速度改变，flowDirection: {flowDirection}, goalVector: {goalVector}");
+                // zUDebug.Log($"[RVO] {entityId} 移动中, 流场速度改变，flowDirection: {flowDirection}, goalVector: {goalVector}");
 
                 // 添加微小随机扰动，防止多个单位重叠或卡住
                 // float angle = (float)m_random.NextDouble() * 2.0f * (float)Math.PI;

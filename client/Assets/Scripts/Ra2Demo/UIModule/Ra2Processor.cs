@@ -155,6 +155,7 @@ public class Ra2Processor : BaseProcessor
                 break;
             case GameStartEvent e:
                 {
+                    GameObjectPoolManager.ClearAllPools(true);
                     zUDebug.Log("[Ra2Processor] 开始游戏");
                     LoadingPanel.Close();
                     HealthPanel.Open();
@@ -166,6 +167,7 @@ public class Ra2Processor : BaseProcessor
                 break;
             case SoloGameStartEvent:
                 {
+                    GameObjectPoolManager.ClearAllPools(true);
                     zUDebug.Log("[Ra2Processor]  solo 模式开始游戏");
                     MatchPanel.Close();
                     HealthPanel.Open();
@@ -177,6 +179,7 @@ public class Ra2Processor : BaseProcessor
                 break;
             case ReplayGameStartEvent:
                 {
+                    GameObjectPoolManager.ClearAllPools(true);
                     zUDebug.Log("[Ra2Processor]  replay 模式开始游戏");
                     MatchPanel.Close();
 

@@ -429,12 +429,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4498538b62f81b944830e17c2de20918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showUnits: 0
-  showRVOAgents: 0
-  showGrid: 0
-  showObstacles: 0
-  showFlowField: 0
-  showSimulationInfo: 0
+  _showUnits: 0
+  _showRVOAgents: 0
+  _showGrid: 0
+  _showObstacles: 0
+  _showFlowField: 0
 --- !u!114 &812412506
 MonoBehaviour:
   m_ObjectHideFlags: 0
