@@ -33,6 +33,10 @@ public class SettingSubPanel
     private Toggle healthBarToggle;
     // 单位统计按钮
     private Button unitStatsBtn;
+    // 模拟按钮
+    private Button simulationBtn;
+    // 寻路按钮
+    private Button pathfindingBtn;
     // 关闭调试按钮
     private Button closeDebugBtn;
 
@@ -103,6 +107,24 @@ public class SettingSubPanel
         {
             // 添加点击监听
             unitStatsBtn.onClick.AddListener(OnUnitStatsBtnClick);
+        }
+        
+        // 获取模拟按钮
+        simulationBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/SimulationBtn")?.GetComponent<Button>();
+        
+        if (simulationBtn != null)
+        {
+            // 添加点击监听
+            simulationBtn.onClick.AddListener(OnSimulationBtnClick);
+        }
+        
+        // 获取寻路按钮
+        pathfindingBtn = root.transform.Find("Scroll View/Viewport/Content/Debug/PathfindingBtn")?.GetComponent<Button>();
+        
+        if (pathfindingBtn != null)
+        {
+            // 添加点击监听
+            pathfindingBtn.onClick.AddListener(OnPathfindingBtnClick);
         }
         
         // 获取关闭调试按钮
@@ -225,6 +247,34 @@ public class SettingSubPanel
     }
     
     /// <summary>
+    /// 模拟按钮点击处理
+    /// </summary>
+    private void OnSimulationBtnClick()
+    {
+        // 查找 Ra2DemoDebugger 组件并调用 SetDebugType(4)
+        Ra2DemoDebugger debugger = Object.FindObjectOfType<Ra2DemoDebugger>();
+        if (debugger != null)
+        {
+            debugger.SetDebugType(4);
+            zUDebug.Log("[SettingSubPanel] 已切换到模拟面板");
+        }
+    }
+    
+    /// <summary>
+    /// 寻路按钮点击处理
+    /// </summary>
+    private void OnPathfindingBtnClick()
+    {
+        // 查找 Ra2DemoDebugger 组件并调用 SetDebugType(5)
+        Ra2DemoDebugger debugger = Object.FindObjectOfType<Ra2DemoDebugger>();
+        if (debugger != null)
+        {
+            debugger.SetDebugType(5);
+            zUDebug.Log("[SettingSubPanel] 已切换到寻路面板");
+        }
+    }
+    
+    /// <summary>
     /// 关闭调试按钮点击处理
     /// </summary>
     private void OnCloseDebugBtnClick()
@@ -259,6 +309,16 @@ public class SettingSubPanel
         if (unitStatsBtn != null)
         {
             unitStatsBtn.onClick.RemoveListener(OnUnitStatsBtnClick);
+        }
+        
+        if (simulationBtn != null)
+        {
+            simulationBtn.onClick.RemoveListener(OnSimulationBtnClick);
+        }
+        
+        if (pathfindingBtn != null)
+        {
+            pathfindingBtn.onClick.RemoveListener(OnPathfindingBtnClick);
         }
         
         if (closeDebugBtn != null)

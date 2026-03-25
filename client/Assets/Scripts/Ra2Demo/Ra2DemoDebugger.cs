@@ -498,7 +498,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawUnitStatisticsPanel(BattleGame game)
     {
-        GUILayout.Label("=== 单位统计面板 ===", _titleStyle);
+        GUILayout.Label("=== Unit statistics info ===", _titleStyle);
         GUILayout.Space(15);
         
         DrawUnitStatistics(game, _labelStyle);
@@ -520,15 +520,16 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawDebugToggles(GUIStyle toggleStyle)
     {
-        showUnits = GUILayout.Toggle(showUnits, "显示单位", toggleStyle);
-        showRVOAgents = GUILayout.Toggle(showRVOAgents, "显示 RVO 智能体", toggleStyle);
+        GUILayout.Label("=== Debug Switch ===", _labelStyle);
+        GUILayout.Space(15);
+
+        showUnits = GUILayout.Toggle(showUnits, "Show Units", toggleStyle);
+        showRVOAgents = GUILayout.Toggle(showRVOAgents, "Show RVO Agents", toggleStyle);
         
-        showGrid = GUILayout.Toggle(showGrid, "显示网格", toggleStyle);
-        showObstacles = GUILayout.Toggle(showObstacles, "显示障碍物", toggleStyle);
-        showFlowField = GUILayout.Toggle(showFlowField, "显示流场", toggleStyle);
+        showGrid = GUILayout.Toggle(showGrid, "Show Grids", toggleStyle);
+        showObstacles = GUILayout.Toggle(showObstacles, "Show obstacles", toggleStyle);
+        showFlowField = GUILayout.Toggle(showFlowField, "Show flowfields", toggleStyle);
     }
-
-
 
     /// <summary>
     /// 绘制调试信息标签（流场数量、RVO 智能体数量等）
@@ -536,7 +537,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     private void DrawPathfindingInfo(BattleGame game, GUIStyle labelStyle)
     {
         GUILayout.Label("=== Pathfinding info ===", labelStyle);
-        GUILayout.Space(10);
+        GUILayout.Space(15);
 
         // 显示流场数量
         ShowFlowFieldInfo(game, labelStyle);
@@ -657,8 +658,8 @@ public class Ra2DemoDebugger : MonoBehaviour
         }
 
         // 绘制统计信息
-        GUILayout.Space(10);
         GUILayout.Label("=== Units statistics ===", labelStyle);
+        GUILayout.Space(15);
         
         // 按阵营遍历显示（只显示有经济数据的阵营）
         foreach (var economyEntry in campEconomyStats.OrderBy(kvp => kvp.Key))
@@ -695,7 +696,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             GUILayout.Space(5);
         }
 
-        GUILayout.Space(20);
+        GUILayout.Space(10);
         // 显示总数
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
         GUILayout.Label($"All Units: {totalCount}", labelStyle);
@@ -708,13 +709,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     {
         GUILayout.Label("=== Debug Console ===", _titleStyle);
         GUILayout.Space(10);
-        
-        GUILayout.Label("Hotkey description:", _labelStyle);
-        GUILayout.Label("` key - toggle UI show/hide", _labelStyle);
-        GUILayout.Space(5);
-        
-        GUILayout.Label("all debug types:", _labelStyle);
-        GUILayout.Label("press ` hotkey to switch:", _labelStyle);
+        GUILayout.Label("press ` hotkey to switch panel:", _labelStyle);
         GUILayout.Label("  Type 0 - close", _labelStyle);
         GUILayout.Label("  Type 1 - help info", _labelStyle);
         GUILayout.Label("  Type 2 - units stat", _labelStyle);
