@@ -184,8 +184,6 @@ namespace ZLockstep.Flow
             zfloat minSpacing = map.GetGridSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
-            flowFieldManager.MarkDynamicObstaclesNeedUpdate();
-
             // 生成候选散点（方形格，默认）
             // 计算所需的行列数：rows*cols >= N
             int pointsPerSide = System.Math.Max(6, (int)zMathf.Sqrt((zfloat)entities.Count) + 1);

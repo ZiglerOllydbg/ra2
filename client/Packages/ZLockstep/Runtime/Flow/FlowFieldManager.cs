@@ -52,7 +52,6 @@ namespace ZLockstep.Flow
         private int maxCachedFields;
         private int currentFrame;
         private int maxUpdatesPerFrame;
-        private bool dynamicObstaclesNeedUpdate;
 
         public bool NeedUpdateObstacles {get; set;}
 
@@ -72,7 +71,6 @@ namespace ZLockstep.Flow
             maxCachedFields = 20;
             maxUpdatesPerFrame = 2;
             currentFrame = 0;
-            dynamicObstaclesNeedUpdate = false;
         }
 
         /// <summary>
@@ -94,14 +92,6 @@ namespace ZLockstep.Flow
         public IFlowFieldMap GetMap()
         {
             return map;
-        }
-        
-        /// <summary>
-        /// 标记动态障碍物需要更新
-        /// </summary>
-        public void MarkDynamicObstaclesNeedUpdate()
-        {
-            dynamicObstaclesNeedUpdate = true;
         }
 
         /// <summary>
@@ -511,7 +501,6 @@ namespace ZLockstep.Flow
             fieldById.Clear();
             dirtyFields.Clear();
             dirtySet.Clear();
-            dynamicObstaclesNeedUpdate = false;
         }
 
         /// <summary>
