@@ -728,7 +728,7 @@ namespace ZLockstep.Flow
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
-                zUDebug.Log($"[RVO] {entityId} 快移动到目标点, goalVector: {goalVector}");
+                // zUDebug.Log($"[RVO] {entityId} 快移动到目标点, goalVector: {goalVector}");
             }
             else
             {
@@ -750,7 +750,7 @@ namespace ZLockstep.Flow
                 
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
 
-                zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}, setFinalV2: {setFinalV2}");
+                // zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}, setFinalV2: {setFinalV2}");
             }
         }
 
