@@ -19,11 +19,11 @@ using ZLockstep.RVO;
 public class Ra2DemoDebugger : MonoBehaviour
 {
     [Header("可视化设置")]
-    private bool _showUnits = true;          // 显示单位
-    private bool _showRVOAgents = true;      // 显示RVO智能体
-    private bool _showGrid = true;           // 显示网格
-    private bool _showObstacles = true;      // 显示障碍物
-    private bool _showFlowField = true;      // 显示流场方向
+    [SerializeField] private bool _showUnits = false;          // 显示单位
+    [SerializeField] private bool _showRVOAgents = false;      // 显示 RVO 智能体
+    [SerializeField] private bool _showGrid = false;           // 显示网格
+    [SerializeField] private bool _showObstacles = false;      // 显示障碍物
+    [SerializeField] private bool _showFlowField = false;      // 显示流场方向
 
     private Ra2Demo _demo;
     

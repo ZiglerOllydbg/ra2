@@ -66,6 +66,9 @@ namespace ZLockstep.Flow
             // UpdateObstacles();
         }
 
+        /// <summary>
+        /// 更新场景障碍物
+        /// </summary>
         public void UpdateObstacles()
         {
             Simulator.Instance.ClearObstacles();
@@ -83,12 +86,13 @@ namespace ZLockstep.Flow
             float maxX = width * gridSize - halfGrid;
             float maxY = height * gridSize - halfGrid;
 
+            // 环境边界，使用顺时针顺序
             List<Vector2> boundaryVertices = new List<Vector2>
             {
                 new(minX, minY),  // 左下
-                new(maxX, minY),  // 右下
+                new(minX, maxY),   // 左上
                 new(maxX, maxY),  // 右上
-                new(minX, maxY)   // 左上
+                new(maxX, minY),  // 右下
             };
 
             Simulator.Instance.addObstacle(boundaryVertices);
@@ -123,16 +127,11 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
-        /// 为实体添加流场导航能力
-        /// 主要功能：
-        /// 1. 获取实体当前位置
-        /// 2. 创建导航组件
-        /// 3. 创建或复用RVO避障代理
-        /// 4. 将导航组件与实体关联
+        /// 添加导航能力
         /// </summary>
-        /// <param name="entity">需要添加导航能力的实体</param>
-        /// <param name="radius">实体的半径（用于碰撞检测）</param>
-        /// <param name="maxSpeed">实体的最大移动速度</param>
+        /// <param name="entity">实体</param>
+        /// <param name="radius">半径</param>
+        /// <param name="maxSpeed">最大速度</param>
         public void AddNavigator(Entity entity, zfloat radius, zfloat maxSpeed)
         {
             // 获取实体位置
@@ -175,8 +174,11 @@ namespace ZLockstep.Flow
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
             }
 
-            // 请求新流场
-            navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(alignedTargetPos);
+            // 用户输入，使用流畅寻路
+            if (userInput)
+            {
+                navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(alignedTargetPos);
+            }
             navigator.HasReachedTarget = false;
             // 重置卡住状态
             navigator.StuckFrames = 0;
@@ -702,17 +704,17 @@ namespace ZLockstep.Flow
             // 从流场获取当前方向的移动指引
             zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
 
-            // ⭐流场方向是否改变，这是智能体瞬移的原因，移动不顺畅的原因
-            if (flowDirection == target.lastFlowDirection)
-            {
-                return;
-            }
+            // // ⭐流场方向是否改变，这是智能体瞬移的原因，移动不顺畅的原因
+            // if (flowDirection == target.LastFlowDirection)
+            // {
+            //     return;
+            // }
 
             // 记录流场方向变化
-            target.lastFlowDirection = flowDirection;
-            ComponentManager.AddComponent(entity, target);
+            // target.LastFlowDirection = flowDirection;
+            // ComponentManager.AddComponent(entity, target);
 
-            // 当流场方向为零时（通常是在目标格子内），直接朝目标点移动
+            // 当流场方向为零时，通常是在目标格子内或者没有使用流畅寻路，直接朝目标点移动
             if (flowDirection == zVector2.zero)
             {
                 // 直接朝目标移动
@@ -723,12 +725,20 @@ namespace ZLockstep.Flow
                     goalVector = RVOMath.normalize(goalVector);
                 }
 
-                goalVector = goalVector * navigator.MaxSpeed.ToFloat();
+                goalVector *= navigator.MaxSpeed.ToFloat();
+
+                if (target.LastPrefVelocity == goalVector)
+                {
+                    return;
+                }
+
+                target.LastPrefVelocity = goalVector;
+                ComponentManager.AddComponent(entity, target);
 
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
-                // zUDebug.Log($"[RVO] {entityId} 快移动到目标点, goalVector: {goalVector}");
+                zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}");
             }
             else
             {
@@ -736,19 +746,28 @@ namespace ZLockstep.Flow
                 Vector2 goalVector = new Vector2(flowDirection.x.ToFloat(), flowDirection.y.ToFloat());
                 goalVector = RVOMath.normalize(goalVector);
                 // 增加速度倍率，加快移动
-                goalVector = goalVector * navigator.MaxSpeed.ToFloat();
+                goalVector *= navigator.MaxSpeed.ToFloat();
+
+                if (target.LastPrefVelocity == goalVector)
+                {
+                    return;
+                }
+                target.LastPrefVelocity = goalVector;
+                ComponentManager.AddComponent(entity, target);
+
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
 
+                zUDebug.Log($"[RVO] {entityId} 移动中, 流场速度改变，flowDirection: {flowDirection}, goalVector: {goalVector}");
 
                 // 添加微小随机扰动，防止多个单位重叠或卡住
-                float angle = (float)m_random.NextDouble() * 2.0f * (float)Math.PI;
-                float dist = (float)m_random.NextDouble() * 0.0001f;
+                // float angle = (float)m_random.NextDouble() * 2.0f * (float)Math.PI;
+                // float dist = (float)m_random.NextDouble() * 0.0001f;
 
-                Vector2 setFinalV2 = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) +
-                                                            dist *
-                                                            new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+                // Vector2 setFinalV2 = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) +
+                //                                             dist *
+                //                                             new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
                 
-                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
+                // Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
 
                 // zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}, setFinalV2: {setFinalV2}");
             }

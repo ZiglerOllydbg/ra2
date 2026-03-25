@@ -1,5 +1,6 @@
 using zUnity;
 using ZLockstep.Simulation.ECS;
+using System.Numerics;
 
 namespace ZLockstep.Flow
 {
@@ -103,18 +104,20 @@ namespace ZLockstep.Flow
         /// 是否是用户输入的目标
         /// </summary>
         public bool UserInput;
-        
+
         /// <summary>
-        /// 上次流场方向
+        /// 上次预设速度
         /// </summary>
-        public zVector2 lastFlowDirection;
+        public ZLockstep.RVO.Vector2 LastPrefVelocity {get; set;}
 
         public static MoveTargetComponent Create(zVector2 targetPos)
         {
             return new MoveTargetComponent
             {
                 TargetPosition = targetPos,
-                HasTarget = true
+                HasTarget = true,
+                UserInput = false,
+                LastPrefVelocity = new ZLockstep.RVO.Vector2(0, 0),
             };
         }
     }

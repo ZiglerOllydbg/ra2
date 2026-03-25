@@ -211,9 +211,9 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                     if (nearestPlayerUnitId >= 0)
                     {
                         // 找到玩家单位，追击
-                        Entity target = new Entity(nearestPlayerUnitId);
+                        Entity target = new(nearestPlayerUnitId);
                         var targetTransform = ComponentManager.GetComponent<TransformComponent>(target);
-                        zVector2 targetPos = new zVector2(targetTransform.Position.x, targetTransform.Position.z);
+                        zVector2 targetPos = new(targetTransform.Position.x, targetTransform.Position.z);
                         _navSystem.SetMoveTarget(entity, targetPos);
                         chaseCount++;
                     }
@@ -222,7 +222,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                         if (offensebarracksIds.Contains(entityId))
                         {
                             // 没有找到玩家单位，移动到玩家基地
-                            _navSystem.SetMoveTarget(entity, _playerBasePosition);
+                            _navSystem.SetMoveTarget(entity, _playerBasePosition, true);
                             moveToBaseCount++;
                         }
                     }
