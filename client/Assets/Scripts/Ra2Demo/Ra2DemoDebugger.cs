@@ -11,22 +11,21 @@ using System.Collections.Generic;
 using ZFrame;
 using ZLockstep.RVO;
 
+[RequireComponent(typeof(Ra2Demo))]
+
 /// <summary>
 /// 调试可视化类，负责处理Ra2Demo中的OnGUI和OnDrawGizmos调试功能
 /// </summary>
 public class Ra2DemoDebugger : MonoBehaviour
 {
     [Header("可视化设置")]
-    public bool showUnits = true;          // 显示单位
-    public bool showRVOAgents = true;      // 显示RVO智能体
-    public bool showGrid = true;           // 显示网格
-    public bool showObstacles = true;      // 显示障碍物
-    public bool showFlowField = true;      // 显示流场方向
+    private bool _showUnits = true;          // 显示单位
+    private bool _showRVOAgents = true;      // 显示RVO智能体
+    private bool _showGrid = true;           // 显示网格
+    private bool _showObstacles = true;      // 显示障碍物
+    private bool _showFlowField = true;      // 显示流场方向
 
     private Ra2Demo _demo;
-    private Vector3 _lastClickPosition;
-    private float _gizmoDisplayTime = 2f;
-    private float _lastClickTime;
     
     // zTime FPS 计算相关变量
     private float _zTimeAccumulatedTime = 0f;
@@ -34,7 +33,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     private float _zTimeFps = 0f;
 
     // 矩形框
-    Rect commonRect = new Rect(200, 400, 600, 500);
+    private Rect commonRect = new(200, 400, 600, 500);
     
     // GUI 样式初始化
     private bool _initStyle = false;
@@ -158,23 +157,15 @@ public class Ra2DemoDebugger : MonoBehaviour
             return;
 
         var game = _demo?.GetBattleGame();
-        
-        // 显示最后点击位置
-        if (Time.time - _lastClickTime < _gizmoDisplayTime)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(_lastClickPosition, 0.5f);
-            Gizmos.DrawLine(_lastClickPosition, _lastClickPosition + Vector3.up * 2f);
-        }
 
         // 显示所有已创建的单位（从逻辑层读取）
-        if (showUnits)
+        if (_showUnits)
         {
             DrawUnits(game);
         }
         
         // 绘制RVO agents
-        if (showRVOAgents)
+        if (_showRVOAgents)
         {
             DrawRVOAgents(game);
         }
@@ -183,13 +174,13 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (game != null && game.MapManager != null)
         {
             // 1. 绘制网格和障碍物
-            if (showGrid || showObstacles)
+            if (_showGrid || _showObstacles)
             {
                 DrawGridAndObstacles(game);
             }
 
             // 2. 绘制流场
-            if (showFlowField && game.FlowFieldManager != null)
+            if (_showFlowField && game.FlowFieldManager != null)
             {
                 DrawFlowFields(game);
             }
@@ -333,13 +324,13 @@ public class Ra2DemoDebugger : MonoBehaviour
                 );
 
                 // 绘制障碍物
-                if (!walkable && showObstacles)
+                if (!walkable && _showObstacles)
                 {
                     Gizmos.color = new Color(0.8f, 0.2f, 0.2f, 0.7f);
                     Gizmos.DrawCube(worldPos, new Vector3(gridSize * 0.95f, 0.2f, gridSize * 0.95f));
                 }
                 // 绘制网格线
-                else if (showGrid)
+                else if (_showGrid)
                 {
                     Gizmos.color = new Color(0.3f, 0.3f, 0.3f, 0.3f);
                     // 只绘制底部和左边线，避免重复
@@ -354,7 +345,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         }
 
         // 绘制地图边界
-        if (showGrid)
+        if (_showGrid)
         {
             Gizmos.color = Color.yellow;
             float mapWidth = width * gridSize;
@@ -540,12 +531,12 @@ public class Ra2DemoDebugger : MonoBehaviour
         GUILayout.Label("=== Gizmoz Debug Switch ===", _labelStyle);
         GUILayout.Space(15);
 
-        showUnits = GUILayout.Toggle(showUnits, "Show Units", toggleStyle);
-        showRVOAgents = GUILayout.Toggle(showRVOAgents, "Show RVO Agents", toggleStyle);
+        _showUnits = GUILayout.Toggle(_showUnits, "Show Units", toggleStyle);
+        _showRVOAgents = GUILayout.Toggle(_showRVOAgents, "Show RVO Agents", toggleStyle);
         
-        showGrid = GUILayout.Toggle(showGrid, "Show Grids", toggleStyle);
-        showObstacles = GUILayout.Toggle(showObstacles, "Show obstacles", toggleStyle);
-        showFlowField = GUILayout.Toggle(showFlowField, "Show flowfields", toggleStyle);
+        _showGrid = GUILayout.Toggle(_showGrid, "Show Grids", toggleStyle);
+        _showObstacles = GUILayout.Toggle(_showObstacles, "Show obstacles", toggleStyle);
+        _showFlowField = GUILayout.Toggle(_showFlowField, "Show flowfields", toggleStyle);
     }
 
     /// <summary>
