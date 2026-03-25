@@ -29,14 +29,47 @@ public class Ra2DemoDebugger : MonoBehaviour
     private float _gizmoDisplayTime = 2f;
     private float _lastClickTime;
     
-    // zTime FPS计算相关变量
+    // zTime FPS 计算相关变量
     private float _zTimeAccumulatedTime = 0f;
     private int _zTimeAccumulatedTicks = 0;
     private float _zTimeFps = 0f;
 
+    // 矩形框
+    Rect commonRect = new Rect(200, 400, 600, 500);
+    
+    // GUI 样式初始化
+    private bool _initStyle = false;
+    // GUI 样式缓存
+    private GUIStyle _labelStyle;
+    private GUIStyle _titleStyle;
+    private GUIStyle _toggleStyle;
+
     private void Awake()
     {
         _demo = GetComponent<Ra2Demo>();
+    }
+
+    /// <summary>
+    /// 初始化 GUI 样式
+    /// </summary>
+    private void InitializeGUIStyles()
+    {
+        // 初始化标签样式
+        _labelStyle = new GUIStyle(GUI.skin.label);
+        _labelStyle.fontSize = 24;
+        _labelStyle.normal.textColor = Color.black;
+        
+        // 初始化标题样式
+        _titleStyle = new GUIStyle(GUI.skin.label);
+        _titleStyle.fontSize = 32;
+        _titleStyle.normal.textColor = Color.green;
+        _titleStyle.fontStyle = FontStyle.Bold;
+        
+        // 初始化开关样式
+        _toggleStyle = new GUIStyle(GUI.skin.toggle);
+        _toggleStyle.fontSize = 24;
+        _toggleStyle.normal.textColor = Color.green;
+        _toggleStyle.onNormal.textColor = Color.red;
     }
 
     private void OnDrawGizmos()
@@ -353,7 +386,13 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     private void OnGUI()
-    { 
+    {
+        if (!_initStyle)
+        {
+            _initStyle = true;
+            InitializeGUIStyles();
+        }
+        
         // 如果 Ra2Demo 不存在或游戏尚未准备好，则不显示调试 UI
         if (_demo == null)
             return;
@@ -369,10 +408,14 @@ public class Ra2DemoDebugger : MonoBehaviour
             // 仅在编辑器状态下显示调试 UI
             if (!Application.isEditor)
                 return;
+            // 绘制矩形框
+            GUI.Box(commonRect, "");
             DrawHelpInfo();
         }
         else if (type == 2)
         {
+            // 绘制矩形框
+            GUI.Box(commonRect, "");
             DrawUnitStatisticsPanel(game);
         }
         else if (type == 3)
@@ -380,6 +423,8 @@ public class Ra2DemoDebugger : MonoBehaviour
             // 仅在编辑器状态下显示调试 UI
             if (!Application.isEditor)
                 return;
+            // 绘制矩形框
+            GUI.Box(commonRect, "");
             DrawDebugUI(game);
         }
     }
@@ -411,23 +456,11 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawDebugUI(BattleGame game)
     {
-        Rect toggleRect = new Rect(20, 500, 200, 350);
-        // 显示调试显示开关
-        GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
-        toggleStyle.fontSize = 24;
-        toggleStyle.normal.textColor = Color.green;
-        // 选中颜色
-        toggleStyle.onNormal.textColor = Color.red;
+        GUILayout.BeginArea(commonRect);
         
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 32;
-        labelStyle.normal.textColor = Color.yellow;
+        DrawDebugToggles(_toggleStyle);
         
-        GUILayout.BeginArea(toggleRect);
-        
-        DrawDebugToggles(toggleStyle);
-        
-        DrawDebugInfoLabels(game, labelStyle);
+        DrawDebugInfoLabels(game, _labelStyle);
         
         GUILayout.EndArea();
     }
@@ -437,23 +470,12 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawUnitStatisticsPanel(BattleGame game)
     {
-        Rect statsRect = new Rect(20, 500, 1000, 500);
+        GUILayout.BeginArea(commonRect);
         
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 24;
-        labelStyle.normal.textColor = Color.cyan;
-        
-        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-        titleStyle.fontSize = 32;
-        titleStyle.normal.textColor = Color.yellow;
-        titleStyle.fontStyle = FontStyle.Bold;
-        
-        GUILayout.BeginArea(statsRect);
-        
-        GUILayout.Label("=== 单位统计面板 ===", titleStyle);
+        GUILayout.Label("=== 单位统计面板 ===", _titleStyle);
         GUILayout.Space(15);
         
-        DrawUnitStatistics(game, labelStyle);
+        DrawUnitStatistics(game, _labelStyle);
         
         GUILayout.EndArea();
     }
@@ -472,16 +494,28 @@ public class Ra2DemoDebugger : MonoBehaviour
         showSimulationInfo = GUILayout.Toggle(showSimulationInfo, "显示仿真信息", toggleStyle);
     }
 
+    private void ShowFlowField(BattleGame game, GUIStyle labelStyle)
+    {
+        if (game.FlowFieldManager != null)
+        {
+            int flowFieldCount = game.FlowFieldManager.GetActiveFieldCount();
+            GUILayout.Label($"流场数量：{flowFieldCount}", labelStyle);
+            
+            // 显示流场请求次数
+            int totalRequestCount = game.FlowFieldManager.GetTotalRequestCount();
+            GUILayout.Label($"流场请求次数：{totalRequestCount}", labelStyle);
+        }
+    }
+
     /// <summary>
     /// 绘制调试信息标签（流场数量、RVO 智能体数量、仿真信息等）
     /// </summary>
     private void DrawDebugInfoLabels(BattleGame game, GUIStyle labelStyle)
     {
         // 显示流场数量
-        if (showFlowField && game.FlowFieldManager != null)
+        if (showFlowField)
         {
-            int flowFieldCount = game.FlowFieldManager.GetActiveFieldCount();
-            GUILayout.Label($"流场数量：{flowFieldCount}", labelStyle);
+            ShowFlowField(game, labelStyle);
         }
         
         // 显示 RVO agents 数量
@@ -501,7 +535,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// <summary>
     /// 绘制仿真信息（zTime Tick、时间、DeltaTim e、FPS 等）
     /// </summary>
-    private void DrawSimulationInfo(ZLockstep.Simulation.TimeManager timeManager, GUIStyle labelStyle)
+    private void DrawSimulationInfo(TimeManager timeManager, GUIStyle labelStyle)
     {
         // 计算 zTime 的 FPS
         _zTimeAccumulatedTime += (float)timeManager.DeltaTime;
@@ -635,6 +669,9 @@ public class Ra2DemoDebugger : MonoBehaviour
         // 显示总数
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
         GUILayout.Label($"All Units: {totalCount}", labelStyle);
+
+        // 显示流场数量
+        ShowFlowField(game, labelStyle);
     }
 
     /// <summary>
@@ -642,34 +679,22 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawHelpInfo()
     {
-        Rect helpRect = new Rect(20, 500, 400, 350);
+        GUILayout.BeginArea(commonRect);
         
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 24;
-        labelStyle.normal.textColor = Color.white;
-        
-        GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-        titleStyle.fontSize = 32;
-        titleStyle.normal.textColor = Color.yellow;
-        titleStyle.fontStyle = FontStyle.Bold;
-        
-        GUILayout.BeginArea(helpRect);
-        
-        GUILayout.Label("=== 调试控制台帮助 ===", titleStyle);
+        GUILayout.Label("=== 调试控制台帮助 ===", _titleStyle);
         GUILayout.Space(10);
         
-        GUILayout.Label("快捷键说明:", labelStyle);
-        GUILayout.Label("` 键 - 切换调试 UI 显示/隐藏", labelStyle);
+        GUILayout.Label("快捷键说明:", _labelStyle);
+        GUILayout.Label("` 键 - 切换调试 UI 显示/隐藏", _labelStyle);
         GUILayout.Space(5);
         
-        GUILayout.Label("调试类型切换:", labelStyle);
-        GUILayout.Label("按 ` 键循环切换以下模式:", labelStyle);
-        GUILayout.Label("  Type 0 - 帮助信息", labelStyle);
-        GUILayout.Label("  Type 1 - 调试 UI (开关控制)", labelStyle);
-        GUILayout.Label("  Type 2 - 单位统计面板", labelStyle);
+        GUILayout.Label("调试类型切换:", _labelStyle);
+        GUILayout.Label("按 ` 键循环切换以下模式:", _labelStyle);
+        GUILayout.Label("  Type 0 - 帮助信息", _labelStyle);
+        GUILayout.Label("  Type 1 - 调试 UI (开关控制)", _labelStyle);
+        GUILayout.Label("  Type 2 - 单位统计面板", _labelStyle);
         GUILayout.Space(5);
         
         GUILayout.EndArea();
     }
-
 }

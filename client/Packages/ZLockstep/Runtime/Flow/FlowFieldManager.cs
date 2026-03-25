@@ -52,6 +52,7 @@ namespace ZLockstep.Flow
         private int maxCachedFields;
         private int currentFrame;
         private int maxUpdatesPerFrame;
+        private int totalRequestCount = 0;  // 新增：记录总请求次数
 
         public bool NeedUpdateObstacles {get; set;}
 
@@ -99,7 +100,7 @@ namespace ZLockstep.Flow
         /// 将世界坐标转换为网格坐标后请求流场
         /// </summary>
         /// <param name="targetWorldPos">目标世界坐标</param>
-        /// <returns>流场ID，用于后续采样操作</returns>
+        /// <returns>流场 ID，用于后续采样操作</returns>
         public int RequestFlowField(zVector2 targetWorldPos)
         {
             map.WorldToGrid(targetWorldPos, out int gridX, out int gridY);
@@ -112,7 +113,7 @@ namespace ZLockstep.Flow
         /// 自动去重并排序目标点以生成稳定的缓存键
         /// </summary>
         /// <param name="targetWorldPositions">目标世界坐标列表</param>
-        /// <returns>流场ID，用于后续采样操作</returns>
+        /// <returns>流场 ID，用于后续采样操作</returns>
         public int RequestFlowFieldMultiWorld(List<zVector2> targetWorldPositions)
         {
             List<(int x, int y)> cells = new List<(int x, int y)>();
@@ -134,9 +135,10 @@ namespace ZLockstep.Flow
         /// 直接使用网格坐标创建多目标流场
         /// </summary>
         /// <param name="targetCells">目标网格坐标列表</param>
-        /// <returns>流场ID，用于后续采样操作</returns>
+        /// <returns>流场 ID，用于后续采样操作</returns>
         public int RequestFlowFieldMulti(List<(int x, int y)> targetCells)
         {
+            totalRequestCount++;  // 新增：增加请求计数
             if (targetCells == null || targetCells.Count == 0)
                 return -1;
 
@@ -174,12 +176,13 @@ namespace ZLockstep.Flow
         /// 请求到指定格子的流场
         /// 创建或获取到指定网格坐标的流场
         /// </summary>
-        /// <param name="targetGridX">目标网格X坐标</param>
-        /// <param name="targetGridY">目标网格Y坐标</param>
-        /// <returns>流场ID，用于后续采样操作</returns>
+        /// <param name="targetGridX">目标网格 X 坐标</param>
+        /// <param name="targetGridY">目标网格 Y 坐标</param>
+        /// <returns>流场 ID，用于后续采样操作</returns>
         public int RequestFlowFieldToGrid(int targetGridX, int targetGridY)
         {
-            // 生成缓存key
+            totalRequestCount++;  // 新增：增加请求计数
+            // 生成缓存 key
             long key = MakeKey(targetGridX, targetGridY);
 
             // 检查是否已存在
@@ -443,7 +446,7 @@ namespace ZLockstep.Flow
                     lastUpdateFrame = field.lastUpdateFrame
                 };
             }
-            return default(FlowFieldInfo);
+            return default;
         }
 
         /// <summary>
@@ -525,11 +528,30 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
+        /// 获取流场总请求次数
+        /// 统计所有类型流场请求的累计次数
+        /// </summary>
+        /// <returns>流场请求总次数</returns>
+        public int GetTotalRequestCount()
+        {
+            return totalRequestCount;
+        }
+
+        /// <summary>
+        /// 重置流场请求计数器
+        /// 用于重新开始统计数据
+        /// </summary>
+        public void ResetRequestCount()
+        {
+            totalRequestCount = 0;
+        }
+
+        /// <summary>
         /// 生成流场缓存键
         /// 将网格坐标组合成长整型作为单目标流场的缓存键
         /// </summary>
-        /// <param name="x">网格X坐标</param>
-        /// <param name="y">网格Y坐标</param>
+        /// <param name="x">网格 X 坐标</param>
+        /// <param name="y">网格 Y 坐标</param>
         /// <returns>缓存键</returns>
         private long MakeKey(int x, int y)
         {
