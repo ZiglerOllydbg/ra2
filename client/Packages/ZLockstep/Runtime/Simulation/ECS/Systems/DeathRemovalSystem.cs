@@ -41,7 +41,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                     
                     // 销毁实体
                     World.EntityManager.DestroyEntity(entity);
-                    zUDebug.Log($"[DeathRemovalSystem] 实体{entityId}尸体保留时间到期，已移除");
+                    // zUDebug.Log($"[DeathRemovalSystem] 实体{entityId}尸体保留时间到期，已移除");
                 }
             }
         }
@@ -89,7 +89,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 flowFieldManager.NeedUpdateObstacles = true;
             }
 
-            zUDebug.Log($"[DeathRemovalSystem] 已移除建筑{entity.Id}的阻挡区域：[{minX},{minY}] 到 [{maxX},{maxY}]");
+            // zUDebug.Log($"[DeathRemovalSystem] 已移除建筑{entity.Id}的阻挡区域：[{minX},{minY}] 到 [{maxX},{maxY}]");
         }
     }
 }

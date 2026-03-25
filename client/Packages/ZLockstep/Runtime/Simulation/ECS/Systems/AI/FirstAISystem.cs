@@ -231,7 +231,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
 
             if (chaseCount > 0 || moveToBaseCount > 0)
             {
-                zUDebug.Log($"[SimpleAISystem] 追击玩家单位数量: {chaseCount}，移动到基地单位数量: {moveToBaseCount}");
+                // zUDebug.Log($"[SimpleAISystem] 追击玩家单位数量: {chaseCount}，移动到基地单位数量: {moveToBaseCount}");
             }
         }
 
@@ -322,11 +322,11 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
 
             if (barracks.Count == 0)
             {
-                zUDebug.LogWarning("[FirstAISystem] AI 没有可用的兵营");
+                // zUDebug.LogWarning("[FirstAISystem] AI 没有可用的兵营");
                 return;
             }
 
-            zUDebug.Log($"[FirstAISystem] 开始生产大兵，找到 {barracks.Count} 个可用兵营");
+            // zUDebug.Log($"[FirstAISystem] 开始生产大兵，找到 {barracks.Count} 个可用兵营");
 
             // 平均分配到每个兵营
             int unitsPerBarracks = UNITS_PER_PRODUCTION / barracks.Count;

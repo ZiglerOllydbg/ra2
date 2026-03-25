@@ -124,15 +124,6 @@ namespace ZLockstep.View.Systems
                 // Debug.Log($"[PresentationSystem] 阵营{evt.CampId}资金变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
                 Frame.DispatchEvent(new EconomyEvent());
             }
-
-            // 处理电力变化事件
-            var powerEvents = EventManager.GetEvents<PowerChangedEvent>();
-            foreach (var evt in powerEvents)
-            {
-                // 这里可以添加处理电力变化的逻辑
-                // 例如：更新UI上的电力显示
-                zUDebug.Log($"[PresentationSystem] 阵营{evt.CampId}电力变化: {evt.OldPower} -> {evt.NewPower} ({evt.Reason})");
-            }
         }
 
         /// <summary>
@@ -456,7 +447,7 @@ namespace ZLockstep.View.Systems
                 }
             }
 
-            zUDebug.Log($"[PresentationSystem] ResyncAllEntities 完成: 新建={createdCount}, 同步={syncedCount}");
+            // zUDebug.Log($"[PresentationSystem] ResyncAllEntities 完成: 新建={createdCount}, 同步={syncedCount}");
         }
 
         /// <summary>

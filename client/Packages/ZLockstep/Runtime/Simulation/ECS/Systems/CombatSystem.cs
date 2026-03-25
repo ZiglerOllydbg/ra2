@@ -524,7 +524,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 PrefabId = -1 // 弹道预制体ID
             });
 
-            zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}");
+            // zUDebug.Log($"[CombatSystem] 发射弹道Entity_{projectile.Id}: {source.Id} -> {target.Id}");
         }
     }
 
