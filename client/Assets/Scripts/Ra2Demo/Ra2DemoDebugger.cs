@@ -535,18 +535,18 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawPathfindingInfo(BattleGame game, GUIStyle labelStyle)
     {
-        GUILayout.Space(10);
         GUILayout.Label("=== Pathfinding info ===", labelStyle);
+        GUILayout.Space(10);
 
         // 显示流场数量
         ShowFlowFieldInfo(game, labelStyle);
         
+        GUILayout.Space(10);
         // 显示 RVO agents 数量
-        if (game.RvoSimulator != null)
-        {
-            int rvoAgentCount = game.RvoSimulator.GetNumAgents();
-            GUILayout.Label($"RVO count: {rvoAgentCount}", labelStyle);
-        }
+        int rvoAgentCount = Simulator.Instance.getNumAgents();
+        GUILayout.Label($"RVO count: {rvoAgentCount}", labelStyle);
+        int obstacleCount = Simulator.Instance.getNumObstacleVertices();
+        GUILayout.Label($"obstacle vertices count: {obstacleCount}", labelStyle);
     }
 
     private void ShowFlowFieldInfo(BattleGame game, GUIStyle labelStyle)
