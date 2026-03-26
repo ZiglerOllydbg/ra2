@@ -559,6 +559,8 @@ public class MainPanel : BasePanel
             },
             message: "确定要退出游戏吗？"
         );
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -638,6 +640,8 @@ public class MainPanel : BasePanel
             // 显示子面板
             buildingSubPanel.Show(subPanelData);
         }
+
+        UISound.Instance.PlayClick();
     }
 
     /// <summary>
@@ -665,6 +669,8 @@ public class MainPanel : BasePanel
             // 显示子面板
             producerSubPanel.Show(subPanelData);
         }
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -689,6 +695,8 @@ public class MainPanel : BasePanel
         
         // 显示提示信息
         ShowMessage(isSelling ? "进入售卖模式，8折出售！" : "退出售卖模式");
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -717,6 +725,8 @@ public class MainPanel : BasePanel
             // 显示子面板
             settingSubPanel.Show(subPanelData);
         }
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -740,6 +750,8 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(0); // Solo 按钮被选中
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -763,6 +775,8 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(1); // Few 按钮被选中
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -786,6 +800,8 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(2); // 大部队按钮被选中
+
+        UISound.Instance.PlayClick();
     }
     
     /// <summary>
