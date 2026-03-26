@@ -1,3 +1,4 @@
+using System.Numerics;
 using ZLockstep.Simulation.ECS.Components;
 using zUnity;
 
@@ -24,17 +25,17 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return new zVector2(chaserPosition.x, chaserPosition.z); // 出错时返回当前位置
             
             // 获取建筑在世界坐标系中的边界框
-            zVector2 buildingCenter = mapManager.FlowToWorld(building.X, building.Y);
+            zVector2 buildingCenter = new(building.X, building.Y);
             
             // 计算建筑边界
-            zfloat halfWidth = zfloat.CreateFloat(building.Width) / 2;
-            zfloat halfHeight = zfloat.CreateFloat(building.Height) / 2;
+            zfloat halfWidth = new zfloat(building.Width) / 2;
+            zfloat halfHeight = new zfloat(building.Height) / 2;
             
-            zVector2 minBound = new zVector2(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
-            zVector2 maxBound = new zVector2(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);
+            zVector2 minBound = new(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
+            zVector2 maxBound = new(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);
             
             // 构建从追击者指向建筑中心的射线
-            zVector2 rayOrigin = new zVector2(chaserPosition.x, chaserPosition.z);
+            zVector2 rayOrigin = new(chaserPosition.x, chaserPosition.z);
             zVector2 toBuilding = buildingCenter - rayOrigin;
             zVector2 rayDirection = toBuilding.normalized;
             
@@ -70,14 +71,14 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return false;
             
             // 获取建筑在世界坐标系中的边界框
-            zVector2 buildingCenter = mapManager.FlowToWorld(building.X, building.Y);
+            zVector2 buildingCenter = new(building.X, building.Y);
             
             // 计算建筑边界
-            zfloat halfWidth = zfloat.CreateFloat(building.Width) / 2;
-            zfloat halfHeight = zfloat.CreateFloat(building.Height) / 2;
+            zfloat halfWidth = new zfloat(building.Width) / 2;
+            zfloat halfHeight = new zfloat(building.Height) / 2;
             
-            zVector2 minBound = new zVector2(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
-            zVector2 maxBound = new zVector2(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);
+            zVector2 minBound = new(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
+            zVector2 maxBound = new(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);
             
             // 计算追击者位置到建筑边界框的最短距离
             zfloat distX = zfloat.Zero;
