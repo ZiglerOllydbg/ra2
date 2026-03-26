@@ -64,6 +64,8 @@ namespace ZLockstep.Flow
             flowFieldManager = ffMgr;
             map = gameMap;
             // UpdateObstacles();
+
+            flowFieldManager.NeedUpdateObstacles = true;
         }
 
         /// <summary>

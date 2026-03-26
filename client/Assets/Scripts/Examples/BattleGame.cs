@@ -93,7 +93,7 @@ namespace Game.Examples
             zUDebug.Log("[BattleGame] 地图初始化: 256x256格，每格1.0米");
 
             // 2. 设置地图边界为障碍物
-            SetupMapBorders();
+            // SetupMapBorders();
 
             // 3. 创建流场管理器
             FlowFieldManager = new FlowFieldManager();
