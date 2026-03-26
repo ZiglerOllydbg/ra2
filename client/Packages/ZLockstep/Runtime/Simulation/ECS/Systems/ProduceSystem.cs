@@ -119,7 +119,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             int playerId = campComponent.CampId;
             
             // 从 ConfCamp 配置表中读取生产出生点
-            zVector3 spawnPosition = factoryPosition;
+            zVector3 baseSpawnPosition = factoryPosition;
            List<ConfCamp> confCamps = ConfigManager.GetAll<ConfCamp>();
             foreach (var confCamp in confCamps)
             {
@@ -130,19 +130,22 @@ namespace ZLockstep.Simulation.ECS.Systems
                         // 解析生产位置字符串（格式："x,y,z"）
                         if (!string.IsNullOrEmpty(confCamp.BarracksPosition))
                         {
-                            spawnPosition = StringToVector3Converter.StringToZVector3(confCamp.BarracksPosition);
+                            baseSpawnPosition = StringToVector3Converter.StringToZVector3(confCamp.BarracksPosition);
                         }
                     } 
                     else
                     {
                         if (!string.IsNullOrEmpty(confCamp.VehicleFactoryPosition))
                         {
-                            spawnPosition = StringToVector3Converter.StringToZVector3(confCamp.VehicleFactoryPosition);
+                            baseSpawnPosition = StringToVector3Converter.StringToZVector3(confCamp.VehicleFactoryPosition);
                         }    
                     }
                     break;
                 }
             }
+            
+            // 计算距离 baseSpawnPosition 2 米的出生点
+            zVector3 spawnPosition = CalculateSpawnPosition(baseSpawnPosition, factoryPosition);
             
             // 使用 EntityCreationManager 创建单位
             int prefabId = 6; // 默认预制体 ID
@@ -154,42 +157,32 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 发布单位创建事件
                 EventManager.Publish(unitEvent.Value);
 
-                // 为新单位设置一个附近的随机目标，触发流场分散逻辑
+                // 为新单位设置目标点，使用原始 spawnPosition
                 var navSystem = world.GameInstance.GetNavSystem();
-                // zVector2 randomTarget = GetRandomTarget(new zVector2(spawnPosition.x, spawnPosition.z), (zfloat)5.0f);
-                zVector2 randomTarget = new(spawnPosition.x, spawnPosition.z + new zfloat(3));
-                navSystem.SetMoveTarget(new Entity(unitEvent.Value.EntityId), randomTarget);
+                zVector2 targetPos = new zVector2(baseSpawnPosition.x, baseSpawnPosition.z);
+                navSystem.SetMoveTarget(new Entity(unitEvent.Value.EntityId), targetPos);
+                zUDebug.Log($"[ProduceSystem] 玩家{playerId}的工厂{factoryEntity.Id}生产了单位类型{unitType}，出生点{spawnPosition}，目标点{targetPos}");
             }
 
-            zUDebug.Log($"[ProduceSystem] 玩家{playerId}的工厂{factoryEntity.Id}生产了单位类型{unitType}，位置{spawnPosition}");
         }
         
         /// <summary>
-        /// 获取指定中心点附近随机位置的目标点
+        /// 计算距离目标点 2 米的出生位置
         /// </summary>
-        /// <param name="center">中心点</param>
-        /// <param name="radius">随机半径</param>
-        /// <returns>随机目标点</returns>
-        private zVector2 GetRandomTarget(zVector2 center, zfloat radius)
+        /// <param name="targetPosition">目标位置（配置表中的出生点）</param>
+        /// <param name="fromPosition">起始位置（工厂位置）</param>
+        /// <returns>距离目标点 2 米的出生位置</returns>
+        private zVector3 CalculateSpawnPosition(zVector3 targetPosition, zVector3 fromPosition)
         {
-            // 使用确定性随机数生成器
-            long seed = (World.Tick * 137 + center.x.value * 31 + center.y.value * 17) % 1000000;
-            zRandom random = new zRandom(seed);
+            // 计算从工厂到目标点的方向向量
+            zVector3 direction = targetPosition - fromPosition;
+            direction = direction.normalized;
             
-            long randomAngle = zMathf.Abs(random.NextLong()) % 360L;
-            long randomDistance = zMathf.Abs(random.NextLong()) % radius.value;
+            // 在目标点前方 2 米处设置出生点
+            zfloat distance = new zfloat(2);
+            zVector3 spawnPos = fromPosition + direction * distance;
             
-            zfloat angle = zfloat.CreateFloat(randomAngle * 10000); // 角度转为弧度
-            zfloat distance = zfloat.CreateFloat(randomDistance);
-            
-            zfloat radian = angle * zMathf.PI / new zfloat(180);
-            zfloat offsetX = zMathf.Cos(radian) * distance;
-            zfloat offsetZ = zMathf.Sin(radian) * distance;
-            
-            return new zVector2(
-                center.x + offsetX,
-                center.y + offsetZ
-            );
+            return spawnPos;
         }
     }
 }
