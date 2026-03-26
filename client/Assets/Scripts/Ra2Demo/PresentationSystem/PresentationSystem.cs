@@ -43,7 +43,7 @@ namespace ZLockstep.View.Systems
         /// <summary>
         /// 初始化系统（由GameWorldBridge调用）
         /// </summary>
-        public void Initialize(Transform viewRoot, Dictionary<int, GameObject> prefabs)
+        public void Initialize(Transform viewRoot)
         {
             _viewRoot = viewRoot;
         }

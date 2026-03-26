@@ -35,7 +35,6 @@ public class Ra2Demo : MonoBehaviour
 
     [Header("Unity 资源")]
     [SerializeField] private Transform viewRoot;
-    [SerializeField] public GameObject[] unitPrefabs = new GameObject[10];
     private PresentationSystem _presentationSystem;
 
 
@@ -153,22 +152,13 @@ public class Ra2Demo : MonoBehaviour
             viewRoot = transform;
 
         // 创建表现系统
-        _presentationSystem = new PresentationSystem();
-        _presentationSystem.EnableSmoothInterpolation = true;
-
-        // 准备预制体字典
-        var prefabDict = new Dictionary<int, GameObject>();
-        for (int i = 0; i < unitPrefabs.Length; i++)
+        _presentationSystem = new PresentationSystem
         {
-            if (unitPrefabs[i] != null)
-            {
-                prefabDict[i] = unitPrefabs[i];
-                zUDebug.Log($"[Ra2Demo] 注册预制体: Type{i} = {unitPrefabs[i].name}");
-            }
-        }
+            EnableSmoothInterpolation = true
+        };
 
         // 初始化并注册表现系统
-        _presentationSystem.Initialize(viewRoot, prefabDict);
+        _presentationSystem.Initialize(viewRoot);
         _presentationSystem.SetGame(_game);
         _game.World.SystemManager.RegisterSystem(_presentationSystem);
 

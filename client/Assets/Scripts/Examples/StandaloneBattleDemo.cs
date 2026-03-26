@@ -107,7 +107,7 @@ public class StandaloneBattleDemo : MonoBehaviour
         }
 
         // 初始化并注册表现系统
-        _presentationSystem.Initialize(viewRoot, prefabDict);
+        _presentationSystem.Initialize(viewRoot);
         _presentationSystem.SetGame(_battleGame);
         _battleGame.World.SystemManager.RegisterSystem(_presentationSystem);
 

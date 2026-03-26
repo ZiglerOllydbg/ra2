@@ -276,7 +276,7 @@ namespace ZLockstep.View
             }
             
             // 初始化表现系统并注册到Game
-            _presentationSystem.Initialize(viewRoot, prefabDict);
+            _presentationSystem.Initialize(viewRoot);
             // 设置Game引用以便访问本地玩家ID
             _presentationSystem.SetGame(_game);
             _game.World.SystemManager.RegisterSystem(_presentationSystem);
