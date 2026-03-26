@@ -399,17 +399,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   viewRoot: {fileID: 0}
-  unitPrefabs:
-  - {fileID: 5423967190054836518, guid: 3489c0120ec490c47a110032757e3c02, type: 3}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 7530846931961761611, guid: 879c57646e0d49f41bab94d9e1311ae5, type: 3}
-  - {fileID: 4346800480097175460, guid: ebedda77d76648c4284d6770520b7d94, type: 3}
-  - {fileID: 0}
-  - {fileID: 0}
   _mainCamera: {fileID: 1230374406}
   _cameraTarget: {fileID: 396749519}
   BoundaryMinX: -32
@@ -430,10 +419,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _showUnits: 0
-  _showRVOAgents: 0
-  _showGrid: 0
+  _showRVOAgents: 1
+  _showGrid: 1
   _showObstacles: 0
-  _showFlowField: 0
+  _showFlowField: 1
 --- !u!114 &812412506
 MonoBehaviour:
   m_ObjectHideFlags: 0
