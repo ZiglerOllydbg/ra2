@@ -7,6 +7,7 @@ using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.View;
 using ZLib;
+using Cinemachine;
 
 /// <summary>
 /// 血量面板 - 显示单位血量信息
@@ -109,6 +110,25 @@ public class HealthPanel : BasePanel
     }
 
     /// <summary>
+    /// 获取当前相机缩放级别
+    /// </summary>
+    /// <returns>相机缩放级别</returns>
+    private float GetCameraZoom()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            return MainPanel.CAMERA_ZOOM_DEFAULT;
+        }
+        
+        // 对于正交相机，直接使用 orthographicSize 作为缩放级别
+        // orthographicSize 越大表示视野越远（缩放级别越大）
+        // orthographicSize 越小表示视野越近（缩放级别越小）
+        // 这与 Slider 的值范围 (CAMERA_ZOOM_MIN 到 CAMERA_ZOOM_MAX) 一致
+        return mainCamera.orthographicSize;
+    }
+
+    /// <summary>
     /// 更新血量条的位置
     /// </summary>
     public void UpdateHealthBar(int entityId)
@@ -145,8 +165,22 @@ public class HealthPanel : BasePanel
         {
             if (healthBarInstance.gameObject != null)
             {
+                // 获取当前相机缩放级别
+                float cameraZoom = GetCameraZoom();
+                
+                // 根据相机缩放级别动态调整血条偏移量和大小
+                // orthographicSize 越小（视野越近），offsetY 应该越大，使血条显示更高，scale 也越大
+                // orthographicSize 越大（视野越远），offsetY 应该越小，使血条显示更低，scale 也越小
+                // 基准值：cameraZoom=15 时，offsetY=60，scale=1
+                float baseOffsetY = 60f;
+                float baseCameraZoom = MainPanel.CAMERA_ZOOM_DEFAULT;
+                // 使用反比关系：zoomRatio = baseCameraZoom / cameraZoom
+                // cameraZoom=10 时，zoomRatio = 15/10 = 1.5，offsetY = 60 * 1.5 = 90，scale = 1.5
+                // cameraZoom=30 时，zoomRatio = 15/30 = 0.5，offsetY = 60 * 0.5 = 30，scale = 0.5
+                float zoomRatio = baseCameraZoom / cameraZoom;
+                float offsetY = baseOffsetY * zoomRatio;
+                
                 float offsetX = 0f;
-                float offsetY = 60f; // 向上偏移 50 像素
                 // 添加向上的偏移量，使血条显示在单位上方
                 if (componentManager.HasComponent<BuildingComponent>(entity))
                 {
@@ -155,15 +189,22 @@ public class HealthPanel : BasePanel
                     if (confBuilding != null)
                     {
                         offsetX = confBuilding.HpOffsetX;
-                        offsetY = confBuilding.HpOffsetY;
+                        // 建筑物的偏移也按相同比例缩放
+                        offsetY = confBuilding.HpOffsetY * zoomRatio;
                     }
                     else
                     {
-                        offsetY = 120f;
+                        offsetY = 120f * zoomRatio;
                     }
                 }
                 
                 healthBarInstance.gameObject.transform.position = new Vector3(screenPosition.x + offsetX, screenPosition.y + offsetY, 0);
+                
+                // 根据相机缩放级别动态调整血条大小
+                // 保持血条在世界空间中的视觉大小一致
+                float baseScale = 1f;
+                float scale = baseScale * zoomRatio;
+                healthBarInstance.gameObject.transform.localScale = new Vector3(scale, scale, scale);
             }
 
             if (healthBarInstance.fillImage != null)
