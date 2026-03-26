@@ -91,7 +91,7 @@ namespace ZLockstep.Simulation.ECS.Utils
             // 检查建筑是否在地图边界内
             if (minX < 0 || minY < 0 || maxX >= mapManager.GetWidth() || maxY >= mapManager.GetHeight())
             {
-                zUDebug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({x},{y}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
+                zUDebug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({posX},{posY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
                 return false;
             }
             
