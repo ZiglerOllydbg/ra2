@@ -398,7 +398,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (activeFields == null)
             return;
 
-        int flowFieldDisplayInterval = 2; // 间隔显示，避免太密集
+        int flowFieldDisplayInterval = 1; // 间隔显示，避免太密集
 
         foreach (var field in activeFields.Values)
         {
@@ -410,7 +410,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             // 绘制目标点
             Vector3 targetPos = new(
                 targetWorldPos.x.ToFloat(),
-                0.5f,
+                _drawHeight,
                 targetWorldPos.y.ToFloat()
             );
             Gizmos.color = Color.red;
@@ -434,11 +434,11 @@ public class Ra2DemoDebugger : MonoBehaviour
                     zVector2 pos = game.MapManager.FlowToWorld(flowX, flowY);
                     Vector3 worldPos = new(
                         pos.x.ToFloat(),
-                        0.5f,
+                        _drawHeight,
                         pos.y.ToFloat()
                     );
 
-                    Vector3 dir = new((float)direction.x, 0, (float)direction.y);
+                    Vector3 dir = new((float)direction.x, _drawHeight, (float)direction.y);
                     
                     // 根据到目标的距离设置颜色
                     float cost = (float)field.costs[idx];
