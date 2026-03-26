@@ -42,6 +42,8 @@ public class Ra2DemoDebugger : MonoBehaviour
     private GUIStyle _titleStyle;
     private GUIStyle _toggleStyle;
 
+    private float _drawHeight = 0.1f;
+
     private void Awake()
     {
         _demo = GetComponent<Ra2Demo>();
@@ -242,7 +244,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         {
             ZLockstep.RVO.Vector2 v2Pos = Simulator.Instance.getAgentPosition(agentNo);
             // 获取agent位置
-            Vector3 pos = new Vector3(v2Pos.x(), 0.1f, v2Pos.y());
+            Vector3 pos = new Vector3(v2Pos.x(), _drawHeight, v2Pos.y());
             
             // 绘制agent半径（白色）
             Gizmos.color = Color.red;
@@ -257,7 +259,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             ZLockstep.RVO.Vector2 v2Vel = Simulator.Instance.getAgentVelocity(agentNo);
             if (RVOMath.absSq(v2Vel) > 0.001f)
             {
-                Vector3 velocity = new Vector3(v2Vel.x(), 0, v2Vel.y());
+                Vector3 velocity = new Vector3(v2Vel.x(), _drawHeight, v2Vel.y());
                 Gizmos.color = Color.blue;
                 Gizmos.DrawLine(pos, pos + velocity);
                 // 绘制箭头头部
@@ -280,7 +282,7 @@ public class Ra2DemoDebugger : MonoBehaviour
             for (int i = 0; i < points.Count; i++)
             {
                 var p = points[i];
-                Vector3 pos = new Vector3((float)p.x, 0.05f, (float)p.y);
+                Vector3 pos = new Vector3((float)p.x, _drawHeight, (float)p.y);
                 Gizmos.DrawWireSphere(pos, r);
             }
         }
@@ -310,7 +312,6 @@ public class Ra2DemoDebugger : MonoBehaviour
 
         int width = game.MapManager.GetWidth();
         int height = game.MapManager.GetHeight();
-        float gridSize = (float)game.MapManager.GetGridSize();
 
         for (int y = 0; y < height; y++)
         {
@@ -318,25 +319,25 @@ public class Ra2DemoDebugger : MonoBehaviour
             {
                 bool walkable = game.MapManager.IsWalkable(x, y);
                 Vector3 worldPos = new Vector3(
-                    x * gridSize + gridSize * 0.5f,
-                    0.01f,
-                    y * gridSize + gridSize * 0.5f
+                    x + 0.5f,
+                    _drawHeight,
+                    y + 0.5f
                 );
 
                 // 绘制障碍物
                 if (!walkable && _showObstacles)
                 {
                     Gizmos.color = new Color(0.8f, 0.2f, 0.2f, 0.7f);
-                    Gizmos.DrawCube(worldPos, new Vector3(gridSize * 0.95f, 0.2f, gridSize * 0.95f));
+                    Gizmos.DrawCube(worldPos, new Vector3(0.95f, _drawHeight, 0.95f));
                 }
                 // 绘制网格线
                 else if (_showGrid)
                 {
                     Gizmos.color = new Color(0.3f, 0.3f, 0.3f, 0.3f);
                     // 只绘制底部和左边线，避免重复
-                    Vector3 bottomLeft = worldPos - new Vector3(gridSize * 0.5f, 0, gridSize * 0.5f);
-                    Vector3 bottomRight = bottomLeft + new Vector3(gridSize, 0, 0);
-                    Vector3 topLeft = bottomLeft + new Vector3(0, 0, gridSize);
+                    Vector3 bottomLeft = worldPos - new Vector3(0.5f, 0, 0.5f);
+                    Vector3 bottomRight = bottomLeft + new Vector3(1, 0, 0);
+                    Vector3 topLeft = bottomLeft + new Vector3(0, 0, 1);
                     
                     Gizmos.DrawLine(bottomLeft, bottomRight);
                     Gizmos.DrawLine(bottomLeft, topLeft);
@@ -348,13 +349,11 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (_showGrid)
         {
             Gizmos.color = Color.yellow;
-            float mapWidth = width * gridSize;
-            float mapHeight = height * gridSize;
             
-            Vector3 corner1 = new Vector3(0, 0.02f, 0);
-            Vector3 corner2 = new Vector3(mapWidth, 0.02f, 0);
-            Vector3 corner3 = new Vector3(mapWidth, 0.02f, mapHeight);
-            Vector3 corner4 = new Vector3(0, 0.02f, mapHeight);
+            Vector3 corner1 = new(0, 0.02f, 0);
+            Vector3 corner2 = new(width, 0.02f, 0);
+            Vector3 corner3 = new(width, 0.02f, height);
+            Vector3 corner4 = new(0, 0.02f, height);
             
             Gizmos.DrawLine(corner1, corner2);
             Gizmos.DrawLine(corner2, corner3);
@@ -377,7 +376,6 @@ public class Ra2DemoDebugger : MonoBehaviour
         if (activeFields == null)
             return;
 
-        float gridSize = (float)game.MapManager.GetGridSize();
         int flowFieldDisplayInterval = 2; // 间隔显示，避免太密集
 
         foreach (var field in activeFields.Values)
@@ -385,37 +383,40 @@ public class Ra2DemoDebugger : MonoBehaviour
             if (field.referenceCount <= 0)
                 continue;
 
+            int flowSize = game.MapManager.GetFlowSize();
+            zVector2 targetWorldPos = game.MapManager.FlowToWorld(field.targetGridX, field.targetGridY);
             // 绘制目标点
-            Vector3 targetPos = new Vector3(
-                field.targetGridX * gridSize + gridSize * 0.5f,
+            Vector3 targetPos = new(
+                targetWorldPos.x.ToFloat(),
                 0.5f,
-                field.targetGridY * gridSize + gridSize * 0.5f
+                targetWorldPos.y.ToFloat()
             );
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(targetPos, 1f);
             Gizmos.DrawSphere(targetPos, 0.3f);
 
             // 绘制流场箭头（间隔显示，避免太密集）
-            for (int y = 0; y < field.height; y += flowFieldDisplayInterval)
+            for (int flowY = 0; flowY < field.height; flowY += flowFieldDisplayInterval)
             {
-                for (int x = 0; x < field.width; x += flowFieldDisplayInterval)
+                for (int flowX = 0; flowX < field.width; flowX += flowFieldDisplayInterval)
                 {
-                    if (!game.MapManager.IsWalkable(x, y))
+                    if (!game.MapManager.IsFlowWalkable(flowX, flowY))
                         continue;
 
-                    int idx = field.GetIndex(x, y);
+                    int idx = field.GetIndex(flowX, flowY);
                     zVector2 direction = field.directions[idx];
                     
                     if (direction.sqrMagnitude < new zfloat(0, 100)) // 0.01
                         continue;
 
-                    Vector3 worldPos = new Vector3(
-                        x * gridSize + gridSize * 0.5f,
-                        0.3f,
-                        y * gridSize + gridSize * 0.5f
+                    zVector2 pos = game.MapManager.FlowToWorld(flowX, flowY);
+                    Vector3 worldPos = new(
+                        pos.x.ToFloat(),
+                        0.5f,
+                        pos.y.ToFloat()
                     );
 
-                    Vector3 dir = new Vector3((float)direction.x, 0, (float)direction.y);
+                    Vector3 dir = new((float)direction.x, 0, (float)direction.y);
                     
                     // 根据到目标的距离设置颜色
                     float cost = (float)field.costs[idx];

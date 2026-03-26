@@ -103,7 +103,7 @@ namespace ZLockstep.Flow
         /// <returns>流场 ID，用于后续采样操作</returns>
         public int RequestFlowField(zVector2 targetWorldPos)
         {
-            map.WorldToGrid(targetWorldPos, out int gridX, out int gridY);
+            map.WorldToFlow(targetWorldPos, out int gridX, out int gridY);
             return RequestFlowFieldToGrid(gridX, gridY);
         }
 
@@ -120,7 +120,7 @@ namespace ZLockstep.Flow
             HashSet<long> seen = new HashSet<long>();
             foreach (var wp in targetWorldPositions)
             {
-                map.WorldToGrid(wp, out int gx, out int gy);
+                map.WorldToFlow(wp, out int gx, out int gy);
                 long k = ((long)gx) | (((long)gy) << 32);
                 if (seen.Add(k))
                 {
@@ -159,7 +159,7 @@ namespace ZLockstep.Flow
             }
 
             // 创建并计算
-            FlowField field = new FlowField(nextFieldId++, map.GetWidth(), map.GetHeight());
+            FlowField field = new FlowField(nextFieldId++, map.GetFlowGridWidth(), map.GetFlowGridHeight());
             field.referenceCount = 1;
             field.isDirty = true;
             field.isMulti = true;
@@ -245,7 +245,7 @@ namespace ZLockstep.Flow
                 return zVector2.zero;
             }
 
-            map.WorldToGrid(worldPos, out int gridX, out int gridY);
+            map.WorldToFlow(worldPos, out int gridX, out int gridY);
 
             if (!field.IsValid(gridX, gridY))
             {
@@ -270,7 +270,7 @@ namespace ZLockstep.Flow
                 return zfloat.Infinity;
             }
 
-            map.WorldToGrid(worldPos, out int gridX, out int gridY);
+            map.WorldToFlow(worldPos, out int gridX, out int gridY);
 
             if (!field.IsValid(gridX, gridY))
             {

@@ -24,12 +24,11 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return new zVector2(chaserPosition.x, chaserPosition.z); // 出错时返回当前位置
             
             // 获取建筑在世界坐标系中的边界框
-            zfloat gridSize = mapManager.GetGridSize();
-            zVector2 buildingCenter = mapManager.GridToWorld(building.GridX, building.GridY);
+            zVector2 buildingCenter = mapManager.FlowToWorld(building.X, building.Y);
             
             // 计算建筑边界
-            zfloat halfWidth = (building.Width * gridSize) / 2;
-            zfloat halfHeight = (building.Height * gridSize) / 2;
+            zfloat halfWidth = zfloat.CreateFloat(building.Width) / 2;
+            zfloat halfHeight = zfloat.CreateFloat(building.Height) / 2;
             
             zVector2 minBound = new zVector2(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
             zVector2 maxBound = new zVector2(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);
@@ -71,12 +70,11 @@ namespace ZLockstep.Simulation.ECS.Utils
                 return false;
             
             // 获取建筑在世界坐标系中的边界框
-            zfloat gridSize = mapManager.GetGridSize();
-            zVector2 buildingCenter = mapManager.GridToWorld(building.GridX, building.GridY);
+            zVector2 buildingCenter = mapManager.FlowToWorld(building.X, building.Y);
             
             // 计算建筑边界
-            zfloat halfWidth = (building.Width * gridSize) / 2;
-            zfloat halfHeight = (building.Height * gridSize) / 2;
+            zfloat halfWidth = zfloat.CreateFloat(building.Width) / 2;
+            zfloat halfHeight = zfloat.CreateFloat(building.Height) / 2;
             
             zVector2 minBound = new zVector2(buildingCenter.x - halfWidth, buildingCenter.y - halfHeight);
             zVector2 maxBound = new zVector2(buildingCenter.x + halfWidth, buildingCenter.y + halfHeight);

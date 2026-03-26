@@ -9,19 +9,29 @@ namespace ZLockstep.Flow
     public interface IFlowFieldMap
     {
         /// <summary>
-        /// 获取流场地图宽度（格子数）
+        /// 获取地图宽度
         /// </summary>
         int GetWidth();
 
         /// <summary>
-        /// 获取流场地图高度（格子数）
+        /// 获取地图高度
         /// </summary>
         int GetHeight();
 
         /// <summary>
-        /// 获取每个格子的世界尺寸
+        /// 获取流场宽度
         /// </summary>
-        zfloat GetGridSize();
+        int GetFlowGridWidth();
+
+        /// <summary>
+        /// 获取流场高度
+        /// </summary>
+        int GetFlowGridHeight();
+
+        /// <summary>
+        /// 获取每个流场格子的尺寸
+        /// </summary>
+        int GetFlowSize();
 
         /// <summary>
         /// 判断指定格子是否可行走
@@ -37,12 +47,12 @@ namespace ZLockstep.Flow
         /// <summary>
         /// 世界坐标转换为格子坐标
         /// </summary>
-        void WorldToGrid(zVector2 worldPos, out int gridX, out int gridY);
+        void WorldToFlow(zVector2 worldPos, out int gridX, out int gridY);
 
         /// <summary>
         /// 格子坐标转换为世界坐标（格子中心）
         /// </summary>
-        zVector2 GridToWorld(int gridX, int gridY);
+        zVector2 FlowToWorld(int gridX, int gridY);
         
         /// <summary>
         /// 设置指定格子的可行走性

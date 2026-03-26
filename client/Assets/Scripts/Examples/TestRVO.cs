@@ -332,7 +332,7 @@ public class TestRVO : MonoBehaviour
     {
         int width = _mapManager.GetWidth();
         int height = _mapManager.GetHeight();
-        float gridSize = (float)_mapManager.GetGridSize();
+        float gridSize = (float)_mapManager.GetFlowSize();
 
         for (int y = 0; y < height; y++)
         {
@@ -401,7 +401,7 @@ public class TestRVO : MonoBehaviour
         if (activeFields == null)
             return;
 
-        float gridSize = (float)_mapManager.GetGridSize();
+        float gridSize = (float)_mapManager.GetFlowSize();
 
         foreach (var field in activeFields.Values)
         {

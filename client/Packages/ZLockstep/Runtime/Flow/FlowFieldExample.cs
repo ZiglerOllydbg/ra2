@@ -28,7 +28,7 @@ namespace ZLockstep.Flow
 
             // 1. 创建256x256的逻辑地图（每格0.5单位）
             mapManager = new SimpleMapManager();
-            mapManager.Initialize(256, 256, new zfloat(0, 5000)); // 0.5
+            mapManager.Initialize(256, 256, 2);
 
             // 2. 设置一些障碍物
             SetupObstacles();

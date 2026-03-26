@@ -73,10 +73,10 @@ namespace ZLockstep.Simulation.ECS.Systems
             }
 
             // 计算建筑占据的区域范围
-            int minX = building.GridX - building.Width / 2;
-            int maxX = building.GridX + building.Width / 2;
-            int minY = building.GridY - building.Height / 2;
-            int maxY = building.GridY + building.Height / 2;
+            int minX = building.X - building.Width / 2;
+            int maxX = building.X + building.Width / 2;
+            int minY = building.Y - building.Height / 2;
+            int maxY = building.Y + building.Height / 2;
 
             // 将建筑占据的区域标记为可行走
             mapManager.SetWalkableRect(minX, minY, maxX, maxY, true);

@@ -109,8 +109,8 @@ namespace ZLockstep.Flow
         public void SetMoveTarget(Entity entity, zVector2 targetPos, bool userInput = false)
         {
             // 将目标位置对齐到网格中心
-            map.WorldToGrid(targetPos, out int targetGridX, out int targetGridY);
-            zVector2 alignedTargetPos = map.GridToWorld(targetGridX, targetGridY);
+            map.WorldToFlow(targetPos, out int targetGridX, out int targetGridY);
+            zVector2 alignedTargetPos = map.FlowToWorld(targetGridX, targetGridY);
 
             var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
@@ -169,8 +169,8 @@ namespace ZLockstep.Flow
                 return;
 
             // 将编队中心位置对齐到网格中心
-            map.WorldToGrid(groupCenter, out int centerGridX, out int centerGridY);
-            zVector2 alignedGroupCenter = map.GridToWorld(centerGridX, centerGridY);
+            map.WorldToFlow(groupCenter, out int centerGridX, out int centerGridY);
+            zVector2 alignedGroupCenter = map.FlowToWorld(centerGridX, centerGridY);
 
             // 统计最大半径，确定最小间距
             zfloat maxRadius = zfloat.Zero;
@@ -181,7 +181,7 @@ namespace ZLockstep.Flow
             }
             // 基础间距：约 4x 半径，并至少为 2 个网格尺寸，保证明显分散
             zfloat spacing = maxRadius * new zfloat(2);
-            zfloat minSpacing = map.GetGridSize() * new zfloat(2);
+            zfloat minSpacing = map.GetFlowSize() * new zfloat(2);
             if (spacing < minSpacing) spacing = minSpacing;
 
             // 生成候选散点（方形格，默认）
@@ -198,7 +198,7 @@ namespace ZLockstep.Flow
                 foreach (var p in candidates)
                 {
                     zVector2 q = ProjectToWalkable(p, 12 + attempts * 6);
-                    map.WorldToGrid(q, out int gx, out int gy);
+                    map.WorldToFlow(q, out int gx, out int gy);
                     long k = ((long)gx) | (((long)gy) << 32);
                     if (seen.Add(k))
                     {
@@ -294,8 +294,8 @@ namespace ZLockstep.Flow
                     {
                         zVector2 p = center + a * (zfloat)i + b * (zfloat)j;
                         // 将点对齐到网格中心
-                        map.WorldToGrid(p, out int gridX, out int gridY);
-                        zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                        map.WorldToFlow(p, out int gridX, out int gridY);
+                        zVector2 alignedPoint = map.FlowToWorld(gridX, gridY);
                         pts.Add(alignedPoint);
                         if (pts.Count >= maxCount) goto END;
                     }
@@ -344,8 +344,8 @@ namespace ZLockstep.Flow
                         startY + row * spacing
                     );
                     // 将点对齐到网格中心
-                    map.WorldToGrid(p, out int gridX, out int gridY);
-                    zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                    map.WorldToFlow(p, out int gridX, out int gridY);
+                    zVector2 alignedPoint = map.FlowToWorld(gridX, gridY);
                     pts.Add(alignedPoint);
                     
                     if (pts.Count >= maxCount)
@@ -385,8 +385,8 @@ namespace ZLockstep.Flow
             
             // 添加中心点
             // 将中心点对齐到网格中心
-            map.WorldToGrid(center, out int centerGridX, out int centerGridY);
-            zVector2 alignedCenter = map.GridToWorld(centerGridX, centerGridY);
+            map.WorldToFlow(center, out int centerGridX, out int centerGridY);
+            zVector2 alignedCenter = map.FlowToWorld(centerGridX, centerGridY);
             pts.Add(alignedCenter);
             if (maxCount <= 1) 
                 return pts;
@@ -404,8 +404,8 @@ namespace ZLockstep.Flow
                         center.y + radius * zMathf.Sin(angle)
                     );
                     // 将点对齐到网格中心
-                    map.WorldToGrid(p, out int gridX, out int gridY);
-                    zVector2 alignedPoint = map.GridToWorld(gridX, gridY);
+                    map.WorldToFlow(p, out int gridX, out int gridY);
+                    zVector2 alignedPoint = map.FlowToWorld(gridX, gridY);
                     pts.Add(alignedPoint);
                     
                     if (pts.Count >= maxCount)
@@ -428,9 +428,9 @@ namespace ZLockstep.Flow
 
         private zVector2 ProjectToWalkable(zVector2 pos, int maxRing)
         {
-            map.WorldToGrid(pos, out int gx, out int gy);
+            map.WorldToFlow(pos, out int gx, out int gy);
             if (map.IsWalkable(gx, gy))
-                return map.GridToWorld(gx, gy);
+                return map.FlowToWorld(gx, gy);
 
             for (int r = 1; r <= maxRing; r++)
             {
@@ -439,16 +439,16 @@ namespace ZLockstep.Flow
                     int y = gy + dy;
                     int x1 = gx - r;
                     int x2 = gx + r;
-                    if (map.IsWalkable(x1, y)) return map.GridToWorld(x1, y);
-                    if (map.IsWalkable(x2, y)) return map.GridToWorld(x2, y);
+                    if (map.IsWalkable(x1, y)) return map.FlowToWorld(x1, y);
+                    if (map.IsWalkable(x2, y)) return map.FlowToWorld(x2, y);
                 }
                 for (int dx = -r + 1; dx <= r - 1; dx++)
                 {
                     int x = gx + dx;
                     int y1 = gy - r;
                     int y2 = gy + r;
-                    if (map.IsWalkable(x, y1)) return map.GridToWorld(x, y1);
-                    if (map.IsWalkable(x, y2)) return map.GridToWorld(x, y2);
+                    if (map.IsWalkable(x, y1)) return map.FlowToWorld(x, y1);
+                    if (map.IsWalkable(x, y2)) return map.FlowToWorld(x, y2);
                 }
             }
             return pos;
@@ -775,7 +775,7 @@ namespace ZLockstep.Flow
             // ===== 近端个体化收敛：靠近个人散点时忽略流场，直达个人目标 =====
             // 目的：多源流场指向“最近散点”，可能与个人分配散点不同，近端阶段改为直达个人目标
             zfloat personalizationRadius = navigator.Radius * new zfloat(4);
-            zfloat grid3 = map.GetGridSize() * new zfloat(3);
+            zfloat grid3 = map.GetFlowSize() * new zfloat(3);
             if (personalizationRadius < grid3) personalizationRadius = grid3;
             if (distanceToTarget <= personalizationRadius)
             {
@@ -800,7 +800,7 @@ namespace ZLockstep.Flow
 
             // ===== 再次检查是否到达（更精确的判定） =====
             // 加入轻微回滞：到达半径 + 网格尺寸20%的死区，减少临界抖动
-            zfloat arriveDeadband = map.GetGridSize() * new zfloat(0, 2000);
+            zfloat arriveDeadband = map.GetFlowSize() * new zfloat(0, 2000);
             if (distanceToTarget <= navigator.ArrivalRadius + arriveDeadband)
             {
                 // 已经到达目标，停止移动
@@ -870,7 +870,7 @@ namespace ZLockstep.Flow
             
             // 预测下一帧位置
             zVector2 predictedPos = currentPos + desiredVelocity * DeltaTime;
-            map.WorldToGrid(predictedPos, out int predGridX, out int predGridY);
+            map.WorldToFlow(predictedPos, out int predGridX, out int predGridY);
             
             // 如果预测位置是障碍物，调整方向
             if (!map.IsWalkable(predGridX, predGridY))
@@ -934,13 +934,13 @@ namespace ZLockstep.Flow
         /// <returns>墙壁法线方向向量</returns>
         private zVector2 DetectWallNormal(zVector2 currentPos, zVector2 moveDir, IFlowFieldMap map)
         {
-            zVector2 checkPos = currentPos + moveDir.normalized * map.GetGridSize();
-            map.WorldToGrid(checkPos, out int gx, out int gy);
+            zVector2 checkPos = currentPos + moveDir.normalized * map.GetFlowSize();
+            map.WorldToFlow(checkPos, out int gx, out int gy);
             
             if (!map.IsWalkable(gx, gy))
             {
                 // 最简单的法线：从当前位置指向碰撞点的反方向
-                zVector2 toObstacle = map.GridToWorld(gx, gy) - currentPos;
+                zVector2 toObstacle = map.FlowToWorld(gx, gy) - currentPos;
                 return -toObstacle.normalized;
             }
             
@@ -951,7 +951,7 @@ namespace ZLockstep.Flow
             zVector2 avgNormal = zVector2.zero;
             int obstacleCount = 0;
             
-            map.WorldToGrid(currentPos, out int cx, out int cy);
+            map.WorldToFlow(currentPos, out int cx, out int cy);
             for (int i = 0; i < 8; i++)
             {
                 int nx = cx + DX[i];
@@ -1005,7 +1005,7 @@ namespace ZLockstep.Flow
                 rvoSimulator.SetAgentPrefVelocity(navigator.RvoAgentId, zVector2.zero);
                 zVector2 freezePos = new zVector2(transform.Position.x, transform.Position.z);
                 // 对齐网格
-                flowFieldManager.GetMap().WorldToGrid(freezePos, out int gx, out int gy);
+                flowFieldManager.GetMap().WorldToFlow(freezePos, out int gx, out int gy);
                 zVector2 fixedPos = new zVector2(gx, gy);
                 rvoSimulator.SetAgentPosition(navigator.RvoAgentId, fixedPos);
                 // freezePos transform.Position
@@ -1043,7 +1043,7 @@ namespace ZLockstep.Flow
             // ===== 碰撞检测：检查新位置是否在障碍物里 =====
             if (map != null)
             {
-                map.WorldToGrid(newPos, out int gridX, out int gridY);
+                map.WorldToFlow(newPos, out int gridX, out int gridY);
                 
                 // 如果新位置不可行走，回退到旧位置
                 if (!map.IsWalkable(gridX, gridY))

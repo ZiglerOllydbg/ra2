@@ -469,7 +469,7 @@ public class StandaloneBattleDemo : MonoBehaviour
     {
         int width = _battleGame.MapManager.GetWidth();
         int height = _battleGame.MapManager.GetHeight();
-        float gridSize = (float)_battleGame.MapManager.GetGridSize();
+        float gridSize = (float)_battleGame.MapManager.GetFlowSize();
 
         // 绘制边界
         Gizmos.color = Color.yellow;
@@ -522,7 +522,7 @@ public class StandaloneBattleDemo : MonoBehaviour
             Gizmos.color = camp.CampId == 0 ? new Color(0.2f, 0.5f, 1f, 0.6f) : new Color(1f, 0.3f, 0.3f, 0.6f);
 
             // 绘制建筑占据的区域
-            float gridSize = (float)_battleGame.MapManager.GetGridSize();
+            float gridSize = (float)_battleGame.MapManager.GetFlowSize();
             Vector3 center = transform.Position.ToVector3();
             Vector3 size = new Vector3(building.Width * gridSize, 2f, building.Height * gridSize);
 

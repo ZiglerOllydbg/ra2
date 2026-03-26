@@ -79,18 +79,19 @@ namespace ZLockstep.Simulation.ECS.Utils
             int halfHeight = height / 2;
             
             // 将世界坐标转换为格子坐标
-            mapManager.WorldToGrid(new zVector2(position.x, position.z), out int gridX, out int gridY);
-            
+            int posX = (int)position.x;
+            int posY = (int)position.z;
+
             // 计算建筑占据的格子范围
-            int minX = gridX - halfWidth;
-            int minY = gridY - halfHeight;
-            int maxX = gridX + halfWidth;
-            int maxY = gridY + halfHeight;
+            int minX = posX - halfWidth;
+            int minY = posY - halfHeight;
+            int maxX = posX + halfWidth;
+            int maxY = posY + halfHeight;
             
             // 检查建筑是否在地图边界内
             if (minX < 0 || minY < 0 || maxX >= mapManager.GetWidth() || maxY >= mapManager.GetHeight())
             {
-                zUDebug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({gridX},{gridY}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
+                zUDebug.Log($"[BuildingPlacementUtils] 建筑位置超出地图边界。位置:({x},{y}), 尺寸:{width}x{height}, 地图尺寸:{mapManager.GetWidth()}x{mapManager.GetHeight()}");
                 return false;
             }
             

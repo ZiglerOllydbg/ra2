@@ -91,15 +91,11 @@ namespace ZLockstep.Simulation.ECS
                 Scale = zVector3.one
             });
 
-            // 3. 计算格子坐标
-            int gridX = 0, gridY = 0;
-            if (mapManager != null)
-            {
-                mapManager.WorldToGrid(new zVector2(position.x, position.z), out gridX, out gridY);
-            }
+            int x = (int)position.x;
+            int y = (int)position.z;
 
             // 4. 添加建筑组件
-            var buildingComponent = BuildingComponent.Create((int)buildingType, gridX, gridY, width, height);
+            var buildingComponent = BuildingComponent.Create((int)buildingType, x, y, width, height);
             world.ComponentManager.AddComponent(entity, buildingComponent);
 
             // 5. 添加阵营组件
@@ -124,41 +120,34 @@ namespace ZLockstep.Simulation.ECS
             if (mapManager != null)
             {
                 // 计算建筑占据的世界坐标边界
-                int minX = gridX - width / 2;
-                int minY = gridY - height / 2;
-                int maxX = gridX + width / 2;
-                int maxY = gridY + height / 2;
+                int minX = x - width / 2;
+                int minY = y - height / 2;
+                int maxX = x + width / 2;
+                int maxY = y + height / 2;
 
                 mapManager.SetWalkableRect(minX, minY, maxX, maxY, false);
 
-                // 将格子坐标转换为世界坐标
-                zVector2 bottomLeftWorld = mapManager.GridToWorld(minX, minY);
-                zVector2 topRightWorld = mapManager.GridToWorld(maxX, maxY);
-
-                // 获取格子尺寸
-                float gridSize = (float)mapManager.GetGridSize();
-
                 // 创建矩形障碍物顶点（逆时针顺序）
-                // 向外扩展半个格子，确保单位不会走到建筑内部
-                float halfGrid = gridSize * 0.5f;
                 List<Vector2> buildingVertices = new List<Vector2>
                 {
-                    new((float)bottomLeftWorld.x - halfGrid, (float)bottomLeftWorld.y - halfGrid),  // 左下
-                    new((float)topRightWorld.x + halfGrid, (float)bottomLeftWorld.y - halfGrid),   // 右下
-                    new((float)topRightWorld.x + halfGrid, (float)topRightWorld.y + halfGrid),     // 右上
-                    new((float)bottomLeftWorld.x - halfGrid, (float)topRightWorld.y + halfGrid)    // 左上
+                    new(minX, minY),  // 左下
+                    new(maxX, minY),   // 右下
+                    new(maxX, maxY),   // 右上
+                    new(minX, maxY)    // 左上
                 };
 
                 // RVO 添加建筑阻挡障碍物
                 Simulator.Instance.addObstacle(buildingVertices);
                 Simulator.Instance.processObstacles();
+
+                // 9. 标记流场为脏（需要重新计算）
+                if (flowFieldManager != null)
+                {
+                    flowFieldManager.MarkRegionDirty(minX, minY, maxX, maxY);
+                }
             }
 
-            // 9. 标记流场为脏（需要重新计算）
-            if (flowFieldManager != null)
-            {
-                flowFieldManager.MarkRegionDirty(gridX, gridY, gridX + width, gridY + height);
-            }
+
 
             // 判断是本地玩家，添加本地玩家组件
             if (world.ComponentManager.HasGlobalComponent<GlobalInfoComponent>())
@@ -231,9 +220,6 @@ namespace ZLockstep.Simulation.ECS
                 PlayerId = campId
             };
 
-            zUDebug.Log($"[EntityCreationManager] 玩家{campId} 创建了建筑类型{buildingType} " +
-                $"在位置{position}（格子{gridX},{gridY}），尺寸{width}x{height}，Entity ID: {entity.Id}");
-            
             return unitCreatedEvent;
         }
 

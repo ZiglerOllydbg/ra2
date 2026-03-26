@@ -1,5 +1,6 @@
 using zUnity;
 using System.Collections.Generic;
+using ZLockstep.View;
 
 namespace ZLockstep.Flow
 {
@@ -9,40 +10,32 @@ namespace ZLockstep.Flow
     /// </summary>
     public class SimpleMapManager : IFlowFieldMap
     {
-        private int width;
-        private int height;
-        private zfloat gridSize;
+        private int _width;
+        private int _height;
+
+        // 流场宽度和高度
+        private int _flowGridWidth;
+        private int _flowGridHeight;
+        private int _flowSize;
         
         private bool[] walkableGrid;
-
-        /// <summary>
-        /// 动态障碍物信息
-        /// </summary>
-        private class DynamicObstacleInfo
-        {
-            public zVector2 position;
-            public zfloat radius;
-            public HashSet<long> occupiedCells;
-            
-            public DynamicObstacleInfo(zVector2 pos, zfloat r)
-            {
-                position = pos;
-                radius = r;
-                occupiedCells = new HashSet<long>();
-            }
-        }
 
         /// <summary>
         /// 初始化地图
         /// </summary>
         /// <param name="width">地图宽度（格子数）</param>
         /// <param name="height">地图高度（格子数）</param>
-        /// <param name="gridSize">格子大小</param>
-        public void Initialize(int width, int height, zfloat gridSize)
+        /// <param name="flowSize">格子大小</param>
+        public void Initialize(int width, int height, int flowSize)
         {
-            this.width = width;
-            this.height = height;
-            this.gridSize = gridSize;
+            _width = width;
+            _height = height;
+            
+            // 初始化流场宽度和高度（与地图尺寸相同，也可以根据需求设置为不同值）
+            _flowSize = flowSize;
+            _flowGridWidth = width / flowSize;
+            _flowGridHeight = height / flowSize;
+
             
             // 初始化格子数据
             walkableGrid = new bool[width * height];
@@ -57,9 +50,9 @@ namespace ZLockstep.Flow
         /// </summary>
         public void SetWalkable(int x, int y, bool walkable)
         {
-            if (x >= 0 && x < width && y >= 0 && y < height)
+            if (x >= 0 && x < _width && y >= 0 && y < _height)
             {
-                walkableGrid[y * width + x] = walkable;
+                walkableGrid[y * _width + x] = walkable;
             }
         }
 
@@ -98,45 +91,13 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
-        /// 添加动态障碍物
-        /// </summary>
-        public void AddDynamicObstacle(int agentId, zVector2 position, zfloat radius)
-        {
-            // 创建新的动态障碍物信息
-            var obstacleInfo = new DynamicObstacleInfo(position, radius);
-            
-            // 计算影响的格子范围
-            WorldToGrid(position, out int centerX, out int centerY);
-            int radiusInCells = (int)(radius / gridSize) + 1;
-            
-            for (int y = centerY - radiusInCells; y <= centerY + radiusInCells; y++)
-            {
-                for (int x = centerX - radiusInCells; x <= centerX + radiusInCells; x++)
-                {
-                    if (x >= 0 && x < width && y >= 0 && y < height)
-                    {
-                        zVector2 cellCenter = GridToWorld(x, y);
-                        zfloat distance = (cellCenter - position).magnitude;
-                        
-                        // 如果格子中心到智能体中心的距离小于半径，则认为该格子被占据
-                        if (distance <= radius)
-                        {
-                            long key = ((long)x) | (((long)y) << 32);
-                            obstacleInfo.occupiedCells.Add(key);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// 获取格子是否可行走
         /// </summary>
         public bool IsLogicWalkable(int x, int y)
         {
-            if (x >= 0 && x < width && y >= 0 && y < height)
+            if (x >= 0 && x < _width && y >= 0 && y < _height)
             {
-                return walkableGrid[y * width + x];
+                return walkableGrid[y * _width + x];
             }
             return false;
         }
@@ -145,25 +106,61 @@ namespace ZLockstep.Flow
 
         public int GetWidth()
         {
-            return width;
+            return _width;
         }
 
         public int GetHeight()
         {
-            return height;
+            return _height;
         }
 
-        public zfloat GetGridSize()
+        public int GetFlowGridWidth()
         {
-            return gridSize;
+            return _flowGridWidth;
         }
 
-        public bool IsWalkable(int gridX, int gridY)
+        public int GetFlowGridHeight()
         {
-            if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
+            return _flowGridHeight;
+        }
+
+        public int GetFlowSize()
+        {
+            return _flowSize;
+        }
+
+        public bool IsWalkable(int x, int y)
+        {
+            if (x >= 0 && x < _width && y >= 0 && y < _height)
             {
-                return walkableGrid[gridY * width + gridX];
+                return walkableGrid[y * _width + x];
             }
+            return false;
+        }
+
+        public bool IsFlowWalkable(int flowX, int flowY)
+        {
+            // 流场格子对应2x2的逻辑格子
+            // 只要有一个逻辑格子可走，流场格子就可走
+            int x = flowX * _flowSize;
+            int y = flowY * _flowSize;
+            
+            for (int dy = 0; dy < _flowSize; dy++)
+            {
+                for (int dx = 0; dx < _flowSize; dx++)
+                {
+                    int lx = x + dx;
+                    int ly = y + dy;
+                    if (lx < _width && ly < _height)
+                    {
+                        if (walkableGrid[ly * _width + lx])
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
             return false;
         }
 
@@ -174,24 +171,24 @@ namespace ZLockstep.Flow
             return zfloat.One;
         }
 
-        public void WorldToGrid(zVector2 worldPos, out int gridX, out int gridY)
+        public void WorldToFlow(zVector2 worldPos, out int flowX, out int flowY)
         {
-            gridX = (int)(worldPos.x / gridSize);
-            gridY = (int)(worldPos.y / gridSize);
+            flowX = (int)(worldPos.x / _flowSize);
+            flowY = (int)(worldPos.y / _flowSize);
             
             // 限制在地图范围内
-            if (gridX < 0) gridX = 0;
-            if (gridY < 0) gridY = 0;
-            if (gridX >= width) gridX = width - 1;
-            if (gridY >= height) gridY = height - 1;
+            if (flowX < 0) flowX = 0;
+            if (flowY < 0) flowY = 0;
+            if (flowX >= _flowGridWidth) flowX = _flowGridWidth - 1;
+            if (flowY >= _flowGridHeight) flowY = _flowGridHeight - 1;
         }
 
-        public zVector2 GridToWorld(int gridX, int gridY)
+        public zVector2 FlowToWorld(int flowX, int flowY)
         {
             // 返回格子中心的世界坐标
             return new zVector2(
-                (zfloat)gridX * gridSize + gridSize * zfloat.Half,
-                (zfloat)gridY * gridSize + gridSize * zfloat.Half
+                (zfloat)flowX * _flowSize + _flowSize * zfloat.Half,
+                (zfloat)flowY * _flowSize + _flowSize * zfloat.Half
             );
         }
 
