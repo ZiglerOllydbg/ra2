@@ -81,11 +81,11 @@ namespace ZLockstep.Flow
 
             // 创建场景边界障碍物（逆时针顺序）
             // 边界向外扩展半个格子，确保单位不会走到地图边缘
-            float halfGrid = 0.5f;
-            float minX = -halfGrid;
-            float minY = -halfGrid;
-            float maxX = width - halfGrid;
-            float maxY = height - halfGrid;
+            float half = 0.5f;
+            float minX = -half;
+            float minY = -half;
+            float maxX = width - half;
+            float maxY = height - half;
 
             // 环境边界，使用顺时针顺序
             List<Vector2> boundaryVertices = new List<Vector2>
@@ -106,10 +106,10 @@ namespace ZLockstep.Flow
                 var building = ComponentManager.GetComponent<BuildingComponent>(entity);
                 
                 // 计算建筑物的世界坐标边界
-                float minWorldX = building.X;
-                float minWorldY = building.Y;
-                float maxWorldX = building.X + building.Width;
-                float maxWorldY = building.Y + building.Height;
+                float minWorldX = building.X - building.Width / 2;
+                float minWorldY = building.Y - building.Height / 2;
+                float maxWorldX = building.X + building.Width / 2;
+                float maxWorldY = building.Y + building.Height / 2;
 
                 // 创建建筑物障碍物（逆时针顺序）
                 List<Vector2> buildingVertices = new List<Vector2>

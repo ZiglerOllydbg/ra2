@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Generic;
 using ZFrame;
 using ZLockstep.RVO;
+using Unity.Mathematics;
 
 [RequireComponent(typeof(Ra2Demo))]
 
@@ -285,6 +286,27 @@ public class Ra2DemoDebugger : MonoBehaviour
                 Vector3 pos = new Vector3((float)p.x, _drawHeight, (float)p.y);
                 Gizmos.DrawWireSphere(pos, r);
             }
+        }
+
+        // 获取障碍物列表，绘制障碍物
+        Gizmos.color = Color.red;
+        int obstacleVertexCount = Simulator.Instance.getNumObstacleVertices();
+        
+        for (int vertexNo = 0; vertexNo < obstacleVertexCount; ++vertexNo)
+        {
+            ZLockstep.RVO.Vector2 currentVertex = Simulator.Instance.getObstacleVertex(vertexNo);
+            Vector3 currentPos = new Vector3((float)currentVertex.x(), _drawHeight, (float)currentVertex.y());
+            
+            // 获取下一个顶点，绘制连线
+            int nextVertexNo = Simulator.Instance.getNextObstacleVertexNo(vertexNo);
+            ZLockstep.RVO.Vector2 nextVertex = Simulator.Instance.getObstacleVertex(nextVertexNo);
+            Vector3 nextPos = new Vector3((float)nextVertex.x(), _drawHeight, (float)nextVertex.y());
+            
+            // 绘制顶点
+            Gizmos.DrawWireSphere(currentPos, 0.3f);
+            
+            // 绘制边
+            Gizmos.DrawLine(currentPos, nextPos);
         }
     }
 
