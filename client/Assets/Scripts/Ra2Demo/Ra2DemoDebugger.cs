@@ -245,13 +245,13 @@ public class Ra2DemoDebugger : MonoBehaviour
             Vector3 pos = new Vector3(v2Pos.x(), 0.1f, v2Pos.y());
             
             // 绘制agent半径（白色）
-            Gizmos.color = Color.white;
+            Gizmos.color = Color.red;
             float radius = Simulator.Instance.getAgentRadius(agentNo);
             Gizmos.DrawWireSphere(pos, radius);
             
             // 绘制agent位置（红色球体）
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(pos, 0.5f);
+            Gizmos.DrawSphere(pos, 0.2f);
             
             // 绘制agent速度（蓝色箭头）
             ZLockstep.RVO.Vector2 v2Vel = Simulator.Instance.getAgentVelocity(agentNo);

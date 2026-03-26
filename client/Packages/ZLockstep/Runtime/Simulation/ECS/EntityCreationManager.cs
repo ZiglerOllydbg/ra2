@@ -253,9 +253,6 @@ namespace ZLockstep.Simulation.ECS
             zVector3 position,
             int prefabId)
         {
-            // 根据单位类型确定单位参数
-            zfloat radius = (zfloat)1.0f;
-
             int confUnitID = (int)unitType;
             ConfUnit confUnit = ConfigManager.Get<ConfUnit>(confUnitID);
             if (confUnit == null)
@@ -264,7 +261,10 @@ namespace ZLockstep.Simulation.ECS
                 return null;
             }
 
-            zfloat maxSpeed = (zfloat)confUnit.Speed;
+            // 根据单位类型确定单位参数
+            zfloat radius = zfloat.CreateFloat(confUnit.Radius);
+            zfloat maxSpeed = zfloat.CreateFloat(confUnit.Speed);
+            zfloat scale = zfloat.CreateFloat(confUnit.Scale);
 
             // 1. 创建单位实体
             var entity = world.EntityManager.CreateEntity();
@@ -274,7 +274,7 @@ namespace ZLockstep.Simulation.ECS
             {
                 Position = position,
                 Rotation = zQuaternion.xPositive,
-                Scale = zVector3.one * radius
+                Scale = zVector3.one * scale
             });
 
             // 3. 添加阵营组件
