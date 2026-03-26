@@ -39,6 +39,11 @@ namespace ZLockstep.Flow
         bool IsWalkable(int gridX, int gridY);
 
         /// <summary>
+        /// 判断指定流场格子是否可行走
+        /// </summary>
+        public bool IsFlowWalkable(int flowX, int flowY);
+
+        /// <summary>
         /// 获取地形代价（可选）
         /// 返回值：1.0 = 正常地形，2.0 = 慢速地形（如泥地），0 = 不可通行
         /// </summary>

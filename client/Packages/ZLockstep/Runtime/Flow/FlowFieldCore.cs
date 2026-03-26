@@ -427,7 +427,7 @@ namespace ZLockstep.Flow
             {
                 for (int x = 0; x < field.width; x++)
                 {
-                    if (!map.IsWalkable(x, y))
+                    if (!map.IsFlowWalkable(x, y))
                         continue;
 
                     int index = field.GetIndex(x, y);
