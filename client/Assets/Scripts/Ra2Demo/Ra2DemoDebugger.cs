@@ -236,7 +236,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     /// </summary>
     private void DrawRVOAgents(BattleGame game)
     {
-        if (game == null || game.RvoSimulator == null)
+        if (game == null)
             return;
 
         var agentNoList = Simulator.Instance.GetAgentNoList();

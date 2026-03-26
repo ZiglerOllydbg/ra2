@@ -59,11 +59,10 @@ namespace ZLockstep.Flow
         /// <param name="ffMgr">流场管理器</param>
         /// <param name="rvoSim">RVO避障模拟器</param>
         /// <param name="gameMap">游戏地图接口</param>
-        public void InitializeNavigation(FlowFieldManager ffMgr, RVO2Simulator rvoSim, IFlowFieldMap gameMap)
+        public void InitializeNavigation(FlowFieldManager ffMgr, IFlowFieldMap gameMap)
         {
             flowFieldManager = ffMgr;
             map = gameMap;
-            // UpdateObstacles();
 
             flowFieldManager.NeedUpdateObstacles = true;
         }

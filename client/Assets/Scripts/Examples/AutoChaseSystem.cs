@@ -4,6 +4,8 @@ using ZLockstep.Simulation.ECS.Systems;
 using ZLockstep.Simulation.ECS.Utils;
 using ZLockstep.Flow;
 using zUnity;
+using ZLockstep.RVO;
+using ZLockstep.View;
 
 namespace Game.Examples
 {
@@ -85,11 +87,11 @@ namespace Game.Examples
 
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
                 var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-                var camp = ComponentManager.GetComponent<CampComponent>(entity);
+                var campComponent = ComponentManager.GetComponent<CampComponent>(entity);
                 var navigator = ComponentManager.GetComponent<FlowFieldNavigatorComponent>(entity);
 
                 // 1. 检查当前攻击目标是否有效且在侦测范围内
-                if (attack.TargetEntityId >= 0 && IsValidChaseTarget(attack.TargetEntityId, camp, transform.Position, attack.Range))
+                if (attack.TargetEntityId >= 0 && IsValidChaseTarget(attack.TargetEntityId, campComponent, transform.Position, attack.Range))
                 {
                     // 目标有效，继续追击
                     Entity target = new(attack.TargetEntityId);
@@ -168,8 +170,60 @@ namespace Game.Examples
                 }
 
                 // 2. 搜索新的敌人
-                int nearestEnemyId = FindNearestEnemy(entity, camp, transform.Position, _detectionRange);
-                
+                // int nearestEnemyId = FindNearestEnemy(entity, camp, transform.Position, _detectionRange);
+
+                var neighbors = SpatialIndex.Instance.RadialSearch(transform.Position, _detectionRange.ToFloat());
+
+                int nearestEnemyId = -1;
+                zfloat minDistSqr = _detectionRange * _detectionRange;
+
+                foreach (var neighbor in neighbors)
+                {
+                    // 跳过自己
+                    Entity neighborEntity = new(neighbor.EntityId);
+                    if (neighbor.EntityId == entityId)
+                        continue;
+
+                    // 检查是否为敌人
+                    var neighborCamp = ComponentManager.GetComponent<CampComponent>(neighborEntity);
+                    if (!campComponent.IsEnemy(neighborCamp))
+                        continue;
+
+                    // 必须有 Transform 和 Health 组件
+                    if (!ComponentManager.HasComponent<TransformComponent>(neighborEntity) ||
+                        !ComponentManager.HasComponent<HealthComponent>(neighborEntity))
+                        continue;
+
+                    // 检查是否还活着
+                    var health = ComponentManager.GetComponent<HealthComponent>(neighborEntity);
+                    if (health.CurrentHealth <= zfloat.Zero)
+                        continue;
+
+                    // 计算距离
+                    zfloat distSqr;
+                    if (ComponentManager.HasComponent<BuildingComponent>(neighborEntity))
+                    {
+                        var building = ComponentManager.GetComponent<BuildingComponent>(neighborEntity);
+                        if (!BuildingBoundaryUtils.IsBuildingInRange(transform.Position, building, _detectionRange, World))
+                            continue; // 建筑不在范围内
+                            
+                        zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(transform.Position, building, World);
+                        distSqr = (new zVector3(boundaryPoint.x, transform.Position.y, boundaryPoint.y) - transform.Position).sqrMagnitude;
+                    }
+                    else
+                    {
+                        var neighborTransform = ComponentManager.GetComponent<TransformComponent>(neighborEntity);
+                        distSqr = (neighborTransform.Position - transform.Position).sqrMagnitude;
+                    }
+
+                    // 找到最近的敌人
+                    if (distSqr < minDistSqr)
+                    {
+                        minDistSqr = distSqr;
+                        nearestEnemyId = entityId;
+                    }
+                }
+
                 if (nearestEnemyId >= 0)
                 {
                     // 找到敌人，追击
@@ -247,72 +301,11 @@ namespace Game.Examples
             zfloat distanceToBoundary = toBoundary.magnitude;
             
             // 安全距离（攻击范围 - 0.5米）
-            zfloat safeDistance = attackRange - new zfloat(2, 0000);
+            zfloat safeDistance = attackRange - new zfloat(2);
             
             // 计算距离边界点安全距离远的位置
             zVector2 direction = toBoundary.normalized;
             return boundaryPoint - direction * safeDistance;
-        }
-
-        /// <summary>
-        /// 搜索最近的敌人
-        /// </summary>
-        private int FindNearestEnemy(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
-        {
-            int nearestEnemyId = -1;
-            zfloat minDistSqr = range * range;
-
-            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
-
-            foreach (var entityId in allEntities)
-            {
-                Entity otherEntity = new Entity(entityId);
-
-                // 跳过自己
-                if (otherEntity.Id == self.Id)
-                    continue;
-
-                // 检查是否为敌人
-                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
-                if (!selfCamp.IsEnemy(otherCamp))
-                    continue;
-
-                // 必须有 Transform 和 Health 组件
-                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
-                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
-                    continue;
-
-                // 检查是否还活着
-                var health = ComponentManager.GetComponent<HealthComponent>(otherEntity);
-                if (health.CurrentHealth <= zfloat.Zero)
-                    continue;
-
-                // 计算距离
-                zfloat distSqr;
-                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
-                {
-                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
-                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
-                        continue; // 建筑不在范围内
-                        
-                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
-                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
-                }
-                else
-                {
-                    var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
-                    distSqr = (otherTransform.Position - position).sqrMagnitude;
-                }
-
-                // 找到最近的敌人
-                if (distSqr < minDistSqr)
-                {
-                    minDistSqr = distSqr;
-                    nearestEnemyId = entityId;
-                }
-            }
-
-            return nearestEnemyId;
         }
 
         /// <summary>

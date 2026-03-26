@@ -4,6 +4,7 @@ using ZLockstep.Simulation.ECS.Utils;
 using zUnity;
 using System;
 using System.Collections.Generic;
+using ZLockstep.Flow;
 
 namespace ZLockstep.Simulation.ECS.Systems
 {
@@ -20,11 +21,6 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// 目标查找最小间隔时间（秒）
         /// </summary>
         private static readonly zfloat TARGET_SEARCH_INTERVAL = (zfloat)1.0f;
-
-        /// <summary>
-        /// 空间索引树，用于加速邻近实体查询
-        /// </summary>
-        private SpatialIndex spatialIndex;
 
         /// <summary>
         /// 搜索邻居的最大半径（基于最大攻击范围的估计值）
@@ -45,13 +41,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private void RebuildSpatialIndex()
         {
-            if (spatialIndex == null)
-            {
-                spatialIndex = new SpatialIndex();
-            }
-            
-            // 清空并重新添加所有实体
-            spatialIndex.Clear();
+            SpatialIndex.Instance.Clear();
             
             // 获取所有有 Transform 和 Camp 组件的实体
             var entities = ComponentManager.GetAllEntityIdsWith<TransformComponent>();
@@ -68,11 +58,11 @@ namespace ZLockstep.Simulation.ECS.Systems
                 var camp = ComponentManager.GetComponent<CampComponent>(entity);
                 
                 // 添加到空间索引
-                spatialIndex.Add(entityId, transform.Position, camp.CampId);
+                SpatialIndex.Instance.Add(entityId, transform.Position, camp.CampId);
             }
             
             // 重建 KD-tree
-            spatialIndex.Rebuild();
+            SpatialIndex.Instance.Rebuild();
         }
 
         /// <summary>
@@ -321,12 +311,9 @@ namespace ZLockstep.Simulation.ECS.Systems
         {
             var targetIds = new List<int>();
             
-            if (spatialIndex == null)
-                return targetIds;
-            
             // 使用 KD-tree 进行空间邻近查询
             float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
-            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
+            var neighbors = SpatialIndex.Instance.RadialSearch(position, searchRadius);
             
             zfloat rangeSqr = range * range;
 
@@ -391,15 +378,12 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// </summary>
         private int FindNearestNonBuildingEnemyKDTree(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
         {
-            if (spatialIndex == null)
-                return -1;
-            
             int nearestEnemyId = -1;
             zfloat minDistSqr = range * range;
 
             // 使用 KD-tree 进行空间邻近查询
             float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
-            var neighbors = spatialIndex.RadialSearch(position, searchRadius);
+            var neighbors = SpatialIndex.Instance.RadialSearch(position, searchRadius);
 
             foreach (var neighbor in neighbors)
             {
@@ -528,155 +512,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
     }
 
-    /// <summary>
-    /// 空间索引数据结构，用于存储实体的空间信息
-    /// </summary>
-    public class SpatialEntry
-    {
-        public int EntityId;
-        public zVector3 Position;
-        public int CampId;
-    }
 
-    /// <summary>
-    /// 简化的 2D KD-tree 实现，专用于 CombatSystem 空间邻近查询
-    /// </summary>
-    public class SpatialIndex
-    {
-        private class Node
-        {
-            public SpatialEntry entry;
-            public Node left;
-            public Node right;
-            public float splitValue; // 分割值
-            public int splitAxis; // 分割轴 (0=x, 1=z)
-        }
 
-        private Node root;
-        private List<SpatialEntry> entries = new List<SpatialEntry>();
-        private bool needsRebuild = true;
-
-        /// <summary>
-        /// 添加实体条目
-        /// </summary>
-        public void Add(int entityId, zVector3 position, int campId)
-        {
-            entries.Add(new SpatialEntry
-            {
-                EntityId = entityId,
-                Position = position,
-                CampId = campId
-            });
-            needsRebuild = true;
-        }
-
-        /// <summary>
-        /// 清空索引
-        /// </summary>
-        public void Clear()
-        {
-            entries.Clear();
-            root = null;
-            needsRebuild = false;
-        }
-
-        /// <summary>
-        /// 重建 KD-tree
-        /// </summary>
-        public void Rebuild()
-        {
-            if (!needsRebuild && root != null)
-                return;
-
-            root = BuildTree(entries.ToArray(), 0, entries.Count - 1, 0);
-            needsRebuild = false;
-        }
-
-        private Node BuildTree(SpatialEntry[] entriesArray, int start, int end, int depth)
-        {
-            if (start > end)
-                return null;
-
-            int axis = depth % 2; // 交替选择 x 或 z 轴
-            int mid = start + (end - start) / 2;
-
-            // 按当前轴排序
-            Array.Sort(entriesArray, start, end - start + 1, new EntryComparer(axis));
-
-            var node = new Node
-            {
-                entry = entriesArray[mid],
-                splitAxis = axis,
-                splitValue = axis == 0 ? (float)entriesArray[mid].Position.x : (float)entriesArray[mid].Position.z
-            };
-
-            node.left = BuildTree(entriesArray, start, mid - 1, depth + 1);
-            node.right = BuildTree(entriesArray, mid + 1, end, depth + 1);
-
-            return node;
-        }
-
-        /// <summary>
-        /// 径向搜索：查找给定点周围半径范围内的所有实体
-        /// </summary>
-        public List<SpatialEntry> RadialSearch(zVector3 center, float radius)
-        {
-            if (root == null)
-                return new List<SpatialEntry>();
-
-            var result = new List<SpatialEntry>();
-            float radiusSq = radius * radius;
-            float[] centerPoint = new float[] { (float)center.x, (float)center.z };
-
-            SearchRadial(root, centerPoint, radius, radiusSq, result);
-            return result;
-        }
-
-        private void SearchRadial(Node node, float[] centerPoint, float radius, float radiusSq, List<SpatialEntry> result)
-        {
-            if (node == null)
-                return;
-
-            // 计算当前节点与查询点的距离
-            float dx = (float)node.entry.Position.x - centerPoint[0];
-            float dz = (float)node.entry.Position.z - centerPoint[1];
-            float distSq = dx * dx + dz * dz;
-
-            // 如果在范围内且不是同一个实体，添加到结果
-            if (distSq <= radiusSq && distSq > 0.0001f)
-            {
-                result.Add(node.entry);
-            }
-
-            // 决定搜索哪个子树
-            float diff = centerPoint[node.splitAxis] - node.splitValue;
-
-            if (diff <= radius)
-            {
-                SearchRadial(node.left, centerPoint, radius, radiusSq, result);
-            }
-
-            if (diff >= -radius)
-            {
-                SearchRadial(node.right, centerPoint, radius, radiusSq, result);
-            }
-        }
-
-        private class EntryComparer : IComparer<SpatialEntry>
-        {
-            private int axis;
-
-            public EntryComparer(int axis)
-            {
-                this.axis = axis;
-            }
-
-            public int Compare(SpatialEntry a, SpatialEntry b)
-            {
-                float valA = axis == 0 ? (float)a.Position.x : (float)a.Position.z;
-                float valB = axis == 0 ? (float)b.Position.x : (float)b.Position.z;
-                return valA.CompareTo(valB);
-            }
-        }
-    }
+    
 }

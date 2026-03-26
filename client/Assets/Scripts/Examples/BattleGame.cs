@@ -32,11 +32,6 @@ namespace Game.Examples
         public FlowFieldManager FlowFieldManager { get; private set; }
 
         /// <summary>
-        /// RVO模拟器
-        /// </summary>
-        public RVO2Simulator RvoSimulator { get; private set; }
-
-        /// <summary>
         /// 导航系统
         /// </summary>
         public FlowFieldNavigationSystem NavSystem { get; private set; }
@@ -100,10 +95,6 @@ namespace Game.Examples
             FlowFieldManager.Initialize(MapManager, maxFields: 30);
             FlowFieldManager.SetMaxUpdatesPerFrame(2);
             zUDebug.Log("[BattleGame] 流场管理器初始化完成");
-
-            // 4. 创建RVO模拟器
-            RvoSimulator = new RVO2Simulator();
-            zUDebug.Log("[BattleGame] RVO模拟器初始化完成");
         }
 
         /// <summary>
@@ -129,7 +120,7 @@ namespace Game.Examples
             //  创建并注册导航系统(去掉MovementSystem基础移动系统)
             NavSystem = new FlowFieldNavigationSystem();
             World.SystemManager.RegisterSystem(NavSystem);
-            NavSystem.InitializeNavigation(FlowFieldManager, RvoSimulator, MapManager);
+            NavSystem.InitializeNavigation(FlowFieldManager, MapManager);
             zUDebug.Log("[BattleGame] 导航系统注册完成");
 
             // 注册自动追击系统（在战斗系统之前，确保单位能追到敌人）

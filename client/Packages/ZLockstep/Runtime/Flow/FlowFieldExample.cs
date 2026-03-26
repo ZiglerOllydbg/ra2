@@ -44,7 +44,7 @@ namespace ZLockstep.Flow
             // 5. 创建导航系统并注册到World
             navSystem = new FlowFieldNavigationSystem();
             world.SystemManager.RegisterSystem(navSystem);
-            navSystem.InitializeNavigation(flowFieldManager, rvoSimulator, mapManager);
+            navSystem.InitializeNavigation(flowFieldManager, mapManager);
         }
 
         /// <summary>
