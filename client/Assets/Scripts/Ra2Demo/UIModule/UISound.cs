@@ -57,7 +57,7 @@ public class UISound
         
         // 加载点击音效
         // clickClip = ResourceCache.GetAudioClip("Audio/ui-click");
-        clickClip = ResourceCache.GetAudioClip("Audio/one-click");
+        // clickClip = ResourceCache.GetAudioClip("Audio/one-click");
         clickClip = ResourceCache.GetAudioClip("Audio/click-clear");
         if (clickClip != null)
         {
