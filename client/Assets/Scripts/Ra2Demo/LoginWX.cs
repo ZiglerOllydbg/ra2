@@ -4,8 +4,10 @@ using PostHogUnity;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using WeChatWASM;
 using ZFrame;
+
+#if UNITY_WEBGL
+using WeChatWASM;
 
 public class LoginWX : MonoBehaviour
 {
@@ -30,7 +32,7 @@ public class LoginWX : MonoBehaviour
     {
         if (!Application.isEditor)
         {
-            // 初始化微信SDK
+            // 初始化微信 SDK
             WX.InitSDK((code) =>
             {
                 zUDebug.Log("init WXSDK code: " + code);
@@ -241,3 +243,4 @@ public class LoginWX : MonoBehaviour
         };
     }
 }
+#endif

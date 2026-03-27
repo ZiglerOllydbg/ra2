@@ -76,26 +76,37 @@ public class LoginPanel : BasePanel
         zUDebug.Log("[LoginPanel] 登录按钮被点击");
         
         // TODO: 实现登录逻辑
-        // 示例：触发登录事件或调用登录接口
-        if (Application.isEditor)
+        // 示例：触发登录事件或调用登录接口 
+#if UNITY_WEBGL
+        // 微信环境登录（非安卓平台）
+        LoginWX loginWX = Object.FindObjectOfType<LoginWX>();
+        if (loginWX != null)
         {
-            string nickName = "Unity用户";
-            string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
+            loginWX.LoaderWXMess();
+        }
+        else 
+        {
+            zUDebug.LogError("[MatchPanel] 未找到 LoginWX 组件");
+        }
+#else
+        string nickName = "测试用户";
+        string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
 
-            Frame.DispatchEvent(new LoginEvent(nickName, avatarUrl));
-        }
-        else
-        {
-            // 微信环境登录
-            LoginWX loginWX = Object.FindObjectOfType<LoginWX>();
-            if (loginWX != null)
-            {
-                loginWX.LoaderWXMess();
-            }
-            else 
-            {
-                zUDebug.LogError("[MatchPanel] 未找到 LoginWX 组件");
-            }
-        }
+        Frame.DispatchEvent(new LoginEvent(nickName, avatarUrl));
+#endif
+
+    }
+    
+    /// <summary>
+    /// 判断是否为安卓平台
+    /// </summary>
+    /// <returns></returns>
+    private bool IsAndroidPlatform()
+    {
+#if UNITY_ANDROID
+        return true;
+#else
+        return false;
+#endif
     }
 }

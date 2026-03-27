@@ -16,7 +16,7 @@ using Unity.VisualScripting;
 using UnityEngine.EventSystems;
 using ZLib;
 using PostHogUnity;
-using WeChatWASM;
+// using WeChatWASM;
 using Unity.Collections;
 
 /// <summary>
