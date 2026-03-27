@@ -6,6 +6,7 @@ using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.View;
 using System;
+using ZLockstep.Simulation;
 
 namespace ZLockstep.Flow
 {
@@ -35,6 +36,12 @@ namespace ZLockstep.Flow
         /// </summary>
         private float arrivalDistanceThreshold = 1f;
     
+        // RVO 更新频率控制常量
+        private const int RVO_UPDATE_INTERVAL = 3;           // 每 3 帧更新一次
+        private const int MAX_CATCH_UP_FRAMES = 10;          // 追帧时最多补 10 帧
+        
+        // RVO 更新状态追踪
+        private int _lastRvoUpdateTick = -1;
 
         // Debug: 最近一次散点集合
         private readonly List<zVector2> debugScatterPoints = new List<zVector2>();
@@ -48,7 +55,7 @@ namespace ZLockstep.Flow
         {
             // 系统初始化
             Simulator.Instance.Clear();
-            Simulator.Instance.setTimeStep(0.05f);
+            Simulator.Instance.setTimeStep(0.05f * RVO_UPDATE_INTERVAL);
             Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 2.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
         }
 
@@ -594,12 +601,11 @@ namespace ZLockstep.Flow
         }
 
         /// <summary>
-        /// 系统更新（每帧调用）
+        /// 每帧更新逻辑，包含 RVO 障碍物更新和 RVO 避障计算
         /// 主要功能：
-        /// 1. 更新流场管理器
-        /// 2. 为每个有导航组件的实体设置期望速度
-        /// 3. 执行RVO避障计算
-        /// 4. 同步位置回 Transform 组件
+        /// 1. 更新 RVO 障碍物（仅在 NeedUpdateObstacles 为 true 时）
+        /// 2. 执行 RVO 避障计算（每 3 帧一次，支持追帧，最多补 10 帧）
+        /// 3. 监控 RVO Agent 邻居数量，检测是否达到上限
         /// </summary>
         public override void Update()
         {
@@ -609,24 +615,51 @@ namespace ZLockstep.Flow
                 UpdateObstacles();
             }
 
-            UpdateRVO();
+            // RVO 避障计算：每 3 帧更新一次，支持追帧场景（最多补 10 帧）
+            // 使用 Tick 差值判断，确保即使发生追帧也能正确触发
+            int nowTick = TimeManager.Tick;
+            if (_lastRvoUpdateTick == -1)
+            {
+                // 首次调用，立即执行
+                _lastRvoUpdateTick = nowTick;
+                UpdateRVO();
+            }
+            else
+            {
+                // 计算距离上次更新的帧数差
+                int deltaTick = nowTick - _lastRvoUpdateTick;
+                
+                // 限制最大追帧数量，避免性能问题
+                int framesToCatchUp = Math.Min(deltaTick, MAX_CATCH_UP_FRAMES);
+                
+                // 如果累积了多帧未更新，按每 3 帧的频率补上所有应执行的更新（最多 10 帧）
+                while (framesToCatchUp >= RVO_UPDATE_INTERVAL)
+                {
+                    _lastRvoUpdateTick += RVO_UPDATE_INTERVAL;
+                    UpdateRVO();
+                    framesToCatchUp -= RVO_UPDATE_INTERVAL;
+                }
+                
+                // 如果实际 deltaTick 超过最大追帧数，强制同步到当前 Tick
+                if (deltaTick > MAX_CATCH_UP_FRAMES)
+                {
+                    _lastRvoUpdateTick = nowTick;
+                }
+            }
 
             // 监控 agent 行为
-            // foreach (var agentNo in Simulator.Instance.GetAgentNoList())
-            // {
-            //     // 获取实际邻居数量
-            //     int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
+            foreach (var agentNo in Simulator.Instance.GetAgentNoList())
+            {
+                // 获取实际邻居数量
+                int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
                 
-            //     // 如果经常达到上限，增加 maxNeighbors
-            //     if (actualNeighbors >= 10)
-            //     {
-            //         zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！");
-            //         // 考虑增加到 15 或 20
-            //     }
-            // }
+                // 如果经常达到上限，增加 maxNeighbors
+                if (actualNeighbors >= 10)
+                {
+                    zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！actualNeighbors:{actualNeighbors}");
+                }
+            }
         }
-
-        private Random m_random = new Random();
 
         private void UpdateRVO()
         {
@@ -704,16 +737,6 @@ namespace ZLockstep.Flow
             // 从流场获取当前方向的移动指引
             zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
 
-            // // ⭐流场方向是否改变，这是智能体瞬移的原因，移动不顺畅的原因
-            // if (flowDirection == target.LastFlowDirection)
-            // {
-            //     return;
-            // }
-
-            // 记录流场方向变化
-            // target.LastFlowDirection = flowDirection;
-            // ComponentManager.AddComponent(entity, target);
-
             // 当流场方向为零时，通常是在目标格子内或者没有使用流畅寻路，直接朝目标点移动
             if (flowDirection == zVector2.zero)
             {
@@ -737,8 +760,6 @@ namespace ZLockstep.Flow
 
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
-
-                // zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}");
             }
             else
             {
@@ -756,20 +777,6 @@ namespace ZLockstep.Flow
                 ComponentManager.AddComponent(entity, target);
 
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
-
-                // zUDebug.Log($"[RVO] {entityId} 移动中, 流场速度改变，flowDirection: {flowDirection}, goalVector: {goalVector}");
-
-                // 添加微小随机扰动，防止多个单位重叠或卡住
-                // float angle = (float)m_random.NextDouble() * 2.0f * (float)Math.PI;
-                // float dist = (float)m_random.NextDouble() * 0.0001f;
-
-                // Vector2 setFinalV2 = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) +
-                //                                             dist *
-                //                                             new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
-                
-                // Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
-
-                // zUDebug.Log($"[RVO] {entityId} 移动中, flowDirection: {flowDirection}, goalVector: {goalVector}, setFinalV2: {setFinalV2}");
             }
         }
 
