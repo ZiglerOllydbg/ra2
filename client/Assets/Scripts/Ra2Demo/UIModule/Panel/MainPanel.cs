@@ -552,6 +552,8 @@ public class MainPanel : BasePanel
 
     private void OnExitButtonClick()
     {
+        UISound.Instance.PlayClick();
+
         confirmDialog.Show(
             onConfirm: () =>
             {
@@ -559,8 +561,6 @@ public class MainPanel : BasePanel
             },
             message: "确定要退出游戏吗？"
         );
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -620,6 +620,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnBuildButtonClick()
     {
+        UISound.Instance.PlayClick();
         zUDebug.Log("Build按钮被点击了！");
 
         producerSubPanel.Hide();
@@ -640,8 +641,6 @@ public class MainPanel : BasePanel
             // 显示子面板
             buildingSubPanel.Show(subPanelData);
         }
-
-        UISound.Instance.PlayClick();
     }
 
     /// <summary>
@@ -649,6 +648,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnProducerButtonClick()
     {
+        UISound.Instance.PlayClick();
         zUDebug.Log("Producer 按钮被点击了！");
         
         buildingSubPanel.Hide();
@@ -669,8 +669,6 @@ public class MainPanel : BasePanel
             // 显示子面板
             producerSubPanel.Show(subPanelData);
         }
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -678,6 +676,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSellButtonClick()
     {
+        UISound.Instance.PlayClick();
         zUDebug.Log("Sell 按钮被点击了！");
         
         // 切换售卖状态
@@ -695,8 +694,6 @@ public class MainPanel : BasePanel
         
         // 显示提示信息
         ShowMessage(isSelling ? "进入售卖模式，8折出售！" : "退出售卖模式");
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -704,6 +701,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSettingButtonClick()
     {
+        UISound.Instance.PlayClick();
         zUDebug.Log("Setting 按钮被点击了！");
         
         // 关闭其他子面板
@@ -725,8 +723,6 @@ public class MainPanel : BasePanel
             // 显示子面板
             settingSubPanel.Show(subPanelData);
         }
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -734,6 +730,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnSoloModeClick()
     {
+        UISound.Instance.PlayClick();
         if (soloBtn == null) return;
         
         TMP_Text buttonText = soloBtn.GetComponentInChildren<TMP_Text>();
@@ -750,8 +747,6 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(0); // Solo 按钮被选中
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -759,6 +754,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnFewModeClick()
     {
+        UISound.Instance.PlayClick();
         if (fewBtn == null) return;
         
         TMP_Text buttonText = fewBtn.GetComponentInChildren<TMP_Text>();
@@ -775,8 +771,6 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(1); // Few 按钮被选中
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>
@@ -784,6 +778,7 @@ public class MainPanel : BasePanel
     /// </summary>
     private void OnManyModeClick()
     {
+        UISound.Instance.PlayClick();
         if (manyBtn == null) return;
         
         TMP_Text buttonText = manyBtn.GetComponentInChildren<TMP_Text>();
@@ -800,8 +795,6 @@ public class MainPanel : BasePanel
         
         // 更新所有按钮的背景图片状态
         UpdateSelectionButtonsState(2); // 大部队按钮被选中
-
-        UISound.Instance.PlayClick();
     }
     
     /// <summary>

@@ -226,6 +226,8 @@ public class MatchPanel : BasePanel
     // 5. 按钮点击处理方法
     private void OnSoloButtonClick()
     {
+        UISound.Instance.PlayClick();
+
         // Capture a simple event
         PostHog.Capture("click_solo_match");
 
@@ -263,6 +265,7 @@ public class MatchPanel : BasePanel
     // Replay按钮点击处理方法
     private void OnReplayButtonClick()
     {
+        UISound.Instance.PlayClick();
         // Capture a simple event
         PostHog.Capture("click_replay");
 
