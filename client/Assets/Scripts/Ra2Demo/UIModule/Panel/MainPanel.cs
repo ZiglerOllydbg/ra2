@@ -114,7 +114,7 @@ public class MainPanel : BasePanel
         zoomSlider = PanelObject.transform.Find("ZoomSlider")?.GetComponent<Slider>();
         
         // 初始化选择按钮组的背景图片状态（默认选中第一个按钮 - Solo 模式）
-        OnFewModeClick();
+        ClickFewMode();
         
         // 初始化售卖状态
         InitializeSellState();
@@ -755,8 +755,11 @@ public class MainPanel : BasePanel
     private void OnFewModeClick()
     {
         UISound.Instance.PlayClick();
-        if (fewBtn == null) return;
-        
+        ClickFewMode();
+    }
+
+    private void ClickFewMode()
+    {
         TMP_Text buttonText = fewBtn.GetComponentInChildren<TMP_Text>();
         if (buttonText != null)
         {
