@@ -413,6 +413,7 @@ public class MainProducerSubPanel
             item.SetData(data);
             item.OnItemAdd = OnListItemAdd;
             item.OnItemSub = OnListItemSub;
+            item.OnItemAddMulti = OnListItemAddMulti;
             listItems.Add(item);
         }
         
@@ -497,6 +498,34 @@ public class MainProducerSubPanel
             SendProduceCommand(item.ItemData.FactoryEntityId, item.ItemData.UnitType, 1);
         }
     }
+
+    private void OnListItemAddMulti(ProducerListItem item)
+    {
+        zUDebug.Log($"请求添加生产项: {item.ItemData?.Name}");
+        
+        // 记录添加操作
+        if (item.ItemData != null && game != null)
+        {
+            string key = $"{item.ItemData.UnitType}";
+            if (!productionRecords.ContainsKey(key))
+            {
+                productionRecords[key] = 0;
+            }
+            productionRecords[key] += 5;
+            
+            zUDebug.Log($"[生产记录] 添加: {key}, 当前数量={productionRecords[key]}");
+        }
+        
+        // 实现添加逻辑，例如发送命令增加单位生产
+        if (item.ItemData != null && game != null)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                SendProduceCommand(item.ItemData.FactoryEntityId, item.ItemData.UnitType, 1);
+            }
+        }
+    }
+
     
     /// <summary>
     /// 列表项减少回调
@@ -524,6 +553,7 @@ public class MainProducerSubPanel
             SendProduceCommand(item.ItemData.FactoryEntityId, item.ItemData.UnitType, -1);
         }
     }
+ 
     
     /// <summary>
     /// 发送生产命令

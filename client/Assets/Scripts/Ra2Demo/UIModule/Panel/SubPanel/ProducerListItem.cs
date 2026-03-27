@@ -4,7 +4,7 @@ using System;
 using TMPro;
 
 /// <summary>
-/// 生产面板列表项 - 继承自BaseListItem
+/// 生产面板列表项 - 继承自 BaseListItem
 /// </summary>
 public class ProducerListItem : BaseListItem
 {
@@ -14,6 +14,7 @@ public class ProducerListItem : BaseListItem
     private TMP_Text descriptionText;
     private Button addBtn;
     private Button subBtn;
+    private Button addMultiBtn;
     
     /// <summary>
     /// 绑定的数据
@@ -30,18 +31,26 @@ public class ProducerListItem : BaseListItem
     /// </summary>
     public Action<ProducerListItem> OnItemSub;
     
-    public ProducerListItem(GameObject __target) : base(__target)
+    /// <summary>
+    /// 批量添加回调（一次生产 5 个，用于通知父面板批量增加单位生产）
+    /// </summary>
+    public Action<ProducerListItem> OnItemAddMulti;
+    
+    public ProducerListItem(GameObject _target) : base(_target)
     {
         // 获取子组件引用
-        iconImage = __target.transform.Find("Image")?.GetComponent<Image>();
-        producerNameText = __target.transform.Find("ProducerName")?.GetComponent<TMP_Text>();
-        factoryNameText = __target.transform.Find("FactoryName")?.GetComponent<TMP_Text>();
-        descriptionText = __target.transform.Find("Description")?.GetComponent<TMP_Text>();
+        iconImage = _target.transform.Find("Image")?.GetComponent<Image>();
+        producerNameText = _target.transform.Find("ProducerName")?.GetComponent<TMP_Text>();
+        factoryNameText = _target.transform.Find("FactoryName")?.GetComponent<TMP_Text>();
+        descriptionText = _target.transform.Find("Description")?.GetComponent<TMP_Text>();
 
-        addBtn = __target.transform.Find("AddBtn")?.GetComponent<Button>();
-        subBtn = __target.transform.Find("SubBtn")?.GetComponent<Button>();
+        addBtn = _target.transform.Find("AddBtn")?.GetComponent<Button>();
+        subBtn = _target.transform.Find("SubBtn")?.GetComponent<Button>();
+        addMultiBtn = _target.transform.Find("AddMultiBtn")?.GetComponent<Button>();
+        
         addBtn?.onClick.AddListener(OnAddClick);
         subBtn?.onClick.AddListener(OnSubClick);
+        addMultiBtn?.onClick.AddListener(OnAddMultiClick);
     }
     
     /// <summary>
@@ -84,6 +93,12 @@ public class ProducerListItem : BaseListItem
         OnItemSub?.Invoke(this);
     }
     
+    private void OnAddMultiClick()
+    {
+        // 触发批量添加回调（一次生产 5 个）
+        OnItemAddMulti?.Invoke(this);
+    }
+    
     /// <summary>
     /// 销毁时调用
     /// </summary>
@@ -91,8 +106,10 @@ public class ProducerListItem : BaseListItem
     {
         addBtn?.onClick.RemoveListener(OnAddClick);
         subBtn?.onClick.RemoveListener(OnSubClick);
+        addMultiBtn?.onClick.RemoveListener(OnAddMultiClick);
         OnItemAdd = null;
         OnItemSub = null;
+        OnItemAddMulti = null;
         base.Destroy();
     }
 }
