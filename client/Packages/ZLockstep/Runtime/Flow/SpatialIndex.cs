@@ -108,20 +108,38 @@ namespace ZLockstep.Flow
         /// </summary>
         public List<SpatialEntry> RadialSearch(zVector3 center, float radius)
         {
+            return RadialSearch(center, radius, -1, null);
+        }
+
+        /// <summary>
+        /// 径向搜索：查找给定点周围半径范围内的实体（支持数量限制和谓词筛选）
+        /// </summary>
+        /// <param name="center">搜索中心</param>
+        /// <param name="radius">搜索半径</param>
+        /// <param name="maxCount">最大返回数量（-1 表示不限制）</param>
+        /// <param name="predicate">筛选谓词</param>
+        /// <returns>符合条件的实体列表</returns>
+        public List<SpatialEntry> RadialSearch(zVector3 center, float radius, int maxCount, Func<SpatialEntry, bool> predicate)
+        {
             if (root == null)
                 return new List<SpatialEntry>();
 
             var result = new List<SpatialEntry>();
             float radiusSq = radius * radius;
             float[] centerPoint = new float[] { (float)center.x, (float)center.z };
+            int count = 0;
 
-            SearchRadial(root, centerPoint, radius, radiusSq, result);
+            SearchRadial(root, centerPoint, radius, radiusSq, result, maxCount, predicate, ref count);
             return result;
         }
 
-        private void SearchRadial(Node node, float[] centerPoint, float radius, float radiusSq, List<SpatialEntry> result)
+        private void SearchRadial(Node node, float[] centerPoint, float radius, float radiusSq, List<SpatialEntry> result, int maxCount, Func<SpatialEntry, bool> predicate, ref int count)
         {
             if (node == null)
+                return;
+
+            // 检查是否已达到数量上限
+            if (maxCount > 0 && count >= maxCount)
                 return;
 
             // 计算当前节点与查询点的距离
@@ -129,10 +147,19 @@ namespace ZLockstep.Flow
             float dz = (float)node.entry.Position.z - centerPoint[1];
             float distSq = dx * dx + dz * dz;
 
-            // 如果在范围内且不是同一个实体，添加到结果
+            // 如果在范围内且不是同一个实体
             if (distSq <= radiusSq && distSq > 0.0001f)
             {
-                result.Add(node.entry);
+                // 应用谓词筛选（如果有）
+                if (predicate == null || predicate(node.entry))
+                {
+                    result.Add(node.entry);
+                    count++;
+                    
+                    // 检查是否已达到数量上限，提前终止
+                    if (maxCount > 0 && count >= maxCount)
+                        return;
+                }
             }
 
             // 决定搜索哪个子树
@@ -140,12 +167,16 @@ namespace ZLockstep.Flow
 
             if (diff <= radius)
             {
-                SearchRadial(node.left, centerPoint, radius, radiusSq, result);
+                SearchRadial(node.left, centerPoint, radius, radiusSq, result, maxCount, predicate, ref count);
+                
+                // 检查左子树搜索后是否已达到数量上限
+                if (maxCount > 0 && count >= maxCount)
+                    return;
             }
 
             if (diff >= -radius)
             {
-                SearchRadial(node.right, centerPoint, radius, radiusSq, result);
+                SearchRadial(node.right, centerPoint, radius, radiusSq, result, maxCount, predicate, ref count);
             }
         }
 

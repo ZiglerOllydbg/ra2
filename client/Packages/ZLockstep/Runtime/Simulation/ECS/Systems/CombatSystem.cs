@@ -4,6 +4,7 @@ using ZLockstep.Simulation.ECS.Utils;
 using zUnity;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ZLockstep.Flow;
 
 namespace ZLockstep.Simulation.ECS.Systems
@@ -309,67 +310,66 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <returns>目标实体 ID 列表</returns>
         private List<int> FindMultipleTargets(Entity self, CampComponent selfCamp, zVector3 position, zfloat range, int maxTargets)
         {
-            var targetIds = new List<int>();
-            
-            // 使用 KD-tree 进行空间邻近查询
+            // 使用 KD-tree 进行空间邻近查询，带数量限制和谓词筛选
             float searchRadius = Math.Min((float)range, MAX_SEARCH_RADIUS);
-            var neighbors = SpatialIndex.Instance.RadialSearch(position, searchRadius);
-            
             zfloat rangeSqr = range * range;
+            
+            var neighbors = SpatialIndex.Instance.RadialSearch(
+                position, 
+                searchRadius, 
+                maxTargets, 
+                neighbor => IsValidTarget(neighbor, self.Id, selfCamp, position, range, rangeSqr)
+            );
+            
+            return neighbors.Select(n => n.EntityId).ToList();
+        }
 
-            foreach (var neighbor in neighbors)
+        /// <summary>
+        /// 判断目标是否有效（在范围内、是敌人、有必要的组件等）
+        /// </summary>
+        private bool IsValidTarget(SpatialEntry neighbor, int selfEntityId, CampComponent selfCamp, zVector3 position, zfloat range, zfloat rangeSqr)
+        {
+            // 跳过自己
+            if (neighbor.EntityId == selfEntityId)
+                return false;
+
+            // 检查是否为敌人
+            var neighborCamp = new CampComponent { CampId = neighbor.CampId };
+            if (!selfCamp.IsEnemy(neighborCamp))
+                return false;
+
+            Entity otherEntity = new Entity(neighbor.EntityId);
+
+            // 必须有 Transform 和 Health 组件
+            if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
+                !ComponentManager.HasComponent<HealthComponent>(otherEntity))
+                return false;
+
+            // 检查是否还活着（只检查 DeathComponent）
+            if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
+                return false;
+
+            // 计算距离
+            var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
+            zfloat distSqr;
+            
+            // 如果目标是建筑，计算到建筑边界的距离
+            if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
             {
-                // 跳过自己
-                if (neighbor.EntityId == self.Id)
-                    continue;
-
-                // 检查是否为敌人
-                var neighborCamp = new CampComponent { CampId = neighbor.CampId };
-                if (!selfCamp.IsEnemy(neighborCamp))
-                    continue;
-
-                Entity otherEntity = new Entity(neighbor.EntityId);
-
-                // 必须有 Transform 和 Health 组件
-                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
-                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
-                    continue;
-
-                // 检查是否还活着（只检查 DeathComponent）
-                if (ComponentManager.HasComponent<DeathComponent>(otherEntity))
-                    continue;
-
-                // 计算距离
-                var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
-                zfloat distSqr;
+                var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
+                if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
+                    return false; // 建筑不在范围内
                 
-                // 如果目标是建筑，计算到建筑边界的距离
-                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
-                {
-                    var building = ComponentManager.GetComponent<BuildingComponent>(otherEntity);
-                    if (!BuildingBoundaryUtils.IsBuildingInRange(position, building, range, World))
-                        continue; // 建筑不在范围内
-                    
-                    zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
-                    distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
-                }
-                else
-                {
-                    distSqr = (otherTransform.Position - position).sqrMagnitude;
-                }
-
-                // 在范围内的目标添加到列表
-                if (distSqr <= rangeSqr)
-                {
-                    targetIds.Add(neighbor.EntityId);
-                    
-                    // 如果已经达到最大目标数，停止搜索
-                    if (targetIds.Count >= maxTargets)
-                        break;
-                }
+                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
+                distSqr = (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
+            }
+            else
+            {
+                distSqr = (otherTransform.Position - position).sqrMagnitude;
             }
 
-            return targetIds;
+            // 检查是否在范围内
+            return distSqr <= rangeSqr;
         }
 
 
