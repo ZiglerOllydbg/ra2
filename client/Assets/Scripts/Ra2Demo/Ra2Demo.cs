@@ -280,7 +280,7 @@ public class Ra2Demo : MonoBehaviour
     private bool isCameraMoving = false; // 是否正在移动相机
     
     // 选择相关字段
-    private List<int> selectedEntityIds = new List<int>(); // 多选单位列表
+    private readonly List<int> selectedEntityIds = new(); // 多选单位列表
     [Header("选择限制")]
     [Tooltip("最大可选择单位数量，0 表示不限制")]
     [SerializeField] private int maxSelectionCount = 0; // 默认为 0，不限制数量
@@ -795,10 +795,7 @@ public class Ra2Demo : MonoBehaviour
     private void Update()
     {
         // 表现系统：插值更新
-        // if (_presentationSystem != null)
-        // {
-        //     _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
-        // }
+        _presentationSystem?.LerpUpdate(Time.deltaTime, 10f);
 
         // 更新淡出效果
         UpdateFadeOut();
@@ -879,10 +876,7 @@ public class Ra2Demo : MonoBehaviour
         ClearAllOutlines(); // 清除所有单位的描边
 
         // 销毁所有视图对象
-        if (_presentationSystem != null)
-        {
-            _presentationSystem.DestroyAllViews();
-        }
+        _presentationSystem?.DestroyAllViews();
 
         // 销毁旧的游戏实例和相关组件
         if (_game != null)
@@ -1028,7 +1022,7 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     public void ClearAllOutlines()
     {
-        if (_game == null || _game.World == null || _presentationSystem == null)
+        if (_game == null || _game.World == null)
             return;
 
         // 禁用之前选中单位的OutlineComponent
@@ -1072,7 +1066,7 @@ public class Ra2Demo : MonoBehaviour
     /// <returns>如果成功启用轮廓返回true，否则返回false</returns>
     public bool EnableOutlineForEntity(int entityId)
     {
-        if (_game == null || _game.World == null || _presentationSystem == null)
+        if (_game == null || _game.World == null)
             return false;
 
         var entity = new Entity(entityId);
@@ -1103,7 +1097,7 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="entityId">实体 ID</param>
     public void DisableOutlineForEntity(int entityId)
     {
-        if (_game == null || _game.World == null || _presentationSystem == null)
+        if (_game == null || _game.World == null)
             return;
 
         var entity = new Entity(entityId);

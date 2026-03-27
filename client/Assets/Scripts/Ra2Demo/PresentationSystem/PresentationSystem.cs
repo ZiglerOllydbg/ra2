@@ -525,8 +525,8 @@ namespace ZLockstep.View.Systems
             }
 
             // 直接同步（无插值）
-            view.Transform.position = transformComponent.Position.ToVector3();
-            view.Transform.rotation = transformComponent.Rotation.ToQuaternion();
+            // view.Transform.position = transformComponent.Position.ToVector3();
+            // view.Transform.rotation = transformComponent.Rotation.ToQuaternion();
             view.Transform.localScale = transformComponent.Scale.ToVector3();
 
             // 写回ViewComponent（如果有修改）
