@@ -301,6 +301,7 @@ public class MainBuildingSubPanel
     /// </summary>
     private void OnListItemSelect(BuildingListItem item)
     {
+        UISound.Instance.PlayClick();
         zUDebug.Log($"选中了列表项: {item.ItemData?.Name}");
         // Frame.DispatchEvent(new SelectBuildingEvent(item.ItemData.BuildingType));
         // TODO: 直接放置

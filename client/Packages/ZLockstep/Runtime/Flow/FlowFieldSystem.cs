@@ -49,7 +49,7 @@ namespace ZLockstep.Flow
             // 系统初始化
             Simulator.Instance.Clear();
             Simulator.Instance.setTimeStep(0.05f);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 2.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
         }
 
         /// <summary>

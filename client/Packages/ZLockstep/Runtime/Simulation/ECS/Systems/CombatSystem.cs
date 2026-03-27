@@ -25,7 +25,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <summary>
         /// 搜索邻居的最大半径（基于最大攻击范围的估计值）
         /// </summary>
-        private const float MAX_SEARCH_RADIUS = 100f;
+        private const float MAX_SEARCH_RADIUS = 20f;
 
         public override void Update()
         {

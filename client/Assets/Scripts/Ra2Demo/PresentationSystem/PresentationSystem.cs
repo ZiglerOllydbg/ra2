@@ -533,7 +533,7 @@ namespace ZLockstep.View.Systems
             ComponentManager.AddComponent(entity, view);
             
             // 同步动画状态
-            SyncAnimationState(entity, view);
+            // SyncAnimationState(entity, view);
 
             // zUDebug.Log($"[PresentationSystem] SyncEntityToView: entityId={entity.Id}, transformComponent.Rotation.eulerAngles:{transformComponent.Rotation.eulerAngles}");
         }
