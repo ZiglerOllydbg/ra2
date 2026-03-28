@@ -472,7 +472,7 @@ namespace ZLockstep.View.Systems
                         ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
                         if (confBuilding == null)
                         {
-                            Debug.LogWarning($"[PresentationSystem] 找不到建筑配置: BuildingType={buildingComponent.BuildingType}");
+                            Debug.LogWarning($"[PresentationSystem] 找不到建筑配置：BuildingType={buildingComponent.BuildingType}");
                             return;
                         }
 
@@ -517,7 +517,7 @@ namespace ZLockstep.View.Systems
                 
             }
 
-            // 记录上一帧位置（用于插值）
+            // 如果启用插值，记录上一帧的逻辑位置（用于下一帧插值）
             if (view.EnableInterpolation)
             {
                 view.LastLogicPosition = view.Transform.position;
@@ -525,17 +525,74 @@ namespace ZLockstep.View.Systems
             }
 
             // 直接同步（无插值）
-            // view.Transform.position = transformComponent.Position.ToVector3();
-            // view.Transform.rotation = transformComponent.Rotation.ToQuaternion();
+            if (!Enabled || !EnableSmoothInterpolation)
+            {
+                // 获取当前逻辑位置和旋转
+                Vector3 currentLogicPos = transformComponent.Position.ToVector3();
+                Quaternion currentLogicRot = transformComponent.Rotation.ToQuaternion();
+                view.Transform.SetPositionAndRotation(currentLogicPos, currentLogicRot);
+            }
+
+            // 同步缩放
             view.Transform.localScale = transformComponent.Scale.ToVector3();
 
-            // 写回ViewComponent（如果有修改）
+            // 写回 ViewComponent（如果有修改）
             ComponentManager.AddComponent(entity, view);
             
             // 同步动画状态
             // SyncAnimationState(entity, view);
 
             // zUDebug.Log($"[PresentationSystem] SyncEntityToView: entityId={entity.Id}, transformComponent.Rotation.eulerAngles:{transformComponent.Rotation.eulerAngles}");
+        }
+
+        /// <summary>
+        /// Unity的Update中调用，用于平滑插值（可选）
+        /// <param name="deltaTime">时间间隔</param>
+        /// <param name="interpolationSpeed">插值速度</param>
+        /// </summary>
+        public void LerpUpdate(float deltaTime, float interpolationSpeed = 10f)
+        {
+            if (!Enabled || !EnableSmoothInterpolation)
+                return;
+
+            var viewEntities = ComponentManager.GetAllEntityIdsWith<ViewComponent>();
+
+            foreach (var entityId in viewEntities)
+            {
+                var entity = new Entity(entityId);
+
+                if (!ComponentManager.HasComponent<TransformComponent>(entity))
+                    continue;
+
+                var view = ComponentManager.GetComponent<ViewComponent>(entity);
+                var logicTransform = ComponentManager.GetComponent<TransformComponent>(entity);
+
+                if (view.GameObject == null || view.Transform == null || !view.EnableInterpolation)
+                    continue;
+
+                // 插值到目标位置：使用 LastLogicPosition 作为起点，而不是当前视觉位置
+                Vector3 targetPos = logicTransform.Position.ToVector3();
+                Quaternion targetRot = logicTransform.Rotation.ToQuaternion();
+
+                if (targetPos != view.LastLogicPosition)
+                {
+                    zUDebug.Log($"[PresentationSystem] LerpUpdate: entityId={entity.Id}, targetPos:{targetPos}");
+                }
+
+                // 正确的插值逻辑：从上一帧的逻辑位置插值到当前帧的逻辑位置
+                // 这样可以避免速度相关的延迟和偏移
+                view.Transform.position = Vector3.Lerp(
+                    view.LastLogicPosition,
+                    targetPos,
+                    deltaTime * interpolationSpeed
+                );
+
+                view.Transform.rotation = Quaternion.Lerp(
+                    view.LastLogicRotation,
+                    targetRot,
+                    deltaTime * interpolationSpeed
+                );
+            }
         }
 
         /// <summary>
@@ -579,47 +636,6 @@ namespace ZLockstep.View.Systems
                 {
                     // view.Animator.SetBool("Fire", false);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Unity的Update中调用，用于平滑插值（可选）
-        /// </summary>
-        public void LerpUpdate(float deltaTime, float interpolationSpeed = 10f)
-        {
-            if (!Enabled || !EnableSmoothInterpolation)
-                return;
-
-            var viewEntities = ComponentManager.GetAllEntityIdsWith<ViewComponent>();
-
-            foreach (var entityId in viewEntities)
-            {
-                var entity = new Entity(entityId);
-
-                if (!ComponentManager.HasComponent<TransformComponent>(entity))
-                    continue;
-
-                var view = ComponentManager.GetComponent<ViewComponent>(entity);
-                var logicTransform = ComponentManager.GetComponent<TransformComponent>(entity);
-
-                if (view.GameObject == null || view.Transform == null || !view.EnableInterpolation)
-                    continue;
-
-                // 插值到目标位置
-                Vector3 targetPos = logicTransform.Position.ToVector3();
-                Quaternion targetRot = logicTransform.Rotation.ToQuaternion();
-
-                view.Transform.position = Vector3.Lerp(
-                    view.Transform.position,
-                    targetPos,
-                    deltaTime * interpolationSpeed
-                );
-
-                view.Transform.rotation = Quaternion.Lerp(
-                    view.Transform.rotation,
-                    targetRot,
-                    deltaTime * interpolationSpeed
-                );
             }
         }
 

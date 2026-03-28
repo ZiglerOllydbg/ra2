@@ -37,7 +37,7 @@ namespace ZLockstep.Flow
         private float arrivalDistanceThreshold = 1f;
     
         // RVO 更新频率控制常量
-        private const int RVO_UPDATE_INTERVAL = 3;           // 每 3 帧更新一次
+        private const int RVO_UPDATE_INTERVAL = 5;           // 每 5 帧更新一次
         private const int MAX_CATCH_UP_FRAMES = 10;          // 追帧时最多补 10 帧
         
         // RVO 更新状态追踪
@@ -56,7 +56,7 @@ namespace ZLockstep.Flow
             // 系统初始化
             Simulator.Instance.Clear();
             Simulator.Instance.setTimeStep(0.05f * RVO_UPDATE_INTERVAL);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 2.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 1.0f, 6.0f, new Vector2(0.0f, 0.0f));
         }
 
         /// <summary>
@@ -632,7 +632,7 @@ namespace ZLockstep.Flow
                 // 限制最大追帧数量，避免性能问题
                 int framesToCatchUp = Math.Min(deltaTick, MAX_CATCH_UP_FRAMES);
                 
-                // 如果累积了多帧未更新，按每 3 帧的频率补上所有应执行的更新（最多 10 帧）
+                // 如果累积了多帧未更新，按每 5 帧的频率补上所有应执行的更新（最多 10 帧）
                 while (framesToCatchUp >= RVO_UPDATE_INTERVAL)
                 {
                     _lastRvoUpdateTick += RVO_UPDATE_INTERVAL;
