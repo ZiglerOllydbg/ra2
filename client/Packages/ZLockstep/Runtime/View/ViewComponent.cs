@@ -50,7 +50,17 @@ namespace ZLockstep.View
         public bool EnableInterpolation;
 
         /// <summary>
-        /// 创建ViewComponent
+        /// 插值总时间（秒），默认 0.25 秒
+        /// </summary>
+        public float InterpolationDuration = 0.25f;
+
+        /// <summary>
+        /// 当前插值已用时间
+        /// </summary>
+        public float CurrentInterpolationTime;
+
+        /// <summary>
+        /// 创建 ViewComponent
         /// </summary>
         public static ViewComponent Create(GameObject gameObject, bool enableInterpolation = false)
         {
@@ -63,7 +73,9 @@ namespace ZLockstep.View
                 Renderer = gameObject.GetComponent<Renderer>(),
                 EnableInterpolation = enableInterpolation,
                 LastLogicPosition = gameObject.transform.position,
-                LastLogicRotation = gameObject.transform.rotation
+                LastLogicRotation = gameObject.transform.rotation,
+                InterpolationDuration = 0.25f,
+                CurrentInterpolationTime = 0f
             };
 
             return view;

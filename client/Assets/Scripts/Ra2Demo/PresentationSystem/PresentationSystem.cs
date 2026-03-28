@@ -30,7 +30,7 @@ namespace ZLockstep.View.Systems
         /// <summary>
         /// 是否启用平滑插值（在FixedUpdate之间）
         /// </summary>
-        public bool EnableSmoothInterpolation { get; set; } = false;
+        public bool EnableSmoothInterpolation { get; set; } = true;
 
         /// <summary>
         /// 是否启用表现系统（追帧时可以禁用以提升性能）
@@ -525,7 +525,7 @@ namespace ZLockstep.View.Systems
             }
 
             // 直接同步（无插值）
-            if (!Enabled || !EnableSmoothInterpolation)
+            if (!EnableSmoothInterpolation)
             {
                 // 获取当前逻辑位置和旋转
                 Vector3 currentLogicPos = transformComponent.Position.ToVector3();
@@ -546,11 +546,10 @@ namespace ZLockstep.View.Systems
         }
 
         /// <summary>
-        /// Unity的Update中调用，用于平滑插值（可选）
+        /// Unity 的 Update 中调用，用于平滑插值（可选）
         /// <param name="deltaTime">时间间隔</param>
-        /// <param name="interpolationSpeed">插值速度</param>
         /// </summary>
-        public void LerpUpdate(float deltaTime, float interpolationSpeed = 10f)
+        public void LerpUpdate(float deltaTime)
         {
             if (!Enabled || !EnableSmoothInterpolation)
                 return;
@@ -574,23 +573,33 @@ namespace ZLockstep.View.Systems
                 Vector3 targetPos = logicTransform.Position.ToVector3();
                 Quaternion targetRot = logicTransform.Rotation.ToQuaternion();
 
-                if (targetPos != view.LastLogicPosition)
+                // 检测目标位置是否变化，如果变化则重置插值时间
+                bool targetChanged = targetPos != view.LastLogicPosition;
+                
+                if (targetChanged)
                 {
                     zUDebug.Log($"[PresentationSystem] LerpUpdate: entityId={entity.Id}, targetPos:{targetPos}");
+                    view.CurrentInterpolationTime = 0f;
                 }
 
+                // 累加插值时间
+                view.CurrentInterpolationTime += deltaTime;
+
+                // 计算插值因子（0 到 1 之间），确保不超过 1
+                float t = Mathf.Clamp01(view.CurrentInterpolationTime / view.InterpolationDuration);
+
                 // 正确的插值逻辑：从上一帧的逻辑位置插值到当前帧的逻辑位置
-                // 这样可以避免速度相关的延迟和偏移
+                // 使用固定时间控制，最大 0.25 秒完成插值
                 view.Transform.position = Vector3.Lerp(
                     view.LastLogicPosition,
                     targetPos,
-                    deltaTime * interpolationSpeed
+                    t
                 );
 
                 view.Transform.rotation = Quaternion.Lerp(
                     view.LastLogicRotation,
                     targetRot,
-                    deltaTime * interpolationSpeed
+                    t
                 );
             }
         }

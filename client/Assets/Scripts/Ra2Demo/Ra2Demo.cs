@@ -795,7 +795,7 @@ public class Ra2Demo : MonoBehaviour
     private void Update()
     {
         // 表现系统：插值更新
-        _presentationSystem?.LerpUpdate(Time.deltaTime, 10f);
+        _presentationSystem?.LerpUpdate(Time.deltaTime);
 
         // 更新淡出效果
         UpdateFadeOut();

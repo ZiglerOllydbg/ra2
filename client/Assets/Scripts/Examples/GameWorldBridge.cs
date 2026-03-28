@@ -173,7 +173,7 @@ namespace ZLockstep.View
             // Unity特定：插值更新（让移动更平滑）
             if (enableSmoothInterpolation && _presentationSystem != null)
             {
-                _presentationSystem.LerpUpdate(Time.deltaTime, interpolationSpeed);
+                _presentationSystem.LerpUpdate(Time.deltaTime);
             }
         }
 

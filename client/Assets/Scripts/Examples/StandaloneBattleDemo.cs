@@ -129,7 +129,7 @@ public class StandaloneBattleDemo : MonoBehaviour
         // 插值更新
         if (_presentationSystem != null)
         {
-            _presentationSystem.LerpUpdate(Time.deltaTime, 10f);
+            _presentationSystem.LerpUpdate(Time.deltaTime);
         }
     }
 
