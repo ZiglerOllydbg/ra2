@@ -74,7 +74,7 @@ namespace ZLockstep.View
                 EnableInterpolation = enableInterpolation,
                 LastLogicPosition = gameObject.transform.position,
                 LastLogicRotation = gameObject.transform.rotation,
-                InterpolationDuration = 0.25f,
+                InterpolationDuration = 0.05f,
                 CurrentInterpolationTime = 0f
             };
 

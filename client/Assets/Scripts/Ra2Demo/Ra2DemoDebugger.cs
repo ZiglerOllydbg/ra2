@@ -209,7 +209,7 @@ public class Ra2DemoDebugger : MonoBehaviour
                 // 绘制单位位置
                 Vector3 pos = transform.Position.ToVector3();
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawWireCube(pos, Vector3.one * 0.8f);
+                Gizmos.DrawSphere(pos, 0.5f);
 
                 // 如果这是选中的单位，用不同颜色标记
                 // 注意：由于访问私有变量限制，这里简化处理
