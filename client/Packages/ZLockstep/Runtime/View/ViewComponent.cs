@@ -52,7 +52,7 @@ namespace ZLockstep.View
         /// <summary>
         /// 插值总时间（秒），默认 0.25 秒
         /// </summary>
-        public float InterpolationDuration = 0.25f;
+        public float InterpolationDuration = 0.05f;
 
         /// <summary>
         /// 当前插值已用时间

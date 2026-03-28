@@ -647,6 +647,41 @@ namespace ZLockstep.Flow
                 }
             }
 
+            // 遍历所有带有 TransformComponent 的实体
+            var transformEntities = ComponentManager.GetAllEntityIdsWith<TransformComponent>();
+            foreach (var entityId in transformEntities)
+            {
+                var entity = new Entity(entityId);
+                var transform = ComponentManager.GetComponent<TransformComponent>(entity);
+                
+                if (transform.LastPosition == transform.FuturePosition)
+                {
+                    continue;
+                }
+
+                // 检查是否有有效的 FutureTick
+                if (transform.FutureTick < 5)
+                {
+                    // 计算插值因子 t = 当前 Tick / (FutureTick * 5)
+                    transform.FutureTick += 1;
+                    
+                    zfloat t = new zfloat(transform.FutureTick) / new zfloat(5);
+                    t = zMathf.Clamp01(t);
+                    
+                    // 使用 Lerp 插值计算当前位置（在 LastPosition 和 FuturePosition 之间）
+                    transform.Position = zVector3.Lerp(transform.LastPosition, transform.FuturePosition, t);
+                    
+                    // 使用 Lerp 插值计算当前旋转
+                    transform.Rotation = zQuaternion.Lerp(transform.LastRotation, transform.FutureRotation, t);
+                    
+                    // 更新组件
+                    ComponentManager.AddComponent(entity, transform);
+
+                    zUDebug.Log($"Interpolated entity {entityId} position: {transform.Position}, LastPosition: {transform.LastPosition}, FuturePosition: {transform.FuturePosition}");
+                }
+            }
+
+
             // 监控 agent 行为
             foreach (var agentNo in Simulator.Instance.GetAgentNoList())
             {
@@ -813,9 +848,15 @@ namespace ZLockstep.Flow
 
             // 同步位置和旋转到 TransformComponent
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-            transform.Position.x = newV2Pos.x;
-            transform.Position.z = newV2Pos.y;
-            transform.Rotation = zQuaternion.LookRotation(forward);
+            // 保存当前位置
+            transform.LastPosition = transform.Position;
+            transform.LastRotation = transform.Rotation;
+
+            // 设置未来位置和旋转
+            zVector3 newPos = new(newV2Pos.x, zfloat.Zero, newV2Pos.y);
+            transform.FuturePosition = newPos;
+            transform.FutureRotation = zQuaternion.LookRotation(forward);
+            transform.FutureTick = 0;
 
             ComponentManager.AddComponent(entity, transform);
             // zUDebug.Log($"[RVO] SyncEntityPositionAndRotation: entityId={entity.Id}, newPos:{newV2Pos}, forward:{forward}, vel:{vel}");

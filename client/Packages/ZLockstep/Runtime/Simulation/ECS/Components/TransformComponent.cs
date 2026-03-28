@@ -8,6 +8,15 @@ namespace ZLockstep.Simulation.ECS.Components
     /// </summary>
     public struct TransformComponent : IComponent
     {
+        public int FutureTick { get; set; }
+        public zVector3 FuturePosition { get; set; }
+
+        public zQuaternion FutureRotation { get; set; }
+
+        public zVector3 LastPosition { get; set; }
+
+        public zQuaternion LastRotation { get; set; }
+
         public zVector3 Position;
         public zQuaternion Rotation;
         public zVector3 Scale;
