@@ -721,6 +721,8 @@ namespace ZLockstep.Flow
 
         }
 
+        private Random m_random = new Random();
+
         /// <summary>
         /// 计算并设置实体的期望移动速度
         /// 主要功能：
@@ -772,6 +774,11 @@ namespace ZLockstep.Flow
             // 从流场获取当前方向的移动指引
             zVector2 flowDirection = flowFieldManager.SampleDirection(navigator.CurrentFlowFieldId, currentPos);
 
+            // 添加微小随机扰动，防止多个单位重叠或卡住
+            float angle = (float)m_random.NextDouble() * 2.0f * (float)Math.PI;
+            float dist = (float)m_random.NextDouble() * 0.001f;
+            Vector2 offsetVel = dist * new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+
             // 当流场方向为零时，通常是在目标格子内或者没有使用流畅寻路，直接朝目标点移动
             if (flowDirection == zVector2.zero)
             {
@@ -795,6 +802,9 @@ namespace ZLockstep.Flow
 
                 // 设置期望速度，用于目标格子内的精确移动
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
+
+                Vector2 setFinalV2 = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) + offsetVel;
+                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
             }
             else
             {
@@ -812,6 +822,9 @@ namespace ZLockstep.Flow
                 ComponentManager.AddComponent(entity, target);
 
                 Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, goalVector);
+
+                Vector2 setFinalV2 = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId) + offsetVel;
+                Simulator.Instance.setAgentPrefVelocity(navigator.RvoAgentId, setFinalV2);
             }
         }
 

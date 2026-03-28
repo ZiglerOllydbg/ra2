@@ -418,11 +418,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4498538b62f81b944830e17c2de20918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _showUnits: 0
+  _showUnits: 1
   _showRVOAgents: 1
   _showGrid: 1
   _showObstacles: 0
-  _showFlowField: 1
+  _showFlowField: 0
 --- !u!114 &812412506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -435,7 +435,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af3152b91131e2e4a9794087c170be44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  avatarTexture: {fileID: 2800000, guid: 7d296fea5847ce24b953728808003a28, type: 3}
 --- !u!1 &928718676
 GameObject:
   m_ObjectHideFlags: 0
