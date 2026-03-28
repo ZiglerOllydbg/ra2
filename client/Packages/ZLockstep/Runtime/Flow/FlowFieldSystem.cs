@@ -677,7 +677,7 @@ namespace ZLockstep.Flow
                     // 更新组件
                     ComponentManager.AddComponent(entity, transform);
 
-                    zUDebug.Log($"Interpolated entity {entityId} position: {transform.Position}, LastPosition: {transform.LastPosition}, FuturePosition: {transform.FuturePosition}");
+                    // zUDebug.Log($"Interpolated entity {entityId} position: {transform.Position}, LastPosition: {transform.LastPosition}, FuturePosition: {transform.FuturePosition}");
                 }
             }
 
