@@ -222,7 +222,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
                         if (offensebarracksIds.Contains(entityId))
                         {
                             // 没有找到玩家单位，移动到玩家基地
-                            _navSystem.SetMoveTarget(entity, _playerBasePosition, true);
+                            _navSystem.SetMoveTarget(entity, _playerBasePosition, false, true);
                             moveToBaseCount++;
                         }
                     }
@@ -264,51 +264,67 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         }
 
         /// <summary>
-        /// 搜索最近的玩家单位
+        /// 搜索最近的玩家单位（使用 SpatialIndex）
         /// </summary>
         private int FindNearestPlayerUnit(zVector3 position)
         {
+            // 使用 SpatialIndex 进行空间邻近查询
+            var neighbors = SpatialIndex.Instance.RadialSearch(
+                position, 
+                (float)_detectionRange, 
+                -1, // 不限制数量
+                neighbor => IsValidPlayerTarget(neighbor, position)
+            );
+            
+            if (neighbors.Count == 0)
+                return -1;
+            
+            // 找到最近的单位
             int nearestUnitId = -1;
             zfloat minDistSqr = _detectionRange * _detectionRange;
-
-            var allEntities = ComponentManager.GetAllEntityIdsWith<CampComponent>();
-
-            foreach (var entityId in allEntities)
+            
+            foreach (var neighbor in neighbors)
             {
-                Entity otherEntity = new Entity(entityId);
-
-                // 检查是否为玩家阵营
-                var otherCamp = ComponentManager.GetComponent<CampComponent>(otherEntity);
-                if (otherCamp.CampId != PLAYER_CAMP_ID)
-                    continue;
-
-                // 跳过建筑，只追单位
-                if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
-                    continue;
-
-                // 必须有 Transform 和 Health 组件
-                if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
-                    !ComponentManager.HasComponent<HealthComponent>(otherEntity))
-                    continue;
-
-                // 检查是否还活着
-                var health = ComponentManager.GetComponent<HealthComponent>(otherEntity);
-                if (health.CurrentHealth <= zfloat.Zero)
-                    continue;
-
-                // 计算距离
+                Entity otherEntity = new Entity(neighbor.EntityId);
                 var otherTransform = ComponentManager.GetComponent<TransformComponent>(otherEntity);
                 zfloat distSqr = (otherTransform.Position - position).sqrMagnitude;
-
-                // 找到最近的单位
+                
                 if (distSqr < minDistSqr)
                 {
                     minDistSqr = distSqr;
-                    nearestUnitId = entityId;
+                    nearestUnitId = neighbor.EntityId;
                 }
             }
-
+            
             return nearestUnitId;
+        }
+        
+        /// <summary>
+        /// 判断玩家目标是否有效（是玩家阵营、非建筑、有必要的组件、存活）
+        /// </summary>
+        private bool IsValidPlayerTarget(SpatialEntry neighbor, zVector3 position)
+        {
+            // 检查是否为玩家阵营
+            if (neighbor.CampId != PLAYER_CAMP_ID)
+                return false;
+            
+            Entity otherEntity = new Entity(neighbor.EntityId);
+            
+            // 跳过建筑，只追单位
+            if (ComponentManager.HasComponent<BuildingComponent>(otherEntity))
+                return false;
+            
+            // 必须有 Transform 和 Health 组件
+            if (!ComponentManager.HasComponent<TransformComponent>(otherEntity) ||
+                !ComponentManager.HasComponent<HealthComponent>(otherEntity))
+                return false;
+            
+            // 检查是否还活着
+            var health = ComponentManager.GetComponent<HealthComponent>(otherEntity);
+            if (health.CurrentHealth <= zfloat.Zero)
+                return false;
+            
+            return true;
         }
 
         // ==================== 生产相关方法 ====================

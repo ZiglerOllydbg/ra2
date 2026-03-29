@@ -166,7 +166,7 @@ namespace ZLockstep.Flow
         /// </summary>
         /// <param name="entity">需要设置目标的实体</param>
         /// <param name="targetPos">目标位置</param>
-        public void SetMoveTarget(Entity entity, zVector2 targetPos, bool userInput = false)
+        public void SetMoveTarget(Entity entity, zVector2 targetPos, bool userInput = false, bool useFlowfield = false)
         {
             // 将目标位置对齐到网格中心
             map.WorldToFlow(targetPos, out int targetGridX, out int targetGridY);
@@ -182,7 +182,7 @@ namespace ZLockstep.Flow
             }
 
             // 用户输入，使用流畅寻路
-            if (userInput)
+            if (useFlowfield)
             {
                 navigator.CurrentFlowFieldId = flowFieldManager.RequestFlowField(alignedTargetPos);
             }
@@ -213,7 +213,7 @@ namespace ZLockstep.Flow
         {
             foreach (var entity in entities)
             {
-                SetMoveTarget(entity, targetPos, userInput);
+                SetMoveTarget(entity, targetPos, userInput, true);
             }
         }
 
