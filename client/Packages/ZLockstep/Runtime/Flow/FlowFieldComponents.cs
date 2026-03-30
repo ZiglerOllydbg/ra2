@@ -65,6 +65,21 @@ namespace ZLockstep.Flow
         /// </summary>
         public int NearSlowFrames;
 
+        /// <summary>
+        /// 是否正在减速
+        /// </summary>
+        public bool IsSlowingDown;
+
+        /// <summary>
+        /// 开始减速时的Tick
+        /// </summary>
+        public int SlowDownStartTick;
+
+        /// <summary>
+        /// 减速前的速度
+        /// </summary>
+        public zfloat SpeedBeforeSlowDown;
+
         public static FlowFieldNavigatorComponent Create(zfloat radius, zfloat maxSpeed)
         {
             return new FlowFieldNavigatorComponent
@@ -73,13 +88,16 @@ namespace ZLockstep.Flow
                 RvoAgentId = -1,
                 MaxSpeed = maxSpeed,
                 ArrivalRadius = new zfloat(0, 5000), // 0.5
-                SlowDownRadius = new zfloat(2),
+                SlowDownRadius = new zfloat(4), // 3-5米开始减速
                 HasReachedTarget = false,
                 IsEnabled = true,
                 Radius = radius,
                 LastPosition = zVector2.zero,
                 StuckFrames = 0,
-                NearSlowFrames = 0
+                NearSlowFrames = 0,
+                IsSlowingDown = false,
+                SlowDownStartTick = 0,
+                SpeedBeforeSlowDown = zfloat.Zero
             };
         }
     }

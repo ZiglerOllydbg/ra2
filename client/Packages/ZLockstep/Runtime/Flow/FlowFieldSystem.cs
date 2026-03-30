@@ -191,6 +191,10 @@ namespace ZLockstep.Flow
             navigator.StuckFrames = 0;
             navigator.LastPosition = new zVector2(transform.Position.x, transform.Position.z);
             navigator.NearSlowFrames = 0;
+            // 重置减速状态
+            navigator.IsSlowingDown = false;
+            navigator.SlowDownStartTick = 0;
+            navigator.SpeedBeforeSlowDown = zfloat.Zero;
 
             // 更新导航组件
             ComponentManager.AddComponent(entity, navigator);
@@ -321,6 +325,10 @@ namespace ZLockstep.Flow
                     navigator.ArrivalRadius = minArrival;
                 }
                 navigator.NearSlowFrames = 0;
+                // 重置减速状态
+                navigator.IsSlowingDown = false;
+                navigator.SlowDownStartTick = 0;
+                navigator.SpeedBeforeSlowDown = zfloat.Zero;
 
                 // 更新组件
                 ComponentManager.AddComponent(e, navigator);
@@ -584,6 +592,10 @@ namespace ZLockstep.Flow
                 flowFieldManager.ReleaseFlowField(navigator.CurrentFlowFieldId);
                 navigator.CurrentFlowFieldId = -1;
                 navigator.HasReachedTarget = reachTarget;
+                // 重置减速状态
+                navigator.IsSlowingDown = false;
+                navigator.SlowDownStartTick = 0;
+                navigator.SpeedBeforeSlowDown = zfloat.Zero;
 
                 ComponentManager.AddComponent(entity, navigator);
             }
@@ -723,6 +735,10 @@ namespace ZLockstep.Flow
 
         private Random m_random = new Random();
 
+        // 减速相关常量
+        private const int SLOW_DOWN_DURATION_TICKS = 90;  // 3秒 = 90帧 (30 FPS)
+        private const float MIN_STOP_SPEED = 0.1f;        // 最小停止速度
+
         /// <summary>
         /// 计算并设置实体的期望移动速度
         /// 主要功能：
@@ -732,6 +748,7 @@ namespace ZLockstep.Flow
         ///    - 在目标格子内：直接朝向目标点移动
         ///    - 在路径上：沿流场方向移动，并添加微小随机扰动防止卡住
         /// 4. 通过 RVO 系统设置实体的期望速度
+        /// 5. 减速逻辑：3-5米开始减速，最多3秒后或速度小于0.1时停止
         /// </summary>
         /// <param name="entityId">实体 ID</param>
         /// <returns>如果成功设置速度返回 true，否则返回 false（未启用或无目标）</returns>
@@ -760,13 +777,60 @@ namespace ZLockstep.Flow
             zVector2 currentPos = new zVector2(transform.Position.x, transform.Position.z);
             var target = ComponentManager.GetComponent<MoveTargetComponent>(entity);
 
-            // 判断 currentPos 与 target.TargetPosition 之间的距离，如果小于某个阈值，设置速度为 0
             zVector2 targetPos = target.TargetPosition;
             zfloat distance = zVector2.Distance(currentPos, targetPos);
-            
+
+            // === 减速逻辑 ===
+            // 检查是否需要开始减速（距离在3-5米范围内）
+            bool shouldSlowDown = distance < navigator.SlowDownRadius && distance >= zfloat.FromFloat(arrivalDistanceThreshold);
+
+            // 计算当前速度倍率
+            zfloat speedMultiplier = zfloat.One;
+
+            if (shouldSlowDown || navigator.IsSlowingDown)
+            {
+                // 如果刚进入减速状态，记录开始时间和速度
+                if (!navigator.IsSlowingDown)
+                {
+                    navigator.IsSlowingDown = true;
+                    navigator.SlowDownStartTick = TimeManager.Tick;
+                    navigator.SpeedBeforeSlowDown = navigator.MaxSpeed;
+                }
+
+                // 计算已经减速的时间（帧数）
+                int elapsedTicks = TimeManager.Tick - navigator.SlowDownStartTick;
+
+                // 检查是否超过最大减速时间（3秒）
+                if (elapsedTicks >= SLOW_DOWN_DURATION_TICKS)
+                {
+                    // 超过3秒，强制停止
+                    ClearMoveTarget(entity, true);
+                    zUDebug.Log($"[RVO] {entityId} 减速超过3秒，强制停止");
+                    return;
+                }
+
+                // 计算速度衰减：线性插值从1.0到0.1
+                // t = elapsedTicks / SLOW_DOWN_DURATION_TICKS (0 -> 1)
+                zfloat t = new zfloat(elapsedTicks) / new zfloat(SLOW_DOWN_DURATION_TICKS);
+                speedMultiplier = zMathf.Lerp(zfloat.One, new zfloat(0, 1000), t); // 从1.0衰减到0.1
+
+                // 如果速度倍率对应的实际速度小于0.1，直接停止
+                zfloat currentSpeed = navigator.MaxSpeed * speedMultiplier;
+                if (currentSpeed < zfloat.FromFloat(MIN_STOP_SPEED))
+                {
+                    ClearMoveTarget(entity, true);
+                    zUDebug.Log($"[RVO] {entityId} 速度小于{MIN_STOP_SPEED}，停止");
+                    return;
+                }
+
+                // 更新组件
+                ComponentManager.AddComponent(entity, navigator);
+            }
+
+            // 检查是否到达最终目标（距离小于阈值）
             if (distance < zfloat.FromFloat(arrivalDistanceThreshold))
             {
-                ClearMoveTarget(entity);
+                ClearMoveTarget(entity, true);
                 zUDebug.Log($"[RVO] {entityId} 已到达目标, 距离小于阈值，distance: {distance}");
                 return;
             }
@@ -779,6 +843,9 @@ namespace ZLockstep.Flow
             float dist = (float)m_random.NextDouble() * 0.001f;
             Vector2 offsetVel = dist * new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
 
+            // 计算最终速度（应用减速倍率）
+            float finalSpeed = (navigator.MaxSpeed * speedMultiplier).ToFloat();
+
             // 当流场方向为零时，通常是在目标格子内或者没有使用流畅寻路，直接朝目标点移动
             if (flowDirection == zVector2.zero)
             {
@@ -790,7 +857,7 @@ namespace ZLockstep.Flow
                     goalVector = RVOMath.normalize(goalVector);
                 }
 
-                goalVector *= navigator.MaxSpeed.ToFloat();
+                goalVector *= finalSpeed;
 
                 if (target.LastPrefVelocity == goalVector)
                 {
@@ -811,8 +878,8 @@ namespace ZLockstep.Flow
                 // 沿流场方向移动
                 Vector2 goalVector = new Vector2(flowDirection.x.ToFloat(), flowDirection.y.ToFloat());
                 goalVector = RVOMath.normalize(goalVector);
-                // 增加速度倍率，加快移动
-                goalVector *= navigator.MaxSpeed.ToFloat();
+                // 应用减速后的速度
+                goalVector *= finalSpeed;
 
                 if (target.LastPrefVelocity == goalVector)
                 {
