@@ -2,6 +2,7 @@ using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.ECS.Systems;
 using ZLockstep.Flow;
+using ZLockstep.Sync.Command.Commands;
 using zUnity;
 using System.Collections.Generic;
 
@@ -58,7 +59,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// <summary>
         /// 生产间隔时间（秒）
         /// </summary>
-        private readonly zfloat _productionInterval = new zfloat(30);
+        private readonly zfloat _productionInterval = new zfloat(10);
         
         /// <summary>
         /// 距离上次生产的时间
@@ -69,6 +70,11 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
         /// 兵营建筑类型
         /// </summary>
         private const int BARRACKS_BUILDING_TYPE = 5;
+
+        /// <summary>
+        /// 兵营配置ID
+        /// </summary>
+        private const int BARRACKS_CONF_ID = 5;
         
         /// <summary>
         /// 动员兵单位类型
@@ -338,7 +344,8 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
 
             if (barracks.Count == 0)
             {
-                // zUDebug.LogWarning("[FirstAISystem] AI 没有可用的兵营");
+                // 没有可用的兵营，尝试建造兵营
+                SendBuildBarracksCommand();
                 return;
             }
 
@@ -441,6 +448,53 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
             }
 
             zUDebug.Log($"[FirstAISystem] 发送生产命令：兵营{barracksId} 生产{count}个大兵");
+        }
+
+        /// <summary>
+        /// 发送建造兵营命令
+        /// </summary>
+        private void SendBuildBarracksCommand()
+        {
+            // 获取 Game 实例
+            var game = World.GameInstance;
+            if (game == null)
+            {
+                zUDebug.LogError("[FirstAISystem] 无法获取 Game 实例，无法发送建造命令");
+                return;
+            }
+
+            // 从 ConfInitUnits 配置表中查找兵营位置
+            string buildPositionStr = null;
+            var initUnits = ConfigManager.GetAll<ConfInitUnits>();
+            foreach (var unit in initUnits)
+            {
+                if (unit.Camp == AI_CAMP_ID && unit.ConfID == BARRACKS_CONF_ID)
+                {
+                    buildPositionStr = unit.Position;
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(buildPositionStr))
+            {
+                zUDebug.LogError($"[FirstAISystem] 未找到阵营 {AI_CAMP_ID} 兵营（ConfID={BARRACKS_CONF_ID}）的位置配置");
+                return;
+            }
+
+            // 将字符串位置转换为 zVector3
+            zVector3 buildPosition = StringToVector3Converter.StringToZVector3(buildPositionStr);
+
+            // 创建建造兵营命令
+            var command = new CreateBuildingCommand(
+                confID: BARRACKS_CONF_ID,
+                campId: AI_CAMP_ID,
+                position: buildPosition
+            );
+
+            // 提交命令
+            game.SubmitCommand(command);
+
+            zUDebug.Log($"[FirstAISystem] 发送建造兵营命令：位置 {buildPosition}");
         }
     }
 }
