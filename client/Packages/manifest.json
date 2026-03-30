@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.posthog.unity": "https://github.com/PostHog/posthog-unity.git?path=com.posthog.unity",
     "com.unity.cinemachine": "2.10.5",
     "com.unity.collab-proxy": "2.0.4",
