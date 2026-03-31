@@ -79,7 +79,7 @@ namespace ZLockstep.View.Systems
             // 1. 处理单位创建事件
             ProcessCreationEvents();
 
-            // 2. 处理死亡事件（播放死亡动画）
+            // 2. 处理死亡事件（ProcessEntityDiedEvents播放死亡动画）
             ProcessEntityDiedEvents();
 
             // 3. 检查死亡动画状态
@@ -145,7 +145,7 @@ namespace ZLockstep.View.Systems
                 // 触发死亡动画
                 if (viewComponent.Animator != null)
                 {
-                    viewComponent.Animator.SetTrigger("Death");
+                    // viewComponent.Animator.SetTrigger("Death");
                 }
                 else
                 {

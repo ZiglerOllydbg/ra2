@@ -34,7 +34,7 @@ namespace ZLockstep.Flow
         /// 到达距离阈值：当单位与目标距离小于此值时，认为已到达目标
         /// 可在 Unity Inspector 中配置，针对不同单位类型调整
         /// </summary>
-        private float arrivalDistanceThreshold = 1f;
+        private float arrivalDistanceThreshold = 0.1f;
     
         // RVO 更新频率控制常量
         private const int RVO_UPDATE_INTERVAL = 5;           // 每 5 帧更新一次
@@ -736,7 +736,7 @@ namespace ZLockstep.Flow
         private Random m_random = new Random();
 
         // 减速相关常量
-        private const int SLOW_DOWN_DURATION_TICKS = 90;  // 3秒 = 90帧 (30 FPS)
+        private const int SLOW_DOWN_DURATION_TICKS = 60;  // 3秒 = 90帧 (30 FPS)
         private const float MIN_STOP_SPEED = 0.1f;        // 最小停止速度
 
         /// <summary>

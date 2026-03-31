@@ -58,7 +58,6 @@ namespace zUnity
 				{
 					throw new IndexOutOfRangeException("zVector2 Only Contains x,y，so the index must use 0 or 1 !");
 				}
-				return zfloat.Zero;
 			}
 
 			set

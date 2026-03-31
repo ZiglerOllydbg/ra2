@@ -226,11 +226,6 @@ namespace ZLockstep.RVO
         /// 静止检测阈值
         /// </summary>
         private zfloat stationaryThreshold = new zfloat(0, 100); // 0.01 单位
-        
-        /// <summary>
-        /// 静止判定帧数
-        /// </summary>
-        private int stationaryFrameThreshold = 30;
 
         /// <summary>
         /// 搜索邻居的最大半径（基于最大速度和时间的估计值）
