@@ -300,7 +300,7 @@ namespace ZLockstep.Flow
                     if (!field.IsValid(nx, ny))
                         continue;
 
-                    if (!map.IsWalkable(nx, ny))
+                    if (!map.IsFlowWalkable(nx, ny))
                         continue;
 
                     // 禁止对角穿角：对角方向要求相邻两正交格可走
@@ -315,7 +315,7 @@ namespace ZLockstep.Flow
 
                         if (!field.IsValid(adjX1, adjY1) || !field.IsValid(adjX2, adjY2))
                             continue;
-                        if (!map.IsWalkable(adjX1, adjY1) || !map.IsWalkable(adjX2, adjY2))
+                        if (!map.IsFlowWalkable(adjX1, adjY1) || !map.IsFlowWalkable(adjX2, adjY2))
                             continue;
                     }
 
@@ -377,7 +377,7 @@ namespace ZLockstep.Flow
 
                     if (!field.IsValid(nx, ny))
                         continue;
-                    if (!map.IsWalkable(nx, ny))
+                    if (!map.IsFlowWalkable(nx, ny))
                         continue;
 
                     // 禁止对角穿角
@@ -391,7 +391,7 @@ namespace ZLockstep.Flow
                         int adjY2 = current.y + stepY;
                         if (!field.IsValid(adjX1, adjY1) || !field.IsValid(adjX2, adjY2))
                             continue;
-                        if (!map.IsWalkable(adjX1, adjY1) || !map.IsWalkable(adjX2, adjY2))
+                        if (!map.IsFlowWalkable(adjX1, adjY1) || !map.IsFlowWalkable(adjX2, adjY2))
                             continue;
                     }
 
@@ -448,7 +448,7 @@ namespace ZLockstep.Flow
                             int nx = x + dx;
                             int ny = y + dy;
 
-                            if (!field.IsValid(nx, ny) || !map.IsWalkable(nx, ny))
+                            if (!field.IsValid(nx, ny) || !map.IsFlowWalkable(nx, ny))
                             {
                                 obstacleCount++;
                             }
