@@ -49,8 +49,9 @@ namespace ZLockstep.Sync.Command.Commands
                         entities.Add(new Entity(entityId));
                     }
 
-                    navSystem.SetMultipleTargets(entities, TargetPosition, true);
-                    zUDebug.Log($"[StandaloneBattleDemo] 移动{entities.Count}个单位到{TargetPosition}");
+                    // 使用 CampId 进行格子分配
+                    navSystem.SetMultipleTargets(entities, TargetPosition, CampId, true);
+                    zUDebug.Log($"[EntityMoveCommand] 移动{entities.Count}个单位到{TargetPosition}，阵营{CampId}");
                 }
                 else
                 {

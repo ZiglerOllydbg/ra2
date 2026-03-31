@@ -29,7 +29,13 @@ namespace ZLockstep.Flow
     {
         private FlowFieldManager flowFieldManager;
         private IFlowFieldMap map;
-        
+
+        /// <summary>
+        /// 停止格子管理器
+        /// 负责基于阵营的格子分配和管理
+        /// </summary>
+        private StopGridManager stopGridManager;
+
         /// <summary>
         /// 到达距离阈值：当单位与目标距离小于此值时，认为已到达目标
         /// 可在 Unity Inspector 中配置，针对不同单位类型调整
@@ -71,7 +77,19 @@ namespace ZLockstep.Flow
             flowFieldManager = ffMgr;
             map = gameMap;
 
+            // 初始化停止格子管理器
+            stopGridManager = new StopGridManager();
+            stopGridManager.Initialize(gameMap);
+
             flowFieldManager.NeedUpdateObstacles = true;
+        }
+
+        /// <summary>
+        /// 获取停止格子管理器
+        /// </summary>
+        public StopGridManager GetStopGridManager()
+        {
+            return stopGridManager;
         }
 
         /// <summary>
@@ -210,14 +228,46 @@ namespace ZLockstep.Flow
 
         /// <summary>
         /// 批量设置多个实体的目标（常见于RTS选中操作）
+        /// 使用格子分配逻辑让单位整齐停止
         /// </summary>
         /// <param name="entities">需要设置目标的实体列表</param>
         /// <param name="targetPos">目标位置</param>
-        public void SetMultipleTargets(List<Entity> entities, zVector2 targetPos, bool userInput = false)
+        /// <param name="campId">阵营ID，用于格子分配</param>
+        /// <param name="userInput">是否为用户输入</param>
+        public void SetMultipleTargets(List<Entity> entities, zVector2 targetPos, int campId, bool userInput = false)
         {
-            foreach (var entity in entities)
+            if (entities == null || entities.Count == 0)
+                return;
+
+            // 使用 StopGridManager 分配格子
+            List<zVector2> assignedPositions = null;
+            if (stopGridManager != null)
             {
-                SetMoveTarget(entity, targetPos, userInput, true);
+                // 构建实体ID列表和阵营ID列表
+                List<int> entityIds = new List<int>();
+                List<int> campIds = new List<int>();
+                foreach (var entity in entities)
+                {
+                    entityIds.Add(entity.Id);
+                    campIds.Add(campId); // 所有单位使用同一个阵营ID
+                }
+
+                assignedPositions = stopGridManager.AssignGrids(entityIds, campIds, targetPos);
+            }
+
+            // 为每个实体设置目标
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var entity = entities[i];
+                zVector2 finalTarget = targetPos;
+
+                // 使用分配后的格子位置
+                if (assignedPositions != null && i < assignedPositions.Count)
+                {
+                    finalTarget = assignedPositions[i];
+                }
+
+                SetMoveTarget(entity, finalTarget, userInput, true);
             }
         }
 
@@ -621,6 +671,12 @@ namespace ZLockstep.Flow
         /// </summary>
         public override void Update()
         {
+            // 每帧更新格子占用（必须在最开始）
+            if (stopGridManager != null && World != null)
+            {
+                stopGridManager.UpdateOccupancy(World);
+            }
+
             if (flowFieldManager.NeedUpdateObstacles)
             {
                 flowFieldManager.NeedUpdateObstacles = false;

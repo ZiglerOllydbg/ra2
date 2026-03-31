@@ -7,6 +7,8 @@ using System.Globalization;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using ZLockstep.Flow;
 
 namespace ZLockstep.Sync.Command.Commands
 {
@@ -51,9 +53,39 @@ namespace ZLockstep.Sync.Command.Commands
                 return;
             }
 
-            int successCount = 0;
+            // 获取 StopGridManager（通过 world.GameInstance.GetNavSystem()）
+            var game = world.GameInstance;
+            var navSystem = game?.GetNavSystem();
+            var stopGridManager = navSystem?.GetStopGridManager();
+
+            // 收集所有单位的阵营信息
+            List<int> campIds = new List<int>();
             foreach (var entityId in EntityIds)
             {
+                var entity = new Entity(entityId);
+                if (world.ComponentManager.HasComponent<CampComponent>(entity))
+                {
+                    var camp = world.ComponentManager.GetComponent<CampComponent>(entity);
+                    campIds.Add(camp.CampId);
+                }
+                else
+                {
+                    campIds.Add(CampId); // 使用命令的阵营ID作为默认值
+                }
+            }
+
+            // 批量分配格子（按选中顺序）
+            List<zVector2> assignedPositions = null;
+            if (stopGridManager != null)
+            {
+                zVector2 targetPos2D = new zVector2(TargetPosition.x, TargetPosition.z);
+                assignedPositions = stopGridManager.AssignGrids(EntityIds.ToList(), campIds, targetPos2D);
+            }
+
+            int successCount = 0;
+            for (int i = 0; i < EntityIds.Length; i++)
+            {
+                var entityId = EntityIds[i];
                 var entity = new Entity(entityId);
 
                 // 检查实体是否存在且属于该玩家
@@ -70,8 +102,16 @@ namespace ZLockstep.Sync.Command.Commands
                     continue;
                 }
 
+                // 使用分配后的格子中心点作为目标位置
+                zVector3 finalTarget = TargetPosition;
+                if (assignedPositions != null && i < assignedPositions.Count)
+                {
+                    zVector2 assigned = assignedPositions[i];
+                    finalTarget = new zVector3(assigned.x, zfloat.Zero, assigned.y);
+                }
+
                 // 添加移动命令组件
-                var moveCmd = new MoveCommandComponent(TargetPosition, StopDistance);
+                var moveCmd = new MoveCommandComponent(finalTarget, StopDistance);
                 world.ComponentManager.AddComponent(entity, moveCmd);
 
                 successCount++;
@@ -92,5 +132,5 @@ namespace ZLockstep.Sync.Command.Commands
         }
 
     }
-    
+
 }
