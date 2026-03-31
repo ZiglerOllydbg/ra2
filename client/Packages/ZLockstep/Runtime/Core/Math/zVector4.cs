@@ -38,15 +38,15 @@ namespace zUnity
 			this.z = vec.z;
 			this.w = vec.w;
 		}
-		
+
 		// 添加反序列化构造函数
-        public zVector4(SerializationInfo info, StreamingContext context)
-        {
-            x = zfloat.CreateFloat(info.GetInt64("x"));
-            y = zfloat.CreateFloat(info.GetInt64("y"));
-            z = zfloat.CreateFloat(info.GetInt64("z"));
-            w = zfloat.CreateFloat(info.GetInt64("w"));
-        }
+		public zVector4(SerializationInfo info, StreamingContext context)
+		{
+			x = zfloat.CreateFloat(info.GetInt64("x"));
+			y = zfloat.CreateFloat(info.GetInt64("y"));
+			z = zfloat.CreateFloat(info.GetInt64("z"));
+			w = zfloat.CreateFloat(info.GetInt64("w"));
+		}
 
 		public zfloat x;
 		public zfloat y;
@@ -379,18 +379,37 @@ namespace zUnity
 		{
 			return (x + " , " + y + " , " + z + " , " + w);
 		}
-		
+
+		public override bool Equals(object obj)
+		{
+			if (obj is zVector4 other)
+			{
+				return x.value == other.x.value && y.value == other.y.value && z.value == other.z.value && w.value == other.w.value;
+			}
+			return false;
+		}
+
+		public bool Equals(zVector4 other)
+		{
+			return x.value == other.x.value && y.value == other.y.value && z.value == other.z.value && w.value == other.w.value;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(x.value, y.value, z.value, w.value);
+		}
+
 		/// <summary>
-        /// 实现ISerializable接口的序列化方法
-        /// </summary>
-        /// <param name="info">序列化信息</param>
-        /// <param name="context">流上下文</param>
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue("x", x.value);
-            info.AddValue("y", y.value);
-            info.AddValue("z", z.value);
-            info.AddValue("w", w.value);
-        }
+		/// 实现ISerializable接口的序列化方法
+		/// </summary>
+		/// <param name="info">序列化信息</param>
+		/// <param name="context">流上下文</param>
+		public void GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			info.AddValue("x", x.value);
+			info.AddValue("y", y.value);
+			info.AddValue("z", z.value);
+			info.AddValue("w", w.value);
+		}
 	}
 }

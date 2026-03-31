@@ -21,7 +21,7 @@ namespace zUnity
 		public static readonly zVector3 left = new zVector3((zfloat)(-1), (zfloat)0, (zfloat)0);
 		public static readonly zVector3 right = new zVector3((zfloat)1, (zfloat)0, (zfloat)0);
 
-        public static readonly zVector3 NULL = new zVector3((zfloat)(-999999), (zfloat)(-999999), (zfloat)(-999999));
+		public static readonly zVector3 NULL = new zVector3((zfloat)(-999999), (zfloat)(-999999), (zfloat)(-999999));
 
 		public bool IsZero()
 		{
@@ -54,7 +54,7 @@ namespace zUnity
 		/// </summary>
 		[JsonProperty]
 		public zfloat x;
-		
+
 		/// <summary>
 		/// Y轴坐标分量
 		/// </summary>
@@ -193,18 +193,18 @@ namespace zUnity
 
 		public zVector3 GetApproxNormalizedXZForMagnitude(zfloat __magnitude)
 		{
-				zVector3 vec;
-				vec.y.value = 0;
+			zVector3 vec;
+			vec.y.value = 0;
 
-				//zfloat xzLen = zMathf.ApproximateHypotenuse(x, z);
-				if (__magnitude.value == 0)
-				{
-					return zVector3.zero;
-				}
-				vec.x.value = x.value * zfloat.SCALE_10000 / __magnitude.value;
-				vec.z.value = z.value * zfloat.SCALE_10000 / __magnitude.value;
+			//zfloat xzLen = zMathf.ApproximateHypotenuse(x, z);
+			if (__magnitude.value == 0)
+			{
+				return zVector3.zero;
+			}
+			vec.x.value = x.value * zfloat.SCALE_10000 / __magnitude.value;
+			vec.z.value = z.value * zfloat.SCALE_10000 / __magnitude.value;
 
-				return vec;
+			return vec;
 		}
 
 		/// <summary>
@@ -238,7 +238,7 @@ namespace zUnity
 			f1.value = zMathf.Sqrt(zfloat.CreateFloat((a.x.value * a.x.value + a.y.value * a.y.value + a.z.value * a.z.value) / zfloat.SCALE_10000)).value / zfloat.SCALE_100;*/
 
 			long num = (x.value * x.value + y.value * y.value + z.value * z.value) / zfloat.SCALE_10000;
-            num = zMathf.SqrtScale(num);
+			num = zMathf.SqrtScale(num);
 
 			if (num > 0)
 			{
@@ -262,8 +262,8 @@ namespace zUnity
 		public static zVector3 Normalize(ref zVector3 __vec)
 		{
 			zVector3 vec = __vec;
-			long num = (vec.x.value * vec.x.value + vec.y.value * vec.y.value + vec.z.value * vec.z.value)/zfloat.SCALE_10000;
-            num = zMathf.SqrtScale(num);
+			long num = (vec.x.value * vec.x.value + vec.y.value * vec.y.value + vec.z.value * vec.z.value) / zfloat.SCALE_10000;
+			num = zMathf.SqrtScale(num);
 
 			if (num > 0)
 			{
@@ -297,7 +297,7 @@ namespace zUnity
 			zfloat f1;
 			long lsqr = (a.x.value * a.x.value + a.y.value * a.y.value + a.z.value * a.z.value);
 			f1.value = zMathf.Sqrt(zfloat.CreateFloat(lsqr / zfloat.SCALE_10000)).value / zfloat.SCALE_100;
-			
+
 			return f1;
 
 			//return zMathf.Sqrt(v3.x * v3.x + v3.y * v3.y + v3.z * v3.z);
@@ -309,9 +309,9 @@ namespace zUnity
 		/// <param name="scale"></param>
 		public void Scale(zVector3 scale)
 		{
-            x.value = x.value * scale.x.value / zfloat.SCALE_10000;
-            y.value = y.value * scale.y.value / zfloat.SCALE_10000;
-            z.value = z.value * scale.z.value / zfloat.SCALE_10000;
+			x.value = x.value * scale.x.value / zfloat.SCALE_10000;
+			y.value = y.value * scale.y.value / zfloat.SCALE_10000;
+			z.value = z.value * scale.z.value / zfloat.SCALE_10000;
 		}
 
 		/// <summary>
@@ -336,7 +336,7 @@ namespace zUnity
 		public static zfloat A2B_angle(zVector3 A, zVector3 B)
 		{
 			zfloat angle;
-            angle.value = zMathf.Rad2Deg.value * zMathf.Acos(zVector3.Dot(ref A, ref B)).value / zfloat.SCALE_10000;
+			angle.value = zMathf.Rad2Deg.value * zMathf.Acos(zVector3.Dot(ref A, ref B)).value / zfloat.SCALE_10000;
 			//确定旋转方向
 			if (zVector3.Cross(A, B).y.value < 0)
 			{
@@ -479,10 +479,10 @@ namespace zUnity
 		/// <returns></returns>
 		public static zVector3 Scale(zVector3 a, zVector3 b)
 		{
-            zVector3 vec;
-            vec.x.value = a.x.value * b.x.value / zfloat.SCALE_10000;
-            vec.y.value = a.x.value * b.y.value / zfloat.SCALE_10000;
-            vec.z.value = a.x.value * b.z.value / zfloat.SCALE_10000;
+			zVector3 vec;
+			vec.x.value = a.x.value * b.x.value / zfloat.SCALE_10000;
+			vec.y.value = a.x.value * b.y.value / zfloat.SCALE_10000;
+			vec.z.value = a.x.value * b.z.value / zfloat.SCALE_10000;
 			return vec;
 		}
 
@@ -495,12 +495,12 @@ namespace zUnity
 		/// <returns></returns>
 		public static zVector3 Cross(zVector3 lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = (lhs.y.value * rhs.z.value - lhs.z.value * rhs.y.value) / zfloat.SCALE_10000;
-            vec.y.value = (lhs.z.value * rhs.x.value - lhs.x.value * rhs.z.value) / zfloat.SCALE_10000;
-            vec.z.value = (lhs.x.value * rhs.y.value - lhs.y.value * rhs.x.value) / zfloat.SCALE_10000;
+			zVector3 vec;
+			vec.x.value = (lhs.y.value * rhs.z.value - lhs.z.value * rhs.y.value) / zfloat.SCALE_10000;
+			vec.y.value = (lhs.z.value * rhs.x.value - lhs.x.value * rhs.z.value) / zfloat.SCALE_10000;
+			vec.z.value = (lhs.x.value * rhs.y.value - lhs.y.value * rhs.x.value) / zfloat.SCALE_10000;
 
-            return vec;
+			return vec;
 			//return new zVector3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x);
 		}
 
@@ -513,13 +513,13 @@ namespace zUnity
 		public static zVector3 Reflect(zVector3 inDir, zVector3 inNormal)
 		{
 			//return -zfloat.Two * zVector3.Dot(ref inNormal, ref inDir) * inNormal + inDir;
-            long lTempNum;
-            zVector3 vec;
-            lTempNum = -2 * zVector3.Dot(ref inNormal, ref inDir).value;
-            vec.x.value = lTempNum * inNormal.x.value / zfloat.SCALE_10000 + inDir.x.value;
-            vec.y.value = lTempNum * inNormal.y.value / zfloat.SCALE_10000 + inDir.y.value;
-            vec.z.value = lTempNum * inNormal.z.value / zfloat.SCALE_10000 + inDir.z.value;
-            return vec;
+			long lTempNum;
+			zVector3 vec;
+			lTempNum = -2 * zVector3.Dot(ref inNormal, ref inDir).value;
+			vec.x.value = lTempNum * inNormal.x.value / zfloat.SCALE_10000 + inDir.x.value;
+			vec.y.value = lTempNum * inNormal.y.value / zfloat.SCALE_10000 + inDir.y.value;
+			vec.z.value = lTempNum * inNormal.z.value / zfloat.SCALE_10000 + inDir.z.value;
+			return vec;
 		}
 
 		/// <summary>
@@ -530,17 +530,17 @@ namespace zUnity
 		/// <returns></returns>
 		public static zfloat Dot(ref zVector3 lhs, ref zVector3 rhs)
 		{
-            zfloat num;
-            num.value = (lhs.x.value * rhs.x.value + lhs.y.value * rhs.y.value + lhs.z.value * rhs.z.value) / zfloat.SCALE_10000;
-            return num;
+			zfloat num;
+			num.value = (lhs.x.value * rhs.x.value + lhs.y.value * rhs.y.value + lhs.z.value * rhs.z.value) / zfloat.SCALE_10000;
+			return num;
 			//return zfloat.CreateFloat((lhs.x.value * rhs.x.value + lhs.y.value * rhs.y.value + lhs.z.value * rhs.z.value)/zfloat.SCALE_10000);
 		}
 
 		public void Set(zfloat new_x, zfloat new_y, zfloat new_z)
 		{
 			this.x.value = new_x.value;
-            this.y.value = new_y.value;
-            this.z.value = new_z.value;
+			this.y.value = new_y.value;
+			this.z.value = new_z.value;
 		}
 
 
@@ -593,16 +593,16 @@ namespace zUnity
 		/// <returns></returns>
 		public static zfloat Angle(zVector3 from, zVector3 to)
 		{
-            //from.Normalize();
-            //to.Normalize();
-            //return zMathf.Acos(zMathf.Clamp(zVector3.Dot(ref from, ref to), zfloat.NegativeOne, zfloat.One)) * zMathf.Rad2Deg;
+			//from.Normalize();
+			//to.Normalize();
+			//return zMathf.Acos(zMathf.Clamp(zVector3.Dot(ref from, ref to), zfloat.NegativeOne, zfloat.One)) * zMathf.Rad2Deg;
 
-            from.Normalize();
-            to.Normalize();
-            zfloat tempNum;
-            tempNum.value = zMathf.Acos(zMathf.Clamp(zVector3.Dot(ref from, ref to), zfloat.NegativeOne, zfloat.One)).value * zMathf.Rad2Deg.value / zfloat.SCALE_10000;
-            return tempNum;
-        }
+			from.Normalize();
+			to.Normalize();
+			zfloat tempNum;
+			tempNum.value = zMathf.Acos(zMathf.Clamp(zVector3.Dot(ref from, ref to), zfloat.NegativeOne, zfloat.One)).value * zMathf.Rad2Deg.value / zfloat.SCALE_10000;
+			return tempNum;
+		}
 
 		/// <summary>
 		/// 两点间距离
@@ -612,29 +612,29 @@ namespace zUnity
 		/// <returns></returns>
 		public static zfloat Distance(zVector3 a, zVector3 b)
 		{
-          //  zVector3 vector = a - b;
-           // return zMathf.Sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+			//  zVector3 vector = a - b;
+			// return zMathf.Sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 
-            zVector3 vector;
-            vector.x.value = a.x.value - b.x.value;
-            vector.y.value = a.y.value - b.y.value;
-            vector.z.value = a.z.value - b.z.value;
-            long lNum = (vector.x.value * vector.x.value + vector.y.value * vector.y.value + vector.z.value * vector.z.value) / zfloat.SCALE_10000;
+			zVector3 vector;
+			vector.x.value = a.x.value - b.x.value;
+			vector.y.value = a.y.value - b.y.value;
+			vector.z.value = a.z.value - b.z.value;
+			long lNum = (vector.x.value * vector.x.value + vector.y.value * vector.y.value + vector.z.value * vector.z.value) / zfloat.SCALE_10000;
 
-            lNum = zMathf.SqrtScale(lNum);
+			lNum = zMathf.SqrtScale(lNum);
 
-            //if (lNum > 100000000)
-            //{
-            //    lNum = zMathf.Sqrt(lNum) * zfloat.SCALE_100;
-            //}
-            //else
-            //{
-            //    lNum *= zfloat.SCALE_10000;
-            //    lNum = zMathf.Sqrt(lNum);
-            //}
-            zfloat fNum;
-            fNum.value = lNum;
-            return fNum;
+			//if (lNum > 100000000)
+			//{
+			//    lNum = zMathf.Sqrt(lNum) * zfloat.SCALE_100;
+			//}
+			//else
+			//{
+			//    lNum *= zfloat.SCALE_10000;
+			//    lNum = zMathf.Sqrt(lNum);
+			//}
+			zfloat fNum;
+			fNum.value = lNum;
+			return fNum;
 		}
 
 		/// <summary>
@@ -665,50 +665,50 @@ namespace zUnity
 		#region 加法
 		public static zVector3 operator +(zVector3 lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value + rhs.x.value;
-            vec.y.value = lhs.y.value + rhs.y.value;
-            vec.z.value = lhs.z.value + rhs.z.value;
+			zVector3 vec;
+			vec.x.value = lhs.x.value + rhs.x.value;
+			vec.y.value = lhs.y.value + rhs.y.value;
+			vec.z.value = lhs.z.value + rhs.z.value;
 			return vec;
 		}
 
 		public static zVector3 operator +(int lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs * zfloat.SCALE_10000 + rhs.x.value;
-            vec.y.value = lhs * zfloat.SCALE_10000 + rhs.y.value;
-            vec.z.value = lhs * zfloat.SCALE_10000 + rhs.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs * zfloat.SCALE_10000 + rhs.x.value;
+			vec.y.value = lhs * zfloat.SCALE_10000 + rhs.y.value;
+			vec.z.value = lhs * zfloat.SCALE_10000 + rhs.z.value;
+			return vec;
 			//return new zVector3(lhs + rhs.x, lhs + rhs.y, lhs + rhs.z);
 		}
 
 		public static zVector3 operator +(zVector3 lhs, int rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value + rhs * zfloat.SCALE_10000;
-            vec.y.value = lhs.y.value + rhs * zfloat.SCALE_10000;
-            vec.z.value = lhs.z.value + rhs * zfloat.SCALE_10000;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value + rhs * zfloat.SCALE_10000;
+			vec.y.value = lhs.y.value + rhs * zfloat.SCALE_10000;
+			vec.z.value = lhs.z.value + rhs * zfloat.SCALE_10000;
+			return vec;
 			//return new zVector3(lhs.x + rhs, lhs.y + rhs, lhs.z + rhs);
 		}
 
 		public static zVector3 operator +(zfloat lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.value + rhs.x.value;
-            vec.y.value = lhs.value + rhs.y.value;
-            vec.z.value = lhs.value + rhs.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.value + rhs.x.value;
+			vec.y.value = lhs.value + rhs.y.value;
+			vec.z.value = lhs.value + rhs.z.value;
+			return vec;
 			//return new zVector3(lhs + rhs.x, lhs + rhs.y, lhs + rhs.z);
 		}
 
 		public static zVector3 operator +(zVector3 lhs, zfloat rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value + rhs.value;
-            vec.y.value = lhs.y.value + rhs.value;
-            vec.z.value = lhs.z.value + rhs.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value + rhs.value;
+			vec.y.value = lhs.y.value + rhs.value;
+			vec.z.value = lhs.z.value + rhs.value;
+			return vec;
 			//return new zVector3(lhs.x + rhs, lhs.y + rhs, lhs.z + rhs);
 		}
 		#endregion
@@ -716,48 +716,48 @@ namespace zUnity
 		#region 减法
 		public static zVector3 operator -(zVector3 lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value - rhs.x.value;
-            vec.y.value = lhs.y.value - rhs.y.value;
-            vec.z.value = lhs.z.value - rhs.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value - rhs.x.value;
+			vec.y.value = lhs.y.value - rhs.y.value;
+			vec.z.value = lhs.z.value - rhs.z.value;
+			return vec;
 			//return new zVector3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
 		}
 		public static zVector3 operator -(int lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs * zfloat.SCALE_10000 - rhs.x.value;
-            vec.y.value = lhs * zfloat.SCALE_10000 - rhs.y.value;
-            vec.z.value = lhs * zfloat.SCALE_10000 - rhs.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs * zfloat.SCALE_10000 - rhs.x.value;
+			vec.y.value = lhs * zfloat.SCALE_10000 - rhs.y.value;
+			vec.z.value = lhs * zfloat.SCALE_10000 - rhs.z.value;
+			return vec;
 			//return new zVector3(lhs - rhs.x, lhs - rhs.y, lhs - rhs.z);
 		}
 		public static zVector3 operator -(zVector3 lhs, int rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value - rhs * zfloat.SCALE_10000;
-            vec.y.value = lhs.y.value - rhs * zfloat.SCALE_10000;
-            vec.z.value = lhs.z.value - rhs * zfloat.SCALE_10000;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value - rhs * zfloat.SCALE_10000;
+			vec.y.value = lhs.y.value - rhs * zfloat.SCALE_10000;
+			vec.z.value = lhs.z.value - rhs * zfloat.SCALE_10000;
+			return vec;
 
 			//return new zVector3(lhs.x - rhs, lhs.y - rhs, lhs.z - rhs);
 		}
 		public static zVector3 operator -(zfloat lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.value - rhs.x.value;
-            vec.y.value = lhs.value - rhs.y.value;
-            vec.z.value = lhs.value - rhs.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.value - rhs.x.value;
+			vec.y.value = lhs.value - rhs.y.value;
+			vec.z.value = lhs.value - rhs.z.value;
+			return vec;
 			//return new zVector3(lhs - rhs.x, lhs - rhs.y, lhs - rhs.z);
 		}
 		public static zVector3 operator -(zVector3 lhs, zfloat rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value - rhs.value;
-            vec.y.value = lhs.y.value - rhs.value;
-            vec.z.value = lhs.z.value - rhs.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value - rhs.value;
+			vec.y.value = lhs.y.value - rhs.value;
+			vec.z.value = lhs.z.value - rhs.value;
+			return vec;
 
 			//return new zVector3(lhs.x - rhs, lhs.y - rhs, lhs.z - rhs);
 		}
@@ -766,11 +766,11 @@ namespace zUnity
 		#region 负号
 		public static zVector3 operator -(zVector3 a)
 		{
-            zVector3 vec;
-            vec.x.value = -a.x.value;
-            vec.y.value = -a.y.value;
-            vec.z.value = -a.z.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = -a.x.value;
+			vec.y.value = -a.y.value;
+			vec.z.value = -a.z.value;
+			return vec;
 			//return new zVector3(-a.x, -a.y, -a.z);
 		}
 
@@ -779,46 +779,46 @@ namespace zUnity
 		#region 乘法
 		public static zVector3 operator *(int lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs * rhs.x.value;
-            vec.y.value = lhs * rhs.y.value;
-            vec.z.value = lhs * rhs.z.value;
+			zVector3 vec;
+			vec.x.value = lhs * rhs.x.value;
+			vec.y.value = lhs * rhs.y.value;
+			vec.z.value = lhs * rhs.z.value;
 
-            return vec;
-            
-            
-            //return new zVector3(lhs * rhs.x, lhs * rhs.y, lhs * rhs.z);
+			return vec;
+
+
+			//return new zVector3(lhs * rhs.x, lhs * rhs.y, lhs * rhs.z);
 		}
 		public static zVector3 operator *(zVector3 lhs, int rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value * rhs;
-            vec.y.value = lhs.y.value * rhs;
-            vec.z.value = lhs.z.value * rhs;
+			zVector3 vec;
+			vec.x.value = lhs.x.value * rhs;
+			vec.y.value = lhs.y.value * rhs;
+			vec.z.value = lhs.z.value * rhs;
 
-            return vec;
+			return vec;
 
 			//return new zVector3(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs);
 		}
 		public static zVector3 operator *(zfloat lhs, zVector3 rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.value * rhs.x.value / zfloat.SCALE_10000;
-            vec.y.value = lhs.value * rhs.y.value / zfloat.SCALE_10000;
-            vec.z.value = lhs.value * rhs.z.value / zfloat.SCALE_10000;
+			zVector3 vec;
+			vec.x.value = lhs.value * rhs.x.value / zfloat.SCALE_10000;
+			vec.y.value = lhs.value * rhs.y.value / zfloat.SCALE_10000;
+			vec.z.value = lhs.value * rhs.z.value / zfloat.SCALE_10000;
 
-            return vec;
+			return vec;
 
 			//return new zVector3(lhs * rhs.x, lhs * rhs.y, lhs * rhs.z);
 		}
 		public static zVector3 operator *(zVector3 lhs, zfloat rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value * rhs.value / zfloat.SCALE_10000;
-            vec.y.value = lhs.y.value * rhs.value / zfloat.SCALE_10000;
-            vec.z.value = lhs.z.value * rhs.value / zfloat.SCALE_10000;
+			zVector3 vec;
+			vec.x.value = lhs.x.value * rhs.value / zfloat.SCALE_10000;
+			vec.y.value = lhs.y.value * rhs.value / zfloat.SCALE_10000;
+			vec.z.value = lhs.z.value * rhs.value / zfloat.SCALE_10000;
 
-            return vec;
+			return vec;
 
 			//return new zVector3(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs);
 		}
@@ -827,21 +827,21 @@ namespace zUnity
 		#region 除法
 		public static zVector3 operator /(zVector3 lhs, int rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value / rhs;
-            vec.y.value = lhs.y.value / rhs;
-            vec.z.value = lhs.z.value / rhs;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value / rhs;
+			vec.y.value = lhs.y.value / rhs;
+			vec.z.value = lhs.z.value / rhs;
+			return vec;
 
 			//return new zVector3(lhs.x / rhs, lhs.y / rhs, lhs.z / rhs);
 		}
 		public static zVector3 operator /(zVector3 lhs, zfloat rhs)
 		{
-            zVector3 vec;
-            vec.x.value = lhs.x.value * zfloat.SCALE_10000 / rhs.value;
-            vec.y.value = lhs.y.value * zfloat.SCALE_10000 / rhs.value;
-            vec.z.value = lhs.z.value * zfloat.SCALE_10000 / rhs.value;
-            return vec;
+			zVector3 vec;
+			vec.x.value = lhs.x.value * zfloat.SCALE_10000 / rhs.value;
+			vec.y.value = lhs.y.value * zfloat.SCALE_10000 / rhs.value;
+			vec.z.value = lhs.z.value * zfloat.SCALE_10000 / rhs.value;
+			return vec;
 
 			//return new zVector3(lhs.x / rhs, lhs.y / rhs, lhs.z / rhs);
 		}
@@ -859,34 +859,55 @@ namespace zUnity
 		}
 		#endregion
 
+		/// <summary>
+		/// 判断是否与另一个对象相等
+		/// </summary>
+		/// <param name="obj">要比较的对象</param>
+		/// <returns>如果相等返回true，否则返回false</returns>
+		public override bool Equals(object obj)
+		{
+			if (obj is zVector3 other)
+			{
+				return x.value == other.x.value && y.value == other.y.value && z.value == other.z.value;
+			}
+			return false;
+		}
 
+		/// <summary>
+		/// 获取哈希码
+		/// </summary>
+		/// <returns>哈希码值</returns>
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(x.value, y.value, z.value);
+		}
 		public override string ToString()
 		{
 			return ("(" + x + " , " + y + " , " + z + ")");
 		}
 
-        /// <summary>
-        /// 实现ISerializable接口的序列化方法
-        /// </summary>
-        /// <param name="info">序列化信息</param>
-        /// <param name="context">流上下文</param>
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue("x", x.value);
-            info.AddValue("y", y.value);
-            info.AddValue("z", z.value);
-        }
-        
-        /// <summary>
-        /// 反序列化构造函数
-        /// </summary>
-        /// <param name="info">序列化信息</param>
-        /// <param name="context">流上下文</param>
-        public zVector3(SerializationInfo info, StreamingContext context)
-        {
-            x = zfloat.CreateFloat(info.GetInt64("x"));
-            y = zfloat.CreateFloat(info.GetInt64("y"));
-            z = zfloat.CreateFloat(info.GetInt64("z"));
-        }
-    }
+		/// <summary>
+		/// 实现ISerializable接口的序列化方法
+		/// </summary>
+		/// <param name="info">序列化信息</param>
+		/// <param name="context">流上下文</param>
+		public void GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			info.AddValue("x", x.value);
+			info.AddValue("y", y.value);
+			info.AddValue("z", z.value);
+		}
+
+		/// <summary>
+		/// 反序列化构造函数
+		/// </summary>
+		/// <param name="info">序列化信息</param>
+		/// <param name="context">流上下文</param>
+		public zVector3(SerializationInfo info, StreamingContext context)
+		{
+			x = zfloat.CreateFloat(info.GetInt64("x"));
+			y = zfloat.CreateFloat(info.GetInt64("y"));
+			z = zfloat.CreateFloat(info.GetInt64("z"));
+		}
+	}
 }

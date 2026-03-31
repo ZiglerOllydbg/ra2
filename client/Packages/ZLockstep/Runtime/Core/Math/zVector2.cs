@@ -30,13 +30,13 @@ namespace zUnity
 			this.x = vec.x;
 			this.y = vec.y;
 		}
-		
+
 		// 添加反序列化构造函数
-        public zVector2(SerializationInfo info, StreamingContext context)
-        {
-            x = zfloat.CreateFloat(info.GetInt64("x"));
-            y = zfloat.CreateFloat(info.GetInt64("y"));
-        }
+		public zVector2(SerializationInfo info, StreamingContext context)
+		{
+			x = zfloat.CreateFloat(info.GetInt64("x"));
+			y = zfloat.CreateFloat(info.GetInt64("y"));
+		}
 
 		public zfloat x;
 		public zfloat y;
@@ -323,7 +323,6 @@ namespace zUnity
 		}
 		#endregion
 
-
 		#region 类型转换
 		public static implicit operator zVector2(zVector3 v)
 		{
@@ -340,16 +339,35 @@ namespace zUnity
 		{
 			return (x + " , " + y);
 		}
-		
+
+		public override bool Equals(object obj)
+		{
+			if (obj is zVector2 other)
+			{
+				return x == other.x && y == other.y;
+			}
+			return false;
+		}
+
+		public bool Equals(zVector2 other)
+		{
+			return x == other.x && y == other.y;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(x.value, y.value);
+		}
+
 		/// <summary>
-        /// 实现ISerializable接口的序列化方法
-        /// </summary>
-        /// <param name="info">序列化信息</param>
-        /// <param name="context">流上下文</param>
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            info.AddValue("x", x.value);
-            info.AddValue("y", y.value);
-        }
+		/// 实现ISerializable接口的序列化方法
+		/// </summary>
+		/// <param name="info">序列化信息</param>
+		/// <param name="context">流上下文</param>
+		public void GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			info.AddValue("x", x.value);
+			info.AddValue("y", y.value);
+		}
 	}
 }

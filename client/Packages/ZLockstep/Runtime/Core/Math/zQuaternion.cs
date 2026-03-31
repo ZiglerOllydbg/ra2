@@ -750,10 +750,12 @@ namespace zUnity
 		}
 
 
-		/* public override int GetHashCode()
-		 {
-			 return this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2 ^ this.w.GetHashCode() >> 1;
-		 }*/
+
+		public override int GetHashCode()
+		{
+			return x.value.GetHashCode() ^ y.value.GetHashCode() << 2 ^ z.value.GetHashCode() >> 2 ^ w.value.GetHashCode() >> 1;
+		}
+
 		public override bool Equals(object other)
 		{
 			if (!(other is zQuaternion))

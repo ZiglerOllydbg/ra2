@@ -109,7 +109,6 @@ namespace ZLockstep.Flow
                 var camp = cm.GetComponent<CampComponent>(entity);
 
                 zVector2 position;
-                bool isMoving = false;
 
                 // 判断单位是否正在移动
                 if (cm.HasComponent<MoveTargetComponent>(entity))
@@ -126,7 +125,6 @@ namespace ZLockstep.Flow
                         // 正在移动，使用目标位置
                         var target = cm.GetComponent<MoveTargetComponent>(entity);
                         position = target.TargetPosition;
-                        isMoving = true;
                     }
                 }
                 else if (cm.HasComponent<MoveCommandComponent>(entity))
@@ -134,7 +132,6 @@ namespace ZLockstep.Flow
                     // 正在移动（旧移动系统），使用目标位置
                     var moveCmd = cm.GetComponent<MoveCommandComponent>(entity);
                     position = new zVector2(moveCmd.TargetPosition.x, moveCmd.TargetPosition.z);
-                    isMoving = true;
                 }
                 else
                 {

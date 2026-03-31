@@ -247,20 +247,20 @@ namespace zUnity
 			}
 		}
 
-		/*public override int GetHashCode()
+		public override int GetHashCode()
 		{
 			return this.GetColumn(0).GetHashCode() ^ this.GetColumn(1).GetHashCode() << 2 ^ this.GetColumn(2).GetHashCode() >> 2 ^ this.GetColumn(3).GetHashCode() >> 1;
-		}*/
+		}
 
-		/* public override bool Equals(object other)
-		 {
-			 if (!(other is zMatrix4x4))
-			 {
-				 return false;
-			 }
-			 zMatrix4x4 matrix4x = (zMatrix4x4)other;
-			 return this.GetColumn(0).Equals(matrix4x.GetColumn(0)) && this.GetColumn(1).Equals(matrix4x.GetColumn(1)) && this.GetColumn(2).Equals(matrix4x.GetColumn(2)) && this.GetColumn(3).Equals(matrix4x.GetColumn(3));
-		 }*/
+		public override bool Equals(object other)
+		{
+			if (!(other is zMatrix4x4))
+			{
+				return false;
+			}
+			zMatrix4x4 matrix4x = (zMatrix4x4)other;
+			return this.GetColumn(0).Equals(matrix4x.GetColumn(0)) && this.GetColumn(1).Equals(matrix4x.GetColumn(1)) && this.GetColumn(2).Equals(matrix4x.GetColumn(2)) && this.GetColumn(3).Equals(matrix4x.GetColumn(3));
+		}
 
 		/// <summary>
 		/// 逆矩阵

@@ -623,6 +623,34 @@ public struct zfloat : ISerializable
 		return value.CompareTo(zfloat.value);
 	}
 
+	/// <summary>
+	/// 类型安全的相等比较
+	/// </summary>
+	public bool Equals(zfloat other)
+	{
+		return value == other.value;
+	}
+
+	/// <summary>
+	/// 重写Equals方法，支持与任意对象比较
+	/// </summary>
+	public override bool Equals(object obj)
+	{
+		if (obj is zfloat other)
+		{
+			return Equals(other);
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// 重写GetHashCode方法，返回基于value的哈希码
+	/// </summary>
+	public override int GetHashCode()
+	{
+		return value.GetHashCode();
+	}
+
 	public static bool TryParse(string s, out zfloat v)
 	{
 		string[] nums = s.Split(splitChars);
@@ -656,7 +684,7 @@ public struct zfloat : ISerializable
 
 		return true;
 	}
-	
+
 	/// <summary>
 	/// 实现ISerializable接口的序列化方法
 	/// </summary>
@@ -666,7 +694,7 @@ public struct zfloat : ISerializable
 	{
 		info.AddValue("value", value);
 	}
-	
+
 	/// <summary>
 	/// 反序列化构造函数
 	/// </summary>
