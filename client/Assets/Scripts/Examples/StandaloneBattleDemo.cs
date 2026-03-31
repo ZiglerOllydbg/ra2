@@ -256,7 +256,7 @@ public class StandaloneBattleDemo : MonoBehaviour
             }
             else
             {
-                _battleGame.NavSystem.SetMultipleTargets(_selectedUnits, targetPosition);
+                _battleGame.NavSystem.SetMultipleTargets(_selectedUnits, targetPosition, 1);
                 Debug.Log($"[StandaloneBattleDemo] 移动{_selectedUnits.Count}个单位到{targetPosition}");
             }
         }

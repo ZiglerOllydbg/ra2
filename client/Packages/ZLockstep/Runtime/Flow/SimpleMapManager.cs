@@ -90,18 +90,6 @@ namespace ZLockstep.Flow
             }
         }
 
-        /// <summary>
-        /// 获取格子是否可行走
-        /// </summary>
-        public bool IsLogicWalkable(int x, int y)
-        {
-            if (x >= 0 && x < _width && y >= 0 && y < _height)
-            {
-                return walkableGrid[y * _width + x];
-            }
-            return false;
-        }
-
         // ============ IFlowFieldMap 接口实现 ============
 
         public int GetWidth()

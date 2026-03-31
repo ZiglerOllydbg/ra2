@@ -111,7 +111,7 @@ namespace ZLockstep.Flow
             // 设置相同目标（会共享同一个流场）
             // 地图范围：256格*0.5=128单位，所以目标应该在(0,0)到(128,128)范围内
             zVector2 targetPos = new zVector2(new zfloat(110), new zfloat(110));
-            navSystem.SetMultipleTargets(squad, targetPos);
+            navSystem.SetMultipleTargets(squad, targetPos, 1);
 
             zUDebug.Log($"创建了 {squad.Count} 个单位，目标: {targetPos}");
             zUDebug.Log($"活跃流场数量: {flowFieldManager.GetActiveFieldCount()}"); // 应该是1
@@ -148,7 +148,7 @@ namespace ZLockstep.Flow
                     groupUnits.Add(unit);
                 }
 
-                navSystem.SetMultipleTargets(groupUnits, targets[group]);
+                navSystem.SetMultipleTargets(groupUnits, targets[group], 1);
             }
 
             zUDebug.Log($"创建了 4 组共 20 个单位");
