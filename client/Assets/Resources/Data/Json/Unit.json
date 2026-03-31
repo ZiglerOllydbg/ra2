@@ -36,7 +36,7 @@
       "AtkCount": 5,
       "Scale": 10000,
       "Radius": 15000,
-      "Speed": 100000,
+      "Speed": 60000,
       "CostMoney": 300,
       "ProduceTime": 80,
       "Name": "獾式坦克",
