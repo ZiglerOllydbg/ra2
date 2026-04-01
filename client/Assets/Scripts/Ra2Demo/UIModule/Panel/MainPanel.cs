@@ -82,6 +82,15 @@ public class MainPanel : BasePanel
     // 设置子面板
     private SettingSubPanel settingSubPanel;
 
+    // 快捷生产按钮
+    private Button infantryFastBtn;
+    private Button badgerTankFastBtn;
+    private Button grizzlyTankFastBtn;
+
+    // 快捷生产刷新定时器
+    private int fastProductionRefreshTimerId = 0;
+    private const float FAST_PRODUCTION_REFRESH_INTERVAL = 0.1f;
+
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
     {
@@ -178,6 +187,9 @@ public class MainPanel : BasePanel
             OnCloseClick = OnSubPanelClosed
         };
         settingSubPanel.Hide();
+
+        // 初始化快捷生产按钮
+        InitializeFastProductionButtons();
     }
 
     /// <summary>
@@ -269,6 +281,11 @@ public class MainPanel : BasePanel
             zoomSlider.onValueChanged.AddListener(OnZoomSliderChanged);
         }
 
+        // 快捷生产按钮事件监听
+        if (infantryFastBtn != null) infantryFastBtn.onClick.AddListener(OnInfantryFastBtnClick);
+        if (badgerTankFastBtn != null) badgerTankFastBtn.onClick.AddListener(OnBadgerTankFastBtnClick);
+        if (grizzlyTankFastBtn != null) grizzlyTankFastBtn.onClick.AddListener(OnGrizzlyTankFastBtnClick);
+
     }
 
     protected override void RemoveEvent()
@@ -331,6 +348,11 @@ public class MainPanel : BasePanel
             zoomSlider.onValueChanged.RemoveListener(OnZoomSliderChanged);
         }
 
+        // 移除快捷生产按钮事件监听
+        if (infantryFastBtn != null) infantryFastBtn.onClick.RemoveListener(OnInfantryFastBtnClick);
+        if (badgerTankFastBtn != null) badgerTankFastBtn.onClick.RemoveListener(OnBadgerTankFastBtnClick);
+        if (grizzlyTankFastBtn != null) grizzlyTankFastBtn.onClick.RemoveListener(OnGrizzlyTankFastBtnClick);
+
     }
     
     protected override void OnBecameInvisible()
@@ -360,6 +382,13 @@ public class MainPanel : BasePanel
         {
             Tick.ClearTimeout(miniMapRefreshTimerId);
             miniMapRefreshTimerId = 0;
+        }
+
+        // 停止快捷生产刷新定时器
+        if (fastProductionRefreshTimerId != 0)
+        {
+            Tick.ClearTimeout(fastProductionRefreshTimerId);
+            fastProductionRefreshTimerId = 0;
         }
 
         // 销毁热键快捷栏子面板
@@ -902,4 +931,159 @@ public class MainPanel : BasePanel
         // 调试日志
         zUDebug.Log($"[MainPanel] Zoom Slider 值改变 - 新高度：{value:F2}");
     }
+
+    #region 快捷生产按钮
+
+    /// <summary>
+    /// 初始化快捷生产按钮
+    /// </summary>
+    private void InitializeFastProductionButtons()
+    {
+        // 显示FastProduction
+        PanelObject.transform.Find("FastProduction")?.transform.gameObject.SetActive(true);
+        infantryFastBtn = PanelObject.transform.Find("FastProduction/InfantryBtn")?.GetComponent<Button>();
+        badgerTankFastBtn = PanelObject.transform.Find("FastProduction/BadgerTankBtn")?.GetComponent<Button>();
+        grizzlyTankFastBtn = PanelObject.transform.Find("FastProduction/GrizzlyTankBtn")?.GetComponent<Button>();
+
+        // 默认隐藏
+        if (infantryFastBtn != null) infantryFastBtn.gameObject.SetActive(false);
+        if (badgerTankFastBtn != null) badgerTankFastBtn.gameObject.SetActive(false);
+        if (grizzlyTankFastBtn != null) grizzlyTankFastBtn.gameObject.SetActive(false);
+
+        // 启动定时刷新
+        StartFastProductionRefresh();
+    }
+
+    /// <summary>
+    /// 启动快捷生产刷新定时器
+    /// </summary>
+    private void StartFastProductionRefresh()
+    {
+        if (fastProductionRefreshTimerId != 0)
+        {
+            Tick.ClearTimeout(fastProductionRefreshTimerId);
+        }
+        fastProductionRefreshTimerId = Tick.SetTimeout(RefreshFastProductionButtons, FAST_PRODUCTION_REFRESH_INTERVAL);
+    }
+
+    /// <summary>
+    /// 刷新快捷生产按钮的显示状态
+    /// </summary>
+    private void RefreshFastProductionButtons()
+    {
+        var game = Ra2Demo?.GetBattleGame();
+        if (game == null)
+        {
+            StartFastProductionRefresh();
+            return;
+        }
+
+        // 获取所有可生产的工厂（与 MainProducerSubPanel 相同的筛选条件）
+        var components = game.World.ComponentManager
+            .GetComponentsWithCondition<ProduceComponent>(entity =>
+                game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
+                !game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
+                game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
+
+        // 收集所有可生产的单位类型及生产数量
+        var supportedTypes = new HashSet<UnitType>();
+        var produceCounts = new Dictionary<UnitType, int>();
+        foreach (var (produceComponent, entity) in components)
+        {
+            foreach (var unitType in produceComponent.SupportedUnitTypes)
+            {
+                supportedTypes.Add(unitType);
+                // 累加该单位类型的生产数量
+                int count = 0;
+                if (produceComponent.ProduceNumbers.ContainsKey(unitType))
+                {
+                    count = produceComponent.ProduceNumbers[unitType];
+                }
+                if (!produceCounts.ContainsKey(unitType)) produceCounts[unitType] = 0;
+                produceCounts[unitType] += count;
+            }
+        }
+
+        // 根据可生产类型显示/隐藏按钮，并更新文字
+        UpdateFastBtn(infantryFastBtn, UnitType.Infantry, supportedTypes, produceCounts);
+        UpdateFastBtn(badgerTankFastBtn, UnitType.badgerTank, supportedTypes, produceCounts);
+        UpdateFastBtn(grizzlyTankFastBtn, UnitType.grizzlyTank, supportedTypes, produceCounts);
+
+        // 重新启动定时器
+        StartFastProductionRefresh();
+    }
+
+    /// <summary>
+    /// 更新快捷生产按钮的显示状态和文字
+    /// </summary>
+    private void UpdateFastBtn(Button btn, UnitType unitType, HashSet<UnitType> supportedTypes, Dictionary<UnitType, int> produceCounts)
+    {
+        if (btn == null) return;
+        bool canProduce = supportedTypes.Contains(unitType);
+        btn.gameObject.SetActive(canProduce);
+        if (!canProduce) return;
+
+        ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unitType);
+        if (confUnit == null) return;
+
+        int count = produceCounts.ContainsKey(unitType) ? produceCounts[unitType] : 0;
+        TMP_Text btnText = btn.GetComponentInChildren<TMP_Text>();
+        if (btnText != null)
+        {
+            btnText.text = count > 0 ? $"{confUnit.Name}+{count}" : confUnit.Name;
+        }
+    }
+
+    private void OnInfantryFastBtnClick()
+    {
+        UISound.Instance.PlayClick();
+        FastProduceUnit(UnitType.Infantry);
+    }
+
+    private void OnBadgerTankFastBtnClick()
+    {
+        UISound.Instance.PlayClick();
+        FastProduceUnit(UnitType.badgerTank);
+    }
+
+    private void OnGrizzlyTankFastBtnClick()
+    {
+        UISound.Instance.PlayClick();
+        FastProduceUnit(UnitType.grizzlyTank);
+    }
+
+    /// <summary>
+    /// 快捷生产单位 - 找到第一个支持该单位类型的工厂并发送生产命令
+    /// </summary>
+    private void FastProduceUnit(UnitType unitType)
+    {
+        var game = Ra2Demo?.GetBattleGame();
+        if (game == null) return;
+
+        var components = game.World.ComponentManager
+            .GetComponentsWithCondition<ProduceComponent>(entity =>
+                game.World.ComponentManager.HasComponent<LocalPlayerComponent>(entity) &&
+                !game.World.ComponentManager.HasComponent<BuildingConstructionComponent>(entity) &&
+                game.World.ComponentManager.HasComponent<BuildingComponent>(entity));
+
+        foreach (var (produceComponent, entity) in components)
+        {
+            if (produceComponent.SupportedUnitTypes.Contains(unitType))
+            {
+                var produceCommand = new ProduceCommand(
+                    campId: 0,
+                    entityId: entity.Id,
+                    unitType: unitType,
+                    changeValue: 1)
+                {
+                    Source = CommandSource.Local
+                };
+                game.SubmitCommand(produceCommand);
+                zUDebug.Log($"[快捷生产] 发送生产命令: 单位{unitType}, 工厂{entity.Id}");
+                return;
+            }
+        }
+    }
+
+    #endregion
 }
