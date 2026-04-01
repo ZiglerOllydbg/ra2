@@ -238,6 +238,10 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Press.performed += OnPress;
         _controls.Create.Drag.performed += OnDrag;
         _controls.Create.Release.performed += OnRelease;
+
+        // 启用相机缩放
+        _controls.Camera.Enable();
+        _controls.Camera.Zoom.performed += OnZoom;
     }
 
     private void OnDisable()
@@ -246,6 +250,25 @@ public class Ra2Demo : MonoBehaviour
         _controls.Create.Press.performed -= OnPress;
         _controls.Create.Drag.performed -= OnDrag;
         _controls.Create.Release.performed -= OnRelease;
+
+        // 禁用相机缩放
+        _controls.Camera.Zoom.performed -= OnZoom;
+        _controls.Camera.Disable();
+    }
+
+    /// <summary>
+    /// 鼠标滚轮缩放回调
+    /// </summary>
+    private void OnZoom(InputAction.CallbackContext context)
+    {
+        Vector2 scroll = context.ReadValue<Vector2>();
+        if (Mathf.Abs(scroll.y) < 0.01f)
+            return;
+
+        const float WHEEL_ZOOM_SPEED = 0.001f;
+        float delta = -scroll.y * WHEEL_ZOOM_SPEED;
+        float newSize = _mainCamera.orthographicSize * (1f + delta);
+        _mainCamera.orthographicSize = Mathf.Clamp(newSize, MIN_ORTHOGRAPHIC_SIZE, MAX_ORTHOGRAPHIC_SIZE);
     }
 
     // 操作状态枚举
