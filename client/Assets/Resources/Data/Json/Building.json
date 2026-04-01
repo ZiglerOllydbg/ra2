@@ -157,7 +157,7 @@
       "AutoHeal": 100,
       "ProjectileID": 4,
       "AtkRange": 15,
-      "AtkInterval": 800,
+      "AtkInterval": 5000,
       "AtkCount": 4,
       "Def": 20,
       "ConstructionTime": 3,

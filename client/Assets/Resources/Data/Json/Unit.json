@@ -117,7 +117,7 @@
       "MaxDamageTargets": 1,
       "ShareDamage": 0,
       "Damage": 50,
-      "Prefab": "Cartridge",
+      "Prefab": "Bullet",
       "AudioClip": "badger_tank_200ms",
       "Note": "碉堡机枪子弹"
     }
