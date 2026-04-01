@@ -79,11 +79,11 @@ namespace ZLockstep.View.Systems
             // 1. 处理单位创建事件
             ProcessCreationEvents();
 
-            // 2. 处理死亡事件（ProcessEntityDiedEvents播放死亡动画）
-            ProcessEntityDiedEvents();
-
-            // 3. 检查死亡动画状态
+            // 2. 检查死亡动画状态
             CheckDyingEntities();
+
+            // 3. 处理死亡事件（ProcessEntityDiedEvents播放死亡动画）
+            ProcessEntityDiedEvents();
 
             // 4. 处理经济变化事件
             ProcessEconomyEvents();
@@ -145,7 +145,7 @@ namespace ZLockstep.View.Systems
                 // 触发死亡动画
                 if (viewComponent.Animator != null)
                 {
-                    // viewComponent.Animator.SetTrigger("Death");
+                    viewComponent.Animator.SetTrigger("Death");
                 }
                 else
                 {
@@ -205,16 +205,24 @@ namespace ZLockstep.View.Systems
                 return true;
 
             // 获取当前动画状态
+            AnimatorStateInfo nextStateInfo = animator.GetNextAnimatorStateInfo(0);
+            if (nextStateInfo.IsName("Death"))
+            {
+                return false;
+            }
+
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
 
-            // 检查是否是死亡动画状态（需要根据实际动画状态名称调整）
-            if (stateInfo.IsName("Death"))
+            // 检查是否是死亡动画状态
+            // 不同单位可能有不同的状态命名：Death、Cartridge_Bomb等
+            bool isDeathState = stateInfo.IsName("Death");
+            if (isDeathState)
             {
                 // normalizedTime大于等于1.0表示动画已经播放完成
                 return stateInfo.normalizedTime >= 1.0f;
             }
 
-            // 如果不是死亡状态，可能动画已经切换，也可以认为完成
+            // 如果不是已知的死亡状态，可能动画已经切换，也可以认为完成
             return true;
         }
 
