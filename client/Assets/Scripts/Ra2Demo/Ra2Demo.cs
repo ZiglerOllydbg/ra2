@@ -647,22 +647,14 @@ public class Ra2Demo : MonoBehaviour
     /// <param name="currentScreenPos">当前屏幕位置</param>
     private void MoveCameraByDrag(Vector2 currentScreenPos)
     {
-        // 计算从起始位置的偏移量（屏幕像素）
         Vector2 screenDelta = currentScreenPos - pressStartPosition;
 
-        float cameraSize = _mainCamera.orthographicSize;
+        // 正交相机：orthographicSize = 视口高度的一半（世界单位）
+        // 每像素对应的世界单位 = (视口高度) / (屏幕像素高度)
+        float worldUnitsPerPixel = _mainCamera.orthographicSize * 2f / Screen.height;
 
-        // 根据 cameraSize 动态调整 worldUnitsPerPixel
-        // cameraSize 范围：10-35，cameraSize 越大，视野越小，每像素对应的世界单位越小
-        float worldUnitsPerPixel = Mathf.Lerp(0.1f, 0.05f, (cameraSize - MainPanel.CAMERA_ZOOM_MIN) / (MainPanel.CAMERA_ZOOM_MAX - MainPanel.CAMERA_ZOOM_MIN));
         Vector3 worldDelta = new Vector3(-screenDelta.x * worldUnitsPerPixel, 0, -screenDelta.y * worldUnitsPerPixel);
-        
-        // 直接叠加到初始位置
-        Vector3 newPosition = _targetInitialPosition + worldDelta;
-        _cameraTarget.transform.position = newPosition;
-        
-        // 调试日志
-        zUDebug.Log($"[Ra2Demo] 相机移动 - ScreenDelta: {screenDelta}, WorldDelta: {worldDelta}, NewPos: {newPosition}");
+        _cameraTarget.transform.position = _targetInitialPosition + worldDelta;
     }
 
     private Vector2 GetCurrentInputPosition()
