@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 using ZLockstep.View;
 using ZLockstep.Simulation.ECS;
 using ZLockstep.Simulation.ECS.Components;
@@ -130,6 +131,9 @@ public class Ra2Demo : MonoBehaviour
 
     private void Awake()
     {
+        // 启用 EnhancedTouch 支持（双指缩放需要）
+        EnhancedTouchSupport.Enable();
+
         // FIX ME: 临时解决内存泄漏
         NativeLeakDetection.Mode = NativeLeakDetectionMode.EnabledWithStackTrace;
 
@@ -278,6 +282,15 @@ public class Ra2Demo : MonoBehaviour
     // 相机移动相关字段
     private Vector3 _targetInitialPosition = Vector3.zero; // 相机初始位置
     private bool isCameraMoving = false; // 是否正在移动相机
+
+    // 双指缩放相关字段
+    private bool isPinching = false; // 是否正在双指缩放
+    private float lastPinchDistance = 0f; // 上一帧双指距离
+
+    // 相机缩放限制
+    private const float MIN_ORTHOGRAPHIC_SIZE = 5f;  // 最小缩放
+    private const float MAX_ORTHOGRAPHIC_SIZE = 30f; // 最大缩放
+    private const float PINCH_ZOOM_SPEED = 0.01f;    // 缩放灵敏度
     
     // 选择相关字段
     private readonly List<int> selectedEntityIds = new(); // 多选单位列表
@@ -735,6 +748,14 @@ public class Ra2Demo : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
+        // 优先检测双指缩放
+        if (HandlePinchZoom())
+        {
+            // 双指缩放时，清空输入队列，避免误触发单指操作
+            inputEventQueue.Clear();
+            return;
+        }
+
         // 处理输入逻辑（在 Update中执行，而非输入回调中）
         ProcessInputLogic();
         // 触发 HealthPanel 的 LateUpdate 事件
@@ -791,6 +812,72 @@ public class Ra2Demo : MonoBehaviour
 
         // 更新淡出效果
         UpdateFadeOut();
+    }
+
+    /// <summary>
+    /// 处理双指缩放
+    /// </summary>
+    /// <returns>true 表示正在缩放，应跳过单指处理</returns>
+    private bool HandlePinchZoom()
+    {
+        // 检查触摸设备是否存在
+        if (Touchscreen.current == null)
+            return false;
+
+        var touches = Touchscreen.current.touches;
+
+        // 收集活跃的触摸点
+        List<Vector2> activeTouchPositions = new();
+        foreach (var touch in touches)
+        {
+            var phase = touch.phase.ReadValue();
+            if (phase != UnityEngine.InputSystem.TouchPhase.None &&
+                phase != UnityEngine.InputSystem.TouchPhase.Ended &&
+                phase != UnityEngine.InputSystem.TouchPhase.Canceled)
+            {
+                activeTouchPositions.Add(touch.position.ReadValue());
+                if (activeTouchPositions.Count >= 2)
+                    break;
+            }
+        }
+
+        // 不是双指触摸
+        if (activeTouchPositions.Count < 2)
+        {
+            if (isPinching)
+            {
+                isPinching = false;
+                lastPinchDistance = 0f;
+                zUDebug.Log("[Ra2Demo] 双指缩放结束");
+            }
+            return false;
+        }
+
+        // 计算双指距离
+        float currentDistance = Vector2.Distance(
+            activeTouchPositions[0],
+            activeTouchPositions[1]
+        );
+
+        // 开始双指缩放
+        if (!isPinching)
+        {
+            isPinching = true;
+            lastPinchDistance = currentDistance;
+            zUDebug.Log("[Ra2Demo] 双指缩放开始");
+            return true;
+        }
+
+        // 计算缩放比例
+        if (lastPinchDistance > 0 && currentDistance > 0)
+        {
+            float scaleFactor = lastPinchDistance / currentDistance;
+            float newSize = _mainCamera.orthographicSize * scaleFactor * (1f + PINCH_ZOOM_SPEED);
+            _mainCamera.orthographicSize = Mathf.Clamp(newSize, MIN_ORTHOGRAPHIC_SIZE, MAX_ORTHOGRAPHIC_SIZE);
+        }
+
+        lastPinchDistance = currentDistance;
+        return true;
     }
 
     /// <summary>
