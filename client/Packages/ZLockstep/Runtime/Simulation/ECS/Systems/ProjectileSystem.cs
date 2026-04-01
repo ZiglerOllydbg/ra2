@@ -130,6 +130,20 @@ namespace ZLockstep.Simulation.ECS.Systems
             if (!ComponentManager.HasComponent<HealthComponent>(target))
                 return;
 
+            int def = 0;
+            // 单位目标，获取防御属性
+            if (ComponentManager.HasComponent<UnitComponent>(target))
+            {
+                var unit = ComponentManager.GetComponent<UnitComponent>(target);
+                ConfUnit confUnit = ConfigManager.Get<ConfUnit>((int)unit.UnitType);
+                if (confUnit != null)
+                {
+                    def = confUnit.Def;
+                }
+            }
+
+            zfloat finalDamage = damage - new zfloat(def);
+
             var health = ComponentManager.GetComponent<HealthComponent>(target);
             health.TakeDamage(damage, World.TimeManager.Tick); // 使用 TakeDamage 方法并传入当前 tick
 

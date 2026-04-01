@@ -229,8 +229,8 @@ public class GMManager
         }
     }
 
-    [GMCommand("addtank")]
-    private void AddTank(string[] args)
+    [GMCommand("addunit")]
+    private void AddUnit(string[] args)
     {
         // 获取BattleGame实例
         if (_world == null)
@@ -239,47 +239,102 @@ public class GMManager
             return;
         }
 
-        // 获取屏幕中心位置的世界坐标
-        Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-        Ray ray = Camera.main.ScreenPointToRay(screenCenter);
-        
-        // 创建一个平面（y=0）来接收射线
-        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
-        float distance;
-        Vector3 worldPosition;
-        
-        if (groundPlane.Raycast(ray, out distance))
+        // 检查参数
+        if (args.Length < 1)
         {
-            worldPosition = ray.GetPoint(distance);
+            AddLog("Usage: addunit <unitType> [campId] [count]");
+            AddLog("Available unit types: Infantry(1), badgerTank(2), grizzlyTank(3), Harvester(4)");
+            AddLog("Example: addunit 3        (Add 1 grizzlyTank at screen center for player 0)");
+            AddLog("Example: addunit 2 1      (Add 1 badgerTank at screen center for player 1)");
+            AddLog("Example: addunit 3 0 5    (Add 5 grizzlyTanks at screen center for player 0)");
+            AddLog("Example: addunit 1 0 10   (Add 10 Infantry at screen center for player 0)");
+            return;
         }
-        else
+
+        // 解析单位类型
+        if (!int.TryParse(args[0], out int unitTypeInt))
         {
-            // 如果射线未击中平面，使用默认位置
-            worldPosition = new Vector3(128, 0, 128); // 地图中心
-            AddLog("Warning: Could not raycast to ground, using default position");
+            AddLog("Error: Invalid unit type (must be a number)");
+            return;
+        }
+
+        UnitType unitType = (UnitType)unitTypeInt;
+
+        // 验证枚举值是否有效
+        if (!Enum.IsDefined(typeof(UnitType), unitType) || unitType == UnitType.None || unitType == UnitType.Projectile)
+        {
+            AddLog($"Error: Invalid unit type {unitTypeInt}. Available: Infantry(1), badgerTank(2), grizzlyTank(3), Harvester(4)");
+            return;
         }
 
         // 默认参数
         int campId = 0; // 默认为玩家0（本地玩家）
+        int count = 1;  // 默认数量为1
 
-        // 解析参数
-        if (args.Length >= 1)
+        // 解析阵营参数
+        if (args.Length >= 2)
         {
-            int.TryParse(args[0], out campId);
+            if (!int.TryParse(args[1], out campId))
+            {
+                AddLog("Error: Invalid camp ID (must be a number)");
+                return;
+            }
         }
 
-        CreateTankCommand createTankCommand = new(
-            campId: campId,
-            unitType: UnitType.grizzlyTank, // 坦克类型
-            position: new zVector3((zfloat)worldPosition.x, (zfloat)worldPosition.y, (zfloat)worldPosition.z),
-            prefabId: 6, // 坦克预制体ID
-            radius: (zfloat)2,
-            maxSpeed: (zfloat)10
-        );
+        // 解析数量参数
+        if (args.Length >= 3)
+        {
+            if (!int.TryParse(args[2], out count) || count <= 0)
+            {
+                AddLog("Error: Invalid count (must be a positive number)");
+                return;
+            }
+            if (count > 50)
+            {
+                AddLog("Warning: Count capped at 50 to prevent performance issues");
+                count = 50;
+            }
+        }
 
-        _world.GameInstance.SubmitCommand(createTankCommand);
+        // 获取屏幕中心位置的世界坐标
+        Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        Ray ray = Camera.main.ScreenPointToRay(screenCenter);
 
-        AddLog($"GM: Added tank at center position ({worldPosition.x:F2}, {worldPosition.z:F2}) for player {campId}");
+        // 创建一个平面（y=0）来接收射线
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+        float distance;
+        Vector3 basePosition;
+
+        if (groundPlane.Raycast(ray, out distance))
+        {
+            basePosition = ray.GetPoint(distance);
+        }
+        else
+        {
+            // 如果射线未击中平面，使用默认位置
+            basePosition = new Vector3(64, 0, 64); // 地图中心
+            AddLog("Warning: Could not raycast to ground, using default position (64, 0, 64)");
+        }
+
+        // 添加多个单位，位置稍微分散
+        for (int i = 0; i < count; i++)
+        {
+            // 计算偏移位置，使单位分散排列
+            float offsetX = (i % 5) * 3f - 6f; // 每行5个，间距3
+            float offsetZ = (i / 5) * 3f;       // 行间距3
+
+            Vector3 spawnPosition = basePosition + new Vector3(offsetX, 0, offsetZ);
+
+            CreateTankCommand createTankCommand = new(
+                campId: campId,
+                unitType: unitType,
+                position: new zVector3((zfloat)spawnPosition.x, (zfloat)spawnPosition.y, (zfloat)spawnPosition.z)
+            );
+
+            _world.GameInstance.SubmitCommand(createTankCommand);
+        }
+
+        AddLog($"GM: Added {count} {unitType} near ({basePosition.x:F2}, {basePosition.z:F2}) for player {campId}");
     }
 
     [GMCommand("setrotation")]

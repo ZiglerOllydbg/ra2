@@ -29,29 +29,11 @@ namespace ZLockstep.Sync.Command.Commands
         /// </summary>
         public zVector3 Position { get; set; }
 
-        /// <summary>
-        /// 坦克预制体ID（用于表现层）
-        /// </summary>
-        public int PrefabId { get; set; }
-
-        /// <summary>
-        /// 坦克半径（用于导航）
-        /// </summary>
-        public zfloat Radius { get; set; }
-
-        /// <summary>
-        /// 坦克最大速度
-        /// </summary>
-        public zfloat MaxSpeed { get; set; }
-
-        public CreateTankCommand(int campId, UnitType unitType, zVector3 position, int prefabId, zfloat radius, zfloat maxSpeed)
+        public CreateTankCommand(int campId, UnitType unitType, zVector3 position)
             : base(campId)
         {
             UnitType = unitType;
             Position = position;
-            PrefabId = prefabId;
-            Radius = radius;
-            MaxSpeed = maxSpeed;
         }
 
         public override void Execute(zWorld world)
@@ -63,7 +45,7 @@ namespace ZLockstep.Sync.Command.Commands
                 CampId,
                 unitType,
                 Position,
-                PrefabId);
+                0);
 
             // 发布事件
             if (unitCreatedEvent.HasValue)
@@ -80,7 +62,7 @@ namespace ZLockstep.Sync.Command.Commands
         // tostring
         public override string ToString()
         {
-            return $"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position} PrefabId: {PrefabId}";
+            return $"[CreateTankCommand] 玩家{CampId} 阵营{CampId} 创建了坦克在位置{Position}";
         }
     }
 }
