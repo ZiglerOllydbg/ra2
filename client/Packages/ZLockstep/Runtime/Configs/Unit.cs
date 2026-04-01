@@ -46,6 +46,10 @@ public class ConfProjectile
 	public int Type; // 子弹类型1=子弹；2=炮弹；
 	public int Speed; // 飞行速度（最大15）
 	public int IsHoming; // 追踪类型导弹
+	public int HitDistance; // 命中距离（万分比，5000=0.5米）
+	public int DamageRadius; // 伤害半径（万分比，0=单体）
+	public int MaxDamageTargets; // 最大伤害目标数（-1=无限制）
+	public int ShareDamage; // 均摊伤害（0=全额，1=均摊）
 	public int Damage; // 伤害
 	public string Prefab; // 资源prefab
 	public string AudioClip; // 音频

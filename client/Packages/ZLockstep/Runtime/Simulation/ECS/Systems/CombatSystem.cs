@@ -470,6 +470,8 @@ namespace ZLockstep.Simulation.ECS.Systems
             });
 
             // 添加弹道组件
+            // 注意：HitDistance、DamageRadius、MaxDamageTargets、ShareDamage 需要在 Excel Projectile 配置表中添加
+            // 字段格式为万分比（10000=1米），使用 zfloat.CreateFloat 转换
             var projComponent = ProjectileComponent.Create(
                 sourceEntityId: source.Id,
                 targetEntityId: target.Id,
@@ -477,7 +479,11 @@ namespace ZLockstep.Simulation.ECS.Systems
                 sourceCampId: sourceCampId,
                 damage: (zfloat)confProjectile.Damage,
                 speed: (zfloat)confProjectile.Speed,
-                isHoming: confProjectile.IsHoming == 1 // 追踪型导弹
+                isHoming: confProjectile.IsHoming == 1, // 追踪型导弹
+                hitDistance: zfloat.CreateFloat(confProjectile.HitDistance), // 命中距离（万分比）
+                damageRadius: zfloat.CreateFloat(confProjectile.DamageRadius), // 伤害半径（万分比）
+                maxDamageTargets: confProjectile.MaxDamageTargets, // 最大伤害目标数
+                shareDamage: confProjectile.ShareDamage == 1 // 均摊伤害
             );
             ComponentManager.AddComponent(projectile, projComponent);
 

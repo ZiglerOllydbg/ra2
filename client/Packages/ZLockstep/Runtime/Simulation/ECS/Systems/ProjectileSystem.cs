@@ -1,5 +1,6 @@
 using ZLockstep.Simulation.ECS.Components;
 using ZLockstep.Simulation.Events;
+using ZLockstep.Flow;
 using zUnity;
 
 namespace ZLockstep.Simulation.ECS.Systems
@@ -65,13 +66,23 @@ namespace ZLockstep.Simulation.ECS.Systems
                 zVector3 toTarget = proj.TargetPosition - transform.Position;
                 zfloat distance = toTarget.magnitude;
 
-                // 3. 检查是否命中
-                if (distance <= HIT_DISTANCE)
+                // 3. 检查是否命中（使用弹道配置的命中距离）
+                zfloat hitDistance = proj.HitDistance > zfloat.Zero ? proj.HitDistance : HIT_DISTANCE;
+                if (distance <= hitDistance)
                 {
-                    // 命中！造成伤害
-                    if (proj.TargetEntityId >= 0)
+                    // 命中！判断是单体伤害还是 AOE 伤害
+                    if (proj.DamageRadius > zfloat.Zero)
                     {
-                        DealDamage(proj.TargetEntityId, proj.Damage);
+                        // AOE 多目标伤害
+                        DealAreaDamage(transform.Position, proj);
+                    }
+                    else
+                    {
+                        // 单目标伤害（保持原有逻辑）
+                        if (proj.TargetEntityId >= 0)
+                        {
+                            DealDamage(proj.TargetEntityId, proj.Damage);
+                        }
                     }
 
                     // 标记为待销毁
@@ -110,7 +121,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
 
         /// <summary>
-        /// 对目标造成伤害
+        /// 对目标造成伤害（单目标）
         /// </summary>
         private void DealDamage(int targetEntityId, zfloat damage)
         {
@@ -126,6 +137,74 @@ namespace ZLockstep.Simulation.ECS.Systems
             ComponentManager.AddComponent(target, health);
 
             // zUDebug.Log($"[ProjectileSystem] 对实体{targetEntityId}造成{damage}伤害，剩余生命{health.CurrentHealth}");
+        }
+
+        /// <summary>
+        /// AOE 范围伤害（多目标）
+        /// </summary>
+        /// <param name="hitPosition">命中位置</param>
+        /// <param name="proj">弹道组件</param>
+        private void DealAreaDamage(zVector3 hitPosition, ProjectileComponent proj)
+        {
+            // 1. 确定搜索参数
+            float searchRadius = (float)proj.DamageRadius;
+            int maxTargets = proj.MaxDamageTargets > 0 ? proj.MaxDamageTargets : -1;
+
+            // 2. 使用 SpatialIndex 搜索范围内的目标
+            var targets = SpatialIndex.Instance.RadialSearch(
+                hitPosition,
+                searchRadius,
+                maxTargets,
+                entry => IsValidTarget(entry, proj.SourceEntityId, proj.SourceCampId)
+            );
+
+            if (targets.Count == 0)
+                return;
+
+            // 3. 计算实际伤害
+            zfloat actualDamage = proj.Damage;
+            if (proj.ShareDamage && targets.Count > 0)
+            {
+                // 均摊模式：总伤害平均分配
+                actualDamage = proj.Damage / new zfloat(targets.Count);
+            }
+
+            // 4. 对每个目标造成伤害
+            foreach (var target in targets)
+            {
+                DealDamage(target.EntityId, actualDamage);
+            }
+        }
+
+        /// <summary>
+        /// 判断目标是否为有效的伤害目标
+        /// </summary>
+        /// <param name="entry">空间索引条目</param>
+        /// <param name="sourceEntityId">弹道发射者ID</param>
+        /// <param name="sourceCampId">弹道发射者阵营ID</param>
+        /// <returns>是否为有效目标</returns>
+        private bool IsValidTarget(SpatialEntry entry, int sourceEntityId, int sourceCampId)
+        {
+            // 1. 不能伤害自己
+            if (entry.EntityId == sourceEntityId)
+                return false;
+
+            // 2. 判断敌我关系
+            var targetCamp = new CampComponent { CampId = entry.CampId };
+            var sourceCamp = new CampComponent { CampId = sourceCampId };
+            if (!sourceCamp.IsEnemy(targetCamp))
+                return false;
+
+            // 3. 目标必须有生命值组件
+            Entity targetEntity = new Entity(entry.EntityId);
+            if (!ComponentManager.HasComponent<HealthComponent>(targetEntity))
+                return false;
+
+            // 4. 目标不能是死亡状态
+            if (ComponentManager.HasComponent<DeathComponent>(targetEntity))
+                return false;
+
+            return true;
         }
 
         /// <summary>
