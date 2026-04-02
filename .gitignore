@@ -221,3 +221,4 @@ __marimo__/
 *.history
 ~*
 client/.claude/
+/.claude
