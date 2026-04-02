@@ -748,20 +748,6 @@ namespace ZLockstep.Flow
                     // zUDebug.Log($"Interpolated entity {entityId} position: {transform.Position}, LastPosition: {transform.LastPosition}, FuturePosition: {transform.FuturePosition}");
                 }
             }
-
-
-            // 监控 agent 行为
-            foreach (var agentNo in Simulator.Instance.GetAgentNoList())
-            {
-                // 获取实际邻居数量
-                int actualNeighbors = Simulator.Instance.getAgentNumAgentNeighbors(agentNo);
-                
-                // 如果经常达到上限，增加 maxNeighbors
-                if (actualNeighbors >= 10)
-                {
-                    zUDebug.LogWarning($"Agent {agentNo} 达到邻居上限！actualNeighbors:{actualNeighbors}");
-                }
-            }
         }
 
         private void UpdateRVO()
