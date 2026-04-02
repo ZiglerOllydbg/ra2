@@ -517,7 +517,13 @@ public class Ra2DemoDebugger : MonoBehaviour
     {
         GUILayout.Label("=== simulation info ===", _titleStyle);
         GUILayout.Space(15);
-        
+
+        // 显示 _game.Update() 耗时统计
+        GUILayout.Label($"GameUpdate Avg: {_demo.GameUpdateAvgMs:F3} ms", _labelStyle);
+        GUILayout.Label($"GameUpdate Max: {_demo.GameUpdateMaxMs:F3} ms", _labelStyle);
+
+        GUILayout.Space(10);
+
         if (game.World != null && game.World.TimeManager != null)
         {
             DrawSimulationInfo(game.World.TimeManager, _labelStyle);
@@ -732,6 +738,4 @@ public class Ra2DemoDebugger : MonoBehaviour
         int totalCount = campUnitStats.Values.Sum(dict => dict.Values.Sum());
         GUILayout.Label($"All Units: {totalCount}", labelStyle);
     }
-
-
 }

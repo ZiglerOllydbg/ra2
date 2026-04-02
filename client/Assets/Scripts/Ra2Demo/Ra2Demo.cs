@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -108,6 +109,13 @@ public class Ra2Demo : MonoBehaviour
     
     // 出售模式状态
     private bool isSellMode = false;
+
+    // _game.Update() 性能统计
+    private readonly Stopwatch _gameUpdateStopwatch = new();
+    private readonly System.Collections.Generic.Queue<(float timestamp, float durationMs)> _gameUpdateSamples = new();
+    private const float STATS_WINDOW_SECONDS = 1f; // 统计窗口：1秒
+    public float GameUpdateAvgMs { get; private set; } // 最近1秒平均耗时(ms)
+    public float GameUpdateMaxMs { get; private set; } // 最近1秒最大耗时(ms)
     
     /// <summary>
     /// 设置出售模式
@@ -822,7 +830,37 @@ public class Ra2Demo : MonoBehaviour
 
         if (_game != null)
         {
+            // 精确计时 _game.Update()
+            _gameUpdateStopwatch.Restart();
             _game.Update();
+            _gameUpdateStopwatch.Stop();
+
+            // 记录样本
+            float now = Time.time;
+            float durationMs = (float)_gameUpdateStopwatch.Elapsed.TotalMilliseconds;
+            _gameUpdateSamples.Enqueue((now, durationMs));
+
+            // 清理超过1秒的旧样本并计算统计值
+            float cutoffTime = now - STATS_WINDOW_SECONDS;
+            float totalMs = 0f;
+            float maxMs = 0f;
+            int count = 0;
+
+            while (_gameUpdateSamples.Count > 0 && _gameUpdateSamples.Peek().timestamp < cutoffTime)
+            {
+                _gameUpdateSamples.Dequeue();
+            }
+
+            foreach (var sample in _gameUpdateSamples)
+            {
+                totalMs += sample.durationMs;
+                if (sample.durationMs > maxMs) maxMs = sample.durationMs;
+                count++;
+            }
+
+            // 更新统计结果
+            GameUpdateAvgMs = count > 0 ? totalMs / count : 0f;
+            GameUpdateMaxMs = maxMs;
         }
     }
 
