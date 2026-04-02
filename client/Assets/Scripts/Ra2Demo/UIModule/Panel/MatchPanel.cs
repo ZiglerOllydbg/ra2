@@ -33,6 +33,7 @@ public class MatchPanel : BasePanel
     private Transform _matchingGroup;
     private TMP_Text _nameText;
     private RawImage _headImg;
+    private TMP_Text _versionText;
     
     // 数据缓存字段
     private string _cachedNickname;
@@ -62,8 +63,14 @@ public class MatchPanel : BasePanel
         
         // 获取 UseLocalNet Toggle 组件
         _useLocalNetToggle = PanelObject.transform.Find("Match/UseLocalNet")?.GetComponent<Toggle>();
-        
-        
+
+        // 获取 Version 文本组件并设置版本号
+        _versionText = PanelObject.transform.Find("Version")?.GetComponent<TMP_Text>();
+        if (_versionText != null)
+        {
+            _versionText.text = $"版本号：{Application.version}";
+        }
+
         // 加载保存的 UseLocalNet 选项
         LoadUseLocalNetOption();
 
