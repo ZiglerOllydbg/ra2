@@ -537,18 +537,9 @@ namespace ZLockstep.Sync
             var entity = World.EntityManager.CreateEntity();
 
             // 2. 添加Transform组件
-            World.ComponentManager.AddComponent(entity, new TransformComponent
-            {
-                Position = position,
-                Rotation = zQuaternion.identity,
-                Scale = zVector3.one * 3,
+            TransformComponent transformComponent = TransformComponent.Create(position, zQuaternion.identity, zVector3.one * 3);
 
-                FutureTick = 0,
-                FuturePosition = zVector3.zero,
-                FutureRotation = zQuaternion.xPositive,
-                LastPosition = zVector3.zero,
-                LastRotation = zQuaternion.xPositive,
-            });
+            World.ComponentManager.AddComponent(entity, transformComponent);
 
             // 3. 添加建筑组件
             var buildingComponent = BuildingComponent.Create(
@@ -608,18 +599,10 @@ namespace ZLockstep.Sync
             var entity = World.EntityManager.CreateEntity();
 
             // 2. 添加Transform组件
-            World.ComponentManager.AddComponent(entity, new TransformComponent
-            {
-                Position = position,
-                Rotation = zQuaternion.identity,
-                Scale = zVector3.one,
+            TransformComponent transformComponent = TransformComponent.Create(position, zQuaternion.identity, zVector3.one);
 
-                FutureTick = 0,
-                FuturePosition = zVector3.zero,
-                FutureRotation = zQuaternion.xPositive,
-                LastPosition = zVector3.zero,
-                LastRotation = zQuaternion.xPositive,
-            });
+            World.ComponentManager.AddComponent(entity, transformComponent);
+
 
             // 3. 添加Unit组件（根据类型）
             var unitComponent = CreateUnitComponent(unitType, playerId);

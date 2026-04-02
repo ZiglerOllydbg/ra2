@@ -59,9 +59,6 @@ namespace ZLockstep.View
         [Header("表现设置")]
         [Tooltip("是否启用插值（让移动更平滑）")]
         [SerializeField] private bool enableSmoothInterpolation = true;
-        
-        [Tooltip("插值速度")]
-        [SerializeField] private float interpolationSpeed = 10f;
 
         [Header("追帧设置")]
         [Tooltip("追帧时每帧执行的逻辑帧数（越大追得越快）")]

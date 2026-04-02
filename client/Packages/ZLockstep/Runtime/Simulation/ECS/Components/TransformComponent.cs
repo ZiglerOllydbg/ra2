@@ -34,6 +34,22 @@ namespace ZLockstep.Simulation.ECS.Components
             LastPosition = zVector3.zero,
             LastRotation = zQuaternion.xPositive,
         };
+
+        public static TransformComponent Create(zVector3 position, zQuaternion rotation, zVector3 scale)
+        {
+            return new TransformComponent
+            {
+                Position = position,
+                Rotation = rotation,
+                Scale = scale,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
+            };
+        }
     }
 }
 

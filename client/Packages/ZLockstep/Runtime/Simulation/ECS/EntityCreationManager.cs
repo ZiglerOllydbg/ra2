@@ -84,18 +84,9 @@ namespace ZLockstep.Simulation.ECS
             var entity = world.EntityManager.CreateEntity();
 
             // 2. 添加Transform组件
-            world.ComponentManager.AddComponent(entity, new TransformComponent
-            {
-                Position = position,
-                Rotation = zQuaternion.identity,
-                Scale = zVector3.one,
 
-                FutureTick = 0,
-                FuturePosition = zVector3.zero,
-                FutureRotation = zQuaternion.xPositive,
-                LastPosition = zVector3.zero,
-                LastRotation = zQuaternion.xPositive,
-            });
+            TransformComponent transform = TransformComponent.Create(position, zQuaternion.identity, zVector3.one);
+            world.ComponentManager.AddComponent(entity, transform);
 
             int x = (int)position.x;
             int y = (int)position.z;
@@ -262,19 +253,10 @@ namespace ZLockstep.Simulation.ECS
             var entity = world.EntityManager.CreateEntity();
 
             // 2. 添加Transform组件
-            world.ComponentManager.AddComponent(entity, new TransformComponent
-            {
-                Position = position,
-                Rotation = zQuaternion.xPositive,
-                Scale = zVector3.one * scale,
+            TransformComponent transformComponent = TransformComponent.Create(position, zQuaternion.xPositive, zVector3.one * scale);
 
-                FutureTick = 0,
-                FuturePosition = zVector3.zero,
-                FutureRotation = zQuaternion.xPositive,
-                LastPosition = zVector3.zero,
-                LastRotation = zQuaternion.xPositive,
-            });
-
+            world.ComponentManager.AddComponent(entity, transformComponent);
+            
             // 3. 添加阵营组件
             var camp = CampComponent.Create(campId);
             world.ComponentManager.AddComponent(entity, camp);

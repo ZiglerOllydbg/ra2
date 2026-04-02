@@ -424,7 +424,6 @@ namespace ZLockstep.View.Systems
                 return;
             }
 
-            int createdCount = 0;
             int syncedCount = 0;
 
             // 获取所有逻辑实体

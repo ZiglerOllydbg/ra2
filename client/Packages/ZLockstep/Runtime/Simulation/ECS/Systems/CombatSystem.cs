@@ -466,18 +466,10 @@ namespace ZLockstep.Simulation.ECS.Systems
             var projectile = World.EntityManager.CreateEntity();
 
             // 添加Transform（从源位置开始）
-            ComponentManager.AddComponent(projectile, new TransformComponent
-            {
-                Position = sourcePos + new zVector3(zfloat.Zero, new zfloat(0, 5000), zfloat.Zero), // 稍微抬高0.5米
-                Rotation = zQuaternion.identity,
-                Scale = zVector3.one,
+            zVector3 birthPosition = sourcePos + new zVector3(zfloat.Zero, new zfloat(0, 5000), zfloat.Zero);
 
-                FutureTick = 0,
-                FuturePosition = zVector3.zero,
-                FutureRotation = zQuaternion.xPositive,
-                LastPosition = zVector3.zero,
-                LastRotation = zQuaternion.xPositive,
-            });
+            TransformComponent projectileTransform = TransformComponent.Create(birthPosition, zQuaternion.identity, zVector3.one);
+            ComponentManager.AddComponent(projectile, projectileTransform);
 
             // 添加弹道组件
             // 注意：HitDistance、DamageRadius、MaxDamageTargets、ShareDamage 需要在 Excel Projectile 配置表中添加
