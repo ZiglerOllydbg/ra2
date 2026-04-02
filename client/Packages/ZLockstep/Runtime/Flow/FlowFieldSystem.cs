@@ -40,7 +40,7 @@ namespace ZLockstep.Flow
         /// 到达距离阈值：当单位与目标距离小于此值时，认为已到达目标
         /// 可在 Unity Inspector 中配置，针对不同单位类型调整
         /// </summary>
-        private float arrivalDistanceThreshold = 0.1f;
+        private float arrivalDistanceThreshold = 0.5f;
     
         // RVO 更新频率控制常量
         private const int RVO_UPDATE_INTERVAL = 5;           // 每 5 帧更新一次
@@ -965,37 +965,35 @@ namespace ZLockstep.Flow
                 return;
 
             // 从 RVO 模拟器获取位置
-            Vector2 pos = Simulator.Instance.getAgentPosition(navigator.RvoAgentId);            
+            Vector2 pos = Simulator.Instance.getAgentPosition(navigator.RvoAgentId);
             zfloat x = zfloat.CreateFloat((long)(pos.x() * 10000));
             zfloat y = zfloat.CreateFloat((long)(pos.y() * 10000));
             zVector2 newV2Pos = new(x, y);
 
-            // zUDebug.Log($"[RVO] SyncEntityPositionAndRotation {entityId} pos: {newV2Pos}");
-            
-            // 从 RVO 模拟器获取速度方向作为朝向
-            Vector2 vel = Simulator.Instance.getAgentVelocity(navigator.RvoAgentId);
-            if (vel.IsZero)
-            {
-                return;
-            }
-
-            Vector2 normalVel = RVOMath.normalize(vel);
-            zVector3 forward = new(zfloat.FromFloat(normalVel.x()), zfloat.Zero, zfloat.FromFloat(normalVel.y()));
-
-            // 同步位置和旋转到 TransformComponent
+            // 同步位置和旋转到 TransformComponent（无论是否移动都要同步位置）
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
-            // 保存当前位置
             transform.LastPosition = transform.Position;
             transform.LastRotation = transform.Rotation;
 
-            // 设置未来位置和旋转
             zVector3 newPos = new(newV2Pos.x, zfloat.Zero, newV2Pos.y);
             transform.FuturePosition = newPos;
-            transform.FutureRotation = zQuaternion.LookRotation(forward);
-            transform.FutureTick = 0;
 
+            // 使用期望速度判断是否要停止，并用期望速度方向更新朝向
+            // 期望速度比实际速度更稳定，不受RVO避障扰动影响
+            Vector2 prefVel = Simulator.Instance.getAgentPrefVelocity(navigator.RvoAgentId);
+            float prefSpeed = RVOMath.abs(prefVel);
+
+            if (prefSpeed > 0.1f)
+            {
+                // 正常移动时，用期望速度方向更新朝向
+                Vector2 normalVel = RVOMath.normalize(prefVel);
+                zVector3 forward = new(zfloat.FromFloat(normalVel.x()), zfloat.Zero, zfloat.FromFloat(normalVel.y()));
+                transform.FutureRotation = zQuaternion.LookRotation(forward);
+            }
+            // 期望速度太小，保持当前朝向不变
+
+            transform.FutureTick = 0;
             ComponentManager.AddComponent(entity, transform);
-            // zUDebug.Log($"[RVO] SyncEntityPositionAndRotation: entityId={entity.Id}, newPos:{newV2Pos}, forward:{forward}, vel:{vel}");
         }
 
         /// <summary>

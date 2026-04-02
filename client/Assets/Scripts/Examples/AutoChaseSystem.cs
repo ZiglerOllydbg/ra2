@@ -152,9 +152,8 @@ namespace Game.Examples
                                     // zUDebug.Log($"[AutoChaseSystem] 继续追击 - 距离: {currentDistance}, 攻击范围: {attack.Range}");
                                 }
                             }
-                            else
+                            else if (currentDistance < attack.Range * zfloat.FromFloat(0.8f))
                             {
-                                // zUDebug.Log($"[AutoChaseSystem] 继续追击 - 目标在攻击范围内({currentDistance} <= {attack.Range})，无需移动");
                                 // 目标在攻击范围内，清除移动目标（如果有的话）
                                 if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
                                 {
