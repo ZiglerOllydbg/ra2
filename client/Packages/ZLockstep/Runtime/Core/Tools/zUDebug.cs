@@ -6,7 +6,7 @@ public class zUDebug
 {
 	public static bool enable = true;
 
-	[Conditional("ZLOGENABLE")]
+	[Conditional("ZLOGTRACE")]
 	public static void Log(object obj)
 	{
 #if !ONLYCSHARP
@@ -18,7 +18,7 @@ public class zUDebug
 #endif
 	}
 
-	[Conditional("ZLOGENABLE")]
+	[Conditional("ZLOGINFO")]
 	public static void LogInfo(object obj)
 	{
 #if !ONLYCSHARP
@@ -29,7 +29,7 @@ public class zUDebug
 #endif
 	}
 
-	[Conditional("ZLOGENABLE")]
+	[Conditional("ZLOGWARN")]
 	public static void LogWarning(object obj)
 	{
 #if !ONLYCSHARP
