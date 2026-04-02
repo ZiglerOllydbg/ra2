@@ -23,7 +23,7 @@ jobs:
 
       # 缓存 Library 文件夹
       - name: 缓存 Unity Library
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: Library
           key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
@@ -105,7 +105,7 @@ jobs:
 
       # 上传构建产物到 GitHub
       - name: 上传 APK 到 GitHub Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Android-APK
           path: build/Android/*.apk
