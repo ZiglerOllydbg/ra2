@@ -8,24 +8,31 @@ namespace ZLockstep.Simulation.ECS.Components
     /// </summary>
     public struct TransformComponent : IComponent
     {
-        public int FutureTick { get; set; }
-        public zVector3 FuturePosition { get; set; }
-
-        public zQuaternion FutureRotation { get; set; }
-
-        public zVector3 LastPosition { get; set; }
-
-        public zQuaternion LastRotation { get; set; }
-
+        // 当前帧
         public zVector3 Position;
         public zQuaternion Rotation;
         public zVector3 Scale;
 
-        public static TransformComponent Default => new TransformComponent
+        // 未来帧
+        public int FutureTick { get; set; }
+        public zVector3 FuturePosition { get; set; }
+        public zQuaternion FutureRotation { get; set; }
+
+        // 上一帧
+        public zVector3 LastPosition { get; set; }
+        public zQuaternion LastRotation { get; set; }
+
+        public static TransformComponent Default => new()
         {
             Position = zVector3.zero,
             Rotation = zQuaternion.xPositive,
-            Scale = zVector3.one
+            Scale = zVector3.one,
+
+            FutureTick = 0,
+            FuturePosition = zVector3.zero,
+            FutureRotation = zQuaternion.xPositive,
+            LastPosition = zVector3.zero,
+            LastRotation = zQuaternion.xPositive,
         };
     }
 }

@@ -142,14 +142,20 @@ namespace Game.Examples
                             if (currentDistance > attack.Range)
                             {
                                 // 只有在没有移动目标或已到达目标时才设置新目标
-                                if (!ComponentManager.HasComponent<MoveTargetComponent>(entity) || navigator.HasReachedTarget)
+                                if (navigator.HasReachedTarget)
                                 {
-                                    MoveTargetComponent moveTargetComponent = ComponentManager.GetComponent<MoveTargetComponent>(entity);
-                                    if (!moveTargetComponent.UserInput)
+                                    if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
+                                    {
+                                        MoveTargetComponent moveTargetComponent = ComponentManager.GetComponent<MoveTargetComponent>(entity);
+                                        if (!moveTargetComponent.UserInput)
+                                        {
+                                            _navSystem.SetMoveTarget(entity, targetPos);
+                                        }
+                                    }
+                                    else
                                     {
                                         _navSystem.SetMoveTarget(entity, targetPos);
                                     }
-                                    // zUDebug.Log($"[AutoChaseSystem] 继续追击 - 距离: {currentDistance}, 攻击范围: {attack.Range}");
                                 }
                             }
                             else if (currentDistance < attack.Range * zfloat.FromFloat(0.8f))
@@ -181,6 +187,9 @@ namespace Game.Examples
                     // 跳过自己
                     Entity neighborEntity = new(neighbor.EntityId);
                     if (neighbor.EntityId == entityId)
+                        continue;
+
+                    if (!ComponentManager.HasComponent<CampComponent>(neighborEntity))
                         continue;
 
                     // 检查是否为敌人

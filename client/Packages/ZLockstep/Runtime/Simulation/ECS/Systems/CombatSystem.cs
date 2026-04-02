@@ -264,7 +264,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 transform.LastRotation = transform.Rotation;
 
                 ComponentManager.AddComponent(entity, transform);
-                
+
                 // 播放音效标记
                 attack.PlayAttackAudio = true;
                 
@@ -470,7 +470,13 @@ namespace ZLockstep.Simulation.ECS.Systems
             {
                 Position = sourcePos + new zVector3(zfloat.Zero, new zfloat(0, 5000), zfloat.Zero), // 稍微抬高0.5米
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one
+                Scale = zVector3.one,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
             });
 
             // 添加弹道组件
@@ -493,6 +499,10 @@ namespace ZLockstep.Simulation.ECS.Systems
 
             // 添加速度组件（初始速度朝向目标）
             zVector3 direction = (targetPos - sourcePos).normalized;
+            // direction不能为zero
+            if (direction.IsZero())
+                direction = zVector3.forward;
+
             ComponentManager.AddComponent(projectile, new VelocityComponent(direction * projComponent.Speed));
 
             // 添加UnitComponent（提供视图标识信息）

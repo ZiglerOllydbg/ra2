@@ -488,6 +488,17 @@ namespace zUnity
 		{
 			zfloat ls = this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
 
+			if (ls <= zfloat.Zero)
+			{
+				this = identity;
+				return;
+			}
+
+			if (ls == zfloat.One)
+			{
+				return;
+			}
+
 			zfloat invNorm = 1 / zMathf.Sqrt(ls);
 
 			this.x = this.x * invNorm;
@@ -498,17 +509,24 @@ namespace zUnity
 
 		public static zQuaternion Normalize(zQuaternion value)
 		{
-			zQuaternion ans;
-
 			zfloat ls = value.x * value.x + value.y * value.y + value.z * value.z + value.w * value.w;
 
-			zfloat invNorm = 1 / zMathf.Sqrt(ls);
+			if (ls <= zfloat.Zero)
+			{
+				return identity;
+			}
 
+			if (ls == zfloat.One)
+			{
+				return value;
+			}
+
+			zfloat invNorm = 1 / zMathf.Sqrt(ls);
+			zQuaternion ans;
 			ans.x = value.x * invNorm;
 			ans.y = value.y * invNorm;
 			ans.z = value.z * invNorm;
 			ans.w = value.w * invNorm;
-
 			return ans;
 		}
 

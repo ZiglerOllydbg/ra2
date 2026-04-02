@@ -88,7 +88,13 @@ namespace ZLockstep.Simulation.ECS
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one
+                Scale = zVector3.one,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
             });
 
             int x = (int)position.x;
@@ -260,7 +266,13 @@ namespace ZLockstep.Simulation.ECS
             {
                 Position = position,
                 Rotation = zQuaternion.xPositive,
-                Scale = zVector3.one * scale
+                Scale = zVector3.one * scale,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
             });
 
             // 3. 添加阵营组件

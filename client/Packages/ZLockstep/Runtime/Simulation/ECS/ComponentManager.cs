@@ -69,6 +69,8 @@ namespace ZLockstep.Simulation.ECS
                 return (T)component;
             }
 
+            zUDebug.LogError($"ComponentManager: GetComponent failed. Entity: {entity.Id}, Component: {componentType.Name}");
+
             return default;
         }
         

@@ -541,7 +541,13 @@ namespace ZLockstep.Sync
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one * 3
+                Scale = zVector3.one * 3,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
             });
 
             // 3. 添加建筑组件
@@ -606,7 +612,13 @@ namespace ZLockstep.Sync
             {
                 Position = position,
                 Rotation = zQuaternion.identity,
-                Scale = zVector3.one
+                Scale = zVector3.one,
+
+                FutureTick = 0,
+                FuturePosition = zVector3.zero,
+                FutureRotation = zQuaternion.xPositive,
+                LastPosition = zVector3.zero,
+                LastRotation = zQuaternion.xPositive,
             });
 
             // 3. 添加Unit组件（根据类型）

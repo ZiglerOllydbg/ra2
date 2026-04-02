@@ -738,7 +738,7 @@ namespace ZLockstep.Flow
                     
                     // 使用 Lerp 插值计算当前位置（在 LastPosition 和 FuturePosition 之间）
                     transform.Position = zVector3.Lerp(transform.LastPosition, transform.FuturePosition, t);
-                    
+
                     // 使用 Lerp 插值计算当前旋转
                     transform.Rotation = zQuaternion.Lerp(transform.LastRotation, transform.FutureRotation, t);
                     
@@ -969,6 +969,12 @@ namespace ZLockstep.Flow
             zfloat x = zfloat.CreateFloat((long)(pos.x() * 10000));
             zfloat y = zfloat.CreateFloat((long)(pos.y() * 10000));
             zVector2 newV2Pos = new(x, y);
+
+            if (!ComponentManager.HasComponent<TransformComponent>(entity))
+            {
+                zUDebug.LogError("[RVO] 实体 {entityId} 没有 TransformComponent");
+                return;
+            }
 
             // 同步位置和旋转到 TransformComponent（无论是否移动都要同步位置）
             var transform = ComponentManager.GetComponent<TransformComponent>(entity);
