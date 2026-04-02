@@ -206,7 +206,7 @@ public class Ra2Demo : MonoBehaviour
             {
                 ApiKey = "phc_MCpygzl60lEcEwRKwIo2H7D5iVu6vtB7kHrtJCMgvEw",
                 Host = "https://us.i.posthog.com",
-                LogLevel = PostHogLogLevel.Debug, // Set to Warning or Error in production
+                LogLevel = PostHogLogLevel.Info, // Set to Warning or Error in production
             }
         );
 
@@ -338,14 +338,15 @@ public class Ra2Demo : MonoBehaviour
     private void OnPress(InputAction.CallbackContext context)
     {
         // 将事件加入队列而非直接设置状态
-        inputEventQueue.Enqueue(new InputEvent
+        var pressEvent = new InputEvent
         {
             State = InputActionState.PressStarted,
             Position = GetCurrentInputPosition(),
             Timestamp = Time.time
-        });
-        
-        zUDebug.Log($"[Ra2Demo] OnPress - 加入队列");
+        };
+        inputEventQueue.Enqueue(pressEvent);
+
+        zUDebug.Log($"[Ra2Demo] OnPress - 添加事件： {pressEvent}");
     }
 
     private void OnDrag(InputAction.CallbackContext context)
@@ -354,22 +355,23 @@ public class Ra2Demo : MonoBehaviour
         inputEventQueue.Enqueue(new InputEvent
         {
             State = InputActionState.Dragging,
-            Position = context.ReadValue<Vector2>(),
+            Position = GetCurrentInputPosition(),
             Timestamp = Time.time
         });
     }
 
     private void OnRelease(InputAction.CallbackContext context)
     {
-        zUDebug.Log($"[Ra2Demo] OnRelease - 加入队列");
-        
-        // 将事件加入队列而非直接设置状态
-        inputEventQueue.Enqueue(new InputEvent
+        var releaseEvent = new InputEvent
         {
             State = InputActionState.ReleasePerformed,
             Position = GetCurrentInputPosition(),
             Timestamp = Time.time
-        });
+        };
+        // 将事件加入队列而非直接设置状态
+        inputEventQueue.Enqueue(releaseEvent);
+
+        zUDebug.Log($"[Ra2Demo] OnRelease - 添加事件：{releaseEvent}");
     }
 
     /// <summary>
@@ -706,10 +708,7 @@ public class Ra2Demo : MonoBehaviour
         if (Touchscreen.current != null && Touchscreen.current.primaryTouch.IsActuated())
         {
             var touch = Touchscreen.current.primaryTouch;
-            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Began || touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Ended)
-            {
-                return touch.position.ReadValue();
-            }
+            return touch.position.ReadValue();
         }
         
         // 备用方案：如果上述都失败，使用最后已知位置
