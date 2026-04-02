@@ -70,13 +70,15 @@ public class LoginPanel : BasePanel
         zUDebug.Log("[LoginPanel] 面板已隐藏");
     }
     
+    private const string NICKNAME_PREF_KEY = "GuestNickname";
+
     // Login 按钮点击处理方法
     private void OnLoginButtonClick()
     {
         zUDebug.Log("[LoginPanel] 登录按钮被点击");
-        
+
         // TODO: 实现登录逻辑
-        // 示例：触发登录事件或调用登录接口 
+        // 示例：触发登录事件或调用登录接口
 #if UNITY_WEBGL
         // 微信环境登录（非安卓平台）
         LoginWX loginWX = Object.FindObjectOfType<LoginWX>();
@@ -84,17 +86,37 @@ public class LoginPanel : BasePanel
         {
             loginWX.LoaderWXMess();
         }
-        else 
+        else
         {
             zUDebug.LogError("[MatchPanel] 未找到 LoginWX 组件");
         }
 #else
-        string nickName = "测试用户";
+        string nickName = GetOrCreateGuestNickname();
         string avatarUrl = "https://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTLXlC8Ynp4rPicm4icSMDic9cXJzfS4abSzRdWMraKrO8o6kiap7EsjPEXL8jiaPphXoOmLKr5QPWDMNBQ/132";
 
         Frame.DispatchEvent(new LoginEvent(nickName, avatarUrl));
 #endif
 
+    }
+
+    /// <summary>
+    /// 获取或创建游客昵称（持久化保存）
+    /// </summary>
+    private string GetOrCreateGuestNickname()
+    {
+        string savedNickname = PlayerPrefs.GetString(NICKNAME_PREF_KEY, "");
+        if (!string.IsNullOrEmpty(savedNickname))
+        {
+            return savedNickname;
+        }
+
+        // 生成"游客"+4位随机数字
+        int randomNumber = Random.Range(1000, 10000);
+        string newNickname = $"游客{randomNumber}";
+        PlayerPrefs.SetString(NICKNAME_PREF_KEY, newNickname);
+        PlayerPrefs.Save();
+        zUDebug.LogInfo($"[LoginPanel] 生成新游客昵称: {newNickname}");
+        return newNickname;
     }
     
     /// <summary>
