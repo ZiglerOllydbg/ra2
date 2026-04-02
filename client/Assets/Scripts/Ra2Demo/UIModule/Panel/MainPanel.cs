@@ -89,7 +89,7 @@ public class MainPanel : BasePanel
 
     // 快捷生产刷新定时器
     private int fastProductionRefreshTimerId = 0;
-    private const float FAST_PRODUCTION_REFRESH_INTERVAL = 0.1f;
+    private const float FAST_PRODUCTION_REFRESH_INTERVAL = 1f;
 
     public MainPanel(IDispathMessage _processor, UIModelData _modelData, DisableNew _disableNew) 
         : base(_processor, _modelData, _disableNew)
