@@ -58,6 +58,7 @@ jobs:
           androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
           buildName: RA
           unityVersion: 2022.3.17
+          scenes: Assets/Scenes/Ra2Demo
 
       # 上传到蒲公英
       - name: 上传到蒲公英
