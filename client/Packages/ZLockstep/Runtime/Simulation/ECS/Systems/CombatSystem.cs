@@ -259,6 +259,10 @@ namespace ZLockstep.Simulation.ECS.Systems
                 // 更新攻击者朝向（朝向主目标）
                 zVector3 toMainTarget = mainTargetTransform.Position - transform.Position;
                 transform.Rotation = zQuaternion.LookRotation(toMainTarget.normalized);
+                transform.FutureRotation = zQuaternion.LookRotation(toMainTarget.normalized);
+                transform.FutureTick = 0;
+                transform.LastRotation = transform.Rotation;
+
                 ComponentManager.AddComponent(entity, transform);
                 
                 // 播放音效标记
