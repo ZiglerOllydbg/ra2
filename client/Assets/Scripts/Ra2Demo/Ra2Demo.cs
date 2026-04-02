@@ -309,6 +309,8 @@ public class Ra2Demo : MonoBehaviour
     // 双指缩放相关字段
     private bool isPinching = false; // 是否正在双指缩放
     private float lastPinchDistance = 0f; // 上一帧双指距离
+    private int pinchCooldownFrames = 0; // 缩放结束后的冷却帧数
+    private const int PINCH_COOLDOWN = 5; // 冷却帧数，防止双指切换时误触发单指操作
 
     // 相机缩放限制
     private const float MIN_ORTHOGRAPHIC_SIZE = 5f;  // 最小缩放
@@ -869,12 +871,25 @@ public class Ra2Demo : MonoBehaviour
         {
             if (isPinching)
             {
+                // 不立即重置，启动冷却计数
                 isPinching = false;
                 lastPinchDistance = 0f;
-                zUDebug.Log("[Ra2Demo] 双指缩放结束");
+                pinchCooldownFrames = PINCH_COOLDOWN;
+                zUDebug.Log("[Ra2Demo] 双指缩放结束，进入冷却");
             }
+
+            // 冷却期间仍阻止单指操作，防止误触
+            if (pinchCooldownFrames > 0)
+            {
+                pinchCooldownFrames--;
+                return true;
+            }
+
             return false;
         }
+
+        // 双指触摸存在，重置冷却
+        pinchCooldownFrames = 0;
 
         // 计算双指距离
         float currentDistance = Vector2.Distance(
