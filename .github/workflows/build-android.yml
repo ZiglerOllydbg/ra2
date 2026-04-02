@@ -29,15 +29,6 @@ jobs:
             Library-Android-
             Library-
 
-      - name: Update ProjectVersion.txt
-        run: |
-          cat > client/ProjectSettings/ProjectVersion.txt << EOF
-          m_EditorVersion: 2022.3.17f1
-          m_EditorVersionWithRevision: 2022.3.17f1 (4fc78088f837)
-          EOF
-          echo 'Updated Unity version info:'
-          cat client/ProjectSettings/ProjectVersion.txt
-
       - name: Build Unity project (Android)
         uses: game-ci/unity-builder@v4
         env:
@@ -47,7 +38,7 @@ jobs:
         with:
           targetPlatform: Android
           projectPath: client
-          androidAppBundle: false
+          androidExportType: androidPackage
           androidKeystoreName: user.keystore
           androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
@@ -55,7 +46,6 @@ jobs:
           androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
           buildName: RA
           unityVersion: 2022.3.17f1
-          scenes: Assets/Scenes/Ra2Demo
 
       - name: Upload to Pgyer
         run: |
