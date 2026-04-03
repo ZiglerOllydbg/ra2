@@ -81,7 +81,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                         // 单目标伤害（保持原有逻辑）
                         if (proj.TargetEntityId >= 0)
                         {
-                            DealDamage(proj.TargetEntityId, proj.Damage);
+                            DealDamage(proj.SourceEntityId, proj.TargetEntityId, proj.Damage);
                         }
                     }
 
@@ -123,8 +123,9 @@ namespace ZLockstep.Simulation.ECS.Systems
         /// <summary>
         /// 对目标造成伤害（单目标）
         /// </summary>
-        private void DealDamage(int targetEntityId, zfloat damage)
+        private void DealDamage(int sourceEntityId, int targetEntityId, zfloat damage)
         {
+            Entity source = new Entity(sourceEntityId);
             Entity target = new Entity(targetEntityId);
 
             if (!ComponentManager.HasComponent<HealthComponent>(target))
@@ -143,9 +144,14 @@ namespace ZLockstep.Simulation.ECS.Systems
             }
 
             zfloat finalDamage = damage - new zfloat(def);
+            if (finalDamage < zfloat.Zero)
+                finalDamage = zfloat.Zero;
+
+            int restraintRatio = GetRestraintRatio(sourceEntityId, targetEntityId);
+            finalDamage = finalDamage * new zfloat(restraintRatio) / new zfloat(10000);
 
             var health = ComponentManager.GetComponent<HealthComponent>(target);
-            health.TakeDamage(damage, World.TimeManager.Tick); // 使用 TakeDamage 方法并传入当前 tick
+            health.TakeDamage(finalDamage, World.TimeManager.Tick); // 使用 TakeDamage 方法并传入当前 tick
 
             // 写回生命值组件（由 HealthSystem 统一处理死亡检测）
             ComponentManager.AddComponent(target, health);
@@ -186,7 +192,36 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 4. 对每个目标造成伤害
             foreach (var target in targets)
             {
-                DealDamage(target.EntityId, actualDamage);
+                DealDamage(proj.SourceEntityId, target.EntityId, actualDamage);
+            }
+        }
+
+        private int GetRestraintRatio(int sourceEntityId, int targetEntityId)
+        {
+            const int defaultRatio = 10000;
+
+            Entity source = new Entity(sourceEntityId);
+            Entity target = new Entity(targetEntityId);
+
+            if (!ComponentManager.HasComponent<UnitComponent>(source) || !ComponentManager.HasComponent<UnitComponent>(target))
+                return defaultRatio;
+
+            var sourceUnit = ComponentManager.GetComponent<UnitComponent>(source);
+            var targetUnit = ComponentManager.GetComponent<UnitComponent>(target);
+            ConfRestraint confRestraint = ConfigManager.Get<ConfRestraint>((int)sourceUnit.UnitType);
+            if (confRestraint == null)
+                return defaultRatio;
+
+            switch (targetUnit.UnitType)
+            {
+                case UnitType.Infantry:
+                    return confRestraint.Infantry;
+                case UnitType.badgerTank:
+                    return confRestraint.BadgerTank;
+                case UnitType.grizzlyTank:
+                    return confRestraint.GrizzlyTank;
+                default:
+                    return defaultRatio;
             }
         }
 

@@ -56,5 +56,19 @@ public class ConfProjectile
 	public string Note; // 备注
 }
 
+[Preserve]
+public class ConfRestraint
+{
+	public ConfRestraint() {}
+
+	[Preserve]
+	public const string JsonFileName = "Unit";
+	public int ID; // 编号
+	public string Name; // 类型
+	public int Infantry; // 大兵
+	public int BadgerTank; // 獾式坦克
+	public int GrizzlyTank; // 灰熊坦克
+}
+
 
 // End of Auto Generated Code

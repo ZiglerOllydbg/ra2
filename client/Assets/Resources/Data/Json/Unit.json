@@ -5,13 +5,13 @@
       "Type": 1,
       "Prefab": "Infantry",
       "Icon": "images/Infantry",
-      "Hp": 300,
+      "Hp": 120,
       "AutoHeal": 100,
       "Atk": 1,
-      "Def": 10,
+      "Def": 0,
       "AtkRange": 10,
       "ProjectileID": 1,
-      "AtkInterval": 5000,
+      "AtkInterval": 10000,
       "AtkCount": 1,
       "Scale": 10000,
       "Radius": 10000,
@@ -26,19 +26,19 @@
       "Type": 2,
       "Prefab": "BadgerTank",
       "Icon": "images/BadgerTank",
-      "Hp": 2000,
+      "Hp": 250,
       "AutoHeal": 100,
       "Atk": 3,
-      "Def": 20,
+      "Def": 0,
       "AtkRange": 10,
       "ProjectileID": 2,
-      "AtkInterval": 5000,
+      "AtkInterval": 12000,
       "AtkCount": 1,
       "Scale": 8000,
       "Radius": 15000,
       "Speed": 60000,
       "CostMoney": 300,
-      "ProduceTime": 80,
+      "ProduceTime": 50,
       "Name": "獾式坦克",
       "Description": "范围攻击，适合快速消灭士兵"
     },
@@ -47,19 +47,19 @@
       "Type": 3,
       "Prefab": "GrizzlyTank",
       "Icon": "images/GrizzlyTank",
-      "Hp": 3000,
+      "Hp": 600,
       "AutoHeal": 100,
       "Atk": 7,
-      "Def": 20,
+      "Def": 0,
       "AtkRange": 15,
       "ProjectileID": 3,
-      "AtkInterval": 20000,
+      "AtkInterval": 15000,
       "AtkCount": 1,
       "Scale": 10000,
       "Radius": 20000,
       "Speed": 50000,
       "CostMoney": 500,
-      "ProduceTime": 100,
+      "ProduceTime": 80,
       "Name": "灰熊坦克",
       "Description": "价格高昂，攻击极高，适合攻击獾式坦克和建筑"
     }
@@ -74,7 +74,7 @@
       "DamageRadius": 0,
       "MaxDamageTargets": 1,
       "ShareDamage": 0,
-      "Damage": 50,
+      "Damage": 40,
       "Prefab": "Bullet",
       "AudioClip": "infantry_200ms",
       "Note": "步枪子弹"
@@ -88,7 +88,7 @@
       "DamageRadius": 30000,
       "MaxDamageTargets": 8,
       "ShareDamage": 0,
-      "Damage": 100,
+      "Damage": 60,
       "Prefab": "Cartridge",
       "AudioClip": "badger_tank_200ms",
       "Note": "（獾式坦克）机枪子弹"
@@ -102,7 +102,7 @@
       "DamageRadius": 0,
       "MaxDamageTargets": 1,
       "ShareDamage": 0,
-      "Damage": 200,
+      "Damage": 80,
       "Prefab": "Shell",
       "AudioClip": "grizzly_tank_1000ms",
       "Note": "炮弹"
@@ -120,6 +120,29 @@
       "Prefab": "Bullet",
       "AudioClip": "badger_tank_200ms",
       "Note": "碉堡机枪子弹"
+    }
+  },
+  "ConfRestraint": {
+    "1": {
+      "ID": 1,
+      "Name": "大兵",
+      "Infantry": 10000,
+      "BadgerTank": 4000,
+      "GrizzlyTank": 16000
+    },
+    "2": {
+      "ID": 2,
+      "Name": "獾式坦克",
+      "Infantry": 20000,
+      "BadgerTank": 10000,
+      "GrizzlyTank": 7000
+    },
+    "3": {
+      "ID": 3,
+      "Name": "灰熊坦克",
+      "Infantry": 9000,
+      "BadgerTank": 15000,
+      "GrizzlyTank": 10000
     }
   }
 }
