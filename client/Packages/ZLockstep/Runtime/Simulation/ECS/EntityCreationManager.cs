@@ -282,7 +282,8 @@ namespace ZLockstep.Simulation.ECS
             var attackComponent = new AttackComponent
             {
                 ConfProjectileID = confUnit.ProjectileID,
-                Range = (zfloat)confUnit.AtkRange,
+                Range = new zfloat(confUnit.AtkRange),
+                WarningRange = new zfloat(confUnit.WarningRange),
                 AttackInterval = zfloat.CreateFloat(confUnit.AtkInterval),
                 MaxTargets = confUnit.AtkCount,
                 TimeSinceLastAttack = zfloat.Zero,
@@ -382,7 +383,8 @@ namespace ZLockstep.Simulation.ECS
                 {
                     MaxTargets = confBuilding.AtkCount,
                     ConfProjectileID = confBuilding.ProjectileID,
-                    Range = new zfloat(confBuilding.AtkRange, 0),
+                    Range = new zfloat(confBuilding.AtkRange),
+                    WarningRange = new zfloat(confBuilding.AtkRange),
                     AttackInterval = zfloat.CreateFloat(confBuilding.AtkInterval),
                     TimeSinceLastAttack = zfloat.Zero,
                     TargetEntityId = -1

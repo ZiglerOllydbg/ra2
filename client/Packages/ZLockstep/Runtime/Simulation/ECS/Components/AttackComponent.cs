@@ -12,9 +12,14 @@ namespace ZLockstep.Simulation.ECS.Components
         public int MaxTargets;
 
         /// <summary>
+        /// 预警范围（进入此范围锁定目标）
+        /// </summary>
+        public zfloat WarningRange { get; set; }
+
+        /// <summary>
         /// 攻击范围
         /// </summary>
-        public zfloat Range;
+        public zfloat Range { get; set; }
 
         /// <summary>
         /// 子弹 ID

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
 using ZLockstep.View;
@@ -321,8 +322,9 @@ public class Ra2Demo : MonoBehaviour
     private const int PINCH_COOLDOWN = 5; // 冷却帧数，防止双指切换时误触发单指操作
 
     // 相机缩放限制
-    private const float MIN_ORTHOGRAPHIC_SIZE = 5f;  // 最小缩放
+    private const float MIN_ORTHOGRAPHIC_SIZE = 10f;  // 最小缩放
     private const float MAX_ORTHOGRAPHIC_SIZE = 30f; // 最大缩放
+    private const float PINCH_DISTANCE_EPSILON = 0.1f;
     private const float PINCH_ZOOM_SPEED = 0.01f;    // 缩放灵敏度
     
     // 选择相关字段
@@ -889,7 +891,7 @@ public class Ra2Demo : MonoBehaviour
         var touches = Touchscreen.current.touches;
 
         // 收集活跃的触摸点
-        List<Vector2> activeTouchPositions = new();
+        List<TouchControl> activeTouches = new();
         foreach (var touch in touches)
         {
             var phase = touch.phase.ReadValue();
@@ -897,14 +899,14 @@ public class Ra2Demo : MonoBehaviour
                 phase != UnityEngine.InputSystem.TouchPhase.Ended &&
                 phase != UnityEngine.InputSystem.TouchPhase.Canceled)
             {
-                activeTouchPositions.Add(touch.position.ReadValue());
-                if (activeTouchPositions.Count >= 2)
+                activeTouches.Add(touch);
+                if (activeTouches.Count >= 2)
                     break;
             }
         }
 
         // 不是双指触摸
-        if (activeTouchPositions.Count < 2)
+        if (activeTouches.Count < 2)
         {
             if (isPinching)
             {
@@ -929,10 +931,9 @@ public class Ra2Demo : MonoBehaviour
         pinchCooldownFrames = 0;
 
         // 计算双指距离
-        float currentDistance = Vector2.Distance(
-            activeTouchPositions[0],
-            activeTouchPositions[1]
-        );
+        Vector2 firstPosition = activeTouches[0].position.ReadValue();
+        Vector2 secondPosition = activeTouches[1].position.ReadValue();
+        float currentDistance = Vector2.Distance(firstPosition, secondPosition);
 
         // 开始双指缩放
         if (!isPinching)
@@ -944,6 +945,22 @@ public class Ra2Demo : MonoBehaviour
         }
 
         // 计算缩放比例
+        bool touchesMoved =
+            activeTouches[0].delta.ReadValue().sqrMagnitude > 0f ||
+            activeTouches[1].delta.ReadValue().sqrMagnitude > 0f;
+        if (!touchesMoved)
+        {
+            lastPinchDistance = currentDistance;
+            return true;
+        }
+
+        float distanceDelta = currentDistance - lastPinchDistance;
+        if (Mathf.Abs(distanceDelta) <= PINCH_DISTANCE_EPSILON)
+        {
+            lastPinchDistance = currentDistance;
+            return true;
+        }
+
         if (lastPinchDistance > 0 && currentDistance > 0)
         {
             float scaleFactor = lastPinchDistance / currentDistance;

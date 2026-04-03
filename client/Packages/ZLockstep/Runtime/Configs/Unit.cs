@@ -22,6 +22,7 @@ public class ConfUnit
 	public int AutoHeal; // 自动回血万分比
 	public int Atk; // 攻击
 	public int Def; // 防御
+	public int WarningRange; // 预警范围
 	public int AtkRange; // 攻击范围
 	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
 	public int AtkInterval; // 攻击频率10000=1秒
