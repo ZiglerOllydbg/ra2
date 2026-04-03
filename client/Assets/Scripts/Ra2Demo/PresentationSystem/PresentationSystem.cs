@@ -145,7 +145,7 @@ namespace ZLockstep.View.Systems
                 // 触发死亡动画
                 if (viewComponent.Animator != null)
                 {
-                    viewComponent.Animator.SetTrigger("Death");
+                    TrySetTrigger(viewComponent.Animator, "Death");
                 }
                 else
                 {
@@ -627,7 +627,7 @@ namespace ZLockstep.View.Systems
                 float speed = velocity.SqrMagnitude.ToFloat();
 
                 // view.Animator.SetBool("Move", isMoving);
-                view.Animator.SetInteger("speed", (int)speed);
+                TrySetInteger(view.Animator, "speed", (int)speed);
             }
 
             // 根据生命值设置死亡动画
@@ -636,7 +636,7 @@ namespace ZLockstep.View.Systems
                 var health = ComponentManager.GetComponent<HealthComponent>(entity);
                 if (health.IsDead)
                 {
-                    view.Animator.SetTrigger("Death");
+                    TrySetTrigger(view.Animator, "Death");
                 }
             }
 
@@ -646,13 +646,45 @@ namespace ZLockstep.View.Systems
                 var attack = ComponentManager.GetComponent<AttackComponent>(entity);
                 if (attack.HasTarget)
                 {
-                    view.Animator.SetTrigger("Fire");
+                    TrySetTrigger(view.Animator, "Fire");
                 }
                 else
                 {
                     // view.Animator.SetBool("Fire", false);
                 }
             }
+        }
+
+        private static bool HasAnimatorParameter(Animator animator, string parameterName, AnimatorControllerParameterType parameterType)
+        {
+            if (animator == null || string.IsNullOrEmpty(parameterName))
+                return false;
+
+            foreach (var parameter in animator.parameters)
+            {
+                if (parameter.type == parameterType && parameter.name == parameterName)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool TrySetTrigger(Animator animator, string triggerName)
+        {
+            if (!HasAnimatorParameter(animator, triggerName, AnimatorControllerParameterType.Trigger))
+                return false;
+
+            animator.SetTrigger(triggerName);
+            return true;
+        }
+
+        private static bool TrySetInteger(Animator animator, string parameterName, int value)
+        {
+            if (!HasAnimatorParameter(animator, parameterName, AnimatorControllerParameterType.Int))
+                return false;
+
+            animator.SetInteger(parameterName, value);
+            return true;
         }
 
         /// <summary>
