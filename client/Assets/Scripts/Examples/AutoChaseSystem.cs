@@ -29,7 +29,7 @@ namespace Game.Examples
         /// <summary>
         /// 重新评估目标的间隔（秒）
         /// </summary>
-        private zfloat _evaluationInterval = new zfloat(1);
+        private zfloat _evaluationInterval = zfloat.CreateFloat(5000);
 
         /// <summary>
         /// 距离上次评估的时间

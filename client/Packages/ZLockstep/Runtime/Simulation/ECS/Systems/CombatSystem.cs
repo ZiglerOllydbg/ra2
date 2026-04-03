@@ -139,7 +139,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             attack.TimeSinceLastAttack += DeltaTime;
             
             // 每次都搜索多个目标
-            List<int> targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.Range, attack.MaxTargets);
+            List<int> targetIds = FindMultipleTargets(entity, camp, transform.Position, attack.WarningRange, attack.MaxTargets);
             
             if (targetIds.Count == 0)
             {
@@ -180,7 +180,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 如果当前目标是建筑，则检查附近是否有非建筑目标可以优先攻击
             if (ComponentManager.HasComponent<BuildingComponent>(mainTarget))
             {
-                int priorityTargetId = FindNearestNonBuildingEnemyKDTree(entity, camp, transform.Position, attack.Range);
+                int priorityTargetId = FindNearestNonBuildingEnemyKDTree(entity, camp, transform.Position, attack.WarningRange);
                 if (priorityTargetId >= 0)
                 {
                     // 存在可优先攻击的非建筑目标，切换目标
@@ -321,11 +321,24 @@ namespace ZLockstep.Simulation.ECS.Systems
             var neighbors = SpatialIndex.Instance.RadialSearch(
                 position, 
                 searchRadius, 
-                maxTargets, 
+                -1, 
                 neighbor => IsValidTarget(neighbor, self.Id, selfCamp, position, range, rangeSqr)
             );
             
-            return neighbors.Select(n => n.EntityId).ToList();
+            neighbors.Sort((left, right) =>
+            {
+                zfloat leftDistance = CalculateTargetDistanceSqr(new Entity(left.EntityId), position);
+                zfloat rightDistance = CalculateTargetDistanceSqr(new Entity(right.EntityId), position);
+
+                if (leftDistance < rightDistance) return -1;
+                if (leftDistance > rightDistance) return 1;
+                return 0;
+            });
+
+            return neighbors
+                .Take(maxTargets)
+                .Select(neighbor => neighbor.EntityId)
+                .ToList();
         }
 
         /// <summary>
@@ -379,6 +392,24 @@ namespace ZLockstep.Simulation.ECS.Systems
 
         /// <summary>
         /// 使用 KD-tree 搜索最近的非建筑敌方单位
+        /// </summary>
+        // Reuse the same effective distance rule for target selection and buildings.
+        private zfloat CalculateTargetDistanceSqr(Entity target, zVector3 position)
+        {
+            var otherTransform = ComponentManager.GetComponent<TransformComponent>(target);
+
+            if (ComponentManager.HasComponent<BuildingComponent>(target))
+            {
+                var building = ComponentManager.GetComponent<BuildingComponent>(target);
+                zVector2 boundaryPoint = BuildingBoundaryUtils.CalculateBuildingBoundaryPoint(position, building, World);
+                return (new zVector3(boundaryPoint.x, position.y, boundaryPoint.y) - position).sqrMagnitude;
+            }
+
+            return (otherTransform.Position - position).sqrMagnitude;
+        }
+
+        /// <summary>
+        /// 浣跨敤 KD-tree 鎼滅储鏈€杩戠殑闈炲缓绛戞晫鏂瑰崟浣?
         /// </summary>
         private int FindNearestNonBuildingEnemyKDTree(Entity self, CampComponent selfCamp, zVector3 position, zfloat range)
         {
