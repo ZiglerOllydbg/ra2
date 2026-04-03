@@ -278,7 +278,7 @@ namespace ZLockstep.Simulation.ECS.Systems.AI
             var neighbors = SpatialIndex.Instance.RadialSearch(
                 position, 
                 (float)_detectionRange, 
-                -1, // 不限制数量
+                3, // 不限制数量
                 neighbor => IsValidPlayerTarget(neighbor, position)
             );
             

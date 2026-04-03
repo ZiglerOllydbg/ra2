@@ -158,7 +158,7 @@ namespace Game.Examples
                                     }
                                 }
                             }
-                            else if (currentDistance < attack.Range * zfloat.FromFloat(0.8f))
+                            else if (currentDistance < attack.Range * zfloat.FromFloat(0.5f))
                             {
                                 // 目标在攻击范围内，清除移动目标（如果有的话）
                                 if (ComponentManager.HasComponent<MoveTargetComponent>(entity))
@@ -228,7 +228,7 @@ namespace Game.Examples
                     if (distSqr < minDistSqr)
                     {
                         minDistSqr = distSqr;
-                        nearestEnemyId = entityId;
+                        nearestEnemyId = neighbor.EntityId;
                     }
                 }
 
