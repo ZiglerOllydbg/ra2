@@ -74,17 +74,17 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查是否是增加生产命令（ChangeValue > 0）
             if (ChangeValue > 0)
             {
-                // 检查资金是否足够
+                // 检查金币是否足够
                 if (!CheckAndDeductProductionCost(world, campComponent.CampId, ChangeValue))
                 {
-                    zUDebug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 资金不足，无法生产单位 {UnitType}");
+                    zUDebug.Log($"[ProduceCommand] 阵营 {campComponent.CampId} 金币不足，无法生产单位 {UnitType}");
                     return;
                 }
             }
             // 如果是减少生产命令（ChangeValue < 0）并且生产数量确实减少了
             else if (ChangeValue < 0 && newNumber < currentNumber)
             {
-                // 返还资金
+                // 返还金币
                 RefundProductionCost(world, campComponent.CampId, -ChangeValue);
             }
 
@@ -92,7 +92,7 @@ namespace ZLockstep.Sync.Command.Commands
             if (!produceComponent.SupportedUnitTypes.Contains(UnitType))
             {
                 zUDebug.LogWarning($"[ProduceCommand] 实体 {EntityId} 不支持生产单位类型 {UnitType}");
-                // 如果不支持生产，且之前扣除了资金，需要返还资金
+                // 如果不支持生产，且之前扣除了金币，需要返还金币
                 if (ChangeValue > 0)
                 {
                     RefundProductionCost(world, campComponent.CampId, ChangeValue);
@@ -113,7 +113,7 @@ namespace ZLockstep.Sync.Command.Commands
             else
             {
                 UnityEngine.Debug.LogWarning($"[ProduceCommand] 实体 {EntityId} 的生产组件中未找到单位类型 {UnitType}");
-                // 如果未找到单位类型，且之前扣除了资金，需要返还资金
+                // 如果未找到单位类型，且之前扣除了金币，需要返还金币
                 if (ChangeValue > 0)
                 {
                     RefundProductionCost(world, campComponent.CampId, ChangeValue);
@@ -155,7 +155,7 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查是否有足够的资源
             if (economyComponent.Money < costMoney)
             {
-                zUDebug.Log($"[ProduceCommand] 资金不足。需要：{costMoney}, 当前：{economyComponent.Money}");
+                zUDebug.Log($"[ProduceCommand] 金币不足。需要：{costMoney}, 当前：{economyComponent.Money}");
                 return false;
             }
             
@@ -164,19 +164,19 @@ namespace ZLockstep.Sync.Command.Commands
             economyComponent.Money -= costMoney;
             int newMoney = economyComponent.Money;
             
-            // 触发资金变化事件
+            // 触发金币变化事件
             world.EventManager.Publish(new MoneyChangedEvent
             {
                 CampId = campId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = $"生产单位消耗资金 x{quantity}"
+                Reason = $"生产单位消耗金币 x{quantity}"
             });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            zUDebug.Log($"[ProduceCommand] 扣除资源成功。花费资金：{costMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[ProduceCommand] 扣除资源成功。花费金币：{costMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余金币：{economyComponent.Money}");
             return true;
         }
 
@@ -214,19 +214,19 @@ namespace ZLockstep.Sync.Command.Commands
             economyComponent.Money += refundMoney;
             int newMoney = economyComponent.Money;
             
-            // 触发资金变化事件
+            // 触发金币变化事件
             world.EventManager.Publish(new MoneyChangedEvent
             {
                 CampId = campId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = $"取消生产单位返还资金 x{quantity}"
+                Reason = $"取消生产单位返还金币 x{quantity}"
             });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            zUDebug.Log($"[ProduceCommand] 返还资源成功。返还资金：{refundMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[ProduceCommand] 返还资源成功。返还金币：{refundMoney} (单价：{confUnit.CostMoney} x {quantity})。剩余金币：{economyComponent.Money}");
         }
 
         public override string ToString()

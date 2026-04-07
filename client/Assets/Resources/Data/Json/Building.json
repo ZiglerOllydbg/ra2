@@ -12,6 +12,7 @@
       "HpOffsetX": 0,
       "HpOffsetY": 140,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -37,6 +38,7 @@
       "HpOffsetX": 0,
       "HpOffsetY": 120,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -62,6 +64,7 @@
       "HpOffsetX": 0,
       "HpOffsetY": 120,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -73,7 +76,7 @@
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
       "Name": "资源回收站",
-      "Description": "通过回收战场残骸、处理废弃装备及协调后勤物流获取作战资金。可升级以提升资源转化效率，是经济运转的核心节点。"
+      "Description": "通过回收战场残骸、处理废弃装备及协调后勤物流获取作战金币。可升级以提升资源转化效率，是经济运转的核心节点。"
     },
     "4": {
       "ID": 4,
@@ -87,6 +90,7 @@
       "HpOffsetX": 0,
       "HpOffsetY": 120,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -98,7 +102,7 @@
       "CostPower": 0,
       "CreateUnitIDList": 0.0,
       "Name": "模块化动力阵列",
-      "Description": "提供基地所需能源的分布式发电系统，采用混合能源（柴油、燃料电池或小型燃气轮机）。若电力不足，高级建筑将无法运作或生产速度下降。"
+      "Description": "提供基地所需能源的分布式发电系统，采用混合能源（柴油、燃料电池或小型燃气轮机）。若能量不足，高级建筑将无法运作或生产速度下降。"
     },
     "5": {
       "ID": 5,
@@ -112,6 +116,7 @@
       "HpOffsetX": -5,
       "HpOffsetY": 120,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -137,6 +142,7 @@
       "HpOffsetX": -20,
       "HpOffsetY": 140,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -162,6 +168,7 @@
       "HpOffsetX": -20,
       "HpOffsetY": 140,
       "AutoHeal": 100,
+      "CanAttack": 0,
       "ProjectileID": 0,
       "AtkRange": 0,
       "AtkInterval": 0,
@@ -187,6 +194,7 @@
       "HpOffsetX": -5,
       "HpOffsetY": 80,
       "AutoHeal": 100,
+      "CanAttack": 1,
       "ProjectileID": 4,
       "AtkRange": 15,
       "AtkInterval": 5000,

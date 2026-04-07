@@ -68,7 +68,7 @@ namespace ZLockstep.Sync.Command.Commands
                 return;
             }
 
-            // 返还资金
+            // 返还金币
             RefundToPlayer(world, campComponent.CampId, refundAmount);
 
             // 销毁建筑实体
@@ -113,7 +113,7 @@ namespace ZLockstep.Sync.Command.Commands
         }
 
         /// <summary>
-        /// 返还资金给玩家
+        /// 返还金币给玩家
         /// </summary>
         private void RefundToPlayer(zWorld world, int campId, int amount)
         {
@@ -128,24 +128,24 @@ namespace ZLockstep.Sync.Command.Commands
                 return;
             }
             
-            // 返还资金
+            // 返还金币
             int oldMoney = economyComponent.Money;
             economyComponent.Money += amount;
             int newMoney = economyComponent.Money;
             
-            // 触发资金变化事件
+            // 触发金币变化事件
             world.EventManager.Publish(new MoneyChangedEvent
             {
                 CampId = campId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = $"售卖建筑返还资金"
+                Reason = $"售卖建筑返还金币"
             });
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            zUDebug.Log($"[SellStructureCommand] 返还资金成功。返还：{amount}, 剩余资金：{economyComponent.Money}");
+            zUDebug.Log($"[SellStructureCommand] 返还金币成功。返还：{amount}, 剩余金币：{economyComponent.Money}");
         }
 
         /// <summary>

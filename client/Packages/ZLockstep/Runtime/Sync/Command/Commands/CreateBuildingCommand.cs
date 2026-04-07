@@ -168,21 +168,21 @@ namespace ZLockstep.Sync.Command.Commands
             // 检查是否有足够的资源
             if (costMoney > 0 && economyComponent.Money < costMoney)
             {
-                zUDebug.Log($"[CreateBuildingCommand] 资金不足。需要: {costMoney}, 当前: {economyComponent.Money}");
+                zUDebug.Log($"[CreateBuildingCommand] 金币不足。需要: {costMoney}, 当前: {economyComponent.Money}");
 
                 world.EventManager.Publish(new MessageEvent
                 {
-                    Message = "资金不足！"
+                    Message = "金币不足！"
                 });
                 return false;
             }
 
             if (costPower > 0 && economyComponent.Power < costPower)
             {
-                zUDebug.Log($"[CreateBuildingCommand] 电力不足。需要: {costPower}, 当前: {economyComponent.Power}");
+                zUDebug.Log($"[CreateBuildingCommand] 能量不足。需要: {costPower}, 当前: {economyComponent.Power}");
                 world.EventManager.Publish(new MessageEvent
                 {
-                    Message = "电力不足！"
+                    Message = "能量不足！"
                 });
                 return false;
             }
@@ -192,37 +192,37 @@ namespace ZLockstep.Sync.Command.Commands
             economyComponent.Money -= costMoney;
             int newMoney = economyComponent.Money;
             
-            // 触发资金变化事件
+            // 触发金币变化事件
             world.EventManager.Publish(new MoneyChangedEvent
             {
                 CampId = CampId,
                 OldMoney = oldMoney,
                 NewMoney = newMoney,
-                Reason = "建造建筑消耗资金"
+                Reason = "建造建筑消耗金币"
             });
             
             if (costPower > 0)
             {
                 int oldPower = economyComponent.Power;
-                economyComponent.Power -= costPower; // 扣除电力供应
+                economyComponent.Power -= costPower; // 扣除能量供应
                 int newPower = economyComponent.Power;
                 
-                // 触发电力变化事件
+                // 触发能量变化事件
                 world.EventManager.Publish(new PowerChangedEvent
                 {
                     CampId = CampId,
                     OldPower = oldPower,
                     NewPower = newPower,
-                    Reason = "建造建筑消耗电力"
+                    Reason = "建造建筑消耗能量"
                 });
                 
-                zUDebug.Log($"[CreateBuildingCommand] 扣除电力成功。消耗电力: {costPower}。剩余电力: {economyComponent.Power}");
+                zUDebug.Log($"[CreateBuildingCommand] 扣除能量成功。消耗能量: {costPower}。剩余能量: {economyComponent.Power}");
             }
             
             // 更新经济组件
             world.ComponentManager.AddComponent(economyEntity, economyComponent);
             
-            zUDebug.Log($"[CreateBuildingCommand] 扣除资源成功。花费资金: {costMoney}, 获得电力: {costPower}。剩余资金: {economyComponent.Money}, 总电力: {economyComponent.Power}");
+            zUDebug.Log($"[CreateBuildingCommand] 扣除资源成功。花费金币: {costMoney}, 获得能量: {costPower}。剩余金币: {economyComponent.Money}, 总能量: {economyComponent.Power}");
             return true;
         }
 

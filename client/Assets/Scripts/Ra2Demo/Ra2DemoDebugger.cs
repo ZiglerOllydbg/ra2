@@ -623,7 +623,7 @@ public class Ra2DemoDebugger : MonoBehaviour
     }
 
     /// <summary>
-    /// 绘制单位统计信息（按阵营分组显示每种 Unit 类型的数量、金钱和电力）
+    /// 绘制单位统计信息（按阵营分组显示每种 Unit 类型的数量、金钱和能量）
     /// </summary>
     private void DrawUnitStatistics(BattleGame game, GUIStyle labelStyle)
     {
@@ -635,7 +635,7 @@ public class Ra2DemoDebugger : MonoBehaviour
         // 内层字典：UnitType -> 数量
         Dictionary<int, Dictionary<UnitType, int>> campUnitStats = new Dictionary<int, Dictionary<UnitType, int>>();
         
-        // 统计每个阵营的金钱和电力（通过 EconomyComponent + CampComponent 获取）
+        // 统计每个阵营的金钱和能量（通过 EconomyComponent + CampComponent 获取）
         Dictionary<int, EconomyComponent> campEconomyStats = new Dictionary<int, EconomyComponent>();
 
         // 1. 先获取所有带 EconomyComponent 的实体（数量较少），再获取对应的 CampComponent

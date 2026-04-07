@@ -22,7 +22,7 @@ public class MainPanel : BasePanel
 {
     // 货币显示文本
     private TMP_Text moneyText;
-    // 电力显示文本
+    // 能量显示文本
     private TMP_Text powerText;
     
     // 按钮引用
@@ -435,9 +435,9 @@ public class MainPanel : BasePanel
     }
 
     /// <summary>
-    /// 设置电力数值显示
+    /// 设置能量数值显示
     /// </summary>
-    /// <param name="power">当前电力</param>
+    /// <param name="power">当前能量</param>
     public void SetPower(int power)
     {
         if (powerText != null)
@@ -456,7 +456,7 @@ public class MainPanel : BasePanel
     }
 
     /// <summary>
-    /// 获取电力显示文本组件
+    /// 获取能量显示文本组件
     /// </summary>
     /// <returns>TMP_Text组件</returns>
     public TMP_Text GetPowerText()
@@ -474,7 +474,7 @@ public class MainPanel : BasePanel
     }
 
     /// <summary>
-    /// 设置电力显示文本组件
+    /// 设置能量显示文本组件
     /// </summary>
     /// <param name="text">TMP_Text组件</param>
     public void SetPowerText(TMP_Text text)

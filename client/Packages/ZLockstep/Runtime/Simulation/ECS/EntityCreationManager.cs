@@ -111,10 +111,6 @@ namespace ZLockstep.Simulation.ECS
             if (attackComponent.HasValue)
             {
                 world.ComponentManager.AddComponent(entity, attackComponent.Value);
-
-                // 添加旋转状态组件
-                var rotationState = RotationStateComponent.Create();
-                world.ComponentManager.AddComponent(entity, rotationState);
             }
 
             // 8. 更新地图：将建筑占据的格子标记为不可行走
@@ -381,7 +377,7 @@ namespace ZLockstep.Simulation.ECS
                 return null;
             }
 
-            if (confBuilding.Type == (int)BuildingType.Tower)
+            if (confBuilding.CanAttack > 0)
             {
                 return new AttackComponent
                 {

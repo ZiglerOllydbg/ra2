@@ -167,7 +167,7 @@ public class GMManager
         
         if (entity.Id != -1)
         {
-            // 找到玩家的经济组件，增加资金
+            // 找到玩家的经济组件，增加金币
             int oldMoney = economyComponent.Money;
             economyComponent.Money += amount;
             int newMoney = economyComponent.Money;
@@ -212,7 +212,7 @@ public class GMManager
         
         if (entity.Id != -1)
         {
-            // 找到玩家的经济组件，设置 GM 电力
+            // 找到玩家的经济组件，设置 GM 能量
             int oldPower = economyComponent.Power;
             int oldGMPower = economyComponent.GMPower;
             economyComponent.GMPower = powerAmount;

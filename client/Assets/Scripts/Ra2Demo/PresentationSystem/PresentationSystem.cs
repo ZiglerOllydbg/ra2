@@ -111,17 +111,17 @@ namespace ZLockstep.View.Systems
 
 
         /// <summary>
-        /// 处理经济变化事件（资金和电力变化）
+        /// 处理经济变化事件（金币和能量变化）
         /// </summary>
         private void ProcessEconomyEvents()
         {
-            // 处理资金变化事件
+            // 处理金币变化事件
             var moneyEvents = EventManager.GetEvents<MoneyChangedEvent>();
             foreach (var evt in moneyEvents)
             {
-                // 这里可以添加处理资金变化的逻辑
-                // 例如：更新UI上的资金显示
-                // Debug.Log($"[PresentationSystem] 阵营{evt.CampId}资金变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
+                // 这里可以添加处理金币变化的逻辑
+                // 例如：更新UI上的金币显示
+                // Debug.Log($"[PresentationSystem] 阵营{evt.CampId}金币变化: {evt.OldMoney} -> {evt.NewMoney} ({evt.Reason})");
                 Frame.DispatchEvent(new EconomyEvent());
             }
         }

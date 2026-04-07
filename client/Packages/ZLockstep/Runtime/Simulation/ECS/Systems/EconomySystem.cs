@@ -20,7 +20,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         public override void Update()
         {
             ProcessMining();
-            ProcessPower(); // 添加电力处理
+            ProcessPower(); // 添加能量处理
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                         ConfCamp confCamp = ConfigManager.Get<ConfCamp>(campId);
                         int addMoney = confCamp?.AddMoneyPerSecond ?? 0;
                         
-                        // 增加玩家资金
+                        // 增加玩家金币
                         AddResourceToPlayer(campId, addMoney);
                     }
                 }
@@ -72,7 +72,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
         
         /// <summary>
-        /// 处理电力系统逻辑
+        /// 处理能量系统逻辑
         /// </summary>
         private void ProcessPower()
         {
@@ -87,7 +87,7 @@ namespace ZLockstep.Simulation.ECS.Systems
                 campIds.Add(campComponent.CampId);
             }
             
-            // 为每个阵营计算电力
+            // 为每个阵营计算能量
             foreach (int campId in campIds)
             {
                 UpdateCampPower(campId);
@@ -95,7 +95,7 @@ namespace ZLockstep.Simulation.ECS.Systems
         }
         
         /// <summary>
-        /// 更新指定阵营的电力
+        /// 更新指定阵营的能量
         /// </summary>
         /// <param name="campId">阵营ID</param>
         private void UpdateCampPower(int campId)
@@ -134,32 +134,32 @@ namespace ZLockstep.Simulation.ECS.Systems
 
                 costPower += confBuilding.CostPower;
 
-                // 建筑完毕才能产生电力
+                // 建筑完毕才能产生能量
                 if (!ComponentManager.HasComponent<BuildingConstructionComponent>(buildingEntity))
                     producePower += confBuilding.ProducePower;
             }
 
             int totalPower = economyComponent.GMPower + confCamp.InitPower + producePower - costPower;
             
-            // 检查电力是否发生变化，如果变化则触发事件
+            // 检查能量是否发生变化，如果变化则触发事件
             if (economyComponent.Power != totalPower)
             {
                 int oldPower = economyComponent.Power;
-                // 更新电力值
+                // 更新能量值
                 economyComponent.Power = totalPower;
                 
-                // 触发电力变化事件
+                // 触发能量变化事件
                 World.EventManager.Publish(new PowerChangedEvent
                 {
                     CampId = campId,
                     OldPower = oldPower,
                     NewPower = totalPower,
-                    Reason = "建筑变更导致电力变化"
+                    Reason = "建筑变更导致能量变化"
                 });
                 
                 ComponentManager.AddComponent(economyEntity, economyComponent);
 
-                zUDebug.Log($"[EconomySystem] 阵营 {campId} 的电力已更新。消耗电力: {costPower}。生产电力: {producePower}。剩余电力: {economyComponent.Power}, 更新前电力: {oldPower}");
+                zUDebug.Log($"[EconomySystem] 阵营 {campId} 的能量已更新。消耗能量: {costPower}。生产能量: {producePower}。剩余能量: {economyComponent.Power}, 更新前能量: {oldPower}");
             }
         }
         
@@ -177,12 +177,12 @@ namespace ZLockstep.Simulation.ECS.Systems
             
             if (entity.Id != -1)
             {
-                // 找到玩家的经济组件，增加资金
+                // 找到玩家的经济组件，增加金币
                 int oldMoney = economyComponent.Money;
                 economyComponent.Money += amount;
                 int newMoney = economyComponent.Money;
                 
-                // 触发资金变化事件
+                // 触发金币变化事件
                 World.EventManager.Publish(new MoneyChangedEvent
                 {
                     CampId = campId,

@@ -3,11 +3,11 @@ using ZLockstep.Simulation.ECS.Components;
 public static class EcsUtils
 {
     /// <summary>
-    /// 获取本地玩家的经济信息（资金和电力）
+    /// 获取本地玩家的经济信息（金币和能量）
     /// </summary>
     /// <param name="game">游戏实例</param>
-    /// <param name="money">输出资金值</param>
-    /// <param name="power">输出电力值</param>
+    /// <param name="money">输出金币值</param>
+    /// <param name="power">输出能量值</param>
     /// <returns>是否成功获取经济信息</returns>
     public static bool GetLocalPlayerEconomy(ZLockstep.Sync.Game game, out int money, out int power)
     {

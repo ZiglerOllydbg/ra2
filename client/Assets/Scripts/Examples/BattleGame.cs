@@ -330,7 +330,7 @@ namespace Game.Examples
                 int initPower = confCamp?.InitPower ?? 10;
                 
                 // 添加经济组件（每个玩家一个全局实体）
-                var money = playerObj["money"]?.ToObject<int>() ?? 2200; // 默认2200资金
+                var money = playerObj["money"]?.ToObject<int>() ?? 2200; // 默认2200金币
                 var power = playerObj["power"]?.ToObject<int>() ?? initPower;
                 var economyEntity = World.EntityManager.CreateEntity();
                 World.ComponentManager.AddComponent(economyEntity, EconomyComponent.Create(money, power));

@@ -3,31 +3,31 @@ using System;
 namespace ZLockstep.Simulation.ECS.Components
 {
     /// <summary>
-    /// 经济组件，包含资金和电力资源
+    /// 经济组件，包含金币和能量资源
     /// </summary>
     [Serializable]
     public struct EconomyComponent : IComponent
     {
         /// <summary>
-        /// 资金
+        /// 金币
         /// </summary>
         public int Money;
 
         /// <summary>
-        /// 电力
+        /// 能量
         /// </summary>
         public int Power;
 
         /// <summary>
-        /// GM调试增加的电力
+        /// GM调试增加的能量
         /// </summary>
         public int GMPower;
 
         /// <summary>
         /// 构造函数
         /// </summary>
-        /// <param name="money">初始资金</param>
-        /// <param name="power">初始电力</param>
+        /// <param name="money">初始金币</param>
+        /// <param name="power">初始能量</param>
         public EconomyComponent(int money, int power)
         {
             Money = money;
@@ -36,10 +36,10 @@ namespace ZLockstep.Simulation.ECS.Components
         }
 
         /// <summary>
-        /// 创建指定资金和电力的经济组件
+        /// 创建指定金币和能量的经济组件
         /// </summary>
-        /// <param name="money">资金</param>
-        /// <param name="power">电力</param>
+        /// <param name="money">金币</param>
+        /// <param name="power">能量</param>
         /// <returns>经济组件</returns>
         public static EconomyComponent Create(int money, int power)
         {

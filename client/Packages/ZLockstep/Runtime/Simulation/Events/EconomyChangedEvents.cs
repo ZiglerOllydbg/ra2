@@ -3,8 +3,8 @@ using System;
 namespace ZLockstep.Simulation.Events
 {
     /// <summary>
-    /// 资金变化事件
-    /// 当玩家的资金发生变化时触发
+    /// 金币变化事件
+    /// 当玩家的金币发生变化时触发
     /// </summary>
     public struct MoneyChangedEvent : IEvent
     {
@@ -14,24 +14,24 @@ namespace ZLockstep.Simulation.Events
         public int CampId;
 
         /// <summary>
-        /// 变化前的资金值
+        /// 变化前的金币值
         /// </summary>
         public int OldMoney;
 
         /// <summary>
-        /// 变化后的资金值
+        /// 变化后的金币值
         /// </summary>
         public int NewMoney;
 
         /// <summary>
-        /// 资金变化的原因（可选）
+        /// 金币变化的原因（可选）
         /// </summary>
         public string Reason;
     }
 
     /// <summary>
-    /// 电力变化事件
-    /// 当玩家的电力发生变化时触发
+    /// 能量变化事件
+    /// 当玩家的能量发生变化时触发
     /// </summary>
     public struct PowerChangedEvent : IEvent
     {
@@ -41,17 +41,17 @@ namespace ZLockstep.Simulation.Events
         public int CampId;
 
         /// <summary>
-        /// 变化前的电力值
+        /// 变化前的能量值
         /// </summary>
         public int OldPower;
 
         /// <summary>
-        /// 变化后的电力值
+        /// 变化后的能量值
         /// </summary>
         public int NewPower;
 
         /// <summary>
-        /// 电力变化的原因（可选）
+        /// 能量变化的原因（可选）
         /// </summary>
         public string Reason;
     }

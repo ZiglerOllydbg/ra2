@@ -18,7 +18,7 @@ public class ConfCamp
 	public string BarracksPosition; // 生产出生点
 	public string VehicleFactoryPosition; // 生产出生点
 	public int InitMoney; // 初始金钱
-	public int InitPower; // 初始电力
+	public int InitPower; // 初始能量
 	public int AddMoneyPerSecond; // 每秒增加金钱
 	public int HealDelayTick; // 自动回血的冷却时间
 }

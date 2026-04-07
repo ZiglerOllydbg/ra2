@@ -25,6 +25,7 @@ public class ConfBuilding
 	public int HpOffsetX; // 血条X偏移
 	public int HpOffsetY; // 血条Y偏移
 	public int AutoHeal; // 自动回血万分比
+	public int CanAttack; // 是否可以攻击0=不攻击1=攻击
 	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
 	public int AtkRange; // 攻击范围
 	public int AtkInterval; // 攻击频率10000=1秒
@@ -32,7 +33,7 @@ public class ConfBuilding
 	public int Def; // 防御
 	public int ConstructionTime; // 建造时间（秒）
 	public int CostMoney; // 消耗金钱
-	public int ProducePower; // 增加电力
+	public int ProducePower; // 增加能量
 	public int CostPower; // 消耗电量
 	public string CreateUnitIDList; // 可以建造的单位列表
 	public string Name; // 名称
