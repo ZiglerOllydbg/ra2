@@ -85,7 +85,7 @@ namespace ZLockstep.Simulation.ECS
 
             // 2. 添加Transform组件
 
-            TransformComponent transform = TransformComponent.Create(position, zQuaternion.identity, zVector3.one);
+            TransformComponent transform = TransformComponent.Create(position, zQuaternion.identity, zVector3.one * zfloat.CreateFloat(confBuilding.Scale));
             world.ComponentManager.AddComponent(entity, transform);
 
             int x = (int)position.x;

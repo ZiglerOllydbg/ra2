@@ -19,6 +19,7 @@ public class ConfBuilding
 	public int Manual; // 手动建造
 	public string Prefab; // 资源prefab
 	public string BuildPrefab; // 建造模型
+	public int Scale; // 缩放比例万分比(10000=1)
 	public int Size; // 占地尺寸（直径）建议奇数
 	public int Hp; // 血量
 	public int HpOffsetX; // 血条X偏移
