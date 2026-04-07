@@ -27,7 +27,7 @@ public class ConfUnit
 	public int ProjectileID; // 子弹类型（指向ConfProjectile表）
 	public int AtkInterval; // 攻击频率10000=1秒
 	public int AtkCount; // 攻击目标数量
-	public int Scale; // 缩放比例10000=1
+	public int Scale; // 缩放比例万分比(10000=1)
 	public int Radius; // 半径10000=1米
 	public int Speed; // 移动速度10000=1米/秒
 	public int CostMoney; // 消耗金钱
@@ -53,6 +53,7 @@ public class ConfProjectile
 	public int ShareDamage; // 均摊伤害（0=全额，1=均摊）
 	public int Damage; // 伤害
 	public string Prefab; // 资源prefab
+	public int Scale; // 缩放比例万分比(10000=1)
 	public string AudioClip; // 音频
 	public string Note; // 备注
 }

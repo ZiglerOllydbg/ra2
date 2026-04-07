@@ -98,7 +98,7 @@
       "PrefabId": 0,
       "Position": "30,0,30",
       "Note": "反重装步兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "15": {
       "ID": 15,
@@ -108,7 +108,7 @@
       "PrefabId": 0,
       "Position": "31,0,30",
       "Note": "反重装步兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "16": {
       "ID": 16,
@@ -118,11 +118,11 @@
       "PrefabId": 0,
       "Position": "32,0,30",
       "Note": "反重装步兵",
-      "Enabled": 1
+      "Enabled": 0
     },
     "17": {
       "ID": 17,
-      "Camp": 1,
+      "Camp": 9,
       "Type": 2,
       "ConfID": 2,
       "PrefabId": 0,

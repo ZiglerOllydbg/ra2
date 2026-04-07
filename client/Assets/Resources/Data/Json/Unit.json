@@ -41,7 +41,7 @@
       "Speed": 60000,
       "CostMoney": 300,
       "ProduceTime": 50,
-      "Name": "獾式坦克",
+      "Name": "獾式战车",
       "Description": "高速轻型坦克，配备短程范围爆炸武器，可对密集步兵集群造成大面积杀伤。拥有优秀的机动性和射速，擅长清剿步兵和支援推进，但装甲薄弱，难以对抗中重型载具。"
     },
     "3": {
@@ -78,7 +78,8 @@
       "MaxDamageTargets": 1,
       "ShareDamage": 0,
       "Damage": 40,
-      "Prefab": "Bullet",
+      "Prefab": "Bullet1",
+      "Scale": 5000,
       "AudioClip": "infantry_200ms",
       "Note": "反重装步兵子弹"
     },
@@ -92,7 +93,8 @@
       "MaxDamageTargets": 8,
       "ShareDamage": 0,
       "Damage": 60,
-      "Prefab": "Cartridge",
+      "Prefab": "Bullet2",
+      "Scale": 20000,
       "AudioClip": "badger_tank_200ms",
       "Note": "（獾式坦克）机枪子弹"
     },
@@ -106,7 +108,8 @@
       "MaxDamageTargets": 1,
       "ShareDamage": 0,
       "Damage": 80,
-      "Prefab": "Shell",
+      "Prefab": "Bullet3",
+      "Scale": 20000,
       "AudioClip": "grizzly_tank_1000ms",
       "Note": "重装坦克炮弹"
     },
@@ -121,6 +124,7 @@
       "ShareDamage": 0,
       "Damage": 50,
       "Prefab": "Bullet",
+      "Scale": 5000,
       "AudioClip": "badger_tank_200ms",
       "Note": "碉堡机枪子弹"
     }

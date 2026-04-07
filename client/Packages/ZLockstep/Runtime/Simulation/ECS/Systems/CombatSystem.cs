@@ -499,7 +499,7 @@ namespace ZLockstep.Simulation.ECS.Systems
             // 添加Transform（从源位置开始）
             zVector3 birthPosition = sourcePos + new zVector3(zfloat.Zero, new zfloat(0, 5000), zfloat.Zero);
 
-            TransformComponent projectileTransform = TransformComponent.Create(birthPosition, zQuaternion.identity, zVector3.one);
+            TransformComponent projectileTransform = TransformComponent.Create(birthPosition, zQuaternion.identity, zVector3.one * zfloat.CreateFloat(confProjectile.Scale));
             ComponentManager.AddComponent(projectile, projectileTransform);
 
             // 添加弹道组件
