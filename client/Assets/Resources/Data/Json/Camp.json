@@ -4,7 +4,7 @@
       "ID": 1,
       "BarracksPosition": "20,0,40",
       "VehicleFactoryPosition": "40,0,20",
-      "InitMoney": 20000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 20,
       "HealDelayTick": 150
@@ -13,7 +13,7 @@
       "ID": 2,
       "BarracksPosition": "105,0,85",
       "VehicleFactoryPosition": "85,0,105",
-      "InitMoney": 20000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 20,
       "HealDelayTick": 150
@@ -22,7 +22,7 @@
       "ID": 9,
       "BarracksPosition": "105,0,85",
       "VehicleFactoryPosition": "85,0,105",
-      "InitMoney": 3000,
+      "InitMoney": 8000,
       "InitPower": 5,
       "AddMoneyPerSecond": 20,
       "HealDelayTick": 150
