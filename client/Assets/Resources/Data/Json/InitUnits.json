@@ -92,33 +92,33 @@
     },
     "14": {
       "ID": 14,
-      "Camp": 9,
+      "Camp": 1,
       "Type": 2,
       "ConfID": 1,
       "PrefabId": 0,
       "Position": "30,0,30",
       "Note": "反重装步兵",
-      "Enabled": 0
+      "Enabled": 1
     },
     "15": {
       "ID": 15,
-      "Camp": 9,
+      "Camp": 1,
       "Type": 2,
-      "ConfID": 1,
+      "ConfID": 2,
       "PrefabId": 0,
       "Position": "31,0,30",
       "Note": "反重装步兵",
-      "Enabled": 0
+      "Enabled": 1
     },
     "16": {
       "ID": 16,
-      "Camp": 9,
+      "Camp": 1,
       "Type": 2,
-      "ConfID": 1,
+      "ConfID": 3,
       "PrefabId": 0,
       "Position": "32,0,30",
       "Note": "反重装步兵",
-      "Enabled": 0
+      "Enabled": 1
     },
     "17": {
       "ID": 17,
@@ -128,7 +128,7 @@
       "PrefabId": 0,
       "Position": "20,0,32",
       "Note": "重装坦克",
-      "Enabled": 1
+      "Enabled": 0
     }
   }
 }
