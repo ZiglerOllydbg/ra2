@@ -19,8 +19,8 @@
       "Speed": 30000,
       "CostMoney": 100,
       "ProduceTime": 20,
-      "Name": "大兵",
-      "Description": "价格便宜，大量士兵可以快速歼灭灰熊坦克"
+      "Name": "反重装步兵",
+      "Description": "装备高爆反装甲武器的轻步兵单位，专精对抗重型装甲目标。机动灵活、造价低廉，适合成群作战，能有效瘫痪或摧毁敌方重装坦克，但对轻型火力和范围攻击极为脆弱。"
     },
     "2": {
       "ID": 2,
@@ -42,12 +42,12 @@
       "CostMoney": 300,
       "ProduceTime": 50,
       "Name": "獾式坦克",
-      "Description": "范围攻击，适合快速消灭士兵"
+      "Description": "高速轻型坦克，配备短程范围爆炸武器，可对密集步兵集群造成大面积杀伤。拥有优秀的机动性和射速，擅长清剿步兵和支援推进，但装甲薄弱，难以对抗中重型载具。"
     },
     "3": {
       "ID": 3,
       "Type": 3,
-      "Prefab": "GrizzlyTank",
+      "Prefab": "dog",
       "Icon": "images/GrizzlyTank",
       "Hp": 600,
       "AutoHeal": 100,
@@ -63,8 +63,8 @@
       "Speed": 50000,
       "CostMoney": 500,
       "ProduceTime": 80,
-      "Name": "灰熊坦克",
-      "Description": "价格高昂，攻击极高，适合攻击獾式坦克和建筑"
+      "Name": "重装坦克",
+      "Description": "装甲厚重、火力强大的主战坦克，主炮可精准击毁轻型载具。凭借坚固防护和稳定输出，在正面交锋中压制獾式坦克等轻型单位，但速度缓慢，易被大量反装甲步兵围攻。"
     }
   },
   "ConfProjectile": {
@@ -80,7 +80,7 @@
       "Damage": 40,
       "Prefab": "Bullet",
       "AudioClip": "infantry_200ms",
-      "Note": "步枪子弹"
+      "Note": "反重装步兵子弹"
     },
     "2": {
       "ID": 2,
@@ -108,7 +108,7 @@
       "Damage": 80,
       "Prefab": "Shell",
       "AudioClip": "grizzly_tank_1000ms",
-      "Note": "炮弹"
+      "Note": "重装坦克炮弹"
     },
     "4": {
       "ID": 4,
@@ -128,7 +128,7 @@
   "ConfRestraint": {
     "1": {
       "ID": 1,
-      "Name": "大兵",
+      "Name": "反重装步兵",
       "Infantry": 10000,
       "BadgerTank": 4000,
       "GrizzlyTank": 16000
@@ -142,7 +142,7 @@
     },
     "3": {
       "ID": 3,
-      "Name": "灰熊坦克",
+      "Name": "重装坦克",
       "Infantry": 9000,
       "BadgerTank": 15000,
       "GrizzlyTank": 10000

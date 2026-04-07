@@ -76,8 +76,15 @@ public static class ResourceCache
             prefab = Resources.Load<GameObject>(prefabPath);
             if (prefab == null)
             {
-                Debug.LogError($"Prefab not found: {prefabPath}");
-                return null;
+                const string fallbackPrefabPath = "Prefabs/Default";
+                Debug.LogWarning($"Prefab not found: {prefabPath}, fallback to: {fallbackPrefabPath}");
+                prefab = Resources.Load<GameObject>(fallbackPrefabPath);
+
+                if (prefab == null)
+                {
+                    Debug.LogError($"Prefab not found: {prefabPath}, and fallback prefab also missing: {fallbackPrefabPath}");
+                    return null;
+                }
             }
             gameObjectCache[prefabPath] = prefab;
         }
@@ -234,8 +241,15 @@ public static class ResourceCache
             sprite = Resources.Load<Sprite>(spritePath);
             if (sprite == null)
             {
-                Debug.LogError($"Sprite not found: {spritePath}");
-                return null;
+                const string fallbackSpritePath = "/Images/Default";
+                Debug.LogWarning($"Sprite not found: {spritePath}, fallback to: {fallbackSpritePath}");
+                sprite = Resources.Load<Sprite>(fallbackSpritePath.TrimStart('/'));
+
+                if (sprite == null)
+                {
+                    Debug.LogError($"Sprite not found: {spritePath}, and fallback sprite also missing: {fallbackSpritePath}");
+                    return null;
+                }
             }
             spriteCache[spritePath] = sprite;
         }

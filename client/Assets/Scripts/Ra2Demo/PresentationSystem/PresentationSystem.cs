@@ -479,7 +479,7 @@ namespace ZLockstep.View.Systems
                         ConfBuilding confBuilding = ConfigManager.Get<ConfBuilding>(buildingComponent.BuildingType);
                         if (confBuilding == null)
                         {
-                            Debug.LogWarning($"[PresentationSystem] 找不到建筑配置：BuildingType={buildingComponent.BuildingType}");
+                            Debug.LogError($"[PresentationSystem] 找不到建筑配置：BuildingType={buildingComponent.BuildingType}");
                             return;
                         }
 
